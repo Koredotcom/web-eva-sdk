@@ -3,7 +3,7 @@ import moment from 'moment';
 import axiosInstance from '../api/axiosInstance';
 
 const HistoryData = async (props) => {
-  let sortedObj = {}, hasMore = false, status = '', error = null;
+  let sortedObj = {}, unsorted = null, hasMore = false, status = '', error = null;
 
   const dataStructuring = (el) => {
     return {
@@ -20,16 +20,20 @@ const HistoryData = async (props) => {
       // console.error('API call failed:', error);
     } else {
       // console.log('API call succeeded:', data);
-      data?.boards?.map(el => {
-        let dayscnt = Timedifference(el?.lastModified);
-        if (sortedObj[dayscnt]) {
-          sortedObj[dayscnt].push(dataStructuring(el));
-        }
-        else {
-          sortedObj[dayscnt] = [];
-          sortedObj[dayscnt].push(dataStructuring(el));
-        }
-      })
+      if(!props?.unsorted) {
+        data?.boards?.map(el => {
+          let dayscnt = Timedifference(el?.lastModified);
+          if (sortedObj[dayscnt]) {
+            sortedObj[dayscnt].push(dataStructuring(el));
+          }
+          else {
+            sortedObj[dayscnt] = [];
+            sortedObj[dayscnt].push(dataStructuring(el));
+          }
+        })
+      } else {
+        unsorted = data?.boards
+      }
       hasMore = data.moreAvailable
     }
   };
@@ -51,7 +55,8 @@ const HistoryData = async (props) => {
     postCallMethod(error)
   }
 
-  return { data: sortedObj, hasMore, status, error }
+
+  return { data: unsorted || sortedObj, hasMore, status, error }
 };
 
 export default HistoryData;

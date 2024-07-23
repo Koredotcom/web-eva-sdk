@@ -1,16 +1,23 @@
-// let sdkConfig = null;
+import { configApiCall, profileApiCall } from "./api/foundationApiCalls";
 
 export const initializeSDK = (config) => {
-  if (!config.accessToken) {
-    console.error("SDK initialization error: 'accessToken' is required.");
-    return;
-  }
-  if (!config.api_url) {
-    console.error("SDK initialization error: 'api_url' is required.");
-    return;
-  }
-  // sdkConfig = config;
+  const requiredKeys = ['accessToken', 'api_url', 'userId']
+
+  let misConfig = false;
+  requiredKeys.map(key => {
+    if(!Object.keys(config).includes(key)) {
+      console.error(`SDK initialization error: '${key}' is required.`);
+      misConfig = true
+      return;
+    }
+  })
+
+  if(misConfig) return;
 
   // Set the SDK config globally
   window.sdkConfig = config;
+
+  // making foundation api call once sdk initialized properly
+  configApiCall(config)
+  profileApiCall(config)
 };

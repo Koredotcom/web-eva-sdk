@@ -14,6 +14,7 @@ import alias from '@rollup/plugin-alias';
 const globals_var = {
   react: 'React',
   'react-dom': 'ReactDOM',
+  // preact: 'preact',
   util: 'util',
   stream: 'stream',
   path: 'path',
@@ -82,7 +83,7 @@ const createConfig = (input, dir, name) => ({
 });
 
 export default [
-  createConfig('src/index.js', '.', 'EvaUIReact'),
+  createConfig('src/index.jsx', '.', 'EvaUIReact'),
   createConfig('src/components/index.js', 'components', 'Components'),
   createConfig('src/history/index.js', 'history', 'History')
 ];

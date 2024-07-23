@@ -10,6 +10,8 @@
     "build": "rollup -c"
   },
   "dependencies": {
+    "@r2wc/react-to-web-component": "^2.0.3",
+    "@reduxjs/toolkit": "^2.2.6",
     "@rollup/plugin-alias": "^5.1.0",
     "@rollup/plugin-replace": "^5.0.7",
     "@vitejs/plugin-react": "^4.3.1",
