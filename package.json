@@ -50,6 +50,11 @@
       "import": "./dist/history/index.esm.js",
       "require": "./dist/history/index.cjs.js",
       "default": "./dist/history/index.umd.js"
+    },
+    "./widgets": {
+      "import": "./dist/widgets/index.esm.js",
+      "require": "./dist/widgets/index.cjs.js",
+      "default": "./dist/widgets/index.umd.js"
     }
   },
   "devDependencies": {

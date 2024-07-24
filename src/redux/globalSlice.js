@@ -1,18 +1,17 @@
 import { createSlice } from '@reduxjs/toolkit';
+import { fetchConfigData, fetchProfileData } from './actions/global.action';
+import { handleAsyncActions } from '../utils/handleAsyncActions';
+
+const initialState = { 
+  profile: {},
+  config: {},
+  count: 5,
+};
+
 const globalSlice = createSlice({
     name: 'global',
-    initialState: { 
-        profile: {},
-        config: {},
-        count: 5
-    },
+    initialState,
     reducers: {
-      getProfileData: (state, action) => {
-        state.profile = action.payload;
-      },
-      getConfigData: (state, action) => {
-        state.config = action.payload;
-      },
       increment: (state, action) => {
         state.count += 1;
       },
@@ -20,9 +19,13 @@ const globalSlice = createSlice({
         state.count -= 1;
       },
     },
+    extraReducers: (builder) => {
+      handleAsyncActions(builder, fetchConfigData, 'config');
+      handleAsyncActions(builder, fetchProfileData, 'profile');
+    }
 });
 
 // Export actions
-export const { getConfigData, getProfileData, increment, decrement } = globalSlice.actions;
+export const { increment, decrement } = globalSlice.actions;
 
 export default globalSlice

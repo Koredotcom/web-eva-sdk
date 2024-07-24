@@ -85,5 +85,6 @@ const createConfig = (input, dir, name) => ({
 export default [
   createConfig('src/index.jsx', '.', 'EvaUIReact'),
   createConfig('src/components/index.js', 'components', 'Components'),
-  createConfig('src/history/index.js', 'history', 'History')
+  createConfig('src/history/index.js', 'history', 'History'),
+  createConfig('src/widgets/index.js', 'widgets', 'Widgets')
 ];
