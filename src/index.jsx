@@ -1,14 +1,3 @@
-import React from 'react';
-
-// import { GlobalProvider } from './context/GlobalContext';
-
-// const SDKProvider = ({ children }) => (
-//     <GlobalProvider>
-//         {children}
-//     </GlobalProvider>
-// );
-
-// export { SDKProvider };
 // Re-export all modules from nested directories
 export { initializeSDK } from './config';
 export * from './components';

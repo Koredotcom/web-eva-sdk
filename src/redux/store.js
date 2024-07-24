@@ -2,6 +2,7 @@
 import { configureStore } from '@reduxjs/toolkit';
 import globalSlice from './globalSlice';
 import logger from './middleware/logger';
+import {thunk} from 'redux-thunk';
 
 // Configure store
 const store = configureStore({
@@ -9,7 +10,7 @@ const store = configureStore({
         global: globalSlice.reducer
     },
     middleware: (getDefaultMiddleware) =>
-        getDefaultMiddleware().concat(logger),
+        getDefaultMiddleware().concat(logger, thunk)
 });
 
 export default store;
