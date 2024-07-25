@@ -5,6 +5,9 @@ import { HistoryWidget, PossibilitiesWidget } from './widgets';
 
 import { increment, decrement } from './redux/globalSlice';
 import store from './redux/store';
+import RecentAgents from './agents/RecentAgents';
+import EnabledAgents from './agents/EnabledAgents';
+import AllAgents from './agents/AllAgents';
 
 const App = () => {
 
@@ -13,27 +16,17 @@ const App = () => {
   useEffect(() => {
     // fetchHistoryData()
     // fetchHistoryWidgetData()
-    fetchPossiblitiesWidgetData()
+    // fetchPossiblitiesWidgetData()
+    fetchRecentAgentsData()
+    fetchEnabledAgentsData()
+    fetchAllAgentsData()
 
     // Initial render
-    render();
+    // render();
 
     // Subscribe to store updates
-    store.subscribe(render);
-
-    // Dispatch actions on button clicks
-    // document.getElementById('increment').addEventListener('click', () => {
-    //   store.dispatch(increment());
-    // });
-
-    // document.getElementById('decrement').addEventListener('click', () => {
-    //   store.dispatch(decrement());
-    // });
+    // store.subscribe(render);
   }, [])
-
-  // const countElement = document.getElementById('count');
-  // const incrementButton = document.getElementById('increment');
-  // const decrementButton = document.getElementById('decrement');
 
   const render = () => {
     const state = store.getState();
@@ -52,13 +45,22 @@ const App = () => {
     const res = await PossibilitiesWidget()
     console.log(res)
   }
+  const fetchRecentAgentsData = async () => {
+    const res = await RecentAgents()
+    console.log(res)
+  }
+  const fetchEnabledAgentsData = async () => {
+    const res = await EnabledAgents()
+    console.log(res)
+  }
+  const fetchAllAgentsData = async () => {
+    const res = await AllAgents()
+    console.log(res)
+  }
   
   return (
     <div>
       <h1>Hello, Vite with React!</h1>
-      {/* <HistoryWidget /> */}
-      {/* <PossibilitiesWidget /> */}
-
       <div className="Counter">
         <h1>Count: <span id="count">0</span></h1>
         <button id="increment" onClick={()=> store.dispatch(increment('4444'))}>Increment</button>

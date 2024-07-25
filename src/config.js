@@ -1,5 +1,5 @@
 // import { configApiCall, profileApiCall } from "./api/foundationApiCalls";
-import { fetchConfigData, fetchProfileData } from "./redux/actions/global.action";
+import { fetchAgents, fetchConfigData, fetchProfileData } from "./redux/actions/global.action";
 import store from "./redux/store";
 export const initializeSDK = (config) => {
   const requiredKeys = ['accessToken', 'api_url', 'userId']
@@ -21,6 +21,7 @@ export const initializeSDK = (config) => {
   // making foundation api call once sdk initialized properly
   store.dispatch(fetchConfigData(config.userId))
   store.dispatch(fetchProfileData(config.userId))
+  store.dispatch(fetchAgents({userId: config.userId}))
   // configApiCall(config)
   // profileApiCall(config)
 };
