@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom/client';
 import App from "./App";
 import { initializeSDK} from './index'; // Adjust the import according to your SDK setup
 
-const getAccessToken = 'dEA6G_TDnmu_Vo0cL-ROFXpkmuaqg1W7g5c-GHhwxAKKgZPrLCwGn9YFjZ8c15d8'; 
+const getAccessToken = 'coLMmnNcL11yI-p8XCk-Sa8KF3cbUZgVa9Bpk4W0o9Pen9n8cVHGAkm14bUGMxIu'; 
 initializeSDK({
     accessToken: getAccessToken,
     api_url: 'https://eva-dev.kore.ai/api/1.1/',

@@ -8,6 +8,8 @@ import store from './redux/store';
 import RecentAgents from './agents/RecentAgents';
 import EnabledAgents from './agents/EnabledAgents';
 import AllAgents from './agents/AllAgents';
+import ChatTestComp from './chat/ChatTestComp';
+
 
 const App = () => {
 
@@ -17,9 +19,9 @@ const App = () => {
     // fetchHistoryData()
     // fetchHistoryWidgetData()
     // fetchPossiblitiesWidgetData()
-    fetchRecentAgentsData()
-    fetchEnabledAgentsData()
-    fetchAllAgentsData()
+    // fetchRecentAgentsData()
+    // fetchEnabledAgentsData()
+    // fetchAllAgentsData()
 
     // Initial render
     // render();
@@ -60,12 +62,13 @@ const App = () => {
   
   return (
     <div>
-      <h1>Hello, Vite with React!</h1>
+      {/* <h1>Hello, Vite with React!</h1>
       <div className="Counter">
         <h1>Count: <span id="count">0</span></h1>
         <button id="increment" onClick={()=> store.dispatch(increment('4444'))}>Increment</button>
         <button id="decrement" onClick={()=> store.dispatch(decrement())}>Decrement</button>
-      </div>
+      </div> */}
+      <ChatTestComp />
     </div>
   )
 }

@@ -30,13 +30,21 @@ export const fetchAgents = createAsyncThunk(
     'global/fetchAgents',
     async (arg, { rejectWithValue }) => {
         try {
-            // const response = await axiosInstance({
-            //     url: `users/${arg?.userId}/agents`,
-            //     method: 'GET',
-            //     params: arg?.params,
-            // });
-
             const response = await axiosInstance.get(`users/${arg.userId}/agents`, arg?.params);
+            return response.data;
+        } catch (error) {
+            return rejectWithValue(error.response.data);
+        }
+    }
+);
+
+export const advanceSearch = createAsyncThunk(
+    'global/advanceSearch',
+    async (arg, { rejectWithValue }) => {
+        try {
+            const response = await axiosInstance.post(`kora/users/${arg.userId}/advancedsearch`, arg.payload, {
+                params: arg?.params
+            });
             return response.data;
         } catch (error) {
             return rejectWithValue(error.response.data);
