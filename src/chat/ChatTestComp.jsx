@@ -10,9 +10,9 @@ const ChatTestComp = () => {
         chatInterface.showComposeBar('composeBar');
 
         // Subscribe to updates
-        const unsubscribe = chatInterface.subscribe((data) => {
+        const unsubscribe = chatInterface.subscribe((question, searchResponse) => {
             // Handle the API response data
-            console.log('Received data from chat API:', data);
+            console.log('Received data from chat API:', question, searchResponse);
         });
 
         // Cleanup on component unmount

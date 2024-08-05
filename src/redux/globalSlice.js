@@ -9,7 +9,8 @@ const initialState = {
   enabledUserAgents: null,
   enabledRecentUserAgents: null,
   count: 5,
-  advanceSearch: {}
+  advanceSearchRes: {},
+  questions: {}
 };
 
 const globalSlice = createSlice({
@@ -22,6 +23,9 @@ const globalSlice = createSlice({
       decrement: (state) => {
         state.count -= 1;
       },
+      updateChatData: (state, action) => {
+        state.questions = action.payload;
+      },
     },
     extraReducers: (builder) => {
       handleAsyncActions(builder, fetchConfigData, 'config');
@@ -31,11 +35,11 @@ const globalSlice = createSlice({
         state.enabledUserAgents = enabledUserAgents
         state.enabledRecentUserAgents = action.payload.recents
       });
-      handleAsyncActions(builder, advanceSearch, 'advanceSearch');
+      handleAsyncActions(builder, advanceSearch, 'advanceSearchRes');
     }
 });
 
 // Export actions
-export const { increment, decrement } = globalSlice.actions;
+export const { increment, decrement, updateChatData } = globalSlice.actions;
 
 export default globalSlice
