@@ -10,7 +10,8 @@ const initialState = {
   enabledRecentUserAgents: null,
   count: 5,
   advanceSearchRes: {},
-  questions: {}
+  questions: {},
+  activeBoardId: null
 };
 
 const globalSlice = createSlice({
@@ -26,6 +27,9 @@ const globalSlice = createSlice({
       updateChatData: (state, action) => {
         state.questions = action.payload;
       },
+      setActiveBoardId: (state, action) => {
+        state.activeBoardId = action.payload;
+      },
     },
     extraReducers: (builder) => {
       handleAsyncActions(builder, fetchConfigData, 'config');
@@ -40,6 +44,11 @@ const globalSlice = createSlice({
 });
 
 // Export actions
-export const { increment, decrement, updateChatData } = globalSlice.actions;
+export const { 
+  increment, 
+  decrement, 
+  updateChatData,
+  setActiveBoardId
+} = globalSlice.actions;
 
 export default globalSlice
