@@ -14,19 +14,8 @@ import alias from '@rollup/plugin-alias';
 const globals_var = {
   react: 'React',
   'react-dom': 'ReactDOM',
-  // preact: 'preact',
-  util: 'util',
-  stream: 'stream',
-  path: 'path',
-  http: 'http',
-  https: 'https',
-  url: 'url',
-  fs: 'fs',
-  assert: 'assert',
-  tty: 'tty',
-  os: 'os',
-  zlib: 'zlib',
-  events: 'events'
+  '@reduxjs/toolkit': 'RTK',
+  'redux-thunk': 'ReduxThunk',
 };
 
 const createConfig = (input, dir, name) => ({
@@ -42,16 +31,6 @@ const createConfig = (input, dir, name) => ({
       dir: `dist/${dir}`,
       format: 'esm',
       entryFileNames: '[name].esm.js',
-    },
-    {
-      dir: `dist/${dir}`,
-      format: 'umd',
-      name,
-      entryFileNames: '[name].umd.js',
-      globals: {
-        react: 'React',
-        'react-dom': 'ReactDOM'
-      }
     }
   ],
   external: Object.keys(globals_var),
@@ -62,7 +41,13 @@ const createConfig = (input, dir, name) => ({
     }),
     resolve({
       preferBuiltins: false,
-      browser: true
+      browser: true,
+      extensions: ['js', 'jsx']
+    }),
+    babel({
+      babelHelpers: 'bundled',
+      exclude: 'node_modules/**',
+      presets: ['@babel/preset-react']
     }),
     commonjs(),
     json(),
@@ -73,11 +58,6 @@ const createConfig = (input, dir, name) => ({
         { find: 'util', replacement: './util-polyfill.js' }
       ]
     }),
-    babel({
-      babelHelpers: 'bundled',
-      exclude: 'node_modules/**',
-      presets: ['@babel/preset-react']
-    }),
     terser()
   ]
 });
@@ -87,5 +67,6 @@ export default [
   createConfig('src/components/index.js', 'components', 'Components'),
   createConfig('src/history/index.js', 'history', 'History'),
   createConfig('src/widgets/index.js', 'widgets', 'Widgets'),
-  createConfig('src/chat/index.js', 'chat', 'Chat')
+  createConfig('src/chat/index.js', 'chat', 'Chat'),
+  createConfig('src/agents/index.js', 'agents', 'Agents')
 ];
