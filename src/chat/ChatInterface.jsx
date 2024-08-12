@@ -56,6 +56,9 @@ const ChatInterface = (props) => {
       if (input) {
         let params = { reqId: uuid() }
         let payload = { question: input }
+        if(state.activeBoardId) {
+          payload.boardId = state.activeBoardId
+        }
         const qId = constructQuestionInitial({ ...params, ...payload })
         const Res = await store.dispatch(advanceSearch({ params, payload, userId: state.profile.data.id }))
         constructQuestionPostCall(Res, qId)

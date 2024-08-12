@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react'
 import ChatInterface from './ChatInterface'
+import NewChat from './NewChat'
 
 const ChatTestComp = () => {
     const chatInterface = useRef()
@@ -27,6 +28,7 @@ const ChatTestComp = () => {
         <div>
             <div id="composeBar" className="composeBar"></div>
             <button onClick={()=> chatInterface.current.sendMessageAction()}>Send</button>
+            <button onClick={()=> NewChat()}>+New</button>
         </div>
     )
 }
