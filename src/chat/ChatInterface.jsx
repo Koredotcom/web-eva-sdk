@@ -67,6 +67,20 @@ const ChatInterface = (props) => {
       inputElement.value = ''
     }
 
+    const initiateChatConversationAction = async (arg) => {
+      let params = { reqId: uuid() }
+      let payload = {}
+      if(state.activeBoardId) {
+        payload.boardId = state.activeBoardId
+      }
+      if(arg?.payload) {
+        payload = {...payload, ...arg.payload}
+      }
+      const qId = constructQuestionInitial({ ...params, ...payload })
+      const Res = await store.dispatch(advanceSearch({ params, payload, userId: state.profile.data.id }))
+      constructQuestionPostCall(Res, qId)
+    }
+
     // Add event listeners for the various events
     inputElement.addEventListener('change', handleEvent);
     inputElement.addEventListener('keyup', handleEvent);
@@ -80,7 +94,8 @@ const ChatInterface = (props) => {
             document.getElementById(parentEl).appendChild(inputElement);
         },
         subscribe,
-        sendMessageAction
+        sendMessageAction,
+        initiateChatConversationAction
     }
 }
 
