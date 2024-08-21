@@ -51,3 +51,15 @@ export const advanceSearch = createAsyncThunk(
         }
     }
 );
+
+export const fetchRecentFiles = createAsyncThunk(
+    'global/fetchRecentFiles',
+    async (userId, { rejectWithValue }) => {
+        try {
+            const response = await axiosInstance.get(`ka/users/${userId}/files?fileContext=knowledge`);
+            return response.data;
+        } catch (error) {
+            return rejectWithValue(error.response.data);
+        }
+    }
+);

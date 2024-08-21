@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { HistoryData } from './history';
+import { RecentFiles } from './recent';
 import { HistoryWidget, PossibilitiesWidget } from './widgets';
 // import { User, Counter, Chat, Menu } from './components';
 
@@ -25,6 +26,7 @@ const App = () => {
     fetchRecentAgentsData()
     // fetchEnabledAgentsData()
     // fetchAllAgentsData()
+    fetchRecentFilesWidget()
 
     // Initial render
     // render();
@@ -62,6 +64,10 @@ const App = () => {
   const fetchAllAgentsData = async () => {
     const res = await AllAgents()
     console.log(res)
+  }
+  const fetchRecentFilesWidget  = async () => {
+    const res = await RecentFiles()
+    console.log('Recent Files', res)
   }
 
   const agentHandler = (agent) => {
