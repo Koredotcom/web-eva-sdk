@@ -1,4 +1,4 @@
-import { advanceSearch } from "../redux/actions/global.action";
+import { advanceSearch, cancelAdvancedSearch } from "../redux/actions/global.action";
 // import { updateChatData } from "../redux/globalSlice";
 import store from "../redux/store";
 import { v4 as uuid } from 'uuid';
@@ -67,6 +67,10 @@ const ChatInterface = (props) => {
       inputElement.value = ''
     }
 
+    const cancelMessageReqAction = async () => {
+        store.dispatch(cancelAdvancedSearch())
+    }
+
     const initiateChatConversationAction = async (arg) => {
       let params = { reqId: uuid() }
       let payload = {}
@@ -95,7 +99,8 @@ const ChatInterface = (props) => {
         },
         subscribe,
         sendMessageAction,
-        initiateChatConversationAction
+        initiateChatConversationAction,
+        cancelMessageReqAction
     }
 }
 
