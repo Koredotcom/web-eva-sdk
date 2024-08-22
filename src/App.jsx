@@ -1,14 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { HistoryData } from './history';
 import { HistoryWidget, PossibilitiesWidget } from './widgets';
-// import { User, Counter, Chat, Menu } from './components';
-
-import { increment, decrement } from './redux/globalSlice';
 import store from './redux/store';
 import RecentAgents from './agents/RecentAgents';
 import EnabledAgents from './agents/EnabledAgents';
 import AllAgents from './agents/AllAgents';
-import ChatTestComp from './chat/ChatTestComp';
+import ChatTestComp from './test-comp/ChatTestComp';
 import InitiateChatConversationAction from './chat/InitiateChatConversationAction';
 
 
@@ -19,12 +16,12 @@ const App = () => {
   // const res = HistoryData()
   //   console.log(res)
   useEffect(() => {
-    // fetchHistoryData()
-    // fetchHistoryWidgetData()
-    // fetchPossiblitiesWidgetData()
+    fetchHistoryData()
+    fetchHistoryWidgetData()
+    fetchPossiblitiesWidgetData()
     fetchRecentAgentsData()
-    // fetchEnabledAgentsData()
-    // fetchAllAgentsData()
+    fetchEnabledAgentsData()
+    fetchAllAgentsData()
 
     // Initial render
     // render();

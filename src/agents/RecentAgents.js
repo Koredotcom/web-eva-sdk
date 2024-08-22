@@ -1,8 +1,8 @@
 import store from "../redux/store";
 
-const constructRecents = (enabledUserAgents, recentAgents) => {
+const constructRecents = (enabledAgents, recentAgents) => {
     let obj = []
-    enabledUserAgents?.map(a => {
+    enabledAgents?.map(a => {
         if(recentAgents?.includes(a?.id)) {
             obj.push(a)
         }
@@ -10,13 +10,13 @@ const constructRecents = (enabledUserAgents, recentAgents) => {
     return obj;
 }
 
-const RecentAgents = () => {
+const recentAgents = () => {
     return new Promise((resolve) => {
         const unsubscribe = store.subscribe(()=> {
             const state = store.getState()
-            const {status, error, data} = state.global.userAgents
-            const enabledUserAgents = state.global.enabledUserAgents
-            const recentAgents = state.global.enabledRecentUserAgents
+            const {status, error, data} = state.global.allAgents
+            const enabledAgents = state.global.enabledAgents
+            const recentAgents = state.global.recentAgents
             if(status !== 'loading') {
                 unsubscribe()
                 resolve({
@@ -29,4 +29,4 @@ const RecentAgents = () => {
     })
 }
 
-export default RecentAgents;
+export default recentAgents;

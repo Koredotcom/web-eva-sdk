@@ -1,21 +1,20 @@
 import store from "../redux/store";
 
-const EnabledAgents = () => {
+const AllAgents = () => {
     return new Promise((resolve) => {
         const unsubscribe = store.subscribe(()=> {
             const state = store.getState()
-            const {status, error, data} = state.global.userAgents
-            const enabledUserAgents = state.global.enabledUserAgents
+            const {status, error, data} = state.global.allAgents
             if(status !== 'loading') {
                 unsubscribe()
                 resolve({
                     status,
                     error,
-                    data : enabledUserAgents
+                    data: data?.agents
                 })
             }
         })
     })
 }
 
-export default EnabledAgents;
+export default AllAgents;

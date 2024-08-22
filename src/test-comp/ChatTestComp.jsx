@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react'
-import ChatInterface from './ChatInterface'
-import NewChat from './NewChat'
-import AgentWelcomeTemplate from '../test-comp/WelcomeTemplate'
+import ChatInterface from '../chat/ChatInterface'
+import NewChat from '../chat/NewChat'
+import AgentWelcomeTemplate from './WelcomeTemplate'
 
 const ChatTestComp = () => {
     const [questions, setQuestions] = useState(null)
