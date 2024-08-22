@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { HistoryData } from './history';
+import { RecentFiles } from './recent';
 import { HistoryWidget, PossibilitiesWidget } from './widgets';
 import store from './redux/store';
 import RecentAgents from './agents/RecentAgents';
@@ -20,6 +21,7 @@ const App = () => {
     fetchHistoryWidgetData()
     fetchPossiblitiesWidgetData()
     fetchRecentAgentsData()
+    fetchRecentFilesWidget()
     fetchEnabledAgentsData()
     fetchAllAgentsData()
 
@@ -59,6 +61,10 @@ const App = () => {
   const fetchAllAgentsData = async () => {
     const res = await AllAgents()
     console.log(res)
+  }
+  const fetchRecentFilesWidget  = async () => {
+    const res = await RecentFiles()
+    console.log('Recent Files', res)
   }
 
   const agentHandler = (agent) => {

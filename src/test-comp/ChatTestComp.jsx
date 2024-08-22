@@ -43,6 +43,7 @@ const ChatTestComp = () => {
             <div id="composeBar" className="composeBar"></div>
             <button onClick={()=> chatInterface.current.sendMessageAction()}>Send</button>
             <button onClick={()=> NewChat()}>+New</button>
+            <button onClick={()=> chatInterface.current.cancelMessageReqAction()}>Stop</button>
         </div>
     )
 }

@@ -1,5 +1,5 @@
 import { createSlice } from '@reduxjs/toolkit';
-import { advanceSearch, fetchAgents, fetchConfigData, fetchProfileData } from './actions/global.action';
+import { advanceSearch, fetchAgents, fetchConfigData, fetchProfileData, fetchRecentFiles } from './actions/global.action';
 import { handleAsyncActions } from '../utils/handleAsyncActions';
 
 const initialState = { 
@@ -11,7 +11,8 @@ const initialState = {
   count: 5,
   advanceSearchRes: {},
   questions: {},
-  activeBoardId: null
+  activeBoardId: null,
+  recentFiles: {}
 };
 
 const globalSlice = createSlice({
@@ -40,6 +41,7 @@ const globalSlice = createSlice({
         state.recentAgents = action.payload.recents
       });
       handleAsyncActions(builder, advanceSearch, 'advanceSearchRes');
+      handleAsyncActions(builder, fetchRecentFiles, 'recentFiles');
     }
 });
 
