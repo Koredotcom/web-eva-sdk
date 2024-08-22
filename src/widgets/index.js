@@ -1,2 +1,2 @@
-export { default as HistoryWidget } from './HistoryWidget.jsx';
-export { default as PossibilitiesWidget } from './PossibilitiesWidget.jsx';
+export { default as HistoryWidget } from './HistoryWidget.js';
+export { default as PossibilitiesWidget } from './PossibilitiesWidget.js';

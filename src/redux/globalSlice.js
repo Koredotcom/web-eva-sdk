@@ -5,9 +5,9 @@ import { handleAsyncActions } from '../utils/handleAsyncActions';
 const initialState = { 
   profile: {},
   config: {},
-  userAgents: {},
-  enabledUserAgents: null,
-  enabledRecentUserAgents: null,
+  allAgents: {},
+  enabledAgents: null,
+  recentAgents: null,
   count: 5,
   advanceSearchRes: {},
   questions: {},
@@ -35,10 +35,10 @@ const globalSlice = createSlice({
     extraReducers: (builder) => {
       handleAsyncActions(builder, fetchConfigData, 'config');
       handleAsyncActions(builder, fetchProfileData, 'profile');
-      handleAsyncActions(builder, fetchAgents, 'userAgents', (state, action) => {
-        let enabledUserAgents = action.payload.agents.filter(a => !!a?.enabled)
-        state.enabledUserAgents = enabledUserAgents
-        state.enabledRecentUserAgents = action.payload.recents
+      handleAsyncActions(builder, fetchAgents, 'allAgents', (state, action) => {
+        let enabledAgents = action.payload.agents.filter(a => !!a?.enabled)
+        state.enabledAgents = enabledAgents
+        state.recentAgents = action.payload.recents
       });
       handleAsyncActions(builder, advanceSearch, 'advanceSearchRes');
       handleAsyncActions(builder, fetchRecentFiles, 'recentFiles');

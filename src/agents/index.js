@@ -1,3 +1,3 @@
-export { default as AllAgents } from './AllAgents.jsx';
-export { default as EnabledAgents } from './EnabledAgents.jsx';
-export { default as RecentAgents } from './RecentAgents.jsx';
+export { default as AllAgents } from './AllAgents.js';
+export { default as EnabledAgents } from './EnabledAgents.js';
+export { default as RecentAgents } from './RecentAgents.js';

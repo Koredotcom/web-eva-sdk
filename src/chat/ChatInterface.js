@@ -80,9 +80,24 @@ const ChatInterface = (props) => {
       if(arg?.payload) {
         payload = {...payload, ...arg.payload}
       }
+      // if(arg.templateType === 'gpt_form_template') {
+      //   payload = {...payload, ...arg.payload}
+      // }
       const qId = constructQuestionInitial({ ...params, ...payload })
       const Res = await store.dispatch(advanceSearch({ params, payload, userId: state.profile.data.id }))
       constructQuestionPostCall(Res, qId)
+    }
+
+    const invokeGptAgentTemplate = (arg) => {
+      const item = arg.question
+      if (!item?.templateInfo?.suggestions?.[0]?.comingSoon) {
+          let payload = {};
+          // let context = {};
+          let context = {...item?.context, messageId : item?.messageId, sources : item?.sources, viewType : item?.viewType, type : "gptAgent"}
+          payload.context = context
+          payload.question = arg.utterance.label
+          initiateChatConversationAction({payload})
+      }
     }
 
     // Add event listeners for the various events
@@ -100,7 +115,8 @@ const ChatInterface = (props) => {
         subscribe,
         sendMessageAction,
         initiateChatConversationAction,
-        cancelMessageReqAction
+        cancelMessageReqAction,
+        invokeGptAgentTemplate
     }
 }
 
