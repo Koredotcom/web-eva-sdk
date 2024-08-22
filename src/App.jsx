@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { HistoryData } from './history';
-import { RecentFiles } from './recent';
+import { RecentFiles, LoadMoreRecentFiles } from './recent';
 import { HistoryWidget, PossibilitiesWidget } from './widgets';
 import store from './redux/store';
 import RecentAgents from './agents/RecentAgents';
@@ -65,6 +65,8 @@ const App = () => {
   const fetchRecentFilesWidget  = async () => {
     const res = await RecentFiles()
     console.log('Recent Files', res)
+    const resMore = await LoadMoreRecentFiles({limit: 12, offset: 2})
+    console.log('Load more -- Recent Files', resMore)
   }
 
   const agentHandler = (agent) => {

@@ -55,13 +55,17 @@ export const advanceSearch = createAsyncThunk(
     }
 );
 
-export const cancelAdvancedSearch = createAction('global/cancelAdvancedSearch', () => controller?.abort());
+export const cancelAdvancedSearch = createAction('global/cancelAdvancedSearch', () => {controller?.abort(); return {}});
 
 export const fetchRecentFiles = createAsyncThunk(
     'global/fetchRecentFiles',
-    async (userId, { rejectWithValue }) => {
+    async ({userId, params}, { rejectWithValue }) => {
         try {
-            const response = await axiosInstance.get(`ka/users/${userId}/files?fileContext=knowledge`);
+            const response = await axiosInstance({
+                url: `ka/users/${userId}/files?fileContext=knowledge`,
+                method: 'GET',
+                params
+            });
             return response.data;
         } catch (error) {
             return rejectWithValue(error.response.data);
