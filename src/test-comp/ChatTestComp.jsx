@@ -34,6 +34,9 @@ const ChatTestComp = () => {
                     if(item?.templateType === 'agent_welcome_template') {
                         return <AgentWelcomeTemplate item={item} />
                     }
+                    if(item.templateType === 'gpt_form_template') {
+                        return <div dangerouslySetInnerHTML={{__html: item.template_html}}></div>
+                    }
                     return null;
                 })}
             </div>

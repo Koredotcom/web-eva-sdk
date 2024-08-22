@@ -34,6 +34,12 @@ export const constructQuestionPostCall = (data, qId) => {
     let question = questions?.[qId]
     delete question?.loading;
 
+
+    if(data?.payload?.templateType === 'gpt_form_template') {
+        const gptFormConstructedData = constructGptFormData()
+        question.template_html = gptFormConstructedData
+    }
+
     // if(data?.params?.arg?.retry) {
     //     delete question?.error;
     // }
@@ -190,4 +196,11 @@ export const constructQuestionPostCall = (data, qId) => {
     //         getEl?.scrollIntoView({ block: "nearest", behavior: 'smooth' });
     //     }, 1500);
     // }
+}
+
+
+
+const constructGptFormData = () => {
+    let html = `<div>This is form template</div>`
+    return html;
 }
