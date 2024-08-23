@@ -1,4 +1,4 @@
-import { createAsyncThunk, createAction  } from "@reduxjs/toolkit";
+import { createAsyncThunk  } from "@reduxjs/toolkit";
 import axiosInstance from "../../api/axiosInstance";
 
 // Asynchronous actions (thunks)
@@ -55,7 +55,18 @@ export const advanceSearch = createAsyncThunk(
     }
 );
 
-export const cancelAdvancedSearch = createAction('global/cancelAdvancedSearch', () => {controller?.abort(); return {}});
+export const cancelAdvancedSearch = createAsyncThunk(
+    'global/cancelAdvancedSearch',
+    async (arg, thunkAPI) => { 
+        controller?.abort();
+        try {            
+            const response = await axiosInstance.delete(`kora/users/${arg.userId}/advancedsearch/cancelrequest/${arg.reqId}`, arg.payload);
+            return response.data;
+        } catch (error) {
+            return thunkAPI.rejectWithValue(error.response.data);
+        }
+    }
+);
 
 export const fetchRecentFiles = createAsyncThunk(
     'global/fetchRecentFiles',

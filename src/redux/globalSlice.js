@@ -12,7 +12,8 @@ const initialState = {
   advanceSearchRes: {},
   questions: {},
   activeBoardId: null,
-  recentFiles: {}
+  recentFiles: {},
+  currentQuestion: {}
 };
 
 const globalSlice = createSlice({
@@ -30,6 +31,9 @@ const globalSlice = createSlice({
       },
       setActiveBoardId: (state, action) => {
         state.activeBoardId = action.payload;
+      },
+      setCurrentQuestion: (state, action) => {
+        state.currentQuestion = action.payload;
       },
     },
     extraReducers: (builder) => {
@@ -50,7 +54,8 @@ export const {
   increment, 
   decrement, 
   updateChatData,
-  setActiveBoardId
+  setActiveBoardId,
+  setCurrentQuestion
 } = globalSlice.actions;
 
 export default globalSlice
