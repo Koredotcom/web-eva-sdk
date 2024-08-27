@@ -21,5 +21,5 @@ export const initializeSDK = (config) => {
   store.dispatch(fetchConfigData(config.userId))
   store.dispatch(fetchProfileData(config.userId))
   store.dispatch(fetchAgents({userId: config.userId}))
-  store.dispatch(fetchRecentFiles(config.userId))
+  store.dispatch(fetchRecentFiles({userId: config.userId, params: {limit: 10}}))
 };
