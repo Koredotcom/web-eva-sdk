@@ -5,6 +5,7 @@ export * from './history';
 export * from './widgets';
 export * from './chat';
 export * from './agents';
+export * from './files';
 
 // Redux store exports
 export { default as store } from './redux/store';

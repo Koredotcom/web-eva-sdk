@@ -1,6 +1,13 @@
 import { createSlice } from '@reduxjs/toolkit';
-import { advanceSearch, fetchAgents, fetchConfigData, fetchProfileData, fetchRecentFiles } from './actions/global.action';
+import { 
+  advanceSearch, 
+  fetchAgents, 
+  fetchConfigData, 
+  fetchProfileData, 
+  fetchRecentFiles 
+} from './actions/global.action';
 import { handleAsyncActions } from '../utils/handleAsyncActions';
+import { cloneDeep, concat } from 'lodash';
 
 const initialState = { 
   profile: {},
@@ -11,7 +18,9 @@ const initialState = {
   advanceSearchRes: {},
   questions: {},
   activeBoardId: null,
+  recentFilesRes: {},
   recentFiles: {},
+  AllrecentFiles: {},
   currentQuestion: {}
 };
 
@@ -28,6 +37,12 @@ const globalSlice = createSlice({
       setCurrentQuestion: (state, action) => {
         state.currentQuestion = action.payload;
       },
+      setRecentFiles: (state, action) => {
+        state.recentFiles = action.payload;
+      },
+      setAllRecentFiles: (state, action) => {
+        state.AllrecentFiles = action.payload;
+      },
     },
     extraReducers: (builder) => {
       handleAsyncActions(builder, fetchConfigData, 'config');
@@ -38,7 +53,19 @@ const globalSlice = createSlice({
         state.recentAgents = action.payload.recents
       });
       handleAsyncActions(builder, advanceSearch, 'advanceSearchRes');
-      handleAsyncActions(builder, fetchRecentFiles, 'recentFiles');
+      handleAsyncActions(builder, fetchRecentFiles, 'recentFilesRes', (state, action)=> {
+        if(action?.meta?.arg?.onload) {
+          state.recentFiles = state.recentFilesRes
+          state.AllrecentFiles = state.recentFilesRes
+        }
+        if(action?.meta?.arg?.loadmore) {
+          let allFiles = cloneDeep(state.AllrecentFiles?.data?.files)
+          allFiles = concat(allFiles, state.recentFilesRes?.data?.files)
+          state.AllrecentFiles.data.files = allFiles
+          state.AllrecentFiles.status = state.recentFilesRes.status
+          state.AllrecentFiles.error = state.recentFilesRes.error
+        }
+      });
     }
 });
 
@@ -46,7 +73,9 @@ const globalSlice = createSlice({
 export const { 
   updateChatData,
   setActiveBoardId,
-  setCurrentQuestion
+  setCurrentQuestion,
+  setRecentFiles,
+  setAllRecentFiles
 } = globalSlice.actions;
 
 export default globalSlice

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { HistoryData } from './history';
-import { RecentFiles, LoadMoreRecentFiles } from './recent';
+import { RecentFiles, LoadMoreRecentFiles } from './files';
 import { HistoryWidget, PossibilitiesWidget } from './widgets';
 import store from './redux/store';
 import RecentAgents from './agents/RecentAgents';
@@ -24,6 +24,7 @@ const App = () => {
     fetchRecentFilesWidget()
     fetchEnabledAgentsData()
     fetchAllAgentsData()
+    // fetchLoadMoreRecentFiles()
 
     // Initial render
     // render();
@@ -65,8 +66,12 @@ const App = () => {
   const fetchRecentFilesWidget  = async () => {
     const res = await RecentFiles()
     console.log('Recent Files', res)
-    const resMore = await LoadMoreRecentFiles({limit: 12, offset: 2})
-    console.log('Load more -- Recent Files', resMore)
+    // const resMore = await LoadMoreRecentFiles({limit: 12, offset: 2})
+    // console.log('Load more -- Recent Files', resMore)
+  }
+  const fetchLoadMoreRecentFiles = async () => {
+    const res = await LoadMoreRecentFiles({limit: 5,})
+    console.log('All Recent Files', res)
   }
 
   const agentHandler = (agent) => {
@@ -87,6 +92,7 @@ const App = () => {
         <button id="decrement" onClick={()=> store.dispatch(decrement())}>Decrement</button>
       </div> */}
       <ChatTestComp />
+      <button onClick={fetchLoadMoreRecentFiles}>Load more</button>
       <ul>
         {agents && agents.data.map(agent => {
           return (
