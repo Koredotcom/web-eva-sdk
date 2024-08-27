@@ -7,7 +7,7 @@ const getAccessToken = 'jzs1epo5d3Y6BMT8IOj6M96IHouDzy138x1-b3PJj-NVghvwXmmrIa-z
 initializeSDK({
     accessToken: getAccessToken,
     api_url: 'https://eva-qa.kore.ai/api/1.1/',
-    userId: "u-2efc7b68-7bd0-596a-96c1-83ee5d58bfbe"
+    userId: 'u-ccdab3b7-4a58-523a-812a-b20c8fccb87d'
 });
 
 ReactDOM.createRoot(document.getElementById('root')).render(<App />)

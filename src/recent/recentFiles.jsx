@@ -42,7 +42,8 @@ const RecentFiles = (props) => {
         resolve({
           status,
           error,
-          data: makeRecentFilesData(data, props?.unsorted, props?.limit) || {}
+          data: makeRecentFilesData(data, props?.unsorted, props?.limit) || {},
+          hasMore: data?.moreAvailable || false
         });
       }
     });

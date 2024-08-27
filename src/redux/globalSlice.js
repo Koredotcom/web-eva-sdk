@@ -8,7 +8,6 @@ const initialState = {
   allAgents: {},
   enabledAgents: null,
   recentAgents: null,
-  count: 5,
   advanceSearchRes: {},
   questions: {},
   activeBoardId: null,
@@ -19,12 +18,6 @@ const globalSlice = createSlice({
     name: 'global',
     initialState,
     reducers: {
-      increment: (state, action) => {
-        state.count += 1;
-      },
-      decrement: (state) => {
-        state.count -= 1;
-      },
       updateChatData: (state, action) => {
         state.questions = action.payload;
       },
@@ -47,8 +40,6 @@ const globalSlice = createSlice({
 
 // Export actions
 export const { 
-  increment, 
-  decrement, 
   updateChatData,
   setActiveBoardId
 } = globalSlice.actions;
