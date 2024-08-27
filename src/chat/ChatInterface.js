@@ -1,4 +1,5 @@
 import { advanceSearch, cancelAdvancedSearch } from "../redux/actions/global.action";
+import { setCurrentQuestion } from "../redux/globalSlice"
 // import { updateChatData } from "../redux/globalSlice";
 import store from "../redux/store";
 import { v4 as uuid } from 'uuid';
@@ -60,15 +61,17 @@ const ChatInterface = (props) => {
           payload.boardId = state.activeBoardId
         }
         const qId = constructQuestionInitial({ ...params, ...payload })
+        store.dispatch(setCurrentQuestion({ ...params, ...payload }))
         const Res = await store.dispatch(advanceSearch({ params, payload, userId: state.profile.data.id }))
         constructQuestionPostCall(Res, qId)
+        store.dispatch(setCurrentQuestion({}))
       }
       input = ''
       inputElement.value = ''
     }
 
     const cancelMessageReqAction = async () => {
-        store.dispatch(cancelAdvancedSearch())
+        store.dispatch(cancelAdvancedSearch({userId: state.profile.data.id, reqId: state.currentQuestion.reqId, payload: state.currentQuestion}))
     }
 
     const initiateChatConversationAction = async (arg) => {
