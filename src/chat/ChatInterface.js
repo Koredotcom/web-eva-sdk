@@ -70,9 +70,14 @@ const ChatInterface = (props) => {
       inputElement.value = ''
     }
 
-    const cancelMessageReqAction = async () => {
-        store.dispatch(cancelAdvancedSearch({userId: state.profile.data.id, reqId: state.currentQuestion.reqId, payload: state.currentQuestion}))
+  const cancelMessageReqAction = async (id) => {
+    if (id) {
+      store.dispatch(cancelAdvancedSearch({ userId: state.profile.data.id, reqId: id, payload: state.currentQuestion }))
+    } else {
+      store.dispatch(cancelAdvancedSearch({ userId: state.profile.data.id, reqId: state.currentQuestion.reqId, payload: state.currentQuestion }))
     }
+
+  }
 
     const initiateChatConversationAction = async (arg) => {
       let params = { reqId: uuid() }
