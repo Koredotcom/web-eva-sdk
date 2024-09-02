@@ -2,6 +2,7 @@ import { v4 as uuid } from 'uuid';
 import { updateChatData, setActiveBoardId } from '../redux/globalSlice';
 import store from '../redux/store';
 import { cloneDeep } from 'lodash';
+import constructGptForm from '../test-comp/gptTemplate';
 
 export const constructQuestionInitial = ({question}) => {
     const uniqueMsgId = uuid();
@@ -36,8 +37,8 @@ export const constructQuestionPostCall = (data, qId) => {
 
 
     if(data?.payload?.templateType === 'gpt_form_template') {
-        const gptFormConstructedData = constructGptFormData()
-        question.template_html = gptFormConstructedData
+        // const gptFormConstructedData = constructGptFormData()
+        return constructGptForm(data?.payload)
     }
 
     // if(data?.params?.arg?.retry) {

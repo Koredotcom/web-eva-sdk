@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react'
 import ChatInterface from '../chat/ChatInterface'
 import NewChat from '../chat/NewChat'
 import AgentWelcomeTemplate from './WelcomeTemplate'
+import constructGptForm from './gptTemplate'
 
 const ChatTestComp = () => {
     const [questions, setQuestions] = useState(null)
@@ -34,8 +35,13 @@ const ChatTestComp = () => {
                     if(item?.templateType === 'agent_welcome_template') {
                         return <AgentWelcomeTemplate item={item} />
                     }
-                    if(item.templateType === 'gpt_form_template') {
-                        return <div dangerouslySetInnerHTML={{__html: item.template_html}}></div>
+                    // if(item.templateType === 'gpt_form_template') {
+                    //     // return <div dangerouslySetInnerHTML={{__html: constructGptForm(item)}}></div>
+                    //    return constructGptForm(item)
+
+                    // }
+                    if(item?.templateType === 'search_answer'){
+                        return item?.answer
                     }
                     return null;
                 })}
