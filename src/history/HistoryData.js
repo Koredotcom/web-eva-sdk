@@ -1,10 +1,8 @@
 import { Timedifference } from '../utils/helpers';
 import moment from 'moment';
-import axiosInstance from '../api/axiosInstance';
+import store from "../redux/store";
 
 const HistoryData = async (props) => {
-  let sortedObj = {}, unsorted = null, hasMore = false, status = '', error = null;
-
   const dataStructuring = (el) => {
     return {
       id: el?.id,
@@ -15,48 +13,42 @@ const HistoryData = async (props) => {
     }
   }
 
-  const postCallMethod = (error, data) => {
-    if (error) {
-      // console.error('API call failed:', error);
+  const postCallMethod = (data) => {
+    let obj = []
+    let sortedObj = {}
+    if (!props?.unsorted) {
+      data?.boards?.forEach(el => {
+        let dayscnt = Timedifference(el?.lastModified);
+        if (sortedObj[dayscnt]) {
+          sortedObj[dayscnt].push(dataStructuring(el));
+        }
+        else {
+          sortedObj[dayscnt] = [];
+          sortedObj[dayscnt].push(dataStructuring(el));
+        }       
+      })
+      obj = sortedObj
     } else {
-      // console.log('API call succeeded:', data);
-      if(!props?.unsorted) {
-        data?.boards?.map(el => {
-          let dayscnt = Timedifference(el?.lastModified);
-          if (sortedObj[dayscnt]) {
-            sortedObj[dayscnt].push(dataStructuring(el));
-          }
-          else {
-            sortedObj[dayscnt] = [];
-            sortedObj[dayscnt].push(dataStructuring(el));
-          }
-        })
-      } else {
-        unsorted = data?.boards
-      }
-      hasMore = data.moreAvailable
+      obj = data?.boards
     }
+    return obj
   };
 
-  try {
-    const params = {
-      limit: props?.limit || 20,
-    }
-    const response = await axiosInstance({
-      url: 'kora/boards?type=history',
-      method: 'GET',
-      params,
+  return new Promise((resolve) => {
+    const unsubscribe = store.subscribe(() => {
+      const state = store.getState();
+      const { status, error, data } = state.global.history;
+      if (status !== 'loading') {
+        unsubscribe();
+        resolve({
+          status,
+          error,
+          data: postCallMethod(data || []),
+          hasMore: data?.moreAvailable || false
+        });
+      }
     });
-    status = 'success'
-    postCallMethod(null, response.data)
-  } catch (error) {
-    status = 'error'
-    error = error
-    postCallMethod(error)
-  }
-
-
-  return { data: unsorted || sortedObj, hasMore, status, error }
+  });
 };
 
 export default HistoryData;

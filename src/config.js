@@ -1,4 +1,4 @@
-import { fetchAgents, fetchConfigData, fetchProfileData, fetchRecentFiles } from "./redux/actions/global.action";
+import { fetchAgents, fetchConfigData, fetchProfileData, fetchHistory, fetchRecentFiles } from "./redux/actions/global.action";
 import store from "./redux/store";
 export const initializeSDK = (config) => {
   const requiredKeys = ['accessToken', 'api_url', 'userId']
@@ -21,5 +21,6 @@ export const initializeSDK = (config) => {
   store.dispatch(fetchConfigData(config.userId))
   store.dispatch(fetchProfileData(config.userId))
   store.dispatch(fetchAgents({userId: config.userId}))
+  store.dispatch(fetchHistory({onload: true, params: {limit: 10}}))
   store.dispatch(fetchRecentFiles({onload: true, userId: config.userId, params: {limit: 10}}))
 };

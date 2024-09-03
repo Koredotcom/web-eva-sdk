@@ -68,6 +68,22 @@ export const cancelAdvancedSearch = createAsyncThunk(
     }
 );
 
+export const fetchHistory = createAsyncThunk(
+    'global/fetchHistory',
+    async ({params}, { rejectWithValue }) => {
+        try {
+            const response = await axiosInstance({
+                url: `kora/boards?type=history`,
+                method: 'GET',
+                params
+            });
+            return response.data;
+        } catch (error) {
+            return rejectWithValue(error.response.data);
+        }
+    }
+);
+
 export const fetchRecentFiles = createAsyncThunk(
     'global/fetchRecentFiles',
     async ({userId, params}, { rejectWithValue }) => {

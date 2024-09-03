@@ -4,10 +4,11 @@ import {
   fetchAgents, 
   fetchConfigData, 
   fetchProfileData, 
+  fetchHistory,
   fetchRecentFiles 
 } from './actions/global.action';
 import { handleAsyncActions } from '../utils/handleAsyncActions';
-import { cloneDeep, concat } from 'lodash';
+import { cloneDeep, concat, uniqBy } from 'lodash';
 
 const initialState = { 
   profile: {},
@@ -21,7 +22,9 @@ const initialState = {
   recentFilesRes: {},
   recentFiles: {},
   AllrecentFiles: {},
-  currentQuestion: {}
+  currentQuestion: {},
+  history: {},
+  AllHistory: {}
 };
 
 const globalSlice = createSlice({
@@ -43,6 +46,9 @@ const globalSlice = createSlice({
       setAllRecentFiles: (state, action) => {
         state.AllrecentFiles = action.payload;
       },
+      setAllHistory: (state, action) => {
+        state.AllHistory = action.payload;
+      },
     },
     extraReducers: (builder) => {
       handleAsyncActions(builder, fetchConfigData, 'config');
@@ -53,6 +59,19 @@ const globalSlice = createSlice({
         state.recentAgents = action.payload.recents
       });
       handleAsyncActions(builder, advanceSearch, 'advanceSearchRes');
+      handleAsyncActions(builder, fetchHistory, 'history', (state, action)=> {
+        if(action?.meta?.arg?.onload) {
+          state.recentFiles = state.history
+          state.AllHistory = state.history
+        }
+        if(action?.meta?.arg?.loadmore) {
+          let allHistory = cloneDeep(state.AllHistory?.data?.boards)         
+          allHistory = uniqBy(concat(allHistory, state.history?.data?.boards), 'id')
+          state.AllHistory.data.boards = allHistory
+          state.AllHistory.status = state.history.status
+          state.AllHistory.error = state.history.error
+        }
+      });
       handleAsyncActions(builder, fetchRecentFiles, 'recentFilesRes', (state, action)=> {
         if(action?.meta?.arg?.onload) {
           state.recentFiles = state.recentFilesRes
@@ -75,6 +94,7 @@ export const {
   setActiveBoardId,
   setCurrentQuestion,
   setRecentFiles,
+  setAllHistory,
   setAllRecentFiles
 } = globalSlice.actions;
 
