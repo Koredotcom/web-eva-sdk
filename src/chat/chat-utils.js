@@ -2,10 +2,21 @@ import { v4 as uuid } from 'uuid';
 import { updateChatData, setActiveBoardId } from '../redux/globalSlice';
 import store from '../redux/store';
 import { cloneDeep } from 'lodash';
-import constructGptForm from '../test-comp/gptTemplate';
+import constructGptForm from './gptTemplate/gptTemplateBody';
+import gptFormFunctionality from './gptTemplate/gptTemplateFunc';
+import { getCidByMessageId } from '../components/helpers';
 
-export const constructQuestionInitial = ({question}) => {
-    const uniqueMsgId = uuid();
+export const constructQuestionInitial = (args) => {
+    let uniqueMsgId;
+    const questions = cloneDeep(store.getState().global.questions)
+
+    if(args?.replaceExistingQsn){
+        uniqueMsgId = getCidByMessageId(questions, args?.messageId)
+    }else{
+        uniqueMsgId = uuid();
+    }
+    
+    let question = args?.question
     let obj = {
         cId: uniqueMsgId,
         question,
@@ -14,7 +25,6 @@ export const constructQuestionInitial = ({question}) => {
         type: "search"
     }
 
-    const questions = cloneDeep(store.getState().global.questions)
     questions[uniqueMsgId] = obj
 
     store.dispatch(updateChatData(questions))
@@ -37,8 +47,13 @@ export const constructQuestionPostCall = (data, qId) => {
 
 
     if(data?.payload?.templateType === 'gpt_form_template') {
-        // const gptFormConstructedData = constructGptFormData()
-        return constructGptForm(data?.payload)
+        const gptFormConstructedData = constructGptForm(data?.payload)
+        // constructGptForm(data?.payload)
+        question.template_html = gptFormConstructedData.innerHTML
+        setTimeout(() => {
+            gptFormFunctionality(data?.payload);
+        }, 1000);
+    
     }
 
     // if(data?.params?.arg?.retry) {
@@ -197,11 +212,4 @@ export const constructQuestionPostCall = (data, qId) => {
     //         getEl?.scrollIntoView({ block: "nearest", behavior: 'smooth' });
     //     }, 1500);
     // }
-}
-
-
-
-const constructGptFormData = () => {
-    let html = `<div>This is form template</div>`
-    return html;
 }
