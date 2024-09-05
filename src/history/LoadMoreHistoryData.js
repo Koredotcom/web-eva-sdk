@@ -10,7 +10,7 @@ let historyOffset = 1
 const LoadMoreHistoryData = async (props) => {
   const params = {
     limit: props?.limit || 10,
-    offset: historyOffset
+    offset: props?.initialData ? 0 : null || historyOffset * (props?.limit || 10)
   }
 
   const state = store.getState();
@@ -29,11 +29,11 @@ const LoadMoreHistoryData = async (props) => {
     }
   }
 
-  const postCallMethod = (data) => {
+  const historyData = (data) => {
     let obj = []
     let sortedObj = {}
-    if (!props?.unsorted) {
-      data?.boards?.forEach(el => {
+    if (props?.sorted) {
+      data?.forEach(el => {
         let dayscnt = Timedifference(el?.lastModified);
         if (sortedObj[dayscnt]) {
           sortedObj[dayscnt].push(dataStructuring(el));
@@ -45,7 +45,9 @@ const LoadMoreHistoryData = async (props) => {
       })
       obj = sortedObj
     } else {
-      obj = data?.boards
+      obj = data.map(el => {
+        return dataStructuring(el)
+      })
     }
     return obj
   };
@@ -59,7 +61,7 @@ const LoadMoreHistoryData = async (props) => {
         resolve({
           status,
           error,
-          data: postCallMethod(data || []),
+          data: historyData(data?.boards || []),
           hasMore: data?.moreAvailable || false
         });
       }

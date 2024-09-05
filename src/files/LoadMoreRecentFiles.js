@@ -9,7 +9,7 @@ const LoadMoreRecentFiles = (props) => {
 
   const params = {
     limit: props?.limit || 10,
-    offset: recentFilesOffset
+    offset: props?.initialData ? 0 : null || recentFilesOffset * (props?.limit || 10)
   }
 
   const state = store.getState();

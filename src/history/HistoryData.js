@@ -14,24 +14,27 @@ const HistoryData = async (props) => {
   }
 
   const postCallMethod = (data) => {
-    let obj = []
-    let sortedObj = {}
-    if (!props?.unsorted) {
-      data?.boards?.forEach(el => {
-        let dayscnt = Timedifference(el?.lastModified);
-        if (sortedObj[dayscnt]) {
-          sortedObj[dayscnt].push(dataStructuring(el));
-        }
-        else {
-          sortedObj[dayscnt] = [];
-          sortedObj[dayscnt].push(dataStructuring(el));
-        }       
-      })
-      obj = sortedObj
-    } else {
-      obj = data?.boards
-    }
-    return obj
+    // let obj = []
+    // let sortedObj = {}
+    // if (!props?.unsorted) {
+    //   data?.boards?.forEach(el => {
+    //     let dayscnt = Timedifference(el?.lastModified);
+    //     if (sortedObj[dayscnt]) {
+    //       sortedObj[dayscnt].push(dataStructuring(el));
+    //     }
+    //     else {
+    //       sortedObj[dayscnt] = [];
+    //       sortedObj[dayscnt].push(dataStructuring(el));
+    //     }       
+    //   })
+    //   obj = sortedObj
+    // } else {
+    //   obj = data?.boards
+    // }
+    // return obj
+    return data.map(el => {
+      return dataStructuring(el)
+    })
   };
 
   return new Promise((resolve) => {
@@ -43,7 +46,7 @@ const HistoryData = async (props) => {
         resolve({
           status,
           error,
-          data: postCallMethod(data || []),
+          data: postCallMethod(data?.boards || []),
           hasMore: data?.moreAvailable || false
         });
       }
