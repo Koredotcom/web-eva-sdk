@@ -82,16 +82,21 @@ const ChatInterface = (props) => {
     const initiateChatConversationAction = async (arg) => {
       let params = { reqId: uuid() }
       let payload = {}
+      let replaceExistingQsn = false;
       if(state.activeBoardId) {
         payload.boardId = state.activeBoardId
       }
       if(arg?.payload) {
         payload = {...payload, ...arg.payload}
       }
-      // if(arg.templateType === 'gpt_form_template') {
-      //   payload = {...payload, ...arg.payload}
-      // }
-      const qId = constructQuestionInitial({ ...params, ...payload })
+      if(arg?.createIssue){
+        if(arg?.from === "gptAgent"){
+          params.agentType = "gptAgent"
+          replaceExistingQsn = true
+        }
+      }
+
+      const qId = constructQuestionInitial({ ...params, ...payload, replaceExistingQsn })
       const Res = await store.dispatch(advanceSearch({ params, payload, userId: state.profile.data.id }))
       constructQuestionPostCall(Res, qId)
     }
