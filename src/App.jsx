@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { HistoryData } from './history';
+import { HistoryData, LoadMoreHistoryData } from './history';
 import { RecentFiles, LoadMoreRecentFiles } from './files';
 import { HistoryWidget, PossibilitiesWidget } from './widgets';
 import store from './redux/store';
@@ -40,7 +40,11 @@ const App = () => {
 
   const fetchHistoryData = async () => {
     const res = await HistoryData()
-    console.log(res)
+    console.log('history', res)
+  }
+  const fetchLoadMoreHistory = async () => {
+    const res = await LoadMoreHistoryData({limit: 10})
+    console.log('All History', res)
   }
   const fetchHistoryWidgetData = async () => {
     const res = await HistoryWidget({limit: 3, unsorted: true})
@@ -92,7 +96,8 @@ const App = () => {
         <button id="decrement" onClick={()=> store.dispatch(decrement())}>Decrement</button>
       </div> */}
       <ChatTestComp />
-      <button onClick={fetchLoadMoreRecentFiles}>Load more</button>
+      <button onClick={fetchLoadMoreHistory}>Load more history</button>
+      <button onClick={fetchLoadMoreRecentFiles}>Load more recent files</button>
       <ul>
         {agents && agents.data.map(agent => {
           return (

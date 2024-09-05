@@ -1,12 +1,23 @@
 
 import moment from 'moment';
-import axiosInstance from '../api/axiosInstance';
+import { fetchHistory } from "../redux/actions/global.action";
+import { setAllHistory } from "../redux/globalSlice";
 import { Timedifference } from '../utils/helpers';
+import store from "../redux/store"
 
-let offset = 1
+let historyOffset = 1
 
 const LoadMoreHistoryData = async (props) => {
-  let sortedObj = {}, hasMore = false, status = '', error = null;
+  const params = {
+    limit: props?.limit || 10,
+    offset: historyOffset
+  }
+
+  const state = store.getState();
+  store.dispatch(setAllHistory({...state.global.AllHistory, status: 'loading'}))
+
+  store.dispatch(fetchHistory({ loadmore: true, params }))
+  historyOffset++
 
   const dataStructuring = (el) => {
     return {
@@ -18,12 +29,11 @@ const LoadMoreHistoryData = async (props) => {
     }
   }
 
-  const postCallMethod = (error, data) => {
-    if (error) {
-      // console.error('API call failed:', error);
-    } else {
-      // console.log('API call succeeded:', data);
-      data?.boards?.map(el => {
+  const postCallMethod = (data) => {
+    let obj = []
+    let sortedObj = {}
+    if (!props?.unsorted) {
+      data?.boards?.forEach(el => {
         let dayscnt = Timedifference(el?.lastModified);
         if (sortedObj[dayscnt]) {
           sortedObj[dayscnt].push(dataStructuring(el));
@@ -33,30 +43,28 @@ const LoadMoreHistoryData = async (props) => {
           sortedObj[dayscnt].push(dataStructuring(el));
         }
       })
-      offset++
-      hasMore = data.moreAvailable
+      obj = sortedObj
+    } else {
+      obj = data?.boards
     }
+    return obj
   };
 
-  try {
-    const params = {
-      limit: props?.limit || 20,
-      offset
-    }
-    const response = await axiosInstance({
-      url: 'kora/boards?type=history',
-      method: 'GET',
-      params,
+  return new Promise((resolve) => {
+    const unsubscribe = store.subscribe(() => {
+      const state = store.getState();
+      const { status, error, data } = state.global.AllHistory;
+      if (status !== 'loading') {
+        unsubscribe();
+        resolve({
+          status,
+          error,
+          data: postCallMethod(data || []),
+          hasMore: data?.moreAvailable || false
+        });
+      }
     });
-    status = 'success'
-    postCallMethod(null, response.data)
-  } catch (error) {
-    status = 'error'
-    error = error
-    postCallMethod(error)
-  }
-
-  return { data: sortedObj, hasMore, status, error }
+  });
 };
 
 export default LoadMoreHistoryData;
