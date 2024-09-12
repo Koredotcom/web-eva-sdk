@@ -26,15 +26,16 @@ const ChatInterface = (props) => {
     };
 
     // Create the input element
-    const inputElement = document.createElement('input');
-    inputElement.type = 'text';
+    const inputElement = document.createElement('div');
+    inputElement.contentEditable = true;
 
     // Define the event handler function
     function handleEvent(event) {
       console.log(`Event: ${event.type}, Value: ${event.target.value}`);
 
       if(event.type == 'keyup') {
-        input = event.target.value
+        // input = event.target.value
+        input = event?.target?.textContent;
         if((event?.key === 'Enter' || event?.keyCode === 13)) {
           sendMessageAction()
         }
@@ -62,22 +63,23 @@ const ChatInterface = (props) => {
         }
         const qId = constructQuestionInitial({ ...params, ...payload })
         store.dispatch(setCurrentQuestion({ ...params, ...payload }))
+
+        input = ''
+        inputElement.textContent = ''
+
         const Res = await store.dispatch(advanceSearch({ params, payload, userId: state.profile.data.id }))
         constructQuestionPostCall(Res, qId)
         store.dispatch(setCurrentQuestion({}))
       }
-      input = ''
-      inputElement.value = ''
     }
 
-  const cancelMessageReqAction = async (id) => {
-    if (id) {
-      store.dispatch(cancelAdvancedSearch({ userId: state.profile.data.id, reqId: id, payload: state.currentQuestion }))
-    } else {
-      store.dispatch(cancelAdvancedSearch({ userId: state.profile.data.id, reqId: state.currentQuestion.reqId, payload: state.currentQuestion }))
+    const cancelMessageReqAction = async (id) => {
+      if (id) {
+        store.dispatch(cancelAdvancedSearch({ userId: state.profile.data.id, reqId: id, payload: state.currentQuestion }))
+      } else {
+        store.dispatch(cancelAdvancedSearch({ userId: state.profile.data.id, reqId: state.currentQuestion.reqId, payload: state.currentQuestion }))
+      }
     }
-
-  }
 
     const initiateChatConversationAction = async (arg) => {
       let params = { reqId: uuid() }
