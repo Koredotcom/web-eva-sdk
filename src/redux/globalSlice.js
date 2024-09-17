@@ -5,7 +5,8 @@ import {
   fetchConfigData, 
   fetchProfileData, 
   fetchHistory,
-  fetchRecentFiles 
+  fetchRecentFiles, 
+  getRecentFileDownloadUrl
 } from './actions/global.action';
 import { handleAsyncActions } from '../utils/handleAsyncActions';
 import { cloneDeep, concat, uniqBy } from 'lodash';
@@ -25,7 +26,8 @@ const initialState = {
   currentQuestion: {},
   historyRes: {},
   history: {},
-  AllHistory: {}
+  AllHistory: {},
+  recentFileDownloadUrl: {}
 };
 
 const globalSlice = createSlice({
@@ -86,6 +88,7 @@ const globalSlice = createSlice({
           state.AllrecentFiles.error = state.recentFilesRes.error
         }
       });
+      handleAsyncActions(builder, getRecentFileDownloadUrl, 'recentFileDownloadUrl');
     }
 });
 

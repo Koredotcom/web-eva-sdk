@@ -99,3 +99,18 @@ export const fetchRecentFiles = createAsyncThunk(
         }
     }
 );
+
+export const getRecentFileDownloadUrl = createAsyncThunk(
+    'global/getRecentFileDownloadUrl',
+    async ({userId, params}, { rejectWithValue }) => {
+        try {
+            const response = await axiosInstance({
+                url: `kora/boards/${userId}/sources/${params?.source}/${params?.docId}/signedMediaUrl`,
+                method: 'GET',
+            });
+            return response.data;
+        } catch (error) {
+            return rejectWithValue(error.response.data);
+        }
+    }
+);

@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { HistoryData, LoadMoreHistoryData } from './history';
-import { RecentFiles, LoadMoreRecentFiles } from './files';
 import { HistoryWidget, PossibilitiesWidget } from './widgets';
 import store from './redux/store';
 import RecentAgents from './agents/RecentAgents';
@@ -8,11 +7,13 @@ import EnabledAgents from './agents/EnabledAgents';
 import AllAgents from './agents/AllAgents';
 import ChatTestComp from './test-comp/ChatTestComp';
 import InitiateChatConversationAction from './chat/InitiateChatConversationAction';
+import File from './test-comp/File';
 
 
 const App = () => {
 
   const [agents, setAgents] = useState(null)
+  
 
   // const res = HistoryData()
   //   console.log(res)
@@ -21,7 +22,6 @@ const App = () => {
     fetchHistoryWidgetData()
     fetchPossiblitiesWidgetData()
     fetchRecentAgentsData()
-    fetchRecentFilesWidget()
     fetchEnabledAgentsData()
     fetchAllAgentsData()
     // fetchLoadMoreRecentFiles()
@@ -42,8 +42,12 @@ const App = () => {
     const res = await HistoryData()
     console.log('history', res)
   }
+  const fetchLoadMoreHistoryInitial = async () => {
+    const res = await LoadMoreHistoryData({limit: 20, initialData: true, sorted: true})
+    console.log('All History', res)
+  }
   const fetchLoadMoreHistory = async () => {
-    const res = await LoadMoreHistoryData({limit: 10})
+    const res = await LoadMoreHistoryData({limit: 20, sorted: false})
     console.log('All History', res)
   }
   const fetchHistoryWidgetData = async () => {
@@ -67,16 +71,6 @@ const App = () => {
     const res = await AllAgents()
     console.log(res)
   }
-  const fetchRecentFilesWidget  = async () => {
-    const res = await RecentFiles()
-    console.log('Recent Files', res)
-    // const resMore = await LoadMoreRecentFiles({limit: 12, offset: 2})
-    // console.log('Load more -- Recent Files', resMore)
-  }
-  const fetchLoadMoreRecentFiles = async () => {
-    const res = await LoadMoreRecentFiles({limit: 5,})
-    console.log('All Recent Files', res)
-  }
 
   const agentHandler = (agent) => {
     const payload = {
@@ -97,7 +91,7 @@ const App = () => {
       </div> */}
       <ChatTestComp />
       <button onClick={fetchLoadMoreHistory}>Load more history</button>
-      <button onClick={fetchLoadMoreRecentFiles}>Load more recent files</button>
+      <button onClick={fetchLoadMoreHistoryInitial}>Initial history data with custom param</button>
       <ul>
         {agents && agents.data.map(agent => {
           return (
@@ -105,6 +99,7 @@ const App = () => {
           )
         })}
       </ul>
+      <File />
     </div>
   )
 }
