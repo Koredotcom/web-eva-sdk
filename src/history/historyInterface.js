@@ -7,13 +7,13 @@ const HistoryInterface = (props) => {
 
     // Subscribe to store updates
     const subscribe = (cb) => {
-        // let callback = cb;
+        let callback = cb;
         const unsubscribe = store.subscribe(() => {
             state = store.getState().global;
-            // // If callback exists and API call is completed, invoke it
-            // if (state.advanceSearchRes.status !== 'loading' && callback) {
-            //     callback(state.questions, state.advanceSearchRes.data);
-            // }
+            // If callback exists and API call is completed, invoke it
+            if (state.historyRes.status !== 'loading' && callback) {
+                callback(state.AllHistory, state.historyRes);
+            }
         });
 
         // Return a function to unsubscribe
@@ -22,17 +22,12 @@ const HistoryInterface = (props) => {
         };
     };
 
-
-
     const deleteHistoryBoard = async (arg) => {
         const response = await store.dispatch(deleteHistory({ boardId: arg?.id }))
         if (response?.payload?.success) {
             let newHistory = { 
                 ...state.AllHistory, 
-                data: {
-                  ...state.AllHistory.data,
-                  boards: state.AllHistory.data.boards.filter(item => item?.id !== response?.meta?.arg?.boardId)
-                }
+                data: state.AllHistory.data.filter(item => item?.id !== response?.meta?.arg?.boardId)
               };
               
               store.dispatch(setAllHistory(newHistory));      
@@ -48,19 +43,15 @@ const HistoryInterface = (props) => {
         }
         const response = await store.dispatch(updateHistory({ params, payload }))
         if (response) {
-            let newBoard = state?.AllHistory?.data?.boards;
-            let updatedBoardIndex = newBoard?.findIndex(item => item.id === arg.boardId);
-            let updatedBoard = [
-                ...newBoard.slice(0, updatedBoardIndex),
-                response.payload,
-                ...newBoard.slice(updatedBoardIndex + 1)
-            ];
+            let newBoard = state?.AllHistory?.data.map(b => {
+                if(b.id === arg.boardId) {
+                    b = response.payload
+                }
+                return b
+            })
             let newHistory = {
                 ...state.AllHistory,
-                data: {
-                    ...state.AllHistory.data,
-                    boards: updatedBoard
-                }
+                data: newBoard
             };
             store.dispatch(setAllHistory(newHistory));
         }

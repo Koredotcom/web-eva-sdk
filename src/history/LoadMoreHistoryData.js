@@ -16,7 +16,7 @@ const LoadMoreHistoryData = async (props) => {
   const state = store.getState();
   store.dispatch(setAllHistory({...state.global.AllHistory, status: 'loading'}))
 
-  store.dispatch(fetchHistory({ loadmore: true, params }))
+  store.dispatch(fetchHistory({ loadmore: true, params, initialData: props?.initialData || false }))
   historyOffset++
 
   const dataStructuring = (el) => {

@@ -71,15 +71,20 @@ const globalSlice = createSlice({
       handleAsyncActions(builder, fetchHistory, 'historyRes', (state, action)=> {
         if(action?.meta?.arg?.onload) {
           state.history = state.historyRes
-          state.AllHistory = state.historyRes
+          // state.AllHistory = state.historyRes
         }
-        if(action?.meta?.arg?.loadmore) {
-          let allHistory = cloneDeep(state.AllHistory?.data?.boards)         
-          allHistory = uniqBy(concat(allHistory, state.historyRes?.data?.boards), 'id')
-          state.AllHistory.data.boards = allHistory
+        // if(action?.meta?.arg?.loadmore) {
+          let allHistory = cloneDeep(state.AllHistory?.data) || []     
+          if(action?.meta?.arg?.initialData) {
+            allHistory = state.historyRes?.data?.boards
+          } else {
+            allHistory = uniqBy(concat(allHistory, state.historyRes?.data?.boards), 'id')
+          }
+          state.AllHistory.data = allHistory
           state.AllHistory.status = state.historyRes.status
           state.AllHistory.error = state.historyRes.error
-        }
+          state.AllHistory.hasMore = state.historyRes?.data?.moreAvailable
+        // }
       });
       handleAsyncActions(builder, fetchRecentFiles, 'recentFilesRes', (state, action)=> {
         if(action?.meta?.arg?.onload) {

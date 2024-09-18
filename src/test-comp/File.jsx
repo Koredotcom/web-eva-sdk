@@ -13,8 +13,8 @@ const File = () => {
         const res = await RecentFiles()
         console.log('Recent Files', res)
     }
-    const fetchLoadMoreRecentFiles = async () => {
-        const res = await LoadMoreRecentFiles({ limit: 10, initialData: true })
+    const fetchLoadMoreRecentFiles = async (loadmore) => {
+        const res = await LoadMoreRecentFiles({ limit: 10, initialData: loadmore ? false : true })
         console.log('All Recent Files', res)
         setFiles(res)
     }
@@ -50,7 +50,7 @@ const File = () => {
                     )
                 })}
             </ul>
-            <button onClick={fetchLoadMoreRecentFiles}>Load more recent files</button>
+            <button onClick={()=> fetchLoadMoreRecentFiles('loadmore')}>Load more recent files</button>
         </div>
     )
 }
