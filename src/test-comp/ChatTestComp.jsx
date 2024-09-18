@@ -2,8 +2,9 @@ import React, { useEffect, useRef, useState } from 'react'
 import ChatInterface from '../chat/ChatInterface'
 import NewChat from '../chat/NewChat'
 import AgentWelcomeTemplate from './WelcomeTemplate'
+import History from './history'
 
-const ChatTestComp = () => {
+const ChatTestComp = (props) => {
     const [questions, setQuestions] = useState(null)
     const chatInterface = useRef()
     useEffect(() => {
@@ -28,6 +29,7 @@ const ChatTestComp = () => {
     }, []);
 
     return (
+        <>
         <div>
             <div>
                 {questions && Object.values(questions).map(item => {
@@ -50,6 +52,10 @@ const ChatTestComp = () => {
             <button onClick={()=> NewChat()}>+New</button>
             <button onClick={()=> chatInterface.current.cancelMessageReqAction()}>Stop</button>
         </div>
+        <div>
+                <History history = {props?.history} />
+        </div>
+        </>
     )
 }
 

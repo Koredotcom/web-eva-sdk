@@ -52,6 +52,12 @@ const globalSlice = createSlice({
       setAllHistory: (state, action) => {
         state.AllHistory = action.payload;
       },
+      // deleteHistoryItem : (state, action) =>{
+      //   state.AllHistory = action.payload
+      // },
+      // updateHistoryItem : (state, action) => {
+      //   state.AllHistory = action.payload
+      // }
     },
     extraReducers: (builder) => {
       handleAsyncActions(builder, fetchConfigData, 'config');
@@ -99,7 +105,9 @@ export const {
   setCurrentQuestion,
   setRecentFiles,
   setAllHistory,
-  setAllRecentFiles
+  setAllRecentFiles,
+  // deleteHistoryItem,
+  // updateHistoryItem
 } = globalSlice.actions;
 
 export default globalSlice
