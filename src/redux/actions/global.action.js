@@ -114,3 +114,30 @@ export const getRecentFileDownloadUrl = createAsyncThunk(
         }
     }
 );
+
+export const deleteHistory = createAsyncThunk(
+    'global/deleteHistory',
+    async (params, { rejectWithValue }) => {
+        try {
+            const response = await axiosInstance({
+                url: `/ka/boards/${params?.boardId}`, 
+                method: 'DELETE'
+            });
+            return response.data;
+        } catch (error) {
+            return rejectWithValue(error.response.data);
+        }
+    }
+);
+
+export const updateHistory = createAsyncThunk(
+    'global/updateHistory',
+    async (arg,{ rejectWithValue }) => {
+        try {
+            const response = await axiosInstance.put(`/ka/boards/${arg?.params?.boardId}`,arg?.payload);
+            return response.data;
+        } catch (error) {
+            return rejectWithValue(error.response.data);
+        }
+    }
+);
