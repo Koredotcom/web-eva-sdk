@@ -3,13 +3,13 @@ const constructGptForm = (item) => {
 
     const formFields = item?.content?.formFields?.inputFields;
     
-    const form = document.createElement('form');
-    form.id = item?.reqId
+    const gptAgentDiv = document.createElement('div')
+    gptAgentDiv.className = 'gptAgentWrapper'
 
     const threadNameDiv = document.createElement('div');
     threadNameDiv.className = 'threadName';
     threadNameDiv.textContent = item?.answer;
-    form.appendChild(threadNameDiv);
+    gptAgentDiv.appendChild(threadNameDiv);
 
     const translateFormViewDiv = document.createElement('div');
     translateFormViewDiv.className = 'translateForm-view';
@@ -46,7 +46,7 @@ const constructGptForm = (item) => {
 
     formFields?.forEach(field => {
         const tvInputGroupDiv = document.createElement('div');
-        tvInputGroupDiv.className = 'tvInputGroup';
+        tvInputGroupDiv.className = `tvInputGroup ${field?.value?.type} ${field?.value?.canUploadFile ? 'uploadGrp' : ''}`;
 
         const grpInputDiv = document.createElement('div');
         grpInputDiv.className = 'grpInput';
@@ -296,23 +296,28 @@ const constructGptForm = (item) => {
         tvBodyDiv.appendChild(tvInputGroupDiv);
     });
 
+    const buttonWrapper = document.createElement('div')
+    buttonWrapper.className = 'buttonsGrp';
+
     const cancelButton = document.createElement('button')
     cancelButton.type = "button";
     cancelButton.textContent = 'Cancel';
     cancelButton.id = 'discardAnswer'
-    tvBodyDiv.appendChild(cancelButton);
+    buttonWrapper.appendChild(cancelButton)
 
     const submitButton = document.createElement('button')
     submitButton.type = "button";
     submitButton.id = 'summarize'
     submitButton.textContent = item?.content?.formFields?.submitAction?.title;
-    tvBodyDiv.appendChild(submitButton);
+    buttonWrapper.appendChild(submitButton)
 
+    tvBodyDiv.appendChild(buttonWrapper)
 
     translateFormViewDiv.appendChild(tvBodyDiv);
-    form.appendChild(translateFormViewDiv);
 
-    return form
+    gptAgentDiv.appendChild(translateFormViewDiv)
+
+    return gptAgentDiv
 
 };
 
