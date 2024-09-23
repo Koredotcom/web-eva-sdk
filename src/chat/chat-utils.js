@@ -49,7 +49,7 @@ export const constructQuestionPostCall = (data, qId) => {
     if(data?.payload?.templateType === 'gpt_form_template') {
         const gptFormConstructedData = constructGptForm(data?.payload)
         // constructGptForm(data?.payload)
-        question.template_html = gptFormConstructedData.innerHTML
+        question.template_html = gptFormConstructedData.outerHTML
         setTimeout(() => {
             gptFormFunctionality(data?.payload);
         }, 1000);
