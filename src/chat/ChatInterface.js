@@ -58,6 +58,8 @@ const ChatInterface = (props) => {
 
     const sendMessageAction = async () => {
       if (input) {
+        // let reqId = generateShortUUID()
+        // let encodedReqId = encodeURIComponent(reqId) 
         let params = { reqId: generateShortUUID() }
         let payload = { question: input }
         if(state.activeBoardId) {
@@ -80,15 +82,18 @@ const ChatInterface = (props) => {
     }
 
     const cancelMessageReqAction = async (id) => {
+      let payload = {boardId: state.activeBoardId}
       if (id) {
-        store.dispatch(cancelAdvancedSearch({ userId: state.profile.data.id, reqId: id, payload: state.currentQuestion }))
+        store.dispatch(cancelAdvancedSearch({ userId: state.profile.data.id, reqId: id, payload }))
       } else {
-        store.dispatch(cancelAdvancedSearch({ userId: state.profile.data.id, reqId: state.currentQuestion.reqId, payload: state.currentQuestion }))
+        store.dispatch(cancelAdvancedSearch({ userId: state.profile.data.id, reqId: state.currentQuestion.reqId, payload }))
       }
     }
 
     const initiateChatConversationAction = async (arg) => {
-      let params = { reqId: generateShortUUID() }
+      // let reqId = generateShortUUID()
+        // let encodedReqId = encodeURIComponent(reqId) 
+        let params = { reqId: generateShortUUID() }
       let payload = {}
       let replaceExistingQsn = false;
       if(state.activeBoardId) {
