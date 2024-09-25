@@ -4,7 +4,7 @@ import store from '../redux/store';
 import { cloneDeep } from 'lodash';
 import constructGptForm from './gptTemplate/gptTemplateBody';
 import gptFormFunctionality from './gptTemplate/gptTemplateFunc';
-import { getCidByMessageId } from '../components/helpers';
+import { getCidByMessageId } from '../utils/helpers';
 
 export const constructQuestionInitial = (args) => {
     let uniqueMsgId;

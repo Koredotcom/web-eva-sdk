@@ -30,7 +30,8 @@ const initialState = {
   AllHistory: {},
   recentFileDownloadUrl: {},
   // searchHistoryRes: {},
-  chatHistoryMoreAvailable: false
+  chatHistoryMoreAvailable: false,
+  fileTypes : null
 };
 
 const globalSlice = createSlice({
@@ -66,7 +67,9 @@ const globalSlice = createSlice({
       // }
     },
     extraReducers: (builder) => {
-      handleAsyncActions(builder, fetchConfigData, 'config');
+      handleAsyncActions(builder, fetchConfigData, 'config', (state, action) => {
+        state.fileTypes = action.payload.fileTypes
+      });
       handleAsyncActions(builder, fetchProfileData, 'profile');
       handleAsyncActions(builder, fetchAgents, 'allAgents', (state, action) => {
         let enabledAgents = action.payload.agents.filter(a => !!a?.enabled)
