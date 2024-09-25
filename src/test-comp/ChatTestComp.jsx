@@ -15,9 +15,9 @@ const ChatTestComp = (props) => {
         chatInterface.current.showComposeBar('composeBar');
 
         // Subscribe to updates
-        const unsubscribe = chatInterface.current.subscribe((question, searchResponse) => {
+        const unsubscribe = chatInterface.current.subscribe((question, searchResponse, moreAvailable) => {
             // Handle the API response data
-            console.log('Received data from chat API:', question, searchResponse);
+            console.log('Received data from chat API:', question, searchResponse, moreAvailable);
             setQuestions(question)
         });
 

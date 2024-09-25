@@ -141,3 +141,19 @@ export const updateHistory = createAsyncThunk(
         }
     }
 );
+
+export const getSearchHistory = createAsyncThunk(
+    'global/getSearchHistory',
+    async ({boardId, params},{ rejectWithValue }) => {
+        try {
+            const response = await axiosInstance({
+                url: `/kora/boards/${boardId}/searchhistory`,
+                method: 'GET',
+                params
+            });
+            return response.data;
+        } catch (error) {
+            return rejectWithValue(error.response.data);
+        }
+    }
+);

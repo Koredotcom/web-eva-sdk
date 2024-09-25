@@ -4,6 +4,7 @@ import store from "../redux/store"
 const NewChat = () => {
     // Set board id as null
     store.dispatch(setActiveBoardId(null))
+    store.dispatch(updateChatData({}))
 }
 
 export default NewChat

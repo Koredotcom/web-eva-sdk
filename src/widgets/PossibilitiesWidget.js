@@ -1,3 +1,4 @@
+import { isObject, isString } from "lodash";
 import store from "../redux/store";
 
 
@@ -19,12 +20,16 @@ const makePossibilityData = (possibilities, limit = 3) => {
     return selectedValues;
   }
 
-  let randomValuesArray = [];
+  let randomValuesArray= [];
   randomValuesArray = Object.values(possibilities || {})?.map(getRandomValueFromArray);
   randomValuesArray = randomValuesArray?.map(f => {
-    return f?.replace(/&bdquo;/g, '"')?.replace(/&ldquo;/g, '"')?.replace(/&rdquo;/g, '"')?.replace(/&comma;/g, ',')
-  })
-  let filterData = selectRandomValuesFromArray(randomValuesArray, limit);
+      if(isObject(f) && !!f?.label) {
+          return f?.label?.replace(/&bdquo;/g, '"')?.replace(/&ldquo;/g, '"')?.replace(/&rdquo;/g, '"')?.replace(/&comma;/g, ',')
+      } else if(isString(f)){
+          return f?.replace(/&bdquo;/g, '"')?.replace(/&ldquo;/g, '"')?.replace(/&rdquo;/g, '"')?.replace(/&comma;/g, ',')
+      } else ;
+  }).filter(Boolean);
+  let filterData = selectRandomValuesFromArray(randomValuesArray, 3);
 
   let allUtterances = [];
   for (const category in possibilities) {

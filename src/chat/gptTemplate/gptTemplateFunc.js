@@ -4,6 +4,7 @@ import cancelAdvanceSearch from "../cancelAdvanceSearch";
 import InitiateChatConversationAction from "../InitiateChatConversationAction";
 import { generateComponentId, getFileExtension, getUID } from "../../components/helpers";
 import FileUploader from "../../utils/fileUploader";
+import store from "../../redux/store";
 
 
 const gptFormFunctionality = (item) => {
@@ -24,7 +25,12 @@ const gptFormFunctionality = (item) => {
 
     const submitAction = (event) => {
         event.preventDefault()
+        const state = store.getState().global;
+
         let payload = {}
+        if(state.activeBoardId) {
+            payload.activeBoardId = state.activeBoardId
+        }
         payload.question = item?.question
 
         let formData = item?.content?.formFields?.inputFields?.reduce((acc, field) => {

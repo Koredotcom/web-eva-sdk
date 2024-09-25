@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react"
 import deleteChatThread from "../history/deleteHistoryData"
 import updateHistoryData from "../history/updateHistoryData"
 import { HistoryData, HistoryInterface, LoadMoreHistoryData } from "../history"
+import { JoinChatThread } from "../chat"
 
 const History = (props) => {
     const [historyData, setHistoryData] = useState(null)
@@ -64,6 +65,10 @@ const History = (props) => {
         updateHistoryData({ boardId: item?.id, newName: updatedName })
     }
 
+    const joinChatHistory = (board) => {
+        JoinChatThread({boardId: board?.id})
+    }
+
     return (
         <div>
             <h1>History</h1>
@@ -72,7 +77,7 @@ const History = (props) => {
             <div>
                 {historyData?.data?.length > 0 && historyData?.data?.map(item => {
                     return (
-                        <div className={`historyGrp-${item?.id}`}>
+                        <div className={`historyGrp-${item?.id}`} onClick={()=> joinChatHistory(item)}>
                             <button onClick={(e) => { e.preventDefault(); deleteChatThread(item) }}>Delete</button>
                             <span>{item?.name}</span>
                             <button onClick={(e) => { e.preventDefault(); editNamePopup(item) }}>Edit</button>

@@ -6,7 +6,8 @@ import {
   fetchProfileData, 
   fetchHistory,
   fetchRecentFiles, 
-  getRecentFileDownloadUrl
+  getRecentFileDownloadUrl,
+  getSearchHistory
 } from './actions/global.action';
 import { handleAsyncActions } from '../utils/handleAsyncActions';
 import { cloneDeep, concat, uniqBy } from 'lodash';
@@ -27,7 +28,9 @@ const initialState = {
   historyRes: {},
   history: {},
   AllHistory: {},
-  recentFileDownloadUrl: {}
+  recentFileDownloadUrl: {},
+  // searchHistoryRes: {},
+  chatHistoryMoreAvailable: false
 };
 
 const globalSlice = createSlice({
@@ -51,6 +54,9 @@ const globalSlice = createSlice({
       },
       setAllHistory: (state, action) => {
         state.AllHistory = action.payload;
+      },
+      setChatHistoryMoreAvailable: (state, action) => {
+        state.chatHistoryMoreAvailable = action.payload;
       },
       // deleteHistoryItem : (state, action) =>{
       //   state.AllHistory = action.payload
@@ -100,6 +106,19 @@ const globalSlice = createSlice({
         }
       });
       handleAsyncActions(builder, getRecentFileDownloadUrl, 'recentFileDownloadUrl');
+      // handleAsyncActions(builder, getSearchHistory, 'searchHistoryRes', (state, action)=> {
+      //   if(action?.meta?.arg?.onload) {
+      //     state.recentFiles = state.recentFilesRes
+      //     state.AllrecentFiles = state.recentFilesRes
+      //   }
+      //   if(action?.meta?.arg?.loadmore) {
+      //     let AllrecentFiles = cloneDeep(state.AllrecentFiles?.data?.files)
+      //     AllrecentFiles = uniqBy(concat(AllrecentFiles, state.recentFilesRes?.data?.files), 'id')
+      //     state.AllrecentFiles.data.files = AllrecentFiles
+      //     state.AllrecentFiles.status = state.recentFilesRes.status
+      //     state.AllrecentFiles.error = state.recentFilesRes.error
+      //   }
+      // });
     }
 });
 
@@ -112,7 +131,8 @@ export const {
   setAllHistory,
   setAllRecentFiles,
   // deleteHistoryItem,
-  // updateHistoryItem
+  // updateHistoryItem,
+  setChatHistoryMoreAvailable
 } = globalSlice.actions;
 
 export default globalSlice

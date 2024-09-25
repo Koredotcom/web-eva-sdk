@@ -15,7 +15,8 @@ const ChatInterface = (props) => {
             state = store.getState().global;
             // If callback exists and API call is completed, invoke it
             if (state.advanceSearchRes.status !== 'loading' && callback) {
-                callback(state.questions, state.advanceSearchRes.data);
+                callback(state.questions, state.advanceSearchRes, state.chatHistoryMoreAvailable);
+                console.log(state.questions, state.advanceSearchRes, state.chatHistoryMoreAvailable)
             }
         });
 
