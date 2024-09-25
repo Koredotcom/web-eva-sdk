@@ -1,5 +1,5 @@
 import { v4 as uuid } from 'uuid';
-import { updateChatData, setActiveBoardId } from '../redux/globalSlice';
+import { updateChatData, setActiveBoardId, setCurrentQuestion } from '../redux/globalSlice';
 import store from '../redux/store';
 import { cloneDeep } from 'lodash';
 import constructGptForm from './gptTemplate/gptTemplateBody';
@@ -22,12 +22,14 @@ export const constructQuestionInitial = (args) => {
         question,
         answer: "",
         loading: true,
-        type: "search"
+        type: "search",
+        reqId: args?.reqId
     }
 
     questions[uniqueMsgId] = obj
 
     store.dispatch(updateChatData(questions))
+    store.dispatch(setCurrentQuestion(obj))
 
     return uniqueMsgId
 }

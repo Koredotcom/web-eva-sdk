@@ -16,3 +16,14 @@ export const Timedifference = (time) => {
         return daysuffix + " " + months[new Date(time).getMonth()]
     }
 }
+
+export const generateShortUUID = () => {
+    // Generate a random 5-byte buffer and convert it to a hex string
+    const randomBytes = crypto.getRandomValues(new Uint8Array(5));
+    const hexString = Array.from(randomBytes, byte => byte.toString(16).padStart(2, '0')).join('').substring(0, 9);
+
+    // Prefix with '#'
+    const shortUUID = `#${hexString}`;
+
+    return shortUUID;
+}

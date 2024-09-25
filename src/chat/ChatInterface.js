@@ -4,6 +4,7 @@ import { setCurrentQuestion } from "../redux/globalSlice"
 import store from "../redux/store";
 import { v4 as uuid } from 'uuid';
 import { constructQuestionInitial, constructQuestionPostCall } from "./chat-utils";
+import { generateShortUUID } from "../utils/helpers";
 
 const ChatInterface = (props) => {
     let state = store.getState().global, input = '';
@@ -57,20 +58,24 @@ const ChatInterface = (props) => {
 
     const sendMessageAction = async () => {
       if (input) {
-        let params = { reqId: uuid() }
+        let params = { reqId: generateShortUUID() }
         let payload = { question: input }
         if(state.activeBoardId) {
           payload.boardId = state.activeBoardId
         }
         const qId = constructQuestionInitial({ ...params, ...payload })
-        store.dispatch(setCurrentQuestion({ ...params, ...payload }))
+
+        
+        // store.dispatch(setCurrentQuestion({ ...params, ...payload }))
+        // let currentQues = state.questions[qId]
+        // store.dispatch(setCurrentQuestion(currentQues))
 
         input = ''
         inputElement.textContent = ''
 
         const Res = await store.dispatch(advanceSearch({ params, payload, userId: state.profile.data.id }))
         constructQuestionPostCall(Res, qId)
-        store.dispatch(setCurrentQuestion({}))
+        // store.dispatch(setCurrentQuestion({}))
       }
     }
 
@@ -83,7 +88,7 @@ const ChatInterface = (props) => {
     }
 
     const initiateChatConversationAction = async (arg) => {
-      let params = { reqId: uuid() }
+      let params = { reqId: generateShortUUID() }
       let payload = {}
       let replaceExistingQsn = false;
       if(state.activeBoardId) {
@@ -100,8 +105,13 @@ const ChatInterface = (props) => {
       }
 
       const qId = constructQuestionInitial({ ...params, ...payload, replaceExistingQsn })
+
+      // let currentQues = state.questions[qId]
+      // store.dispatch(setCurrentQuestion(currentQues))
+
       const Res = await store.dispatch(advanceSearch({ params, payload, userId: state.profile.data.id }))
       constructQuestionPostCall(Res, qId)
+      // store.dispatch(setCurrentQuestion({}))
     }
 
     const invokeGptAgentTemplate = (arg) => {

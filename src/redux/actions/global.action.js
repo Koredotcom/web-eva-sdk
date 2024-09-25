@@ -59,8 +59,9 @@ export const cancelAdvancedSearch = createAsyncThunk(
     'global/cancelAdvancedSearch',
     async (arg, thunkAPI) => { 
         controller?.abort();
-        try {            
-            const response = await axiosInstance.delete(`kora/users/${arg.userId}/advancedsearch/cancelrequest/${arg.reqId}`, arg.payload);
+        try {   
+            let reqdQuestionId = encodeURIComponent(arg.reqId)         
+            const response = await axiosInstance.delete(`https://eva-qa.kore.ai/api/kora/users/${arg.userId}/advancedsearch/cancelrequest/${reqdQuestionId}`, arg.payload);
             return response.data;
         } catch (error) {
             return thunkAPI.rejectWithValue(error.response.data);
