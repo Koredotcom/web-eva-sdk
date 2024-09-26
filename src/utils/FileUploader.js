@@ -1,5 +1,6 @@
 import axios from 'axios';
-import { allowedFileTypes, filetypes, getFileExtension, getQueryParams } from '../components/helpers.js';
+import {getFileExtension, getQueryParams } from './helpers';
+import store from '../redux/store';
 
 function FileUploader({
     file, 
@@ -16,12 +17,19 @@ function FileUploader({
     scope,
     source 
 }) {
+
+    const state = store.getState();
+    let allFileTypes = state.global.fileTypes
     const app = window.sdkConfig.api_url;
     this.baseUrl = app;
     this.CHUNK_SIZE = 2048 * 2048;
     this.CHUNK_SIZE_INITIAL = 1024 * 1024;
-    this.allowedFileTypes = allowedFileTypes
-    this.filetypes = filetypes
+    this.allowedFileTypes = allFileTypes.attachment
+    this.filetypes = {
+        "audio": allFileTypes.audio,
+        "video": allFileTypes.video,
+        "image": allFileTypes.image
+    };
 
     this.file = file;
     this.fileContext = fileContext;
