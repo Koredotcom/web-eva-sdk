@@ -39,10 +39,11 @@ export const fetchAgents = createAsyncThunk(
 );
 
 
-const controller = new AbortController();
+let controller;
 export const advanceSearch = createAsyncThunk(
     'global/advanceSearch',
     async (arg, thunkAPI) => {
+        controller = new AbortController();
         try {            
             const response = await axiosInstance.post(`kora/users/${arg.userId}/advancedsearch`, arg.payload, {
                 params: arg?.params,
@@ -69,7 +70,8 @@ export const cancelAdvancedSearch = createAsyncThunk(
             });
 
             controller?.abort();
-            // const response = await axiosInstance.delete(`https://eva-qa.kore.ai/api/kora/users/${arg.userId}/advancedsearch/cancelrequest/${reqdQuestionId}`, arg.payload);
+            controller = null;
+            
             return response.data;
         } catch (error) {
             return thunkAPI.rejectWithValue(error.response.data);

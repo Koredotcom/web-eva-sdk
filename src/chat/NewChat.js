@@ -1,4 +1,4 @@
-import { setActiveBoardId } from "../redux/globalSlice"
+import { setActiveBoardId, updateChatData } from "../redux/globalSlice"
 import store from "../redux/store"
 
 const NewChat = () => {
