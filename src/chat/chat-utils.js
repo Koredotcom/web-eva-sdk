@@ -4,7 +4,7 @@ import store from '../redux/store';
 import { cloneDeep } from 'lodash';
 import constructGptForm from './gptTemplate/gptTemplateBody';
 import gptFormFunctionality from './gptTemplate/gptTemplateFunc';
-import { getCidByMessageId } from '../components/helpers';
+import { getCidByMessageId } from '../utils/helpers';
 
 export const constructQuestionInitial = (args) => {
     let uniqueMsgId;
@@ -48,7 +48,7 @@ export const constructQuestionPostCall = (data, qId) => {
     delete question?.loading;
 
 
-    if(data?.payload?.templateType === 'gpt_form_template') {
+    if(data?.payload?.history?.status !== 'terminated' && data?.payload?.templateType === 'gpt_form_template') {
         const gptFormConstructedData = constructGptForm(data?.payload)
         // constructGptForm(data?.payload)
         question.template_html = gptFormConstructedData.outerHTML
@@ -118,6 +118,13 @@ export const constructQuestionPostCall = (data, qId) => {
         // if(stepIndex === 0) {
         //     updatedQuestions[question?.parentMsgId].status = 'in-progress'
         // }
+    }
+    else if(data?.payload?.history?.status === 'terminated'){
+        if(data?.payload?.history?.templateType === "gpt_form_template"){
+            delete question.template_html
+        }
+            let terminatedAnswerResponse = "I see you interrupted the answer generation. Please feel free to provide more details or let me know how can I assist you further"
+            question = { ...question,  ...data?.payload?.history, answer : terminatedAnswerResponse};
     }
     else {
         question = { ...question, ...data?.payload};
@@ -200,7 +207,11 @@ export const constructQuestionPostCall = (data, qId) => {
     // })
 
     if(!activeBoardId) {
-        store.dispatch(setActiveBoardId(data?.payload?.boardId))
+        if(data?.payload?.history?.status === 'terminated'){    
+            store.dispatch(setActiveBoardId(data?.payload?.history?.bId))
+        }else{
+            store.dispatch(setActiveBoardId(data?.payload?.boardId))
+        } 
     }
     store.dispatch(updateChatData(questions))
 

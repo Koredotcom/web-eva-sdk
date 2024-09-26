@@ -38,7 +38,11 @@ const ChatTestComp = (props) => {
                     }
                     if (item.templateType === 'gpt_form_template') {
                         return (
-                            <div dangerouslySetInnerHTML={{ __html: item.template_html }}></div>
+                            item.status === 'terminated' ? (
+                                <div>{item?.answer}</div>
+                            ) : (
+                                <div dangerouslySetInnerHTML={{ __html: item.template_html }}></div>    
+                            )
                         );
                     }
                     if(item?.templateType === 'search_answer'){

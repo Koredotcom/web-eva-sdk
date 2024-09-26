@@ -2,9 +2,9 @@
 import axios from "axios";
 import cancelAdvanceSearch from "../cancelAdvanceSearch";
 import InitiateChatConversationAction from "../InitiateChatConversationAction";
-import { generateComponentId, getFileExtension, getUID } from "../../components/helpers";
 import FileUploader from "../../utils/fileUploader";
 import store from "../../redux/store";
+import { generateComponentId, getFileExtension, getUID } from "../../utils/helpers";
 
 
 const gptFormFunctionality = (item) => {
@@ -155,7 +155,12 @@ const gptFormFunctionality = (item) => {
                 const reqdButton = document.getElementById(`removeButton-${id}`)
                 reqdButton.style.display = 'block'
             },
-            (msg) => console.log(msg))
+            (msg) => {
+                console.log(msg);
+                const reqdInputField = document.getElementById(`fileUpload-${id}`)
+                reqdInputField.value = ''
+                fileId = null;
+            })
     }
 
 
