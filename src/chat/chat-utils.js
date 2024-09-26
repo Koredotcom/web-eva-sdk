@@ -120,7 +120,11 @@ export const constructQuestionPostCall = (data, qId) => {
         // }
     }
     else if(data?.payload?.history?.status === 'terminated'){
-        question = { ...question, ...data?.payload?.history};
+        if(data?.payload?.history?.templateType === "gpt_form_template"){
+            delete question.template_html
+        }
+            let terminatedAnswerResponse = "I see you interrupted the answer generation. Please feel free to provide more details or let me know how can I assist you further"
+            question = { ...question,  ...data?.payload?.history, answer : terminatedAnswerResponse};
     }
     else {
         question = { ...question, ...data?.payload};
