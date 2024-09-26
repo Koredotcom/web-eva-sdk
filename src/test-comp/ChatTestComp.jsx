@@ -33,6 +33,13 @@ const ChatTestComp = (props) => {
         <div>
             <div>
                 {questions && Object.values(questions).map(item => {
+                    if (item?.status === 'terminated') {
+                        return (
+                            <div className="threadName">
+                                I see you interrupted the answer generation. Please feel free to provide more details or let me know how can I assist you further
+                            </div>
+                        )
+                    }
                     if(item?.templateType === 'agent_welcome_template') {
                         return <AgentWelcomeTemplate item={item} />
                     }
@@ -48,9 +55,9 @@ const ChatTestComp = (props) => {
                 })}
             </div>
             <div id="composeBar" className="composeBar"></div>
-            <button onClick={()=> chatInterface.current.sendMessageAction()}>Send</button>
-            <button onClick={()=> NewChat()}>+New</button>
-            <button onClick={()=> chatInterface.current.cancelMessageReqAction()}>Stop</button>
+            <div onClick={()=> chatInterface.current.sendMessageAction()}>Send</div>
+            <div onClick={()=> NewChat()}>+New</div>
+            <div onClick={()=> chatInterface.current.cancelMessageReqAction()}>Stop</div>
         </div>
         <div>
                 <History history = {props?.history} />

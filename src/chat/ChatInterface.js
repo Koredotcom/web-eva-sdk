@@ -4,7 +4,8 @@ import { setCurrentQuestion } from "../redux/globalSlice"
 import store from "../redux/store";
 import { v4 as uuid } from 'uuid';
 import { constructQuestionInitial, constructQuestionPostCall } from "./chat-utils";
-import { generateShortUUID } from "../utils/helpers";
+import { generateShortUUID, getCidByMessageId } from "../utils/helpers";
+import { cloneDeep } from "lodash";
 
 const ChatInterface = (props) => {
     let state = store.getState().global, input = '';
@@ -82,13 +83,21 @@ const ChatInterface = (props) => {
     }
 
     const cancelMessageReqAction = async (id) => {
-      let payload = {boardId: state.activeBoardId}
-      if (id) {
-        store.dispatch(cancelAdvancedSearch({ userId: state.profile.data.id, reqId: id, payload }))
-      } else {
-        store.dispatch(cancelAdvancedSearch({ userId: state.profile.data.id, reqId: state.currentQuestion.reqId, payload }))
-      }
-    }
+      const reqId = id || state.currentQuestion.reqId;
+      const payload = { boardId: state.activeBoardId };
+    
+      const response = await store.dispatch(cancelAdvancedSearch({ 
+        userId: state.profile.data.id, 
+        reqId, 
+        payload 
+      }));
+    
+      const questions = cloneDeep(store.getState().global.questions);
+      const reqdCId = getCidByMessageId(questions, reqId);
+    
+      constructQuestionPostCall(response, reqdCId);
+    };
+    
 
     const initiateChatConversationAction = async (arg) => {
       // let reqId = generateShortUUID()

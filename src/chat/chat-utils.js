@@ -48,7 +48,7 @@ export const constructQuestionPostCall = (data, qId) => {
     delete question?.loading;
 
 
-    if(data?.payload?.templateType === 'gpt_form_template') {
+    if(data?.payload?.history?.status !== 'terminated' && data?.payload?.templateType === 'gpt_form_template') {
         const gptFormConstructedData = constructGptForm(data?.payload)
         // constructGptForm(data?.payload)
         question.template_html = gptFormConstructedData.outerHTML
@@ -118,6 +118,9 @@ export const constructQuestionPostCall = (data, qId) => {
         // if(stepIndex === 0) {
         //     updatedQuestions[question?.parentMsgId].status = 'in-progress'
         // }
+    }
+    else if(data?.payload?.history?.status === 'terminated'){
+        question = { ...question, ...data?.payload?.history};
     }
     else {
         question = { ...question, ...data?.payload};
@@ -200,7 +203,11 @@ export const constructQuestionPostCall = (data, qId) => {
     // })
 
     if(!activeBoardId) {
-        store.dispatch(setActiveBoardId(data?.payload?.boardId))
+        if(data?.payload?.history?.status === 'terminated'){    
+            store.dispatch(setActiveBoardId(data?.payload?.history?.bId))
+        }else{
+            store.dispatch(setActiveBoardId(data?.payload?.boardId))
+        } 
     }
     store.dispatch(updateChatData(questions))
 
