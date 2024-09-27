@@ -6,7 +6,7 @@ export const fetchConfigData = createAsyncThunk(
     'global/fetchConfigData',
     async (userId, { rejectWithValue }) => {
         try {
-            const response = await axiosInstance.get(`ka/users/${userId}/sdk/config`);
+            const response = await axiosInstance.get(`1.1/ka/users/${userId}/sdk/config`);
             return response.data;
         } catch (error) {
             return rejectWithValue(error.response.data);
@@ -18,7 +18,7 @@ export const fetchProfileData = createAsyncThunk(
     'global/fetchProfileData',
     async (userId, { rejectWithValue }) => {
         try {
-            const response = await axiosInstance.get(`ka/users/${userId}/profile`);
+            const response = await axiosInstance.get(`1.1/ka/users/${userId}/profile`);
             return response.data;
         } catch (error) {
             return rejectWithValue(error.response.data);
@@ -30,7 +30,7 @@ export const fetchAgents = createAsyncThunk(
     'global/fetchAgents',
     async (arg, { rejectWithValue }) => {
         try {
-            const response = await axiosInstance.get(`users/${arg.userId}/agents`, arg?.params);
+            const response = await axiosInstance.get(`1.1/users/${arg.userId}/agents`, arg?.params);
             return response.data;
         } catch (error) {
             return rejectWithValue(error.response.data);
@@ -45,7 +45,7 @@ export const advanceSearch = createAsyncThunk(
     async (arg, thunkAPI) => {
         controller = new AbortController();
         try {            
-            const response = await axiosInstance.post(`kora/users/${arg.userId}/advancedsearch`, arg.payload, {
+            const response = await axiosInstance.post(`1.1/kora/users/${arg.userId}/advancedsearch`, arg.payload, {
                 params: arg?.params,
                 signal: controller.signal,
             });
@@ -64,7 +64,7 @@ export const cancelAdvancedSearch = createAsyncThunk(
             let reqdQuestionId = encodeURIComponent(arg.reqId)
 
             const response = await axiosInstance({
-                url: `https://eva-qa.kore.ai/api/kora/users/${arg.userId}/advancedsearch/cancelrequest/${reqdQuestionId}`, 
+                url: `kora/users/${arg.userId}/advancedsearch/cancelrequest/${reqdQuestionId}`, 
                 method: 'DELETE',
                 data: arg.payload
             });
@@ -84,7 +84,7 @@ export const fetchHistory = createAsyncThunk(
     async ({params}, { rejectWithValue }) => {
         try {
             const response = await axiosInstance({
-                url: `kora/boards?type=history`,
+                url: `1.1/kora/boards?type=history`,
                 method: 'GET',
                 params
             });
@@ -100,7 +100,7 @@ export const fetchRecentFiles = createAsyncThunk(
     async ({userId, params}, { rejectWithValue }) => {
         try {
             const response = await axiosInstance({
-                url: `ka/users/${userId}/files?fileContext=knowledge`,
+                url: `1.1/ka/users/${userId}/files?fileContext=knowledge`,
                 method: 'GET',
                 params
             });
@@ -116,7 +116,7 @@ export const getRecentFileDownloadUrl = createAsyncThunk(
     async ({userId, params}, { rejectWithValue }) => {
         try {
             const response = await axiosInstance({
-                url: `kora/boards/${userId}/sources/${params?.source}/${params?.docId}/signedMediaUrl`,
+                url: `1.1/kora/boards/${userId}/sources/${params?.source}/${params?.docId}/signedMediaUrl`,
                 method: 'GET',
             });
             return response.data;
@@ -131,7 +131,7 @@ export const deleteHistory = createAsyncThunk(
     async (params, { rejectWithValue }) => {
         try {
             const response = await axiosInstance({
-                url: `/ka/boards/${params?.boardId}`, 
+                url: `1.1/ka/boards/${params?.boardId}`, 
                 method: 'DELETE'
             });
             return response.data;
@@ -145,7 +145,7 @@ export const updateHistory = createAsyncThunk(
     'global/updateHistory',
     async (arg,{ rejectWithValue }) => {
         try {
-            const response = await axiosInstance.put(`/ka/boards/${arg?.params?.boardId}`,arg?.payload);
+            const response = await axiosInstance.put(`1.1/ka/boards/${arg?.params?.boardId}`,arg?.payload);
             return response.data;
         } catch (error) {
             return rejectWithValue(error.response.data);
@@ -158,7 +158,7 @@ export const getSearchHistory = createAsyncThunk(
     async ({boardId, params},{ rejectWithValue }) => {
         try {
             const response = await axiosInstance({
-                url: `/kora/boards/${boardId}/searchhistory`,
+                url: `1.1/kora/boards/${boardId}/searchhistory`,
                 method: 'GET',
                 params
             });
