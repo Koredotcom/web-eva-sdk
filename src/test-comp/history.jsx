@@ -66,8 +66,15 @@ const History = (props) => {
     }
 
     const joinChatHistory = (board) => {
-        JoinChatThread({boardId: board?.id})
-    }
+        return new Promise((resolve) => {
+          JoinChatThread({ boardId: board?.id })
+            .then(() => {
+              resolve(board?.id);
+            })
+        });
+      };
+
+      
 
     return (
         <div>

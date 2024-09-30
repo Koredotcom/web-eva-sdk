@@ -88,7 +88,7 @@ const constructGptForm = (item) => {
 
             const textareaElement = document.createElement('textarea');
             textareaElement.id = `inputValue-${field?.key}`
-            textareaElement.placeholder = field?.value?.placeholder;
+            textareaElement.placeholder = field?.value?.placeholder || 'Enter Text...';
             textareaElement.textContent = field?.value?.default || ''
             grpInputDiv.appendChild(textareaElement)
         }
@@ -130,7 +130,7 @@ const constructGptForm = (item) => {
 
             const textareaElement = document.createElement('textarea');
             textareaElement.id = `inputValue-${field?.key}`
-            textareaElement.placeholder = field?.value?.placeholder;
+            textareaElement.placeholder = field?.value?.placeholder || 'Enter Text...';
             textareaElement.textContent = field?.value?.default || ''
             grpInputDiv.appendChild(textareaElement)
         }
@@ -260,7 +260,7 @@ const constructGptForm = (item) => {
 
             const textareaElement = document.createElement('textarea');
             textareaElement.id = `inputValue-${field?.key}`
-            textareaElement.placeholder = field?.value?.placeholder;
+            textareaElement.placeholder = field?.value?.placeholder || 'Enter text...';
             textareaElement.textContent = field?.value?.default || ''
             grpInputDiv.appendChild(textareaElement)
         }
@@ -271,11 +271,12 @@ const constructGptForm = (item) => {
             nameTitleDiv.textContent = `${field?.label} ${(field?.required || field?.value?.required) ? '*' : ''}`;
             grpInputDiv.appendChild(nameTitleDiv);
 
-            const textareaElement = document.createElement('textarea');
-            textareaElement.id = `inputValue-${field?.key}`
-            textareaElement.placeholder = field?.value?.placeholder;
-            textareaElement.textContent = field?.value?.default || ''
-            grpInputDiv.appendChild(textareaElement)
+            const numberElement = document.createElement('input');
+            numberElement.type = 'number'
+            numberElement.id = `inputValue-${field?.key}`
+            numberElement.placeholder = field?.value?.placeholder || 'Enter Number...';
+            numberElement.value = field?.value?.default || ''
+            grpInputDiv.appendChild(numberElement)
         }
 
         if (field?.value?.type === 'file') {
@@ -286,7 +287,7 @@ const constructGptForm = (item) => {
 
             const textareaElement = document.createElement('textarea');
             textareaElement.id = `inputValue-${field?.key}`
-            textareaElement.placeholder = field?.value?.placeholder;
+            textareaElement.placeholder = field?.value?.placeholder || 'Enter Content...';
             textareaElement.textContent = field?.value?.default || ''
             grpInputDiv.appendChild(textareaElement)
         }
