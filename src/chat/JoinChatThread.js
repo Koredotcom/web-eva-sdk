@@ -119,24 +119,9 @@ const JoinChatThread = async (props) => {
         store.dispatch(setChatHistoryMoreAvailable(moreAvailable))
         store.dispatch(updateChatData(_questions))
     }
-    setTimeout(() => {
-        afterApiCallSuccess()
-    }, 0);
+    afterApiCallSuccess()
 
     console.log(Res)
-
-    return new Promise((resolve) => {
-        const unsubscribe = store.subscribe(() => {
-          const state = store.getState();
-          const data = state.global.questions;
-          const id = state.global.activeBoardId
-          if (Object.keys(data).length > 0 && id) {
-            unsubscribe();
-            resolve(props?.boardId);
-          }
-        });
-      });
-
 }
 
 export default JoinChatThread
