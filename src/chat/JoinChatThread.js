@@ -25,7 +25,7 @@ const JoinChatThread = async (props) => {
     const Res = await store.dispatch(getSearchHistory({boardId: props.boardId, params}))
 
     // Setting active boardId
-    setActiveBoardId(props.boardId)
+    store.dispatch(setActiveBoardId(props.boardId))
 
     // offset will increase only if its pagination call
     if(props?.pagination) {

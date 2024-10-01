@@ -9,7 +9,7 @@ import { generateComponentId, getFileExtension, getUID } from "../../utils/helpe
 
 const gptFormFunctionality = (item) => {
 
-    let fileId = null;
+    let fileData = null;
 
     const formFields = item?.content?.formFields?.inputFields;
 
@@ -47,16 +47,13 @@ const gptFormFunctionality = (item) => {
                     reqdValue = reqdInputElement.value;
                 }
             }
-            else if (field?.value?.canUploadFile && fileId) {
-                reqdValue = fileId;
-            }
             else {
                 reqdInputElement = document.getElementById(`inputValue-${field?.key}`)
                 reqdValue = reqdInputElement.value
             }
 
             if (field?.required || field?.value?.required) {
-                if (reqdValue.length === 0) {
+                if (reqdValue?.length === 0) {
                     return;
                 }
             }
@@ -68,6 +65,11 @@ const gptFormFunctionality = (item) => {
 
             if (reqdValue) {
                 acc[field.key].value = reqdValue;
+            }
+
+            if(field?.value?.canUploadFile && fileData && (Object.keys(fileData)?.includes(field.key))){
+                let index = Object.keys(fileData).indexOf(field?.key)
+                acc[field.key] = Object.values(fileData)[index]
             }
 
             return acc;
@@ -146,8 +148,15 @@ const gptFormFunctionality = (item) => {
                     docId: file?.fileUrl?.fileId
                 }
 
-                fileId = file?.fileUrl?.fileId
+                
+                let currentFileData = fileData || {}
+                currentFileData[id] = {
+                    type: "file",
+                    value: file?.fileUrl?.fileId,
+                    title: file?.title || file?.fileName
+                }
 
+                fileData = currentFileData;
 
                 const reqdTextArea = document.getElementById(`inputValue-${id}`)
                 reqdTextArea.style.display = 'none';
@@ -159,7 +168,7 @@ const gptFormFunctionality = (item) => {
                 console.log(msg);
                 const reqdInputField = document.getElementById(`fileUpload-${id}`)
                 reqdInputField.value = ''
-                fileId = null;
+                fileData = null;
             })
     }
 
@@ -168,7 +177,7 @@ const gptFormFunctionality = (item) => {
         event.preventDefault();
         const reqdInputField = document.getElementById(`fileUpload-${id}`)
         reqdInputField.value = ''
-        fileId = null;
+        fileData = null;
 
         const reqdTextArea = document.getElementById(`inputValue-${id}`)
         reqdTextArea.style.display = 'block';

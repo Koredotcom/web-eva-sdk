@@ -66,8 +66,8 @@ const History = (props) => {
     }
 
     const joinChatHistory = (board) => {
-        JoinChatThread({boardId: board?.id})
-    }
+        JoinChatThread({ boardId: board?.id })
+    };    
 
     return (
         <div>

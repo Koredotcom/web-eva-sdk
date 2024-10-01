@@ -4,7 +4,7 @@ import { setCurrentQuestion } from "../redux/globalSlice"
 import store from "../redux/store";
 import { v4 as uuid } from 'uuid';
 import { constructQuestionInitial, constructQuestionPostCall } from "./chat-utils";
-import { generateShortUUID, getCidByMessageId } from "../utils/helpers";
+import { generateShortUUID, getCidByMessageId, getCidByReqId } from "../utils/helpers";
 import { cloneDeep } from "lodash";
 
 const ChatInterface = (props) => {
@@ -93,7 +93,7 @@ const ChatInterface = (props) => {
       }));
     
       const questions = cloneDeep(store.getState().global.questions);
-      const reqdCId = getCidByMessageId(questions, reqId);
+      const reqdCId = getCidByReqId(questions, reqId);
     
       constructQuestionPostCall(response, reqdCId);
     };
