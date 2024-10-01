@@ -25,7 +25,7 @@ const JoinChatThread = async (props) => {
     const Res = await store.dispatch(getSearchHistory({boardId: props.boardId, params}))
 
     // Setting active boardId
-    setActiveBoardId(props.boardId)
+    store.dispatch(setActiveBoardId(props.boardId))
 
     // offset will increase only if its pagination call
     if(props?.pagination) {
@@ -119,9 +119,24 @@ const JoinChatThread = async (props) => {
         store.dispatch(setChatHistoryMoreAvailable(moreAvailable))
         store.dispatch(updateChatData(_questions))
     }
-    afterApiCallSuccess()
+    setTimeout(() => {
+        afterApiCallSuccess()
+    }, 0);
 
     console.log(Res)
+
+    return new Promise((resolve) => {
+        const unsubscribe = store.subscribe(() => {
+          const state = store.getState();
+          const data = state.global.questions;
+          const id = state.global.activeBoardId
+          if (Object.keys(data).length > 0 && id) {
+            unsubscribe();
+            resolve(props?.boardId);
+          }
+        });
+      });
+
 }
 
 export default JoinChatThread

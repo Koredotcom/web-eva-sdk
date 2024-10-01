@@ -65,15 +65,10 @@ const History = (props) => {
         updateHistoryData({ boardId: item?.id, newName: updatedName })
     }
 
-    const joinChatHistory = (board) => {
-        return new Promise((resolve) => {
-          JoinChatThread({ boardId: board?.id })
-            .then(() => {
-              resolve(board?.id);
-            })
-        });
+    const joinChatHistory = async (board) => {
+         const res = await JoinChatThread({ boardId: board?.id })
+         console.log(res)
       };
-
       
 
     return (
