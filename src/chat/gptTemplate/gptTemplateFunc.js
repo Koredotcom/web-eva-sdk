@@ -5,6 +5,9 @@ import InitiateChatConversationAction from "../InitiateChatConversationAction";
 import FileUploader from "../../utils/fileUploader";
 import store from "../../redux/store";
 import { generateComponentId, getFileExtension, getUID } from "../../utils/helpers";
+import Choices from "choices.js";
+import "choices.js/public/assets/styles/choices.css";
+// import "./../gptTemplate/choics.css"
 
 
 const gptFormFunctionality = (item) => {
@@ -34,17 +37,17 @@ const gptFormFunctionality = (item) => {
         payload.question = item?.question
 
         let formData = item?.content?.formFields?.inputFields?.reduce((acc, field) => {
-
             let reqdInputElement;
             let reqdValue;
+        
             if (field?.value?.type === 'dropdown') {
+                reqdInputElement = document.getElementById(`dropdownValue-${field?.key}`);
+                
                 if (field?.value?.multi) {
-                    const reqdInputElement = document.getElementById(`dropdownValue-${field?.key}`);
                     const reqdValues = Array.from(reqdInputElement.selectedOptions).map(option => option.value);
-                    reqdValue = reqdValues
+                    reqdValue = reqdValues; // Now an array
                 } else {
-                    reqdInputElement = document.getElementById(`dropdownValue-${field?.key}`)
-                    reqdValue = reqdInputElement.value;
+                    reqdValue = reqdInputElement.value; // Single value
                 }
             }
             else {
@@ -60,9 +63,9 @@ const gptFormFunctionality = (item) => {
 
             acc[field.key] = {
                 type: field?.value?.type,
-                required: !!field?.value?.required ? true : false
+                required: !!field?.value?.required
             };
-
+        
             if (reqdValue) {
                 acc[field.key].value = reqdValue;
             }
@@ -74,6 +77,7 @@ const gptFormFunctionality = (item) => {
 
             return acc;
         }, {});
+        
 
         let singlePrompt = item?.content?.formFields?.inputFields?.find(field => field.key === "prompt")
         let multiPrompt = item?.content?.formFields?.inputFields?.find(field => field.key === "prompts")
@@ -92,7 +96,7 @@ const gptFormFunctionality = (item) => {
         if (item?.isTask) {
             obj.multiIntentExecution = true
         }
-
+        // console.log(payload)
         InitiateChatConversationAction({payload, ...obj})
     }
 
@@ -217,15 +221,48 @@ const gptFormFunctionality = (item) => {
         if (field?.value?.type === "dropdown" && !field?.value?.multi) {
 
             const selectElement = document.getElementById(`dropdownValue-${field?.key}`);
+            const choices = new Choices(selectElement, {
+                silent: false,
+                placeholder: true,
+                addChoices: false,
+                placeholderValue: 'Select an option',
+                searchEnabled: false,
+            });
+
+            let dropDownChoices;
+            dropDownChoices = field?.value?.choices
 
             if (field?.key === 'prompts') {
                 selectElement.addEventListener('change', updateTextarea);
-            }
+                dropDownChoices = field?.value?.choices.map((choice, index) => ({
+                    ...choice,
+                    selected: index === 0 
+                }));
+            }  
+
+            choices.setChoices(dropDownChoices, 'id', 'label', true);
         }
 
         if (field?.value?.type === "dropdown" && field?.value?.multi) {
 
             const selectElement = document.getElementById(`dropdownValue-${field?.key}`);
+            const choices = new Choices(selectElement, {
+                silent: false,
+                placeholder: true,
+                addChoices: false,
+                placeholderValue: 'Select Multiple Options',
+                searchEnabled: false, 
+                removeItemButton: true,
+                maxItemCount : -1,
+                duplicateItemsAllowed: false, 
+                removeItems: true, 
+                itemSelectText: '', 
+                noChoicesText: '', 
+            });
+
+            const dropDownChoices = field?.value?.choices
+
+            choices.setChoices(dropDownChoices, 'id', 'label', true);
         }
 
         if (field?.key === "prompt") {
