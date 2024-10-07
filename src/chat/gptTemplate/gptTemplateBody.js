@@ -1,4 +1,3 @@
-
 const constructGptForm = (item) => {
 
     const formFields = item?.content?.formFields?.inputFields;
@@ -150,17 +149,9 @@ const constructGptForm = (item) => {
 
             const selectElement = document.createElement('select');
             selectElement.id = `dropdownValue-${field?.key}`;
-            selectElement.name = field?.label;
 
             if (field?.key === 'prompts') {
             }
-
-            field?.value?.choices?.forEach(choice => {
-                const optionElement = document.createElement('option');
-                optionElement.value = choice?.id;
-                optionElement.textContent = choice?.label;
-                selectElement.appendChild(optionElement);
-            });
 
             grpWrapDiv.appendChild(selectElement);
             grpInputDiv.appendChild(grpWrapDiv);
@@ -179,20 +170,11 @@ const constructGptForm = (item) => {
             grpNameDiv.appendChild(nameTitleDiv);
             grpWrapDiv.appendChild(grpNameDiv);
 
-            const selectElement = document.createElement('select');
-            selectElement.id = `dropdownValue-${field?.key}`;
-            selectElement.name = field?.label;
-            selectElement.size = "1"
-            selectElement.multiple = true
+            const dropdownElement = document.createElement('select')
+            dropdownElement.id = `dropdownValue-${field?.key}`
+            dropdownElement.setAttribute('multiple', true);
 
-            field?.value?.choices?.forEach(choice => {
-                const optionElement = document.createElement('option');
-                optionElement.value = choice?.id;
-                optionElement.textContent = choice?.label;
-                selectElement.appendChild(optionElement);
-            });
-
-            grpWrapDiv.appendChild(selectElement);
+            grpWrapDiv.appendChild(dropdownElement);
             grpInputDiv.appendChild(grpWrapDiv);
         }
 
