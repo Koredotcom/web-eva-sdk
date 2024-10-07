@@ -3,7 +3,6 @@ import store from "../redux/store";
 import FileUploader from "../utils/fileUploader";
 import axios, { all } from "axios";
 import { searchSession } from "../redux/actions/global.action";
-import uploadFileData from "./uploadFile";
 import { generateComponentId, generateShortUUID, getFileExtension, getUID } from "../utils/helpers";
 import { setSelectedContext } from "../redux/globalSlice";
 
