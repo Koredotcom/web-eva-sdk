@@ -7,7 +7,7 @@ import {
   fetchHistory,
   fetchRecentFiles, 
   getRecentFileDownloadUrl,
-  getSearchHistory
+  searchSession
 } from './actions/global.action';
 import { handleAsyncActions } from '../utils/handleAsyncActions';
 import { cloneDeep, concat, uniqBy } from 'lodash';
@@ -31,7 +31,9 @@ const initialState = {
   recentFileDownloadUrl: {},
   // searchHistoryRes: {},
   chatHistoryMoreAvailable: false,
-  fileTypes : null
+  fileTypes : null,
+  selectedContext : {},
+  maxAllowedFileSize : null
 };
 
 const globalSlice = createSlice({
@@ -59,6 +61,9 @@ const globalSlice = createSlice({
       setChatHistoryMoreAvailable: (state, action) => {
         state.chatHistoryMoreAvailable = action.payload;
       },
+      setSelectedContext : (state, action) => {
+        state.selectedContext = action.payload;
+      }
       // deleteHistoryItem : (state, action) =>{
       //   state.AllHistory = action.payload
       // },
@@ -69,6 +74,7 @@ const globalSlice = createSlice({
     extraReducers: (builder) => {
       handleAsyncActions(builder, fetchConfigData, 'config', (state, action) => {
         state.fileTypes = action.payload.fileTypes
+        state.maxAllowedFileSize = action.payload.maxKnowledgeFileSize
       });
       handleAsyncActions(builder, fetchProfileData, 'profile');
       handleAsyncActions(builder, fetchAgents, 'allAgents', (state, action) => {
@@ -108,6 +114,7 @@ const globalSlice = createSlice({
           state.AllrecentFiles.error = state.recentFilesRes.error
         }
       });
+      handleAsyncActions(builder, searchSession, 'selectedContext')
       handleAsyncActions(builder, getRecentFileDownloadUrl, 'recentFileDownloadUrl');
       // handleAsyncActions(builder, getSearchHistory, 'searchHistoryRes', (state, action)=> {
       //   if(action?.meta?.arg?.onload) {
@@ -135,7 +142,8 @@ export const {
   setAllRecentFiles,
   // deleteHistoryItem,
   // updateHistoryItem,
-  setChatHistoryMoreAvailable
+  setChatHistoryMoreAvailable,
+  setSelectedContext
 } = globalSlice.actions;
 
 export default globalSlice

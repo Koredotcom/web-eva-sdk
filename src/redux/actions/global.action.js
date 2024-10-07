@@ -168,3 +168,26 @@ export const getSearchHistory = createAsyncThunk(
         }
     }
 );
+
+export const searchSession = createAsyncThunk(
+    'global/searchSession',
+    async (arg, { rejectWithValue }) => {
+        try{
+            if(arg?.params?.action === "add"){
+                const response = await axiosInstance.post(`/kora/users/${arg?.userId}/searchsession`, arg?.payload)
+                return response.data
+            }
+            else if(arg?.params?.action === "update"){
+                const response = await axiosInstance.put(`/kora/users/${arg?.userId}/searchsession/${arg?.sessionId}`, arg?.payload)
+                return response.data
+            }
+            else if(arg?.params?.action === "remove"){
+                const response = await axiosInstance.delete(`/kora/users/${arg?.userId}/searchsession/${arg?.sessionId}/sources/${arg?.docId}`)
+                return response.data
+            }
+        }
+        catch (error){
+            return rejectWithValue(error.response.data)
+        }
+    }
+)

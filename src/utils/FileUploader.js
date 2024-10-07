@@ -15,7 +15,8 @@ function FileUploader({
     rowId,
     tableId, 
     scope,
-    source 
+    source ,
+    uID
 }) {
 
     const state = store.getState();
@@ -50,6 +51,7 @@ function FileUploader({
     this.uploadedChunks=null;
     this.successChunks=0;
     this.source = source;
+    this.uID = uID;
     
 
     this.getDataURL = function(src) {
@@ -338,7 +340,7 @@ function FileUploader({
                         console.error("failed api call",err);
                     }
                 } else {
-                    const response ={type: _self.fileInfo.type,fileName:_self.fileInfo.fileName,filesize:_self.fileInfo.fileSize, fileUrl: data.data, blobUrl: _self.blobUrl, duration: _self.fileDuration, mediaName: _self.fileInfo.mediaName, lMod: _self.file.lastModified}
+                    const response ={type: _self.fileInfo.type,fileName:_self.fileInfo.fileName,filesize:_self.fileInfo.fileSize, fileUrl: data.data, blobUrl: _self.blobUrl, duration: _self.fileDuration, mediaName: _self.fileInfo.mediaName, lMod: _self.file.lastModified, uID : _self.fileInfo.uniqueID}
                     if (_self.onSuccess) _self.onSuccess(response);
                 }
             })
@@ -615,7 +617,8 @@ function FileUploader({
                 fileName: this.file.name,
                 mediaName: this.mediaName,
                 fileType: this.file.name.split('.').pop().toLowerCase(),
-                fileSize: this.file.size
+                fileSize: this.file.size,
+                uniqueID : this.uID
             };
 
             if (this.allowedFileTypes?.indexOf(this.fileInfo.fileType) !== -1) {
@@ -644,10 +647,10 @@ function FileUploader({
                 }
                 
             } else {
-                this.onError('INVALID_FILE_FORMAT');
+                this.onError('INVALID_FILE_FORMAT',this.fileInfo);
             }
         } else {
-            this.onError('FILE_NAME_MISSING');
+            this.onError('FILE_NAME_MISSING',this.fileInfo);
         }
     };
     
