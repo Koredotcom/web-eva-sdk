@@ -3,13 +3,19 @@ import ChatInterface from '../chat/ChatInterface'
 import NewChat from '../chat/NewChat'
 import AgentWelcomeTemplate from './WelcomeTemplate'
 import History from './history'
+import { FileUpload } from '../Attachments'
 
 const ChatTestComp = (props) => {
     const [questions, setQuestions] = useState(null)
+    const [selcontext, setSelContext] = useState(null)
     const chatInterface = useRef()
+    const uploadFile = useRef()
     useEffect(() => {
         // Create an instance of ChatInterface
         chatInterface.current = ChatInterface();
+
+        uploadFile.current = FileUpload();
+        uploadFile.current.showUploadChip('composeBar')
 
         // Show the input bar in a specific DOM element
         chatInterface.current.showComposeBar('composeBar');
@@ -21,10 +27,16 @@ const ChatTestComp = (props) => {
             setQuestions(question)
         });
 
+        const unsubscribe2 = uploadFile.current.subscribe((context, sessionId, quickActions) => {
+            console.log("Selected Context", context, "Session ID", sessionId, quickActions)
+            setSelContext(context)
+        })
+
         // Cleanup on component unmount
         return () => {
             // Unsubscribe from store updates
             unsubscribe();
+            unsubscribe2();
         };
     }, []);
 
@@ -49,6 +61,16 @@ const ChatTestComp = (props) => {
                         return item?.answer
                     }
                     return null;
+                })}
+            </div>
+            <div>
+                {selcontext?.length > 0 && selcontext?.map((item)=> {
+                    return(
+                        <>
+                        <div>{item?.title}</div>
+                        <button onClick={() => uploadFile.current.removeSelectedFile(item)}>Remove</button>
+                        </>
+                    )
                 })}
             </div>
             <div id="composeBar" className="composeBar"></div>
