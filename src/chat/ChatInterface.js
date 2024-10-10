@@ -129,11 +129,11 @@ const ChatInterface = (props) => {
     }
 
     const invokeGptAgentTemplate = (arg) => {
-      const item = arg.question
+      const item = arg.item
       if (!item?.templateInfo?.suggestions?.[0]?.comingSoon) {
           let payload = {};
           // let context = {};
-          let context = {...item?.context, messageId : item?.messageId, sources : item?.sources, viewType : item?.viewType, type : "gptAgent"}
+          let context =  {sources : item?.sources}
           payload.context = context
           payload.question = arg.utterance.label
           initiateChatConversationAction({payload})
