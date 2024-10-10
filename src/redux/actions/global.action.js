@@ -178,11 +178,11 @@ export const searchSession = createAsyncThunk(
                 return response.data
             }
             else if(arg?.params?.action === "update"){
-                const response = await axiosInstance.put(`/kora/users/${arg?.userId}/searchsession/${arg?.sessionId}`, arg?.payload)
+                const response = await axiosInstance.put(`/kora/users/${arg?.userId}/searchsession/${arg?.params?.sessionId}`, arg?.payload)
                 return response.data
             }
             else if(arg?.params?.action === "remove"){
-                const response = await axiosInstance.delete(`/kora/users/${arg?.userId}/searchsession/${arg?.sessionId}/sources/${arg?.docId}`)
+                const response = await axiosInstance.delete(`/kora/users/${arg?.userId}/searchsession/${arg?.params?.sessionId}/sources/${arg?.params?.docId}`)
                 return response.data
             }
         }
