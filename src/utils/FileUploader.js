@@ -618,7 +618,8 @@ function FileUploader({
                 mediaName: this.mediaName,
                 fileType: this.file.name.split('.').pop().toLowerCase(),
                 fileSize: this.file.size,
-                uniqueID : this.uID
+                uniqueID : this.uID,
+                title : this.file.name
             };
 
             if (this.allowedFileTypes?.indexOf(this.fileInfo.fileType) !== -1) {

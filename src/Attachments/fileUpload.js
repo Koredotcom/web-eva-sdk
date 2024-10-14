@@ -5,6 +5,9 @@ import axios, { all } from "axios";
 import { searchSession } from "../redux/actions/global.action";
 import { generateComponentId, generateShortUUID, getFileExtension, getUID } from "../utils/helpers";
 import { setSelectedContext } from "../redux/globalSlice";
+import uploadFiles from "./uploadFiles";
+import removeItem from "./removeItem";
+import removeCurentFile from "./removeCurrentFile";
 
 const FileUpload = (props) => {
     let state = store.getState().global;
@@ -15,8 +18,8 @@ const FileUpload = (props) => {
         const unsubscribe = store.subscribe(() => {
             state = store.getState().global;
             // If callback exists and API call is completed, invoke it
-            if (state.selectedContext.status !== 'loading' && callback) {
-                callback(state.selectedContext.data?.sources, state.selectedContext.data?.sessionId, state.selectedContext.data?.quickactions);
+            if (state.selectedContext?.status !== 'loading' && callback) {
+                callback(state.selectedContext.data?.sources, state.selectedContext.data?.sessionId, state.selectedContext.data?.quickactions, state.selectedContext.data?.error);
             }
         });
 
@@ -53,7 +56,7 @@ const FileUpload = (props) => {
                     ...allFiles
                 ];
                 _selectedContext.data.sessionId = state.selectedContext.data?.sessionId
-                // _selectedContext.data.quickactions = state.selectedContext.data?.quickactions
+                _selectedContext.data.quickactions = state.selectedContext.data?.quickactions
             }
             //Setting Sources Initially in Loading State till the call is successful
             store.dispatch(setSelectedContext(_selectedContext))
@@ -73,7 +76,8 @@ const FileUpload = (props) => {
                             );
                         }
                         //If there are no sources to add, no searchSession call is to be made. 
-                        allSources?.length && uploadSelectedFile(allSources);
+                        let action = state.selectedContext.data?.sessionId ? "update" : "add"
+                        allSources?.length && uploadFiles({attachments : allSources, action});
                     }
                 });
             }
@@ -87,18 +91,22 @@ const FileUpload = (props) => {
         if (localSize > allowedFileSize) {
             let _selectedContext = {};
             _selectedContext.data = {};
+            let errorFiles = [...(state.selectedContext.data.error || [])];
+            let fileWithError = {
+                ...file,
+                error : 'size',
+                message : `File Size has to be less than ${allowedFileSize} MB`
+            }
+            errorFiles.push(fileWithError)
             let remainingFiles = state.selectedContext.data.sources.filter(f => f.uID !== file.uID)
             _selectedContext.data.sources = remainingFiles
             _selectedContext.data.sessionId = state.selectedContext?.data?.sessionId
             _selectedContext.data.quickactions = state.selectedContext?.data?.quickactions
+            _selectedContext.data.error = errorFiles
             store.dispatch(setSelectedContext(_selectedContext))
             onComplete();
-            let resp = {
-                success : false,
-                message : `File Size has to be less than ${allowedFileSize} MB`
-            }
             // Returning as an object with success as false for the client to know that the request could not be completed
-            return resp;
+            return;
         }
 
         // If File Size is in the range of Upload
@@ -146,11 +154,7 @@ const FileUpload = (props) => {
                 let sources = allSources || [];
 
                 // Adding all the selected sources to allSources array to make the selected Context Call
-                sources.push({
-                    docId: file?.fileUrl?.fileId,
-                    source: 'attachment',
-                    uID: file?.uID
-                });
+                sources.push(f);
 
                 allSources = sources;
                 onComplete();
@@ -163,42 +167,10 @@ const FileUpload = (props) => {
         );
     };
 
-
-    const uploadSelectedFile = async (args) => {
-        let userId = window.sdkConfig.userId
-        let action = state.selectedContext.data?.sessionId ? "update" : "add"
-        let data = {
-            params: {
-                action: action
-            },
-            userId: userId
-        }
-
-        if (action === 'add') {
-            data.payload = {
-                sources: args
-            }
-        } else if (action === 'update') {
-            data.payload = {
-                addSources: args
-            },
-                data.sessionId = state.selectedContext.data?.sessionId
-        }
-        const response = await store.dispatch(searchSession(data))
-        // store.dispatch(setSelectedContext(response.payload))
-    }
-
     const removeSelectedFile = async (args) => {
         if (args.loading) {
             //If the source is loading and user terminated the call in between, we are removing that in selected Context and updating the state
-            let _selectedContext = {};
-            _selectedContext.data = {};
-            let remainingFiles = state.selectedContext.data.sources.filter(file => file.uID !== args.uID)
-            _selectedContext.data.sources = remainingFiles
-            _selectedContext.data.sessionId = state.selectedContext?.data?.sessionId
-            _selectedContext.data.quickactions = state.selectedContext?.data?.quickactions
-            store.dispatch(setSelectedContext(_selectedContext))
-            return;
+            return removeItem({state, item:args})
         } else if (state.selectedContext.data.loading) {
             //If there is a selectedContext call loading and user wants to remove already added file, returning with no action.
             let resp = {
@@ -208,32 +180,29 @@ const FileUpload = (props) => {
             // Returning as an object with success as false for the client to know that the request could not be completed
             return resp;
         } else {
-            //Deleting already added Selected File on User Request
-            let userId = window.sdkConfig.userId
-            let data = {
-                params: {
-                    "action": "remove"
-                },
-                userId: userId,
-                sessionId: state.selectedContext.data?.sessionId,
-                docId: args?.docId
-            };
-            const response = await store.dispatch(searchSession(data))
-            if (response?.payload?.sources?.length === 0) {
-                //If all the sources are removed, the selected Conetxt would be null
-                store.dispatch(setSelectedContext({}))
-            }
+            removeCurentFile({state, item : args, removingSource : true})
         }
     }
 
-    const fileUploadError = (msg, data, allFilesCount) => {
-        console.log(msg, data, allFilesCount)
-        let resp = {
-            success : false,
-            message : "The file type is not Compatible"
+    const fileUploadError = (msg, data) => {
+        // console.log(msg, data, allFilesCount)
+        let _selectedContext = {};
+        _selectedContext.data = {};
+        let remainingFiles = state.selectedContext.data.sources.filter(file => file.uID !== data.uniqueID)
+        let errorFiles = [...(state.selectedContext.data.error || [])];
+        let fileWithError = {
+            ...data,
+            error : 'type',
+            message : `The file type ${data.fileType} is not Compatible`
         }
+        errorFiles.push(fileWithError)
+        _selectedContext.data.sources = remainingFiles
+        _selectedContext.data.sessionId = state.selectedContext?.data?.sessionId
+        _selectedContext.data.quickactions = state.selectedContext?.data?.quickactions  
+        _selectedContext.data.error = errorFiles
+        store.dispatch(setSelectedContext(_selectedContext))
         // Returning as an object with success as false for the client to know that the request could not be completed
-        return resp
+        return;
     }
 
     const uploadFileButton = document.createElement('input')
@@ -242,14 +211,12 @@ const FileUpload = (props) => {
     uploadFileButton.multiple = true
     uploadFileButton.addEventListener('change', (e) => uploadFile(e))
 
-
-
     return {
         showUploadChip: parentEl => {
             document.getElementById(parentEl).appendChild(uploadFileButton);
         },
         subscribe,
-        uploadSelectedFile,
+        // uploadSelectedFile,
         removeSelectedFile
     }
 }
