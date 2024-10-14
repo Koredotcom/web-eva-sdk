@@ -124,7 +124,20 @@ const ChatInterface = (props) => {
       // store.dispatch(setCurrentQuestion(currentQues))
 
       const Res = await store.dispatch(advanceSearch({ params, payload, userId: state.profile.data.id }))
-      constructQuestionPostCall(Res, qId)
+      /*
+      below condition triggers when templatetype is gpt_form_template and user doesnt have any input fields to enter, so application needs to make advancesearch api call with {} formData, as per EVA
+      */
+      if (Res?.payload?.templateType === "gpt_form_template" && Res?.payload?.content?.formFields?.inputFields?.length === 0){
+        delete payload.context
+        payload.formData = {}
+        // payload.messageId = qId
+        const newRes = await store.dispatch(advanceSearch({ params, payload,  userId: state.profile.data.id }))
+        console.log("newRes..", newRes)
+        constructQuestionPostCall(newRes, qId)
+      }else{
+        constructQuestionPostCall(Res, qId)
+      }
+      
       // store.dispatch(setCurrentQuestion({}))
     }
 
