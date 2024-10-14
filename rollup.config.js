@@ -9,6 +9,7 @@ import json from '@rollup/plugin-json';
 import builtins from 'rollup-plugin-node-builtins';
 import globals from 'rollup-plugin-node-globals';
 import alias from '@rollup/plugin-alias';
+import postcss from 'rollup-plugin-postcss';
 
 
 const globals_var = {
@@ -43,6 +44,10 @@ const createConfig = (input, dir, name) => ({
       preferBuiltins: false,
       browser: true,
       extensions: ['js', 'jsx']
+    }),
+    postcss({
+      extract: true, 
+      minimize: true,
     }),
     babel({
       babelHelpers: 'bundled',
