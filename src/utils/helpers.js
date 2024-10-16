@@ -1,5 +1,6 @@
 
 import moment from "moment";
+import store from "../redux/store";
 
 export const Timedifference = (time) => {
     let daysdiff = new Date().getDate() - new Date(time).getDate();
@@ -81,3 +82,45 @@ export const getCidByReqId = (data, reqId) => {
     }
     return null;
 }
+
+export const renderIcons = (provider, extIcon, providerIcon) => { //providerIcon will be helpful for history, in case the existing connection is deleted and no connections left for that specific integration
+
+    const state = store.getState().global
+    const { enabledAgents } = state;
+    let icon = enabledAgents?.find(skill => skill.id === provider || skill?.appId === provider)?.icon || providerIcon
+    if (!icon) {
+        icon = enabledAgents?.find(item => item?.id === provider)?.icon
+    }
+
+    const Icondiv = document.createElement('div');
+    Icondiv.className = 'srcimg';
+
+    const img = document.createElement('img');
+    img.src = providerIcon;
+    img.className = 'backgroundIcon';
+
+    Icondiv.appendChild(img);
+
+    if (extIcon) {
+        const subImg = document.createElement('img');
+        subImg.src = extIcon; 
+        subImg.className = 'subIcon';
+        Icondiv.appendChild(subImg); 
+    }
+
+    return Icondiv;
+}
+
+export const htmlDecode = (input) => {
+    const e = document.createElement('div');
+
+    // Universal search breaking issue workaround
+    if (Array.isArray(input)) {
+        input = input[0];
+    }
+
+    input = input ? input.replace(/&quot;/g, '') : '';
+
+    e.innerHTML = input;
+    return e.childNodes.length === 0 ? "" : (e.childNodes[0].nodeValue || e.childNodes[0].outerHTML);
+};

@@ -76,6 +76,13 @@ const ChatInterface = (props) => {
         input = ''
         inputElement.textContent = ''
 
+        //If there are attachments in the Compose Bar, sending Session Id
+        if(state?.selectedContext?.data?.sessionId){
+          payload.context = {
+            sessionId : state?.selectedContext?.data?.sessionId
+          }
+        }
+
         const Res = await store.dispatch(advanceSearch({ params, payload, userId: state.profile.data.id }))
         constructQuestionPostCall(Res, qId)
         // store.dispatch(setCurrentQuestion({}))
