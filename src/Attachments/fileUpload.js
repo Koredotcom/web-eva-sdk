@@ -19,7 +19,7 @@ const FileUpload = (props) => {
             state = store.getState().global;
             // If callback exists and API call is completed, invoke it
             if (state.selectedContext?.status !== 'loading' && callback) {
-                callback(state.selectedContext.data?.sources, state.selectedContext.data?.sessionId, state.selectedContext.data?.quickactions, state.selectedContext.data?.error);
+                callback(state?.selectedContext?.data?.sources, state?.selectedContext?.data?.sessionId, state?.selectedContext?.data?.quickactions, state?.selectedContext?.data?.error);
             }
         });
 
@@ -50,13 +50,13 @@ const FileUpload = (props) => {
             _selectedContext.data.loading = true  //setting loading as true for initial setting of sources
 
             //If there is already added a SessionID, there are already sources added, adding that with the sources that are to be uploaded
-            if (state.selectedContext.data?.sessionId) {
+            if (state?.selectedContext?.data?.sessionId) {
                 _selectedContext.data.sources = [
                     ...state.selectedContext.data.sources,
                     ...allFiles
                 ];
-                _selectedContext.data.sessionId = state.selectedContext.data?.sessionId
-                _selectedContext.data.quickactions = state.selectedContext.data?.quickactions
+                _selectedContext.data.sessionId = state?.selectedContext?.data?.sessionId
+                _selectedContext.data.quickactions = state?.selectedContext?.data?.quickactions
             }
             //Setting Sources Initially in Loading State till the call is successful
             store.dispatch(setSelectedContext(_selectedContext))
@@ -68,7 +68,7 @@ const FileUpload = (props) => {
                     completedFiles++;
                     //Checking whether all files have completed token generation to make the searchSession Call
                     if (completedFiles === files.length) {
-                        let selectedSources = state.selectedContext.data.sources
+                        let selectedSources = state?.selectedContext?.data?.sources
                         if (allSources?.length !== selectedSources?.length) {
                             //Checking and uploading the selected sources as context
                             allSources = allSources.filter(source =>
@@ -76,7 +76,7 @@ const FileUpload = (props) => {
                             );
                         }
                         //If there are no sources to add, no searchSession call is to be made. 
-                        let action = state.selectedContext.data?.sessionId ? "update" : "add"
+                        let action = state?.selectedContext?.data?.sessionId ? "update" : "add"
                         allSources?.length && uploadFiles({attachments : allSources, action});
                     }
                 });
