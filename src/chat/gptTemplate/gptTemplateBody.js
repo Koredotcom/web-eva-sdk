@@ -1,3 +1,5 @@
+import Choices from "choices.js";
+
 const constructGptForm = (item) => {
 
     const formFields = item?.content?.formFields?.inputFields;
@@ -150,8 +152,8 @@ const constructGptForm = (item) => {
             const selectElement = document.createElement('select');
             selectElement.id = `dropdownValue-${field?.key}`;
 
-            if (field?.key === 'prompts') {
-            }
+            // Initialize Choices.js when the dropdown is available
+            observeDOMChanges(`#dropdownValue-${field?.key}`, false, field, initializeChoicesForElement);
 
             grpWrapDiv.appendChild(selectElement);
             grpInputDiv.appendChild(grpWrapDiv);
@@ -173,6 +175,10 @@ const constructGptForm = (item) => {
             const dropdownElement = document.createElement('select')
             dropdownElement.id = `dropdownValue-${field?.key}`
             dropdownElement.setAttribute('multiple', true);
+
+
+             // Initialize Choices.js when the dropdown is available
+             observeDOMChanges(`#dropdownValue-${field?.key}`, true, field, initializeChoicesForElement);
 
             grpWrapDiv.appendChild(dropdownElement);
             grpInputDiv.appendChild(grpWrapDiv);
@@ -305,3 +311,60 @@ const constructGptForm = (item) => {
 };
 
 export default constructGptForm
+
+
+const initializeChoicesForElement = (el, isMulti, field) => {
+    if (typeof window !== 'undefined' && typeof document !== 'undefined') {
+        if (el) {
+            let obj = {}
+            if(isMulti) {
+                obj = {
+                    silent: false,
+                    placeholder: true,
+                    addChoices: false,
+                    placeholderValue: 'Select Multiple Options',
+                    searchEnabled: false, 
+                    removeItemButton: true,
+                    maxItemCount : -1,
+                    duplicateItemsAllowed: false, 
+                    removeItems: true, 
+                    itemSelectText: '', 
+                    noChoicesText: '', 
+                }
+            } else {
+                obj = {
+                    silent: false,
+                    placeholder: true,
+                    addChoices: false,
+                    placeholderValue: 'Select an option',
+                    searchEnabled: false,
+                    containerOuter: `choices-${field?.key}`
+                }
+            }
+            const choices = new Choices(el, obj);
+
+            let dropDownChoices = field?.value?.choices;
+            if (field?.key === 'prompts' && !isMulti) {
+                el.addEventListener('change', updateTextarea);
+                dropDownChoices = field?.value?.choices.map((choice, index) => ({
+                    ...choice,
+                    selected: index === 0 
+                }));
+            }
+
+            choices.setChoices(dropDownChoices, 'id', 'label', true);
+        }
+    }
+}
+
+const observeDOMChanges = (selector, isMulti, field, callback) => {
+    const observer = new MutationObserver((mutationsList, observer) => {
+        const element = document.querySelector(selector);
+        if (element) {
+            observer.disconnect();  // Stop observing once the element is found
+            callback(element, isMulti, field);
+        }
+    });
+
+    observer.observe(document.body, { childList: true, subtree: true });
+};

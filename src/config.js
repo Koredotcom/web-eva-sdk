@@ -12,7 +12,8 @@ export const initializeSDK = (config) => {
     }
   })
 
-  if(misConfig) return;
+  // if(misConfig) return;
+  if (typeof window !== 'undefined' && typeof document !== 'undefined' && misConfig) return;
 
   // Set the SDK config globally
   window.sdkConfig = config;

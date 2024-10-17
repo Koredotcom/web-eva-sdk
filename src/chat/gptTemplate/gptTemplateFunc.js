@@ -5,8 +5,8 @@ import InitiateChatConversationAction from "../InitiateChatConversationAction";
 import FileUploader from "../../utils/fileUploader";
 import store from "../../redux/store";
 import { generateComponentId, getFileExtension, getUID } from "../../utils/helpers";
-import Choices from "choices.js";
-import "choices.js/public/assets/styles/choices.css";
+// import Choices from "choices.js";
+// import "choices.js/public/assets/styles/choices.css";
 // import "./../gptTemplate/choics.css"
 
 
@@ -218,52 +218,52 @@ const gptFormFunctionality = (item) => {
             }
         }
 
-        if (field?.value?.type === "dropdown" && !field?.value?.multi) {
+        // if (field?.value?.type === "dropdown" && !field?.value?.multi) {
 
-            const selectElement = document.getElementById(`dropdownValue-${field?.key}`);
-            const choices = new Choices(selectElement, {
-                silent: false,
-                placeholder: true,
-                addChoices: false,
-                placeholderValue: 'Select an option',
-                searchEnabled: false,
-            });
+        //     const selectElement = document.getElementById(`dropdownValue-${field?.key}`);
+        //     const choices = new Choices(selectElement, {
+        //         silent: false,
+        //         placeholder: true,
+        //         addChoices: false,
+        //         placeholderValue: 'Select an option',
+        //         searchEnabled: false,
+        //     });
 
-            let dropDownChoices;
-            dropDownChoices = field?.value?.choices
+        //     let dropDownChoices;
+        //     dropDownChoices = field?.value?.choices
 
-            if (field?.key === 'prompts') {
-                selectElement.addEventListener('change', updateTextarea);
-                dropDownChoices = field?.value?.choices.map((choice, index) => ({
-                    ...choice,
-                    selected: index === 0 
-                }));
-            }  
+        //     if (field?.key === 'prompts') {
+        //         selectElement.addEventListener('change', updateTextarea);
+        //         dropDownChoices = field?.value?.choices.map((choice, index) => ({
+        //             ...choice,
+        //             selected: index === 0 
+        //         }));
+        //     }  
 
-            choices.setChoices(dropDownChoices, 'id', 'label', true);
-        }
+        //     choices.setChoices(dropDownChoices, 'id', 'label', true);
+        // }
 
-        if (field?.value?.type === "dropdown" && field?.value?.multi) {
+        // if (field?.value?.type === "dropdown" && field?.value?.multi) {
 
-            const selectElement = document.getElementById(`dropdownValue-${field?.key}`);
-            const choices = new Choices(selectElement, {
-                silent: false,
-                placeholder: true,
-                addChoices: false,
-                placeholderValue: 'Select Multiple Options',
-                searchEnabled: false, 
-                removeItemButton: true,
-                maxItemCount : -1,
-                duplicateItemsAllowed: false, 
-                removeItems: true, 
-                itemSelectText: '', 
-                noChoicesText: '', 
-            });
+        //     const selectElement = document.getElementById(`dropdownValue-${field?.key}`);
+        //     const choices = new Choices(selectElement, {
+        //         silent: false,
+        //         placeholder: true,
+        //         addChoices: false,
+        //         placeholderValue: 'Select Multiple Options',
+        //         searchEnabled: false, 
+        //         removeItemButton: true,
+        //         maxItemCount : -1,
+        //         duplicateItemsAllowed: false, 
+        //         removeItems: true, 
+        //         itemSelectText: '', 
+        //         noChoicesText: '', 
+        //     });
 
-            const dropDownChoices = field?.value?.choices
+        //     const dropDownChoices = field?.value?.choices
 
-            choices.setChoices(dropDownChoices, 'id', 'label', true);
-        }
+        //     choices.setChoices(dropDownChoices, 'id', 'label', true);
+        // }
 
         if (field?.key === "prompt") {
 
