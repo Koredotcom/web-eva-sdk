@@ -39,6 +39,7 @@ const SelectedContext = () => {
 
     return (
         <div>
+            <h1>Selected Context</h1>
             {quickActions?.length > 0 && quickActions?.map((item) => (
                 <div onClick={(e) => chatInterface.current.askQuickActions(item)}>{item?.label}</div>
             ))}
