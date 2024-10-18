@@ -107,6 +107,7 @@ const ChatInterface = (props) => {
     
 
     const initiateChatConversationAction = async (arg) => {
+      state = store.getState().global
       // let reqId = generateShortUUID()
         // let encodedReqId = encodeURIComponent(reqId) 
         let params = { reqId: generateShortUUID() }
@@ -130,7 +131,7 @@ const ChatInterface = (props) => {
       // let currentQues = state.questions[qId]
       // store.dispatch(setCurrentQuestion(currentQues))
 
-      const Res = await store.dispatch(advanceSearch({ params, payload, userId: state.profile.data.id }))
+      const Res = await store.dispatch(advanceSearch({ params, payload, userId: state?.profile?.data?.id }))
       /*
       below condition triggers when templatetype is gpt_form_template and user doesnt have any input fields to enter, so application needs to make advancesearch api call with {} formData, as per EVA
       */
@@ -160,6 +161,13 @@ const ChatInterface = (props) => {
       }
     }
 
+    const askQuickActions = (arg) => {
+      const payload = {
+        action : arg
+      }
+      initiateChatConversationAction({payload})
+    }
+
     // Add event listeners for the various events
     inputElement.addEventListener('change', handleEvent);
     inputElement.addEventListener('keyup', handleEvent);
@@ -176,7 +184,8 @@ const ChatInterface = (props) => {
         sendMessageAction,
         initiateChatConversationAction,
         cancelMessageReqAction,
-        invokeGptAgentTemplate
+        invokeGptAgentTemplate,
+        askQuickActions
     }
 }
 

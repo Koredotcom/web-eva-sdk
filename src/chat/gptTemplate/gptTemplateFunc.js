@@ -7,7 +7,6 @@ import store from "../../redux/store";
 import { generateComponentId, getFileExtension, getUID } from "../../utils/helpers";
 import Choices from "choices.js";
 import "choices.js/public/assets/styles/choices.css";
-// import "./../gptTemplate/choics.css"
 
 
 const gptFormFunctionality = (item) => {

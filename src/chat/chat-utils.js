@@ -6,6 +6,7 @@ import constructGptForm from './gptTemplate/gptTemplateBody';
 import gptFormFunctionality from './gptTemplate/gptTemplateFunc';
 import { getCidByMessageId } from '../utils/helpers';
 import AnswerFromChip from './AnswerFromChip';
+import MenuOptions from '../Attachments/MenuOptions';
 
 export const constructQuestionInitial = (args) => {
     let uniqueMsgId;
@@ -63,6 +64,9 @@ export const constructQuestionPostCall = (data, qId) => {
         if(data?.payload?.sources?.length > 0 ){
             const ansFromChipData = AnswerFromChip({item : data?.payload})
             question.answerFrom_html = ansFromChipData.outerHTML
+            setTimeout(() => {
+                MenuOptions(data?.payload)
+            }, 1000);
         }
     }
     

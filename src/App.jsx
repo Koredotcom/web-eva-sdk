@@ -3,6 +3,7 @@ import { HistoryWidget, PossibilitiesWidget } from './widgets';
 import ChatTestComp from './test-comp/ChatTestComp';
 import File from './test-comp/File';
 import Agents from './test-comp/agents';
+import SelectedContext from './test-comp/selectedContext';
 
 
 const App = () => {
@@ -26,6 +27,7 @@ const App = () => {
       <ChatTestComp/>
       <Agents />
       <File />
+      <SelectedContext/>
     </div>
   )
 }

@@ -154,6 +154,8 @@ const AnswerFromChip = ({ item, regeneratingAnswer }) => {
 
     const renderChip = () => {
         let chipElement;
+        let answerFromChipDiv = document.createElement('div');
+        answerFromChipDiv.className = 'answerFromChipDiv'
 
         if (regeneratingAnswer) {
             chipElement = regeneratingChipRenderer();
@@ -163,7 +165,13 @@ const AnswerFromChip = ({ item, regeneratingAnswer }) => {
             chipElement = knowledgeChipRenderer();
         }
 
-        return chipElement; 
+        const askFollowUpButton = document.createElement('button')
+        askFollowUpButton.id = 'followupButton'
+        askFollowUpButton.textContent = 'Ask Follow Up'
+
+        answerFromChipDiv.appendChild(chipElement)
+        answerFromChipDiv.appendChild(askFollowUpButton)
+        return answerFromChipDiv; 
     };
 
 

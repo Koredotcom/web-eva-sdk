@@ -8,6 +8,8 @@ import { setSelectedContext } from "../redux/globalSlice";
 import uploadFiles from "./uploadFiles";
 import removeItem from "./removeItem";
 import removeCurentFile from "./removeCurrentFile";
+import { sessionItemHandler } from "./createContext";
+import { cloneDeep } from "lodash";
 
 const FileUpload = (props) => {
     let state = store.getState().global;
@@ -205,6 +207,60 @@ const FileUpload = (props) => {
         return;
     }
 
+    const setRecentFileAsSource = (args) => {
+        let item = {
+            ...args,
+            ext: args?.fileExtension,
+            title: args?.fileName,
+            docId: args?.id,
+            source: "attachment"
+        }
+
+        
+        let state = store.getState().global
+
+        let {enabledAgents, selectedContext} = state
+        let _agents = cloneDeep(enabledAgents)
+        let isAgentSetAsSource = _agents.find(ag => ag.id === selectedContext?.data?.sources?.[0]?.source)
+        let sourceType = isAgentSetAsSource ? "agent" : null
+        let discardPrevSession = false;
+        if (sourceType === 'agent' || selectedContext?.sources?.[0]?.isAgent) {
+            discardPrevSession = true
+        }
+        sessionItemHandler({state, item, discardPrevSession})
+    }
+
+    const setChipAsSource = (args) => {
+        let state = store.getState().global
+
+        let {enabledAgents, selectedContext} = state
+        const msgType = args?.type
+        const messageId = msgType === "followup" ? args?.parentMessageId : args?.messageId;
+        const _selectedContext = { ...args?.context, messageId, sources: args?.sources, viewType: args?.viewType }
+
+        if (args?.viewType === "table" && _selectedContext?.hasOwnProperty("sessionId")) {
+            sessionItemHandler({ item: { ..._selectedContext, source: 'attachment' }, viewType: args?.viewType })
+        } else {
+            let _agents = cloneDeep(enabledAgents)
+            let isAgentSetAsSource = _agents.find(ag => ag.id === args?.sources?.[0]?.source)
+            let sourceType = isAgentSetAsSource ? "agent" : null
+            let obj = {
+                state,
+                boardId: args.boardId,
+                messageId,
+                item: args?.sources?.[0],
+                duplicateErr: true,
+                viewType: args?.viewType,
+                type: sourceType
+            }
+
+            if (sourceType === 'agent' || selectedContext?.data?.sources?.[0]?.isAgent) {
+                obj.discardPrevSession = true
+            }
+            sessionItemHandler(obj)
+        }
+    }
+
     const uploadFileButton = document.createElement('input')
     uploadFileButton.type = 'file'
     uploadFileButton.innerText = 'Upload'
@@ -217,7 +273,9 @@ const FileUpload = (props) => {
         },
         subscribe,
         // uploadSelectedFile,
-        removeSelectedFile
+        removeSelectedFile,
+        setRecentFileAsSource,
+        setChipAsSource
     }
 }
 
