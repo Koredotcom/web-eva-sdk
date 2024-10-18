@@ -1,3 +1,6 @@
+// Import the CSS file
+import './styles/sdk.css';
+
 // Re-export all modules from nested directories
 export { initializeSDK } from './config';
 export * from './components';

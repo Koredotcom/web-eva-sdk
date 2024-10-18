@@ -34,7 +34,11 @@ const createConfig = (input, dir, name) => ({
       entryFileNames: '[name].esm.js',
     }
   ],
-  external: Object.keys(globals_var),
+  external: [
+    ...Object.keys(globals_var),
+    'window',
+    'document'
+  ],
   plugins: [
     replace({
       'process.env.NODE_ENV': JSON.stringify('production'),
@@ -46,7 +50,7 @@ const createConfig = (input, dir, name) => ({
       extensions: ['js', 'jsx']
     }),
     postcss({
-      extract: true, 
+      extract: 'sdk-styles.css', 
       minimize: true,
     }),
     babel({
