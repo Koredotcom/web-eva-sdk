@@ -3,21 +3,14 @@ import ChatInterface from '../chat/ChatInterface'
 import NewChat from '../chat/NewChat'
 import AgentWelcomeTemplate from './WelcomeTemplate'
 import History from './history'
-import { FileUpload } from '../Attachments'
-import SelectedContext from './selectedContext'
+import DemoComp from './selectedContextDemoComp'
 
 const ChatTestComp = (props) => {
     const [questions, setQuestions] = useState(null)
-    const [selcontext, setSelContext] = useState(null)
-    const [errorFiles, setErrorFiles] = useState(null)
     const chatInterface = useRef()
-    const uploadFile = useRef()
     useEffect(() => {
         // Create an instance of ChatInterface
         chatInterface.current = ChatInterface();
-
-        uploadFile.current = FileUpload();
-        uploadFile.current.showUploadChip('composeBar')
 
         // Show the input bar in a specific DOM element
         chatInterface.current.showComposeBar('composeBar');
@@ -29,17 +22,10 @@ const ChatTestComp = (props) => {
             setQuestions(question)
         });
 
-        const unsubscribe2 = uploadFile.current.subscribe((context, sessionId, quickActions, errorFiles) => {
-            console.log("Selected Context", context, "Session ID", sessionId, quickActions, errorFiles)
-            setSelContext(context)
-            setErrorFiles(errorFiles)
-        })
-
         // Cleanup on component unmount
         return () => {
             // Unsubscribe from store updates
             unsubscribe();
-            unsubscribe2();
         };
     }, []);
 
@@ -71,9 +57,6 @@ const ChatTestComp = (props) => {
                     return null;
                 })}
             </div>
-            <div>
-                <SelectedContext selcontext = {selcontext} errorFiles = {errorFiles} />
-            </div>
             <div id="composeBar" className="composeBar"></div>
             <button onClick={()=> chatInterface.current.sendMessageAction()}>Send</button>
             <button onClick={()=> NewChat()}>+New</button>
@@ -81,6 +64,7 @@ const ChatTestComp = (props) => {
         </div>
         <div>
                 <History history = {props?.history} />
+                <DemoComp/>
         </div>
         </>
     )

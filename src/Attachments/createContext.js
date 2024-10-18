@@ -1,4 +1,4 @@
-import { cloneDeep} from "lodash";
+import { cloneDeep, isEmpty} from "lodash";
 import store from "../redux/store";
 import { searchSession } from "../redux/actions/global.action";
 import { setSelectedContext } from "../redux/globalSlice";
@@ -49,7 +49,7 @@ export const sessionItemHandler = (args) => {
 
     const { selectedContext } = state
 
-    if (selectedContext.status === 'loading') {
+    if (selectedContext?.status === 'loading') {
         let selectedContextData = selectedContext
         selectedContextData.data.error = {
             error: true,
@@ -176,7 +176,7 @@ export const sessionItemHandler = (args) => {
         }
         _selectedContext?.sources?.push(addedItem);
 
-        if ((_selectedContext?.sources?.length === 1 && !selectedContext) || discardPrevSession) {
+        if ((_selectedContext?.sources?.length === 1 && isEmpty(selectedContext)) || discardPrevSession) {
             // isAgent - it will come here because previously setted context was agent and now it should replace with new agent 
             action = "add"
             payload = _selectedContext?.sources;
@@ -187,7 +187,7 @@ export const sessionItemHandler = (args) => {
                 payload[0].docId = addedItem?.sources?.[0]?.docId
             }
         }
-        else if (_selectedContext?.sources?.length > selectedContext?.sources?.length) {
+        else if (_selectedContext?.sources?.length > selectedContext?.data?.sources?.length) {
             action = "update"
             payload = [addedItem];
         }
@@ -332,7 +332,7 @@ const getContextData = (state, data) => {
     }
     // if comes in this condition means all items removed from existing session
     if (data?.args?.action === "remove" && (data?.response?.payload?.sources?.length === 0)) {
-        store.dispatch(setSelectedContext(null));
+        store.dispatch(setSelectedContext({}));
     }
 
     if (data?.callback) {
