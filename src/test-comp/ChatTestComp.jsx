@@ -61,7 +61,12 @@ const ChatTestComp = (props) => {
                         );
                     }
                     if(item?.templateType === 'search_answer'){
-                        return item?.answer
+                        return (
+                            <>
+                            <div>{item?.answer}</div>
+                            <div dangerouslySetInnerHTML={{__html : item.answerFrom_html}}></div>
+                            </>
+                        )
                     }
                     return null;
                 })}

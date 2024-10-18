@@ -5,6 +5,7 @@ import { cloneDeep } from 'lodash';
 import constructGptForm from './gptTemplate/gptTemplateBody';
 import gptFormFunctionality from './gptTemplate/gptTemplateFunc';
 import { getCidByMessageId } from '../utils/helpers';
+import AnswerFromChip from './AnswerFromChip';
 
 export const constructQuestionInitial = (args) => {
     let uniqueMsgId;
@@ -57,6 +58,14 @@ export const constructQuestionPostCall = (data, qId) => {
         }, 1000);
     
     }
+
+    if(data?.payload?.templateType === 'search_answer'){
+        if(data?.payload?.sources?.length > 0 ){
+            const ansFromChipData = AnswerFromChip({item : data?.payload})
+            question.answerFrom_html = ansFromChipData.outerHTML
+        }
+    }
+    
 
     // if(data?.params?.arg?.retry) {
     //     delete question?.error;
