@@ -36,7 +36,7 @@ export const sessionItemHandler = (args) => {
     const {
         messageId,
         boardId, // both will conly come when try to set context from 3dot menu (ask followup) option
-        state,
+        // state,
         item,
         discardPrevSession, // always create new session
         duplicateErr, // select,deselect functionality will be disabled if its true, instead showing error toast msg
@@ -47,6 +47,7 @@ export const sessionItemHandler = (args) => {
         type
     } = args;
 
+    const state = store.getState().global;
     const { selectedContext } = state
 
     if (selectedContext?.status === 'loading') {
@@ -141,11 +142,11 @@ export const sessionItemHandler = (args) => {
 
     if (_selectedItem && !discardPrevSession) {
         if (duplicateErr) {   
-            let selectedContextData = selectedContext
-            setTimeout(() => {
-                selectedContextData.data.error = null;
-                store.dispatch(setSelectedContext(selectedContextData))
-            }, 3000);
+            let selectedContextData = cloneDeep(selectedContext)
+            // setTimeout(() => {
+            //     selectedContextData.data.error = null;
+            //     store.dispatch(setSelectedContext(selectedContextData))
+            // }, 3000);
             selectedContextData.data.error = {
                 error: true,
                 message: 'Source is Already Added'

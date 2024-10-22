@@ -4,6 +4,7 @@ import NewChat from '../chat/NewChat'
 import AgentWelcomeTemplate from './WelcomeTemplate'
 import History from './history'
 import DemoComp from './selectedContextDemoComp'
+import AskFollowup from '../Attachments/askFollowup'
 
 const ChatTestComp = (props) => {
     const [questions, setQuestions] = useState(null)
@@ -51,6 +52,7 @@ const ChatTestComp = (props) => {
                             <>
                             <div>{item?.answer}</div>
                             <div dangerouslySetInnerHTML={{__html : item.answerFrom_html}}></div>
+                            {item?.answerFrom_html && <div onClick={()=> AskFollowup(item)}>Ask followup</div>}
                             </>
                         )
                     }
@@ -63,8 +65,8 @@ const ChatTestComp = (props) => {
             <button onClick={()=> chatInterface.current.cancelMessageReqAction()}>Stop</button>
         </div>
         <div>
-                <History history = {props?.history} />
-                <DemoComp/>
+                {/* <History history = {props?.history} /> */}
+                {/* <DemoComp/> */}
         </div>
         </>
     )

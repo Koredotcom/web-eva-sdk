@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { GetDownloadUrl, LoadMoreRecentFiles, RecentFiles } from '../files'
+import SetAttachmentContext from '../Attachments/setAttachmentContext'
 
 const File = () => {
     const [files, setFiles] = useState(null)
@@ -46,7 +47,10 @@ const File = () => {
             <ul>
                 {files && files.data.map(file => {
                     return (
-                        <li key={file.id} onClick={() => downloadHanlder(file)}>{file?.fileName}</li>
+                        <li key={file.id}>
+                            <span onClick={() => downloadHanlder(file)}>{file?.fileName}</span>
+                            <button onClick={()=> SetAttachmentContext(file)}>Set as Source</button>
+                        </li>
                     )
                 })}
             </ul>

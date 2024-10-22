@@ -21,7 +21,9 @@ const FileUpload = (props) => {
             state = store.getState().global;
             // If callback exists and API call is completed, invoke it
             if (state.selectedContext?.status !== 'loading' && callback) {
-                callback(state?.selectedContext?.data?.sources, state?.selectedContext?.data?.sessionId, state?.selectedContext?.data?.quickactions, state?.selectedContext?.data?.error);
+                if(!state?.selectedContext?.data) return;
+                const {sources, sessionId, quickactions, error} = state?.selectedContext?.data;
+                callback(sources, sessionId, quickactions, error);
             }
         });
 
@@ -169,7 +171,7 @@ const FileUpload = (props) => {
         );
     };
 
-    const removeSelectedFile = async (args) => {
+    const removeContext = async (args) => {
         if (args.loading) {
             //If the source is loading and user terminated the call in between, we are removing that in selected Context and updating the state
             return removeItem({state, item:args})
@@ -207,7 +209,7 @@ const FileUpload = (props) => {
         return;
     }
 
-    const setRecentFileAsSource = (args) => {
+    const setAttachmentContext = (args) => {
         let item = {
             ...args,
             ext: args?.fileExtension,
@@ -216,21 +218,20 @@ const FileUpload = (props) => {
             source: "attachment"
         }
 
-        
         let state = store.getState().global
-
-        let {enabledAgents, selectedContext} = state
+        const {enabledAgents, selectedContext} = state
         let _agents = cloneDeep(enabledAgents)
         let isAgentSetAsSource = _agents.find(ag => ag.id === selectedContext?.data?.sources?.[0]?.source)
         let sourceType = isAgentSetAsSource ? "agent" : null
         let discardPrevSession = false;
-        if (sourceType === 'agent' || selectedContext?.sources?.[0]?.isAgent) {
+        if (sourceType === 'agent' || selectedContext?.data?.sources?.[0]?.isAgent) {
             discardPrevSession = true
         }
-        sessionItemHandler({state, item, discardPrevSession})
+
+        sessionItemHandler({item, discardPrevSession})
     }
 
-    const setChipAsSource = (args) => {
+    const askFollowup = (args) => {
         let state = store.getState().global
 
         let {enabledAgents, selectedContext} = state
@@ -245,7 +246,6 @@ const FileUpload = (props) => {
             let isAgentSetAsSource = _agents.find(ag => ag.id === args?.sources?.[0]?.source)
             let sourceType = isAgentSetAsSource ? "agent" : null
             let obj = {
-                state,
                 boardId: args.boardId,
                 messageId,
                 item: args?.sources?.[0],
@@ -273,9 +273,9 @@ const FileUpload = (props) => {
         },
         subscribe,
         // uploadSelectedFile,
-        removeSelectedFile,
-        setRecentFileAsSource,
-        setChipAsSource
+        removeContext,
+        setAttachmentContext,
+        askFollowup
     }
 }
 

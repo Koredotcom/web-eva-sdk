@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { FileUpload } from "../Attachments";
 import { ChatInterface } from "../chat";
+import RemoveContext from "../Attachments/removeContext";
 
 const SelectedContext = () => {
 
@@ -49,7 +50,7 @@ const SelectedContext = () => {
             {selectedContext?.length > 0 && selectedContext?.map((item) => (
                 <div key={item?.title}>
                     <div>{item?.title}</div>
-                    <button onClick={() => uploadFile.current.removeSelectedFile(item)}>Remove</button>
+                    <button onClick={() => RemoveContext(item)}>Remove</button>
                 </div>
             ))}
         </div>
