@@ -33,7 +33,9 @@ const initialState = {
   chatHistoryMoreAvailable: false,
   fileTypes : null,
   selectedContext : {},
-  maxAllowedFileSize : null
+  maxAllowedFileSize : null,
+  enabledCustomTemplates: {},
+  GptUploadedFiles: null
 };
 
 const globalSlice = createSlice({
@@ -63,6 +65,12 @@ const globalSlice = createSlice({
       },
       setSelectedContext : (state, action) => {
         state.selectedContext = action.payload;
+      },
+      setEnabledCustomTemplates : (state, action) => {
+        state.enabledCustomTemplates = action.payload;
+      },
+      setGptUploadedFiles : (state, action) => {
+        state.GptUploadedFiles = action.payload;
       }
       // deleteHistoryItem : (state, action) =>{
       //   state.AllHistory = action.payload
@@ -143,7 +151,9 @@ export const {
   // deleteHistoryItem,
   // updateHistoryItem,
   setChatHistoryMoreAvailable,
-  setSelectedContext
+  setSelectedContext,
+  setEnabledCustomTemplates,
+  setGptUploadedFiles
 } = globalSlice.actions;
 
 export default globalSlice

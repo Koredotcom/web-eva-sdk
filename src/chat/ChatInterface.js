@@ -1,5 +1,5 @@
 import { advanceSearch, cancelAdvancedSearch } from "../redux/actions/global.action";
-import { setCurrentQuestion } from "../redux/globalSlice"
+import { setCurrentQuestion, setEnabledCustomTemplates } from "../redux/globalSlice"
 // import { updateChatData } from "../redux/globalSlice";
 import store from "../redux/store";
 import { v4 as uuid } from 'uuid';
@@ -59,6 +59,7 @@ const ChatInterface = (props) => {
 
     const sendMessageAction = async () => {
       if (input) {
+        const {enabledAgents, selectedContext} = state
         // let reqId = generateShortUUID()
         // let encodedReqId = encodeURIComponent(reqId) 
         let params = { reqId: generateShortUUID() }
@@ -77,9 +78,27 @@ const ChatInterface = (props) => {
         inputElement.textContent = ''
 
         //If there are attachments in the Compose Bar, sending Session Id
-        if(state?.selectedContext?.data?.sessionId){
-          payload.context = {
-            sessionId : state?.selectedContext?.data?.sessionId
+        // if(selectedContext?.data?.sessionId){
+        //   payload.context = {
+        //     sessionId : selectedContext?.data?.sessionId
+        //   }
+        // }
+
+        if(!!selectedContext) {
+          let _agents = cloneDeep(enabledAgents)
+          let isAgentSetAsSource = _agents.find(ag => ag.id === selectedContext?.data?.sources?.[0]?.source)
+          let isAgent = isAgentSetAsSource ? "agent" : null
+          if(isAgent) {
+            // when setted context is an agent
+            payload.context = selectedContext?.data?.context || selectedContext?.data?.sources?.[0]
+            if(selectedContext?.data?.messageId) {
+              payload.contextParams = {messageId: selectedContext?.data?.messageId}
+            }
+          } else {
+            // when setted context is an attachment
+            payload.context = {
+              sessionId : selectedContext?.data?.sessionId
+            }
           }
         }
 
@@ -168,6 +187,10 @@ const ChatInterface = (props) => {
       initiateChatConversationAction({payload})
     }
 
+    const enableCustomTemplate = (payload) => {
+      store.dispatch(setEnabledCustomTemplates(payload))
+    }
+
     // Add event listeners for the various events
     inputElement.addEventListener('change', handleEvent);
     inputElement.addEventListener('keyup', handleEvent);
@@ -185,7 +208,8 @@ const ChatInterface = (props) => {
         initiateChatConversationAction,
         cancelMessageReqAction,
         invokeGptAgentTemplate,
-        askQuickActions
+        askQuickActions,
+        enableCustomTemplate
     }
 }
 

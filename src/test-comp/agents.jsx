@@ -3,6 +3,7 @@ import AllAgents from '../agents/AllAgents'
 import EnabledAgents from '../agents/EnabledAgents'
 import recentAgents from '../agents/RecentAgents'
 import InitiateChatConversationAction from '../chat/InitiateChatConversationAction'
+import { InvokeAgent } from '../chat'
 
 const Agents = () => {
     const [agents, setAgents] = useState(null)
@@ -41,7 +42,7 @@ const Agents = () => {
             <ul>
                 {agents && agents.data.map(agent => {
                     return (
-                        <li key={agent.id} onClick={() => agentHandler(agent)}>{agent.name}</li>
+                        <li key={agent.id} onClick={() => InvokeAgent(agent)}>{agent.name}</li>
                     )
                 })}
             </ul>

@@ -296,7 +296,7 @@ const constructGptForm = (item) => {
 
     const submitButton = document.createElement('button')
     submitButton.type = "button";
-    submitButton.id = 'summarize'
+    submitButton.id = 'submitGptForm'
     submitButton.textContent = item?.content?.formFields?.submitAction?.title;
     buttonWrapper.appendChild(submitButton)
 

@@ -6,6 +6,7 @@ import constructGptForm from './gptTemplate/gptTemplateBody';
 import gptFormFunctionality from './gptTemplate/gptTemplateFunc';
 import { getCidByMessageId } from '../utils/helpers';
 import AnswerFromChip from './AnswerFromChip';
+import { chatTemplateTypes, msgStatus } from '../utils/constants';
 
 export const constructQuestionInitial = (args) => {
     let uniqueMsgId;
@@ -49,17 +50,21 @@ export const constructQuestionPostCall = (data, qId) => {
     delete question?.loading;
 
 
-    if(data?.payload?.history?.status !== 'terminated' && data?.payload?.templateType === 'gpt_form_template') {
-        const gptFormConstructedData = constructGptForm(data?.payload)
-        // constructGptForm(data?.payload)
-        question.template_html = gptFormConstructedData.outerHTML
-        setTimeout(() => {
-            gptFormFunctionality(data?.payload);
-        }, 1000);
-    
+    if(state.enabledCustomTemplates?.[data?.payload?.templateType]) {
+        // If custom template enabled for this data?.payload?.templateType template type
+    } else {
+
+        // DEFAULT GPT FORM TEMPLATE
+        if(data?.payload?.history?.status !== msgStatus.TERMINATED && data?.payload?.templateType === chatTemplateTypes.GPT_FORM_TEMPLATE) {
+            const gptFormConstructedData = constructGptForm(data?.payload)
+            question.template_html = gptFormConstructedData.outerHTML
+            setTimeout(() => {
+                gptFormFunctionality(data?.payload);
+            }, 1000);
+        }
     }
 
-    if(data?.payload?.templateType === 'search_answer'){
+    if(data?.payload?.templateType === chatTemplateTypes.SEARCH_ANSWER){
         if(data?.payload?.sources?.length > 0 ){
             const ansFromChipData = AnswerFromChip({item : data?.payload})
             question.answerFrom_html = ansFromChipData.outerHTML
@@ -131,8 +136,8 @@ export const constructQuestionPostCall = (data, qId) => {
         //     updatedQuestions[question?.parentMsgId].status = 'in-progress'
         // }
     }
-    else if(data?.payload?.history?.status === 'terminated'){
-        if(data?.payload?.history?.templateType === "gpt_form_template"){
+    else if(data?.payload?.history?.status === msgStatus.TERMINATED){
+        if(data?.payload?.history?.templateType === chatTemplateTypes.GPT_FORM_TEMPLATE){
             delete question.template_html
         }
             let terminatedAnswerResponse = "I see you interrupted the answer generation. Please feel free to provide more details or let me know how can I assist you further"
@@ -219,7 +224,7 @@ export const constructQuestionPostCall = (data, qId) => {
     // })
 
     if(!activeBoardId) {
-        if(data?.payload?.history?.status === 'terminated'){    
+        if(data?.payload?.history?.status === msgStatus.TERMINATED){    
             store.dispatch(setActiveBoardId(data?.payload?.history?.bId))
         }else{
             store.dispatch(setActiveBoardId(data?.payload?.boardId))

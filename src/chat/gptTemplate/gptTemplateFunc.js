@@ -5,183 +5,24 @@ import InitiateChatConversationAction from "../InitiateChatConversationAction";
 import FileUploader from "../../utils/fileUploader";
 import store from "../../redux/store";
 import { generateComponentId, getFileExtension, getUID } from "../../utils/helpers";
-// import Choices from "choices.js";
-// import "choices.js/public/assets/styles/choices.css";
-// import "./../gptTemplate/choics.css"
-
+import GptSubmitAction from "./gptSubmitAction";
+import GptFileUpload from "./gptFileUpload";
+import { setGptUploadedFiles } from "../../redux/globalSlice";
 
 const gptFormFunctionality = (item) => {
 
-    let fileData = null;
-
     const formFields = item?.content?.formFields?.inputFields;
-
-    const updateTextarea = (event) => {
-        const selectElement = event.target;
-        const promptIdValue = selectElement.value;
-
-        const promptFieldValues = formFields?.find(field => field?.key === "prompts")
-        let promptContainerValue = promptFieldValues?.value?.nested?.value?.values?.find(val => val.id === promptIdValue)?.value
-        const textareaElement = document.getElementById(`inputValue-prompts`);
-        textareaElement.value = promptContainerValue;
-    };
-
-    const submitAction = (event) => {
-        event.preventDefault()
-        const state = store.getState().global;
-
-        let payload = {}
-        if(state.activeBoardId) {
-            payload.activeBoardId = state.activeBoardId
-        }
-        payload.question = item?.question
-
-        let formData = item?.content?.formFields?.inputFields?.reduce((acc, field) => {
-            let reqdInputElement;
-            let reqdValue;
-        
-            if (field?.value?.type === 'dropdown') {
-                reqdInputElement = document.getElementById(`dropdownValue-${field?.key}`);
-                
-                if (field?.value?.multi) {
-                    const reqdValues = Array.from(reqdInputElement.selectedOptions).map(option => option.value);
-                    reqdValue = reqdValues; // Now an array
-                } else {
-                    reqdValue = reqdInputElement.value; // Single value
-                }
-            }
-            else {
-                reqdInputElement = document.getElementById(`inputValue-${field?.key}`)
-                reqdValue = reqdInputElement.value
-            }
-
-            if (field?.required || field?.value?.required) {
-                if (reqdValue?.length === 0) {
-                    return;
-                }
-            }
-
-            acc[field.key] = {
-                type: field?.value?.type,
-                required: !!field?.value?.required
-            };
-        
-            if (reqdValue) {
-                acc[field.key].value = reqdValue;
-            }
-
-            if(field?.value?.canUploadFile && fileData && (Object.keys(fileData)?.includes(field.key))){
-                let index = Object.keys(fileData).indexOf(field?.key)
-                acc[field.key] = Object.values(fileData)[index]
-            }
-
-            return acc;
-        }, {});
-        
-
-        let singlePrompt = item?.content?.formFields?.inputFields?.find(field => field.key === "prompt")
-        let multiPrompt = item?.content?.formFields?.inputFields?.find(field => field.key === "prompts")
-        if (singlePrompt) {
-            const promptValue = document.getElementById(`inputValue-${singlePrompt?.key}`)
-            formData.prompt = promptValue.value
-        } else if (multiPrompt) {
-            const promptValue = document.getElementById(`inputValue-${multiPrompt?.key}`)
-            formData.prompt = promptValue.value
-        }
-
-        payload.formData = formData || {}
-        payload.messageId = item?.messageId
-
-        let obj = { createIssue: true, from: "gptAgent", botQuestionId: item?.id}
-        if (item?.isTask) {
-            obj.multiIntentExecution = true
-        }
-        // console.log(payload)
-        InitiateChatConversationAction({payload, ...obj})
-    }
 
     const cancelAction = (event) => {
         event.preventDefault()
         cancelAdvanceSearch(item?.reqId)
     }
 
-    const uploadFile = (event, id) => {
-        if (event.target.files.length > 0) {
-            uploadFileInitial(event.target.files[0], id)
-        }
-    }
-
-
-    const uploadFileInitial = (file, id) => {
-        console.log(window.sdkConfig)
-        let userId = window.sdkConfig.userId;
-        let userAccessToken = window.sdkConfig.accessToken;
-        const source = axios.CancelToken.source();
-        let obj = {
-            mediaName: getUID(6),
-            loading: true,
-        };
-
-        const uploadConfig = {
-            file,
-            userInfoId: userId,
-            fileContext: 'knowledge',
-            userAccessToken: userAccessToken,
-            mediaName: obj.mediaName,
-            source: source
-        }
-
-        const u = new FileUploader(uploadConfig);
-
-        obj.fileName = u?.file?.name
-        obj.title = u?.file?.name
-        obj.source = "attachment"
-        obj.extName = getFileExtension(u?.file?.name)
-
-        u.start(
-            (res) => { }, (file) => {
-                let componentId = generateComponentId();
-                console.log(file)
-                let f = {
-                    ...file,
-                    loading: false,
-                    componentId,
-                    extName: getFileExtension(file?.fileName),
-                    source: "attachment",
-                    title: file?.fileName,
-                    docId: file?.fileUrl?.fileId
-                }
-
-                
-                let currentFileData = fileData || {}
-                currentFileData[id] = {
-                    type: "file",
-                    value: file?.fileUrl?.fileId,
-                    title: file?.title || file?.fileName
-                }
-
-                fileData = currentFileData;
-
-                const reqdTextArea = document.getElementById(`inputValue-${id}`)
-                reqdTextArea.style.display = 'none';
-
-                const reqdButton = document.getElementById(`removeButton-${id}`)
-                reqdButton.style.display = 'block'
-            },
-            (msg) => {
-                console.log(msg);
-                const reqdInputField = document.getElementById(`fileUpload-${id}`)
-                reqdInputField.value = ''
-                fileData = null;
-            })
-    }
-
-
     const removeUploadedFile = (event, id) => {
         event.preventDefault();
         const reqdInputField = document.getElementById(`fileUpload-${id}`)
         reqdInputField.value = ''
-        fileData = null;
+        store.dispatch(setGptUploadedFiles(null))
 
         const reqdTextArea = document.getElementById(`inputValue-${id}`)
         reqdTextArea.style.display = 'block';
@@ -190,16 +31,17 @@ const gptFormFunctionality = (item) => {
         reqdButton.style.display = 'none'
     }
 
-
     const delIconDiv = document.getElementById('deleteAnswer');
-    delIconDiv.addEventListener('click', (event) => cancelAction(event))
+    if(delIconDiv) {
+        delIconDiv.addEventListener('click', (event) => cancelAction(event))
+    }
 
     formFields?.forEach(field => {
         if (field?.value?.type === "richText" && field?.key === "content") {
             if (field?.value?.canUploadFile) {
 
                 const inputField = document.getElementById(`fileUpload-${field?.key}`)
-                inputField.addEventListener('change', (event) => uploadFile(event, field?.key))
+                inputField.addEventListener('change', (event) => GptFileUpload(event, field?.key))
 
                 const removeButton = document.getElementById(`removeButton-${field?.key}`);
                 removeButton.addEventListener('click', (event) => removeUploadedFile(event, field?.key))
@@ -211,59 +53,12 @@ const gptFormFunctionality = (item) => {
             if (field?.value?.canUploadFile) {
 
                 const inputField = document.getElementById(`fileUpload-${field?.key}`)
-                inputField.addEventListener('change', (event) => uploadFile(event, field?.key))
+                inputField.addEventListener('change', (event) => GptFileUpload(event, field?.key))
 
                 const removeButton = document.getElementById(`removeButton-${field?.key}`);
                 removeButton.addEventListener('click', () => removeUploadedFile(field?.key))
             }
         }
-
-        // if (field?.value?.type === "dropdown" && !field?.value?.multi) {
-
-        //     const selectElement = document.getElementById(`dropdownValue-${field?.key}`);
-        //     const choices = new Choices(selectElement, {
-        //         silent: false,
-        //         placeholder: true,
-        //         addChoices: false,
-        //         placeholderValue: 'Select an option',
-        //         searchEnabled: false,
-        //     });
-
-        //     let dropDownChoices;
-        //     dropDownChoices = field?.value?.choices
-
-        //     if (field?.key === 'prompts') {
-        //         selectElement.addEventListener('change', updateTextarea);
-        //         dropDownChoices = field?.value?.choices.map((choice, index) => ({
-        //             ...choice,
-        //             selected: index === 0 
-        //         }));
-        //     }  
-
-        //     choices.setChoices(dropDownChoices, 'id', 'label', true);
-        // }
-
-        // if (field?.value?.type === "dropdown" && field?.value?.multi) {
-
-        //     const selectElement = document.getElementById(`dropdownValue-${field?.key}`);
-        //     const choices = new Choices(selectElement, {
-        //         silent: false,
-        //         placeholder: true,
-        //         addChoices: false,
-        //         placeholderValue: 'Select Multiple Options',
-        //         searchEnabled: false, 
-        //         removeItemButton: true,
-        //         maxItemCount : -1,
-        //         duplicateItemsAllowed: false, 
-        //         removeItems: true, 
-        //         itemSelectText: '', 
-        //         noChoicesText: '', 
-        //     });
-
-        //     const dropDownChoices = field?.value?.choices
-
-        //     choices.setChoices(dropDownChoices, 'id', 'label', true);
-        // }
 
         if (field?.key === "prompt") {
 
@@ -281,12 +76,14 @@ const gptFormFunctionality = (item) => {
     });
 
     const cancelButton = document.getElementById('discardAnswer')
-    cancelButton.addEventListener('click', (event) => cancelAction(event))
+    if(cancelButton) {
+        cancelButton.addEventListener('click', (event) => cancelAction(event))
+    }
 
-    const submitButton = document.getElementById('summarize')
-    submitButton.addEventListener('click', (event) => submitAction(event))
-
-
+    const submitButton = document.getElementById('submitGptForm')
+    if(submitButton) {
+        submitButton.addEventListener('click', (event) => GptSubmitAction(event, item))
+    }
 };
 
 export default gptFormFunctionality;

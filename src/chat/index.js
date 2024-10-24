@@ -4,3 +4,6 @@ export { default as InitiateChatConversationAction } from './InitiateChatConvers
 export { default as InvokeGptAgentTemplate } from './invokeGptAgentTemplate.js';
 export { default as cancelAdvanceSearch } from './cancelAdvanceSearch.js';
 export { default as JoinChatThread } from './JoinChatThread.js';
+export { default as GptSubmitAction } from './gptTemplate/gptSubmitAction.js';
+export { default as InvokeAgent } from './invokeAgent.js';
+export { default as GptFileUpload } from './gptTemplate/gptFileUpload.js';

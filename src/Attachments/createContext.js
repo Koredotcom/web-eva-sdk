@@ -135,7 +135,7 @@ export const sessionItemHandler = (args) => {
         selectedContextData.data = {};
         // selectedContextData.data.sessionId = selectedContext?.data?.sessionId
         // selectedContextData.data.quickactions = selectedContext?.data?.quickactions
-        selectedContextData.sources = [{ ...item }, type]
+        selectedContextData.data.sources = [{...item, type}]
         store.dispatch(setSelectedContext(selectedContextData))
         return;
     }
