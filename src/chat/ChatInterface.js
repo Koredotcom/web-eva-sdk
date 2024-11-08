@@ -164,6 +164,10 @@ const ChatInterface = (props) => {
       }else{
         constructQuestionPostCall(Res, qId)
       }
+
+      if(arg?.callback) {
+        arg.callback()
+      }
       
       // store.dispatch(setCurrentQuestion({}))
     }

@@ -1,3 +1,4 @@
+import { setGptUploadedFiles } from "../../redux/globalSlice";
 import store from "../../redux/store";
 import InitiateChatConversationAction from "../InitiateChatConversationAction";
 
@@ -72,7 +73,12 @@ const GptSubmitAction = (event, question) => {
     if (question?.isTask) {
         obj.multiIntentExecution = true
     }
-    InitiateChatConversationAction({payload, ...obj})
+
+    let callback = () => {
+        store.dispatch(setGptUploadedFiles(null))
+    }
+    
+    InitiateChatConversationAction({payload, callback, ...obj})
 }
 
 export default GptSubmitAction;
