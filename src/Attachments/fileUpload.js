@@ -275,7 +275,8 @@ const FileUpload = (props) => {
         // uploadSelectedFile,
         removeContext,
         setAttachmentContext,
-        askFollowup
+        askFollowup,
+        uploadFile
     }
 }
 
