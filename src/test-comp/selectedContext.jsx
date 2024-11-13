@@ -14,7 +14,7 @@ const SelectedContext = () => {
     useEffect(() => {
         uploadFile.current = FileUpload();
         chatInterface.current = ChatInterface();
-        uploadFile.current.showUploadChip('composeBar')
+        // uploadFile.current.showUploadChip('composeBar')
 
         const unsubscribe = uploadFile.current.subscribe((context, sessionId, quickActions, errorFiles) => {
             console.log("Selected Context", context, "Session ID", sessionId, quickActions, errorFiles)
@@ -40,6 +40,10 @@ const SelectedContext = () => {
 
     return (
         <div>
+            <input 
+                type='file' 
+                onChange={(e)=> uploadFile.current.uploadFile(e)}
+            />
             <h1>Selected Context</h1>
             {quickActions?.length > 0 && quickActions?.map((item) => (
                 <div onClick={(e) => chatInterface.current.askQuickActions(item)}>{item?.label}</div>

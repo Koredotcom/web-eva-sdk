@@ -26,10 +26,12 @@ const GptSubmitAction = (event, question) => {
             } else {
                 reqdValue = reqdInputElement.value; // Single value
             }
+            console.log(`Form field is ${`(dropdownValue-${field?.key})`} and value is {${reqdInputElement.value}}`)
         }
         else {
             reqdInputElement = document.getElementById(`inputValue-${field?.key}`)
             reqdValue = reqdInputElement.value
+            console.log(`Form field is ${`(inputValue-${field?.key})`} and value is {${reqdInputElement.value}}`)
         }
 
         if (field?.required || field?.value?.required) {
@@ -61,9 +63,11 @@ const GptSubmitAction = (event, question) => {
     if (singlePrompt) {
         const promptValue = document.getElementById(`inputValue-${singlePrompt?.key}`)
         formData.prompt = promptValue.value
+        console.log(`Form field is ${`(inputValue-${singlePrompt?.key})`} and value is {${promptValue.value}}`)
     } else if (multiPrompt) {
         const promptValue = document.getElementById(`inputValue-${multiPrompt?.key}`)
         formData.prompt = promptValue.value
+        console.log(`Form field is ${`(inputValue-${multiPrompt?.key})`} and value is {${promptValue.value}}`)
     }
 
     payload.formData = formData || {}

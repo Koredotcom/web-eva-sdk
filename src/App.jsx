@@ -25,8 +25,8 @@ const App = () => {
   return (
     <div>
       <ChatTestComp/>
-      {/* <Agents /> */}
-      <File />
+      <Agents />
+      {/* <File /> */}
       <SelectedContext/>
     </div>
   )
