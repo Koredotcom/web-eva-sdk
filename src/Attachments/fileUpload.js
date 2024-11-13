@@ -261,18 +261,8 @@ const FileUpload = (props) => {
         }
     }
 
-    const uploadFileButton = document.createElement('input')
-    uploadFileButton.type = 'file'
-    uploadFileButton.innerText = 'Upload'
-    uploadFileButton.multiple = true
-    uploadFileButton.addEventListener('change', (e) => uploadFile(e))
-
     return {
-        showUploadChip: parentEl => {
-            document.getElementById(parentEl).appendChild(uploadFileButton);
-        },
         subscribe,
-        // uploadSelectedFile,
         removeContext,
         setAttachmentContext,
         askFollowup,
