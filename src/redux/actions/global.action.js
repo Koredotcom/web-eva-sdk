@@ -191,3 +191,15 @@ export const searchSession = createAsyncThunk(
         }
     }
 )
+
+export const submitFeedback = createAsyncThunk(
+    'global/submitFeedback',
+    async (arg, thunkAPI) => {
+        try {
+            const response = await axiosInstance.put(`kora/boards/${arg?.boardId}/messages/${arg?.messageId}/feedback`, arg.payload);
+            return response.data;
+        } catch (error) {
+            return thunkAPI.rejectWithValue(error.response.data);
+        }
+    }
+);
