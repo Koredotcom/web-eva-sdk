@@ -10,6 +10,7 @@ export * from './chat';
 export * from './agents';
 export * from './files';
 export * from './Attachments';
+export * from './Feedback'
 
 // Redux store exports
 export { default as store } from './redux/store';

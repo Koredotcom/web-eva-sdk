@@ -7,7 +7,8 @@ import {
   fetchHistory,
   fetchRecentFiles, 
   getRecentFileDownloadUrl,
-  searchSession
+  searchSession,
+  submitFeedback
 } from './actions/global.action';
 import { handleAsyncActions } from '../utils/handleAsyncActions';
 import { cloneDeep, concat, uniqBy } from 'lodash';
@@ -35,7 +36,8 @@ const initialState = {
   selectedContext : {},
   maxAllowedFileSize : null,
   enabledCustomTemplates: {},
-  GptUploadedFiles: null
+  GptUploadedFiles: null,
+  submitFeedback: {}
 };
 
 const globalSlice = createSlice({
@@ -124,6 +126,12 @@ const globalSlice = createSlice({
       });
       handleAsyncActions(builder, searchSession, 'selectedContext')
       handleAsyncActions(builder, getRecentFileDownloadUrl, 'recentFileDownloadUrl');
+      handleAsyncActions(builder, submitFeedback, 'submitFeedback', (state, action)=> {
+        // feedback logic to update questions
+        let questions = cloneDeep(state.questions)
+        questions[[action.meta.arg.cId]] = { ...questions[[action.meta.arg.cId]] , ...action.payload}
+        state.questions = questions
+      });
       // handleAsyncActions(builder, getSearchHistory, 'searchHistoryRes', (state, action)=> {
       //   if(action?.meta?.arg?.onload) {
       //     state.recentFiles = state.recentFilesRes
