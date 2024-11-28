@@ -129,7 +129,7 @@ const globalSlice = createSlice({
       handleAsyncActions(builder, submitFeedback, 'submitFeedback', (state, action)=> {
         // feedback logic to update questions
         let questions = cloneDeep(state.questions)
-        questions[[action.meta.arg.cId]] = { ...questions[[action.meta.arg.cId]] , ...action.payload}
+        questions[[action.meta.arg.cId]] = { ...questions[[action.meta.arg.cId]] , ...action.payload.data}
         state.questions = questions
       });
       // handleAsyncActions(builder, getSearchHistory, 'searchHistoryRes', (state, action)=> {
