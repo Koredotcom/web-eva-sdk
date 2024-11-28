@@ -41,8 +41,7 @@ const submitUserFeedback = async ({ type, cId, payload }) => {
         Payload: ${feedBackPayload}
     `);
     const response = await store.dispatch(submitFeedback({ boardId: state.activeBoardId, messageId: currentQuestion?.messageId, cId: cId, payload: feedBackPayload }));
-    console.log("response after submitting feedback: ", response)
-    return;
+    return response;
 }
 
 export default submitUserFeedback

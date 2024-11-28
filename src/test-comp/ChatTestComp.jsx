@@ -5,7 +5,8 @@ import AgentWelcomeTemplate from './WelcomeTemplate'
 import History from './history'
 import DemoComp from './selectedContextDemoComp'
 import AskFollowup from '../Attachments/askFollowup'
-import submitUserFeedback from '../Feedback'
+import { submitUserFeedback } from '../Feedback'
+
 
 
 const ChatTestComp = (props) => {
@@ -72,7 +73,7 @@ const ChatTestComp = (props) => {
                                     <div dangerouslySetInnerHTML={{ __html: item.answerFrom_html }}></div>
                                     {item?.answerFrom_html && <div onClick={() => AskFollowup(item)}>Ask followup</div>}
                                     {!item?.disableFeedback && <div>
-                                        <button onClick={() => submitUserFeedback("like", item?.cId, null)}>Like</button>
+                                        <button onClick={() => submitUserFeedback({type:"like", cId:item?.cId, payload:null})}>Like</button>
                                         <button onClick={() => 
                                             setShowDislikeMenu(true)
                                             }>Dislike</button>
@@ -106,7 +107,7 @@ const ChatTestComp = (props) => {
                                         <div>
                                             <button
                                                 onClick={() => {
-                                                    submitUserFeedback("dislike", item?.cId, null),
+                                                    submitUserFeedback({type:"dislike", cId:item?.cId,payload: null}),
                                                         setShowDislikeMenu(false)
                                                 }}>
                                                 Submit
