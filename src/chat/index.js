@@ -7,3 +7,8 @@ export { default as JoinChatThread } from './JoinChatThread.js';
 export { default as GptSubmitAction } from './gptTemplate/gptSubmitAction.js';
 export { default as InvokeAgent } from './invokeAgent.js';
 export { default as GptFileUpload } from './gptTemplate/gptFileUpload.js';
+export { default as AddAdditionalGPTResponse } from './gptTemplate/addAdditionalGPTResponse.js';
+export { default as DeleteGPTResponse } from './gptTemplate/deleteGPTResponse.js';
+export { default as UpdateGPTPromptValue } from './gptTemplate/updateGPTPromptValue.js';
+export { default as RemoveUploadedGPTFile } from './gptTemplate/removeUploadedGPTFile.js';
+export { default as SubmitGPTForm } from './gptTemplate/submitGPTForm.js';

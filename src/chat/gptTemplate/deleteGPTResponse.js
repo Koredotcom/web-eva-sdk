@@ -1,7 +1,7 @@
 import MultiResponse from "./MultiResponse"
 
-const DeleteResponse = (item, subIndex) => {
+const DeleteGPTResponse = (item, subIndex) => {
     return MultiResponse().deleteAdditionalResponse(item, subIndex)
 }
 
-export default DeleteResponse;
+export default DeleteGPTResponse;
