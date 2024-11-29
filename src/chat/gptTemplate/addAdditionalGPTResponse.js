@@ -1,7 +1,7 @@
 import MultiResponse from "./MultiResponse"
 
-const AddResponse = (item) => {
+const AddAdditionalGPTResponse = (item) => {
     return MultiResponse().addAdditionalResponse(item)
 }
 
-export default AddResponse;
+export default AddAdditionalGPTResponse;

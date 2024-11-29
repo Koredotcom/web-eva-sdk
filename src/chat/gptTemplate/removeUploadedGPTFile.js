@@ -1,7 +1,7 @@
 import MultiResponse from "./MultiResponse"
 
-const RemoveUploadedFile = (item, index) => {
+const RemoveUploadedGPTFile = (item, index) => {
     return MultiResponse().removeFile(item, index)
 }
 
-export default RemoveUploadedFile;
+export default RemoveUploadedGPTFile;

@@ -1,10 +1,10 @@
 import React from "react";
 import { GptFileUpload } from "../chat";
-import DeleteResponse from "../chat/gptTemplate/deleteResponse";
-import UpdatePrompt from "../chat/gptTemplate/updatePrompt";
-import AddResponse from "../chat/gptTemplate/AddResponse";
+import DeleteGPTResponse from "../chat/gptTemplate/deleteGPTResponse";
+import UpdateGPTPromptValue from "../chat/gptTemplate/updateGPTPromptValue";
+import AddAdditionalGPTResponse from "../chat/gptTemplate/addAdditionalGPTResponse";
 import SubmitGPTForm from "../chat/gptTemplate/submitGPTForm";
-import RemoveUploadedFile from "../chat/gptTemplate/removeUploadedFile";
+import RemoveUploadedGPTFile from "../chat/gptTemplate/removeUploadedGPTFile";
 
 const MultiResponseTestComp = ({ item }) => {
 
@@ -28,14 +28,14 @@ const MultiResponseTestComp = ({ item }) => {
                             {(contextField?.value?.type === "file") && (
                                 <>
                                     <input type="file" id={`fileUpload-${contextField?.key}`} onChange={(e) => GptFileUpload(e, `${contextField?.key}`)}/>
-                                    <button onClick={(e) => RemoveUploadedFile(e, `${contextField?.key}`)} id = {`removeButton-${contextField?.key}`}style={{display: "none"}}>Remove</button>
+                                    <button onClick={(e) => RemoveUploadedGPTFile(e, `${contextField?.key}`)} id = {`removeButton-${contextField?.key}`}style={{display: "none"}}>Remove</button>
                                 </>
                             )}
 
                             {contextField?.value?.canUploadFile && (
                                 <>  
                                     <input type="file" id={`fileUpload-${contextField?.key}`} onChange={(e) => GptFileUpload(e, `${contextField?.key}`)}/>
-                                    <button onClick={(e) => RemoveUploadedFile(e, `${contextField?.key}`)} id = {`removeButton-${contextField?.key}`}style={{display: "none"}}>Remove</button>
+                                    <button onClick={(e) => RemoveUploadedGPTFile(e, `${contextField?.key}`)} id = {`removeButton-${contextField?.key}`}style={{display: "none"}}>Remove</button>
                                 </>
                             )}
                         </>
@@ -44,7 +44,7 @@ const MultiResponseTestComp = ({ item }) => {
                 {forms?.fieldValues?.map((fieldValue, subIndex) => {
                     return (
                         <>
-                            {subIndex > 0 && <button onClick={() => { DeleteResponse(item, subIndex) }}>Delete</button>}
+                            {subIndex > 0 && <button onClick={() => { DeleteGPTResponse(item, subIndex) }}>Delete</button>}
                             {fieldValue?.map((subItem, anotherIndex) => {
                                 return (
                                     <>
@@ -61,7 +61,7 @@ const MultiResponseTestComp = ({ item }) => {
                                         {(subItem?.value?.type === "dropdown" && !subItem?.value?.multi) && (
                                             <>
                                                 <div>{subItem?.label}</div>
-                                                <select id={`dropdownValue-${subItem?.key}-${subIndex}`} onChange={(e) => {if(subItem?.key === 'prompts'){UpdatePrompt(item,subIndex, e.target.value)}}}>
+                                                <select id={`dropdownValue-${subItem?.key}-${subIndex}`} onChange={(e) => {if(subItem?.key === 'prompts'){UpdateGPTPromptValue(item,subIndex, e.target.value)}}}>
                                                     {subItem?.value?.choices?.map((choice, choiceIndex) => {
                                                         return <option value={choice?.id}>{choice?.label}</option>
                                                     })}
@@ -89,7 +89,7 @@ const MultiResponseTestComp = ({ item }) => {
                                         {(subItem?.value?.canUploadFile) && (
                                             <>  
                                                 <input type="file" id={`fileUpload-${subItem?.key}-${subIndex}`} onChange={(e) => GptFileUpload(e, `${subItem?.key}-${subIndex}`)}/>
-                                                <button onClick={(e) => RemoveUploadedFile(e, `${subItem?.key}-${subIndex}`)} id = {`removeButton-${subItem?.key}-${subIndex}`} style={{display: "none"}}>Remove</button>
+                                                <button onClick={(e) => RemoveUploadedGPTFile(e, `${subItem?.key}-${subIndex}`)} id = {`removeButton-${subItem?.key}-${subIndex}`} style={{display: "none"}}>Remove</button>
                                             </>
                                         )}
                                         {(subItem?.key === "prompt") && (
@@ -113,7 +113,7 @@ const MultiResponseTestComp = ({ item }) => {
             </div>
 
             <button onClick={() => {
-                AddResponse(item)
+                AddAdditionalGPTResponse(item)
             }}>Add</button>
             <button onClick={(e) => {
                 SubmitGPTForm(e, item)
