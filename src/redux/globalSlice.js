@@ -35,7 +35,7 @@ const initialState = {
   fileTypes : null,
   selectedContext : {},
   maxAllowedFileSize : null,
-  enabledCustomTemplates: {},
+  enabledCustomTemplates: {gpt_form_template: true},
   GptUploadedFiles: null,
   submitFeedback: {}
 };
