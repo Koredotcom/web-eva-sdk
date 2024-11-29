@@ -3,6 +3,7 @@ import FileUploader from "../../utils/fileUploader";
 import { generateComponentId, getFileExtension, getUID } from "../../utils/helpers";
 import store from "../../redux/store";
 import { setGptUploadedFiles } from "../../redux/globalSlice";
+import { cloneDeep } from "lodash";
 
 let gptFileData = null;
 
@@ -58,7 +59,7 @@ const uploadFileInitial = (file, id, resolve, reject) => {
             }
 
             
-            let currentFileData = gptFileData || {}
+            let currentFileData = cloneDeep(gptFileData) || {}
             currentFileData[id] = {
                 type: "file",
                 value: file?.fileUrl?.fileId,
@@ -86,8 +87,10 @@ const uploadFileInitial = (file, id, resolve, reject) => {
             if(reqdInputField) {
                 reqdInputField.value = ''
             }
-            gptFileData = null;
-            store.dispatch(setGptUploadedFiles(null))
+            let state = store.getState().global;
+            let uploadedFiles = cloneDeep(state.GptUploadedFiles);
+            delete uploadedFiles[id];
+            store.dispatch(setGptUploadedFiles(uploadedFiles));
             reject(msg)
         })
 }

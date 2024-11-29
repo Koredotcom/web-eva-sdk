@@ -5,7 +5,8 @@ import AgentWelcomeTemplate from './WelcomeTemplate'
 import History from './history'
 import DemoComp from './selectedContextDemoComp'
 import AskFollowup from '../Attachments/askFollowup'
-import { submitUserFeedback } from '../Feedback'
+import MultiResponseTestComp from './MultiResponseTestComp'
+// import { submitUserFeedback } from '../Feedback'
 
 
 
@@ -62,7 +63,7 @@ const ChatTestComp = (props) => {
                                 item.status === 'terminated' ? (
                                     <div>{item?.answer}</div>
                                 ) : (
-                                    <div dangerouslySetInnerHTML={{ __html: item.template_html }}></div>
+                                    <MultiResponseTestComp item={item} />
                                 )
                             );
                         }
@@ -115,6 +116,20 @@ const ChatTestComp = (props) => {
                                         </div>
 
                                     </div>}
+                                </>
+                            )
+                        }
+                        if(item.templateType === "multi_responses"){
+                            return (
+                                <>
+                                {item?.responses?.map((response, index) => {
+                                    return (
+                                        <>
+                                            <div>{`Response ${index + 1}`}</div>
+                                            <div>{response?.answer}</div>
+                                        </>
+                                    )
+                                })}
                                 </>
                             )
                         }

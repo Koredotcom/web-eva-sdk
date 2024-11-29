@@ -7,6 +7,7 @@ import gptFormFunctionality from './gptTemplate/gptTemplateFunc';
 import { getCidByMessageId } from '../utils/helpers';
 import AnswerFromChip from './AnswerFromChip';
 import { chatTemplateTypes, msgStatus } from '../utils/constants';
+import MultiResponse from './gptTemplate/MultiResponse';
 
 export const constructQuestionInitial = (args) => {
     let uniqueMsgId;
@@ -51,6 +52,10 @@ export const constructQuestionPostCall = (data, qId) => {
 
 
     if(state.enabledCustomTemplates?.[data?.payload?.templateType]) {
+        if(data?.payload?.templateType === chatTemplateTypes.GPT_FORM_TEMPLATE) {
+            let multiResponseData = MultiResponse().getInitialFormData(data?.payload)
+            question.gpt_forms = multiResponseData
+        }
         // If custom template enabled for this data?.payload?.templateType template type
     } else {
 
