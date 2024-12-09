@@ -1,4 +1,4 @@
-import { cloneDeep } from "lodash";
+import { cloneDeep, isEmpty } from "lodash";
 import store from "../../redux/store";
 import { setGptUploadedFiles, updateChatData } from "../../redux/globalSlice";
 import InitiateChatConversationAction from "../InitiateChatConversationAction";
@@ -20,7 +20,10 @@ const MultiResponse = () => {
         if (item?.content?.formFields?.paramFields) {
             parameterFields = item?.content?.formFields?.paramFields
         }
-        if (item?.content?.formFields?.responseFields) {
+
+        let isResFieldEmpty = item?.content?.formFields?.responseFields?.length === 1 && isEmpty(item?.content?.formFields?.responseFields?.[0])
+
+        if (item?.content?.formFields?.responseFields && !isResFieldEmpty) {
             responseFields = cloneDeep(item?.content?.formFields?.responseFields?.[0])
             if(responseFields?.value?.nested){
                 responseFields.value.nested.value = responseFields?.value?.nested?.value?.values[0]?.value;
@@ -177,7 +180,7 @@ const MultiResponse = () => {
                     console.log(`Form field is ${`(dropdownValue-${field?.key})`} and value is {${reqdInputElement.value}}`)
                 } else { 
                     reqdInputElement = document.getElementById(`inputValue-${field?.key}-${index}`)
-                    reqdValue = reqdInputElement.value || reqdInputElement.textContent
+                    reqdValue = reqdInputElement?.value || reqdInputElement?.textContent || ""
                     console.log(`Form field is ${`(inputValue-${field?.key})`} and value is {${reqdInputElement.value}}`)
                 }
     
