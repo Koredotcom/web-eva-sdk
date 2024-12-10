@@ -179,7 +179,7 @@ const MultiResponse = () => {
                     console.log(`Form field is ${`(dropdownValue-${field?.key})`} and value is {${reqdInputElement.value}}`)
                 } else { 
                     reqdInputElement = document.getElementById(`inputValue-${field?.key}-${index}`)
-                    reqdValue = reqdInputElement.value || reqdInputElement.textContent
+                    reqdValue = reqdInputElement?.value || reqdInputElement?.textContent || ""
                     console.log(`Form field is ${`(inputValue-${field?.key})`} and value is {${reqdInputElement.value}}`)
                 }
     
