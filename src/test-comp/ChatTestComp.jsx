@@ -30,6 +30,8 @@ const ChatTestComp = (props) => {
             setQuestions(question)
         });
 
+        chatInterface.current.enableCustomTemplate({gpt_form_template: true})
+
         // Cleanup on component unmount
         return () => {
             // Unsubscribe from store updates
