@@ -10,20 +10,17 @@ const MultiResponse = () => {
     const getInitialFormData = (item) => {
         // The Initial gpt_forms data will be rendered here
         let forms = {}
-        let parameterFields = []
-        let fieldValues = []
-        let responseFields = []
+        let parameterFields = [];
+        let fieldValues = [];
+        let responseFields = [];
 
-        if (item?.content?.formFields?.contextFields) {
+        if (!isEmpty(item?.content?.formFields?.contextFields)) {
             forms.contextFields = item?.content?.formFields?.contextFields
         }
-        if (item?.content?.formFields?.paramFields) {
+        if (!isEmpty(item?.content?.formFields?.paramFields)) {
             parameterFields = item?.content?.formFields?.paramFields
         }
-
-        let isResFieldEmpty = item?.content?.formFields?.responseFields?.length === 1 && isEmpty(item?.content?.formFields?.responseFields?.[0])
-
-        if (item?.content?.formFields?.responseFields && !isResFieldEmpty) {
+        if (!isEmpty(item?.content?.formFields?.responseFields)) {
             responseFields = cloneDeep(item?.content?.formFields?.responseFields?.[0])
             if(responseFields?.value?.nested){
                 responseFields.value.nested.value = responseFields?.value?.nested?.value?.values[0]?.value;
@@ -66,9 +63,11 @@ const MultiResponse = () => {
         let cloneParamFields = cloneDeep(_formData.fieldValues[0]);
 
         // The choices dropdown will be added here
-        let choicesDropdown = getChoices(_formData.fieldValues.length);
-        cloneParamFields.unshift(choicesDropdown);
-
+        let choicesDropdown;
+        if(!isEmpty(item?.content?.formFields?.contextFields)) {
+            choicesDropdown = getChoices(_formData.fieldValues.length);
+            cloneParamFields.unshift(choicesDropdown);
+        }
         _formData.fieldValues.push(cloneParamFields);
         currentQuestion.gpt_forms = _formData;
         _questions[item?.cId] = currentQuestion;
@@ -116,8 +115,8 @@ const MultiResponse = () => {
         
         // Constructing contextFields
         let contextFields = item?.gpt_forms?.contextFields?.[0];
-        let payloadContext = {};
-        if (contextFields) {
+        let payloadContext = [];
+        if (!isEmpty(contextFields)) {
 
             let reqdValue;
 
@@ -216,7 +215,7 @@ const MultiResponse = () => {
                 }
 
                 // Setting the Content Field for the First Response
-                if(index === 0) {
+                if(index === 0 && !isEmpty(contextFields)) {
                     acc.content =  {type: "dropdown", value: "0", required: false, id: contextFields?.id, label: contextFields?.label}
                 }
                 return acc;
