@@ -36,19 +36,19 @@ const MultiResponse = () => {
         return forms
     }
 
-    const getChoices = (len) => {
+    const getChoices = (len, contextField) => {
         // The Content dropdown will have the initial response and the rest of the responses to select
         let choices = [{ "id": "0", "label": "Initial Response" }]
         for (let i = 0; i < len; i++) {
             choices.push({ "id": `${i + 1}`, "label": `Response ${i + 1}` })
         }
         let contextDropDownField = {
-            "id": "content",
-            "key": "content",
-            "label": "Content",
+            "id": contextField?.id,
+            "key": contextField?.key,
+            "label": contextField?.label,
             "value": {
                 "type": "dropdown",
-                "required": true,
+                "required": contextField?.value?.required,
                 "multi": false,
                 "choices": choices
             }
@@ -65,7 +65,8 @@ const MultiResponse = () => {
         // The choices dropdown will be added here
         let choicesDropdown;
         if(!isEmpty(item?.content?.formFields?.contextFields)) {
-            choicesDropdown = getChoices(_formData.fieldValues.length);
+            let contextField = item?.content?.formFields?.contextFields?.[0];
+            choicesDropdown = getChoices(_formData.fieldValues.length, contextField);
             cloneParamFields.unshift(choicesDropdown);
         }
         _formData.fieldValues.push(cloneParamFields);
@@ -216,7 +217,7 @@ const MultiResponse = () => {
 
                 // Setting the Content Field for the First Response
                 if(index === 0 && !isEmpty(contextFields)) {
-                    acc.content =  {type: "dropdown", value: "0", required: false, id: contextFields?.id, label: contextFields?.label}
+                    acc[contextFields?.key] =  {type: "dropdown", value: "0", required: false, id: contextFields?.id, label: contextFields?.label}
                 }
                 return acc;
             }, {})
