@@ -8,7 +8,8 @@ import {
   fetchRecentFiles, 
   getRecentFileDownloadUrl,
   searchSession,
-  submitFeedback
+  submitFeedback,
+  presenceStart
 } from './actions/global.action';
 import { handleAsyncActions } from '../utils/handleAsyncActions';
 import { cloneDeep, concat, uniqBy } from 'lodash';
@@ -37,7 +38,8 @@ const initialState = {
   maxAllowedFileSize : null,
   enabledCustomTemplates: {},
   GptUploadedFiles: null,
-  submitFeedback: {}
+  submitFeedback: {},
+  presenceStart: {}
 };
 
 const globalSlice = createSlice({
@@ -132,19 +134,7 @@ const globalSlice = createSlice({
         questions[[action.meta.arg.cId]] = { ...questions[[action.meta.arg.cId]] , ...action.payload.data}
         state.questions = questions
       });
-      // handleAsyncActions(builder, getSearchHistory, 'searchHistoryRes', (state, action)=> {
-      //   if(action?.meta?.arg?.onload) {
-      //     state.recentFiles = state.recentFilesRes
-      //     state.AllrecentFiles = state.recentFilesRes
-      //   }
-      //   if(action?.meta?.arg?.loadmore) {
-      //     let AllrecentFiles = cloneDeep(state.AllrecentFiles?.data?.files)
-      //     AllrecentFiles = uniqBy(concat(AllrecentFiles, state.recentFilesRes?.data?.files), 'id')
-      //     state.AllrecentFiles.data.files = AllrecentFiles
-      //     state.AllrecentFiles.status = state.recentFilesRes.status
-      //     state.AllrecentFiles.error = state.recentFilesRes.error
-      //   }
-      // });
+      handleAsyncActions(builder, presenceStart, 'presenceStart');
     }
 });
 
