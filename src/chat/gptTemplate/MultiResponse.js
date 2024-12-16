@@ -162,9 +162,7 @@ const MultiResponse = () => {
         payload.formData.contextFields = payloadContext;
 
         // Constructing requestParams
-        let requestParams = []
-        requestParams = allResponseFields?.map((field, index) => {
-
+        let requestParams = allResponseFields?.map((field, index) => {
             let totalMockParameters = field?.reduce((acc, field) => {
                 let reqdInputElement;
                 let reqdValue;
@@ -221,8 +219,8 @@ const MultiResponse = () => {
                 }
                 return acc;
             }, {})
-            requestParams.push(totalMockParameters)
-            return totalMockParameters
+            // requestParams.push(totalMockParameters)
+            return { "fields" : totalMockParameters };
         })
     
         
