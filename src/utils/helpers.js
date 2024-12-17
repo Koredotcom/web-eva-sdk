@@ -68,7 +68,7 @@ export const getQueryParams = (url) => {
 export const getCidByMessageId = (data, messageId) => {
     for (const key in data) {
         if (data[key].messageId === messageId) {
-            return data[key].cId;
+            return data[key].reqId;
         }
     }
     return null; // or an appropriate value if no match is found
@@ -77,7 +77,7 @@ export const getCidByMessageId = (data, messageId) => {
 export const getCidByReqId = (data, reqId) => {
     for (const key in data) {
         if (data[key].reqId === reqId) {
-            return data[key].cId;
+            return data[key].reqId;
         }
     }
     return null;

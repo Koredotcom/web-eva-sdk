@@ -1,6 +1,6 @@
 import { advanceSearch, cancelAdvancedSearch } from "../redux/actions/global.action";
-import { setCurrentQuestion, setEnabledCustomTemplates } from "../redux/globalSlice"
-// import { updateChatData } from "../redux/globalSlice";
+import { setChatInterfaceOptions, setCurrentQuestion, setEnabledCustomTemplates } from "../redux/globalSlice"
+import { updateChatData } from "../redux/globalSlice";
 import store from "../redux/store";
 import { v4 as uuid } from 'uuid';
 import { constructQuestionInitial, constructQuestionPostCall } from "./chat-utils";
@@ -8,7 +8,7 @@ import { generateShortUUID, getCidByMessageId, getCidByReqId } from "../utils/he
 import { cloneDeep, isEmpty } from "lodash";
 
 const ChatInterface = (props) => {
-    let state = store.getState().global, input = '';
+    let state = store.getState().global, input = '', resIndexRef = 0;
 
     // Subscribe to store updates
     const subscribe = (cb) => {
@@ -16,10 +16,10 @@ const ChatInterface = (props) => {
         const unsubscribe = store.subscribe(() => {
             state = store.getState().global;
             // If callback exists and API call is completed, invoke it
-            if (state.advanceSearchRes.status !== 'loading' && callback) {
+            // if (state.advanceSearchRes.status !== 'loading' && callback) {
                 callback(state.questions, state.advanceSearchRes, state.chatHistoryMoreAvailable);
-                console.log(state.questions, state.advanceSearchRes, state.chatHistoryMoreAvailable)
-            }
+                // console.log(state.questions, state.advanceSearchRes, state.chatHistoryMoreAvailable)
+            // }
         });
 
         // Return a function to unsubscribe
@@ -92,6 +92,7 @@ const ChatInterface = (props) => {
       if(arg?.createIssue){
         if(arg?.from === "gptAgent"){
           params.agentType = "gptAgent"
+          params.reqId = getCidByMessageId(state.questions, payload?.messageId)
           replaceExistingQsn = true
         }
       }
@@ -107,7 +108,6 @@ const ChatInterface = (props) => {
         payload.formData = {}
         // payload.messageId = qId
         const newRes = await store.dispatch(advanceSearch({ params, payload,  userId: state.profile.data.id }))
-        console.log("newRes..", newRes)
         constructQuestionPostCall(newRes, qId)
       }else{
         constructQuestionPostCall(Res, qId)
@@ -140,6 +140,74 @@ const ChatInterface = (props) => {
       store.dispatch(setEnabledCustomTemplates(payload))
     }
 
+    const contentStreaming = (detail) => {
+      // if contentStreaming set to false by client than it will not stream the content
+      if(state.chatInterfaceOptions?.contentStreaming === false) return;
+
+      // questionsRef.current - because questions state updates not coming in eventBuzz
+      let question = cloneDeep(state.questions[detail?.data?.reqId])
+
+      if (question?.apiSuccess) return; // Means adv search call success now no need to take socket updates
+
+      if (detail?.data?.status === 'in-progress') {
+
+        if (detail?.data?.templateType === 'multi_responses') {
+          const resIndex = detail?.data?.respId
+
+
+          if (!question.hasOwnProperty('responses')) {
+            question.responses = []
+          }
+          if (!question?.responses?.[resIndex]) {
+            question.responses[resIndex] = { answer: '' }
+          }
+
+          question.responses[resIndex].answer = question?.responses?.[resIndex]?.answer?.concat(detail?.data?.chunk)
+
+          if (resIndexRef !== resIndex) {
+            question.responses[resIndexRef].status = 'completed'
+          }
+
+          // One old index for comparing
+          resIndexRef = resIndex;
+
+        } else {
+          question.answer = question?.answer?.concat(detail?.data?.chunk)
+        }
+
+        question.templateType = detail?.data?.templateType || "search_answer"
+        question.streamingStatus = 'in-progress'
+
+        if (question?.loading) {
+          delete question?.loading
+        }
+
+        const questions = cloneDeep(state.questions);
+        questions[detail?.data?.reqId] = question
+        store.dispatch(updateChatData(questions))
+      }
+
+      if (detail?.data?.status === 'completed' || detail?.data?.status === 'aborted') {
+        question.streamingStatus = detail?.data?.status // 'completed' or 'aborted'
+
+        const questions = cloneDeep(state.questions);
+        questions[detail?.data?.reqId] = question
+        store.dispatch(updateChatData(questions))
+
+        // setTimeout(() => {
+        //   let dottt = document.querySelector('.dottt')
+        //   if (dottt) {
+        //     document.querySelector('.dottt').remove()
+        //   }
+        // }, 250);
+      }
+    }
+
+    const options = (_options) => {
+      const chatOptions = cloneDeep(state.chatInterfaceOptions)
+      store.dispatch(setChatInterfaceOptions({...chatOptions, ..._options}))
+    }
+
     return {
         subscribe,
         sendMessageAction,
@@ -148,6 +216,8 @@ const ChatInterface = (props) => {
         invokeGptAgentTemplate,
         askQuickActions,
         enableCustomTemplate,
+        contentStreaming,
+        options
     }
 }
 

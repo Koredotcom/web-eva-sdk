@@ -1,4 +1,5 @@
 import io from "socket.io-client";
+import { ChatInterface } from "../chat";
 
 class WebSocketClient {
     constructor() {
@@ -52,7 +53,9 @@ class WebSocketClient {
 
             this.socket.on('live', (msg) => {
                 if(msg?.entity === "answersuggestion") {}
-                if(msg?.entity === "answerChunk"){}
+                if(msg?.entity === "answerChunk"){
+                    ChatInterface().contentStreaming(msg)
+                }
             });
         } catch (err) {
             console.error('AI for Work exception in socket connection', err?.message);

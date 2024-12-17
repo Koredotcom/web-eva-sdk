@@ -39,7 +39,8 @@ const initialState = {
   enabledCustomTemplates: {},
   GptUploadedFiles: null,
   submitFeedback: {},
-  presenceStart: {}
+  presenceStart: {},
+  chatInterfaceOptions: {}
 };
 
 const globalSlice = createSlice({
@@ -75,6 +76,9 @@ const globalSlice = createSlice({
       },
       setGptUploadedFiles : (state, action) => {
         state.GptUploadedFiles = action.payload;
+      },
+      setChatInterfaceOptions : (state, action) => {
+        state.chatInterfaceOptions = action.payload;
       }
       // deleteHistoryItem : (state, action) =>{
       //   state.AllHistory = action.payload
@@ -151,7 +155,8 @@ export const {
   setChatHistoryMoreAvailable,
   setSelectedContext,
   setEnabledCustomTemplates,
-  setGptUploadedFiles
+  setGptUploadedFiles,
+  setChatInterfaceOptions
 } = globalSlice.actions;
 
 export default globalSlice
