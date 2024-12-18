@@ -66,6 +66,7 @@ const ChatTestComp = (props) => {
                                     <div>{item?.answer}</div>
                                 ) : (
                                     <MultiResponseTestComp item={item} />
+                                    // <div dangerouslySetInnerHTML={{ __html: item.template_html }}></div>
                                 )
                             );
                         }

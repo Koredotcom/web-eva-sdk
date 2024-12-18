@@ -61,10 +61,12 @@ export const constructQuestionPostCall = (data, qId) => {
 
         // DEFAULT GPT FORM TEMPLATE
         if(data?.payload?.history?.status !== msgStatus.TERMINATED && data?.payload?.templateType === chatTemplateTypes.GPT_FORM_TEMPLATE) {
-            const gptFormConstructedData = constructGptForm(data?.payload)
+            let multiResponseData = MultiResponse().getInitialFormData(data?.payload);
+            question.gpt_forms = multiResponseData;
+            const gptFormConstructedData = constructGptForm(multiResponseData, data?.payload)
             question.template_html = gptFormConstructedData.outerHTML
             setTimeout(() => {
-                gptFormFunctionality(data?.payload);
+                gptFormFunctionality(multiResponseData, data?.payload);
             }, 1000);
         }
     }
