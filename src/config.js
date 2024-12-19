@@ -1,6 +1,7 @@
-import { fetchAgents, fetchConfigData, fetchProfileData, fetchHistory, fetchRecentFiles } from "./redux/actions/global.action";
+import { fetchAgents, fetchConfigData, fetchProfileData, fetchHistory, fetchRecentFiles, presenceStart } from "./redux/actions/global.action";
 import store from "./redux/store";
-export const initializeSDK = (config) => {
+import { WebSocketService } from "./socket/socket.service";
+export const initializeSDK = async (config) => {
   const requiredKeys = ['accessToken', 'api_url', 'userId']
 
   let misConfig = false;
@@ -24,4 +25,24 @@ export const initializeSDK = (config) => {
   store.dispatch(fetchAgents({userId: config.userId}))
   store.dispatch(fetchHistory({onload: true, params: {limit: 10}}))
   store.dispatch(fetchRecentFiles({onload: true, userId: config.userId, params: {limit: 10}}))
+  
+  // once presenceStart call success than get the sToken which is required to connect socket
+  await store.dispatch(presenceStart())
+
+  // Initialize and connect WebSocket
+  WebSocketService.initialize({
+    url: config.presence_url,
+    options: {
+      query: {
+        userid: config.userId,
+        channels: 7,
+        sToken: store.getState().global?.presenceStart?.data?.sToken,
+        rnd: new Date().getTime(),
+      },
+    },
+  });
+  WebSocketService.connect();
+  // WebSocketService.on("live", (data) => {
+  //   console.log('sadfafafs')
+  // })
 };

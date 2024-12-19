@@ -20,6 +20,7 @@ const ChatTestComp = (props) => {
         // Create an instance of ChatInterface
         chatInterface.current = ChatInterface();
 
+        chatInterface.current.options({contentStreaming: false})
         // Show the input bar in a specific DOM element
         // chatInterface.current.showComposeBar('composeBar');
 

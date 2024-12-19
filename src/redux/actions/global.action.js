@@ -203,3 +203,16 @@ export const submitFeedback = createAsyncThunk(
         }
     }
 );
+
+// gives sToken - which is required to connect with web socket
+export const presenceStart = createAsyncThunk(
+    'global/presenceStart',
+    async (arg, thunkAPI) => {
+        try {
+            const response = await axiosInstance.post(`1.1/presence/start`);
+            return response.data;
+        } catch (error) {
+            return thunkAPI.rejectWithValue(error.response.data);
+        }
+    }
+);

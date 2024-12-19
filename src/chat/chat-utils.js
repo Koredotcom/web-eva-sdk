@@ -10,13 +10,11 @@ import { chatTemplateTypes, msgStatus } from '../utils/constants';
 import MultiResponse from './gptTemplate/MultiResponse';
 
 export const constructQuestionInitial = (args) => {
-    let uniqueMsgId;
+    let uniqueMsgId = args?.reqId;
     const questions = cloneDeep(store.getState().global.questions)
 
     if(args?.replaceExistingQsn){
         uniqueMsgId = getCidByMessageId(questions, args?.messageId)
-    }else{
-        uniqueMsgId = uuid();
     }
     
     let question = args?.question
@@ -26,7 +24,7 @@ export const constructQuestionInitial = (args) => {
         answer: "",
         loading: true,
         type: "search",
-        reqId: args?.reqId
+        reqId: uniqueMsgId
     }
 
     questions[uniqueMsgId] = obj
@@ -214,7 +212,7 @@ export const constructQuestionPostCall = (data, qId) => {
     //     }
     // }
 
-    questions[qId] = question;
+    questions[qId] = {...question, apiSuccess: true};
 
     // updateState({
     //     searchResultData: data?.res,
