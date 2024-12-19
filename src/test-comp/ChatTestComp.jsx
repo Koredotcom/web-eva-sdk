@@ -32,6 +32,8 @@ const ChatTestComp = (props) => {
 
         chatInterface.current.enableCustomTemplate({gpt_form_template: true})
 
+        // chatInterface.current.storeCustomData({"test" : "yes"})
+
         // Cleanup on component unmount
         return () => {
             // Unsubscribe from store updates
