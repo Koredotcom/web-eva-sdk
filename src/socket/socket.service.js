@@ -1,4 +1,4 @@
-import io from "socket.io-client";
+// import io from "socket.io-client";
 import { ChatInterface } from "../chat";
 
 class WebSocketClient {
