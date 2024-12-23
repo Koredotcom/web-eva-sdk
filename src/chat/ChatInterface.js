@@ -58,6 +58,7 @@ const ChatInterface = (props) => {
 
         const Res = await store.dispatch(advanceSearch({ params, payload, userId: state.profile.data.id }))
         constructQuestionPostCall(Res, qId)
+        resIndexRef = 0
       }
     }
 
@@ -116,6 +117,7 @@ const ChatInterface = (props) => {
       if(arg?.callback) {
         arg.callback()
       }
+      resIndexRef = 0
     }
 
     const invokeGptAgentTemplate = (arg) => {
@@ -193,6 +195,8 @@ const ChatInterface = (props) => {
         const questions = cloneDeep(state.questions);
         questions[detail?.data?.reqId] = question
         store.dispatch(updateChatData(questions))
+
+        resIndexRef = 0
 
         // setTimeout(() => {
         //   let dottt = document.querySelector('.dottt')

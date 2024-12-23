@@ -7,6 +7,7 @@ const getAccessToken = 'OM2E8kTERGXB61ChT8H8WOPlcPufKQM1TDwWe_twnZtXP9rXWNj-MEDM
 initializeSDK({
     accessToken: getAccessToken,
     api_url: 'https://eva-qa.kore.ai/api/',
+    presence_url: 'https://eva-qa.kore.ai/',
     userId: 'u-ccdab3b7-4a58-523a-812a-b20c8fccb87d'
 });
 
