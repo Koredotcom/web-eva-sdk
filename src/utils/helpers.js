@@ -1,6 +1,7 @@
 
 import moment from "moment";
 import store from "../redux/store";
+import { cloneDeep } from "lodash";
 
 export const Timedifference = (time) => {
     let daysdiff = new Date().getDate() - new Date(time).getDate();
@@ -124,3 +125,10 @@ export const htmlDecode = (input) => {
     e.innerHTML = input;
     return e.childNodes.length === 0 ? "" : (e.childNodes[0].nodeValue || e.childNodes[0].outerHTML);
 };
+
+export const getCurrentQuestion = (item) => {
+    let state = store.getState().global;
+    let _questions = cloneDeep(state.questions);
+    let requiredQuestion = Object.values(_questions).find(it => it.reqId === item?.reqId);
+    return requiredQuestion;
+}

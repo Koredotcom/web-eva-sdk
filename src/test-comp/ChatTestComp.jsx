@@ -33,6 +33,8 @@ const ChatTestComp = (props) => {
 
         chatInterface.current.enableCustomTemplate({gpt_form_template: true})
 
+        // chatInterface.current.storeCustomData({"test" : "yes"})
+
         // Cleanup on component unmount
         return () => {
             // Unsubscribe from store updates
@@ -67,6 +69,7 @@ const ChatTestComp = (props) => {
                                     <div>{item?.answer}</div>
                                 ) : (
                                     <MultiResponseTestComp item={item} />
+                                    // <div dangerouslySetInnerHTML={{ __html: item.template_html }}></div>
                                 )
                             );
                         }
