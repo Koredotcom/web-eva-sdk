@@ -1,7 +1,7 @@
 import MultiResponse from "./MultiResponse"
 
-const AddAdditionalGPTResponse = (item) => {
-    return MultiResponse().addAdditionalResponse(item)
+const AddAdditionalGPTResponse = (item, defaultTemplate) => {
+    return MultiResponse().addAdditionalResponse(item, defaultTemplate)
 }
 
 export default AddAdditionalGPTResponse;

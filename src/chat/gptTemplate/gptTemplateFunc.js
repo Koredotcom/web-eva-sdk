@@ -1,17 +1,19 @@
-
-import axios from "axios";
 import cancelAdvanceSearch from "../cancelAdvanceSearch";
-import InitiateChatConversationAction from "../InitiateChatConversationAction";
-import FileUploader from "../../utils/fileUploader";
 import store from "../../redux/store";
-import { generateComponentId, getFileExtension, getUID } from "../../utils/helpers";
 import GptSubmitAction from "./gptSubmitAction";
 import GptFileUpload from "./gptFileUpload";
 import { setGptUploadedFiles } from "../../redux/globalSlice";
+import { cloneDeep } from "lodash";
+import UpdateGPTPromptValue from "./updateGPTPromptValue";
+import AddAdditionalGPTResponse from "./addAdditionalGPTResponse";
+import DeleteGPTResponse from "./deleteGPTResponse";
+import RemoveUploadedGPTFile from "./removeUploadedGPTFile";
+import { getCurrentQuestion } from "../../utils/helpers";
+import SubmitGPTForm from "./submitGPTForm";
 
-const gptFormFunctionality = (item) => {
+const gptFormFunctionality = (formData, item) => {
 
-    const formFields = item?.content?.formFields?.inputFields;
+    let contextField = formData?.contextFields?.[0]
 
     const cancelAction = (event) => {
         event.preventDefault()
@@ -20,15 +22,25 @@ const gptFormFunctionality = (item) => {
 
     const removeUploadedFile = (event, id) => {
         event.preventDefault();
-        const reqdInputField = document.getElementById(`fileUpload-${id}`)
-        reqdInputField.value = ''
-        store.dispatch(setGptUploadedFiles(null))
+        RemoveUploadedGPTFile(event, id)
+    }
 
-        const reqdTextArea = document.getElementById(`inputValue-${id}`)
-        reqdTextArea.style.display = 'block';
+    const addResponse = (event) => {
+        event.preventDefault();
+        const currentQsn = getCurrentQuestion(item);
+        AddAdditionalGPTResponse(currentQsn, true)
+    }
 
-        const reqdButton = document.getElementById(`removeButton-${id}`)
-        reqdButton.style.display = 'none'
+    const deleteResponse = (event, index) => {
+        event.preventDefault();
+        const currentQsn = getCurrentQuestion(item);
+        DeleteGPTResponse(currentQsn, index, true)
+    }
+
+    const submitAnswer = (event, item) => {
+        event.preventDefault();
+        const currentQsn = getCurrentQuestion(item);
+        SubmitGPTForm(event, currentQsn)
     }
 
     const delIconDiv = document.getElementById('deleteAnswer');
@@ -36,42 +48,45 @@ const gptFormFunctionality = (item) => {
         delIconDiv.addEventListener('click', (event) => cancelAction(event))
     }
 
-    formFields?.forEach(field => {
-        if (field?.value?.type === "richText" && field?.key === "content") {
-            if (field?.value?.canUploadFile) {
+    if (contextField?.value?.canUploadFile) {
+        const inputField = document.getElementById(`fileUpload-${contextField?.key}`)
+        inputField.addEventListener('change', (event) => GptFileUpload(event, `${contextField?.key}`))
 
-                const inputField = document.getElementById(`fileUpload-${field?.key}`)
-                inputField.addEventListener('change', (event) => GptFileUpload(event, field?.key))
+        const removeButton = document.getElementById(`removeButton-${contextField?.key}`);
+        removeButton.addEventListener('click', (event) => removeUploadedFile(event, `${contextField?.key}`))
+    }
 
-                const removeButton = document.getElementById(`removeButton-${field?.key}`);
-                removeButton.addEventListener('click', (event) => removeUploadedFile(event, field?.key))
-            }
-        }
-
-        if (field?.value?.type === "longText" && field?.key !== "prompts" && field?.key !== "prompt") {
+    formData?.fieldValues?.forEach((parameters, index) => {
+        parameters?.forEach((field, i) => {
 
             if (field?.value?.canUploadFile) {
 
-                const inputField = document.getElementById(`fileUpload-${field?.key}`)
-                inputField.addEventListener('change', (event) => GptFileUpload(event, field?.key))
+                const inputField = document.getElementById(`fileUpload-${field?.key}-${index}`)
+                inputField.addEventListener('change', (event) => GptFileUpload(event, `${field?.key}-${index}`))
 
-                const removeButton = document.getElementById(`removeButton-${field?.key}`);
-                removeButton.addEventListener('click', () => removeUploadedFile(field?.key))
+                const removeButton = document.getElementById(`removeButton-${field?.key}-${index}`);
+                removeButton.addEventListener('click', (event) => removeUploadedFile(event, `${field?.key}-${index}`))
             }
-        }
 
-        if (field?.key === "prompt") {
+            if (field?.key === "prompt") {
 
-            const textareaElement = document.getElementById(`inputValue-${field?.key}`);
-            textareaElement.value = field?.value?.default || '';
-        }
+                const textareaElement = document.getElementById(`inputValue-${field?.key}-${index}`);
+                textareaElement.value = field?.value?.default || '';
+            }
 
-        if (field?.value?.nested?.key === "prompt") {
+            if (field?.value?.nested?.key === "prompt") {
 
-            const textareaElement = document.getElementById(`inputValue-${field?.key}`);
+                const textareaElement = document.getElementById(`inputValue-${field?.key}-${index}`);
 
-            const initialPromptValue = formFields?.find(field => field?.key === "prompts")?.value?.nested?.value?.values?.[0]?.value
-            textareaElement.value = field?.value?.default || initialPromptValue || '';
+                const initialPromptValue = field?.value?.nested?.value
+                textareaElement.value = initialPromptValue || '';
+            }
+        })
+        if (index > 0) {
+            const deleteResponseButton = document.getElementById(`deleteResponse-${index}`)
+            if (deleteResponseButton) {
+                deleteResponseButton.addEventListener('click', (event) => deleteResponse(event, index))
+            }
         }
     });
 
@@ -82,7 +97,12 @@ const gptFormFunctionality = (item) => {
 
     const submitButton = document.getElementById('submitGptForm')
     if(submitButton) {
-        submitButton.addEventListener('click', (event) => GptSubmitAction(event, item))
+        submitButton.addEventListener('click', (event) => submitAnswer(event, item))
+    }
+
+    const addAdditionalResponseButton = document.getElementById('addAdditionalResponse')
+    if(addAdditionalResponseButton) {
+        addAdditionalResponseButton.addEventListener('click', (event) => addResponse(event))
     }
 };
 

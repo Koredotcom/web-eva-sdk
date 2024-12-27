@@ -1,5 +1,5 @@
 import { advanceSearch, cancelAdvancedSearch } from "../redux/actions/global.action";
-import { setChatInterfaceOptions, setCurrentQuestion, setEnabledCustomTemplates } from "../redux/globalSlice"
+import { setChatInterfaceOptions, setCurrentQuestion, setCustomData, setEnabledCustomTemplates } from "../redux/globalSlice"
 import { updateChatData } from "../redux/globalSlice";
 import store from "../redux/store";
 import { v4 as uuid } from 'uuid';
@@ -36,6 +36,9 @@ const ChatInterface = (props) => {
         if(state.activeBoardId) {
           payload.boardId = state.activeBoardId
         }
+        if(!isEmpty(state.customData)){
+          payload.customData = state.customData
+        }
         const qId = constructQuestionInitial({ ...params, ...payload })
 
         if(!isEmpty(selectedContext)) {
@@ -58,6 +61,7 @@ const ChatInterface = (props) => {
 
         const Res = await store.dispatch(advanceSearch({ params, payload, userId: state.profile.data.id }))
         constructQuestionPostCall(Res, qId)
+        resIndexRef = 0
       }
     }
 
@@ -97,6 +101,10 @@ const ChatInterface = (props) => {
         }
       }
 
+      if(!isEmpty(state.customData)){
+        payload.customData = state.customData
+      }
+
       const qId = constructQuestionInitial({ ...params, ...payload, replaceExistingQsn })
 
       const Res = await store.dispatch(advanceSearch({ params, payload, userId: state?.profile?.data?.id }))
@@ -116,6 +124,7 @@ const ChatInterface = (props) => {
       if(arg?.callback) {
         arg.callback()
       }
+      resIndexRef = 0
     }
 
     const invokeGptAgentTemplate = (arg) => {
@@ -138,6 +147,10 @@ const ChatInterface = (props) => {
 
     const enableCustomTemplate = (payload) => {
       store.dispatch(setEnabledCustomTemplates(payload))
+    }
+
+    const storeCustomData = (payload) => {
+      store.dispatch(setCustomData(payload))
     }
 
     const contentStreaming = (detail) => {
@@ -194,6 +207,8 @@ const ChatInterface = (props) => {
         questions[detail?.data?.reqId] = question
         store.dispatch(updateChatData(questions))
 
+        resIndexRef = 0
+
         // setTimeout(() => {
         //   let dottt = document.querySelector('.dottt')
         //   if (dottt) {
@@ -216,6 +231,7 @@ const ChatInterface = (props) => {
         invokeGptAgentTemplate,
         askQuickActions,
         enableCustomTemplate,
+        storeCustomData,
         contentStreaming,
         options
     }
