@@ -5,6 +5,7 @@ import { v4 as uuid } from 'uuid';
 import { setActiveBoardId, updateChatData, setChatHistoryMoreAvailable } from "../redux/globalSlice";
 import constructGptForm from "./gptTemplate/gptTemplateBody";
 import gptFormFunctionality from "./gptTemplate/gptTemplateFunc";
+import MultiResponse from "./gptTemplate/MultiResponse";
 
 let chatHistoryOffset = 0
 
@@ -78,6 +79,8 @@ const JoinChatThread = async (props) => {
             if(q?.templateType === 'gpt_form_template') {
                 const gptFormConstructedData = constructGptForm(q)
                 obj.template_html = gptFormConstructedData.outerHTML
+                let multiResponseData = MultiResponse().getInitialFormData(q)
+                obj.gpt_forms = multiResponseData
                 setTimeout(() => {
                     gptFormFunctionality(q);
                 }, 1000);
