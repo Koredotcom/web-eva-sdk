@@ -1,5 +1,6 @@
-// import io from "socket.io-client";
+import io from "socket.io-client";
 import { ChatInterface } from "../chat";
+import BotConversation from "../chat/botAgent/getBotConversation";
 
 class WebSocketClient {
     constructor() {
@@ -35,6 +36,7 @@ class WebSocketClient {
 
         try {
             this.socket = io(this.url, this.options);
+            console.log("connected socket data: ", this.socket)
             this.socket.on("connect", () => {
                 console.info(`Socket connected: ${this.socket.id}`);
             });
@@ -49,6 +51,11 @@ class WebSocketClient {
 
             this.socket.on("message", (data) => {
                 console.log("Socket message received:", data);
+            });
+
+            this.socket.on("botMessage", (data) => {
+                console.log("bot message received:", data);
+                BotConversation().setBotConversation(data)
             });
 
             this.socket.on('live', (msg) => {

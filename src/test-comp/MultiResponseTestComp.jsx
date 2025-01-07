@@ -16,7 +16,7 @@ const MultiResponseTestComp = ({ item }) => {
                     return (
                         <>
                             <div className='contextFiledHeader'>Context</div>
-                            {(contextField?.value?.type === "longText") && (
+                            {(contextField?.value?.type === "longText" || contextField?.value?.type === "richText") && (
                                 <>
                                     <div contentEditable="true" placeholder={contextField?.placeholder} value={contextField?.value} id={`inputValue-${contextField?.key}`}></div>
                                 </>

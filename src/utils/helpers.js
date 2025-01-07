@@ -75,6 +75,17 @@ export const getCidByMessageId = (data, messageId) => {
     return null; // or an appropriate value if no match is found
 };
 
+
+export const getReqIdByMessageId = (messageId) => {
+    let questions = cloneDeep(store.getState().global?.questions)
+    for (const key in questions) {
+        if (questions[key]?.messageId === messageId) {
+            return questions[key]?.reqId;
+        }
+    }
+    return null; // or an appropriate value if no match is found
+};
+
 export const getCidByReqId = (data, reqId) => {
     for (const key in data) {
         if (data[key].reqId === reqId) {
