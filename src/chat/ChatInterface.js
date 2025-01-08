@@ -131,8 +131,8 @@ const ChatInterface = (props) => {
       const item = arg.item
       if (!item?.templateInfo?.suggestions?.[0]?.comingSoon) {
           let payload = {};
-          let context =  {sources : item?.sources}
-          payload.context = context
+          let context =  arg?.item?.context
+          payload.context = { ...context, "sources": item?.sources }
           payload.question = arg.utterance.label
           initiateChatConversationAction({payload})
       }
