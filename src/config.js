@@ -49,11 +49,4 @@ export const initializeSDK = async (config) => {
   //   console.log('sadfafafs')
   // })
 
-  if (config?.initializeBotSDK){
-    const botInstance = BotConversation()
-    botInstance.enableEVABotSdk(true) /*if user want to use html of kore bot sdk */
-    botInstance.initializeBotSDK(config?.initializeBotSDK)
-    // botInstance.installOwnTemplate(CustomTemplateComponentManager())
-    // botInstance.installOwnTemplate(HoldConversationTemplateManager())
-  }
 };

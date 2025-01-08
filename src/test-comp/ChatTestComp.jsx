@@ -22,8 +22,7 @@ const ChatTestComp = (props) => {
     const chatInterface = useRef()
     useEffect(() => {
         // Create an instance of ChatInterface
-        chatInterface.current = ChatInterface();
-
+        chatInterface.current = ChatInterface();        
         chatInterface.current.options({contentStreaming: true})
         // Show the input bar in a specific DOM element
         // chatInterface.current.showComposeBar('composeBar');
@@ -38,8 +37,18 @@ const ChatTestComp = (props) => {
         chatInterface.current.enableCustomTemplate({gpt_form_template: true})
 
         // Installing custom templates for BOT Agent
-        BotConversation().installOwnTemplate(CustomTemplateComponentManager())
-        BotConversation().installOwnTemplate(HoldConversationTemplateManager())
+        let botInstance = BotConversation()
+        botInstance.initializeBotSDK({
+            "name": "ProcureBot",
+            "streamId": "st-b6012ef2-810d-5240-b33e-5404d68b680e",
+            "webhook": {
+                "clientId": "cs-79a89a6f-b0ab-5e2f-b912-8dd1e2f95da0",
+                "clientSecret": "VJNwkfbPcMZl4bOa1Qn3XtYRz6rqigwtTgOlaYX25Xs="
+            }
+        })
+        botInstance.enableEVABotSdk(true)
+        botInstance.installOwnTemplate(CustomTemplateComponentManager())
+        botInstance.installOwnTemplate(HoldConversationTemplateManager())
 
         // chatInterface.current.storeCustomData({"test" : "yes"})
 
