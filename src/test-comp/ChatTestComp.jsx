@@ -68,8 +68,8 @@ const ChatTestComp = (props) => {
                                 item.status === 'terminated' ? (
                                     <div>{item?.answer}</div>
                                 ) : (
-                                    <MultiResponseTestComp item={item} />
-                                    // <div dangerouslySetInnerHTML={{ __html: item.template_html }}></div>
+                                    // <MultiResponseTestComp item={item} />
+                                    <div dangerouslySetInnerHTML={{ __html: item.template_html }}></div>
                                 )
                             );
                         }
