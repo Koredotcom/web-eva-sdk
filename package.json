@@ -10,11 +10,13 @@
     "build": "rollup -c"
   },
   "dependencies": {
+    "@koredev/kore-web-sdk": "^11.8.1-rc.2a85011",
     "@reduxjs/toolkit": "^2.2.6",
     "@rollup/plugin-alias": "^5.1.0",
     "@rollup/plugin-replace": "^5.0.7",
     "axios": "^1.7.2",
     "choices.js": "^11.0.2",
+    "html-dom-parser": "^5.0.12",
     "lodash": "^4.17.21",
     "moment": "^2.30.1",
     "react": "^18.3.1",
@@ -81,6 +83,7 @@
     "rollup-plugin-polyfill-node": "^0.13.0",
     "rollup-plugin-postcss": "^4.0.2",
     "rollup-plugin-terser": "^7.0.2",
+    "sass-embedded": "^1.83.0",
     "vite": "^5.3.4"
   }
 }

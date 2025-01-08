@@ -41,7 +41,10 @@ const initialState = {
   submitFeedback: {},
   customData : {},
   presenceStart: {},
-  chatInterfaceOptions: {}
+  chatInterfaceOptions: {},
+  botTemplateElementReference: null,
+  botSDkInstance: null,
+  enableKoreBotSDK: false
 };
 
 const globalSlice = createSlice({
@@ -83,6 +86,12 @@ const globalSlice = createSlice({
       },
       setChatInterfaceOptions : (state, action) => {
         state.chatInterfaceOptions = action.payload;
+      },
+      setBotSDKInstance : (state, action) => {
+        state.botSDkInstance = action.payload
+      }, 
+      setEnableKoreBotSDK: (state, action) => {
+        state.enableKoreBotSDK = action.payload
       }
       // deleteHistoryItem : (state, action) =>{
       //   state.AllHistory = action.payload
@@ -102,7 +111,21 @@ const globalSlice = createSlice({
         state.enabledAgents = enabledAgents
         state.recentAgents = action.payload.recents
       });
-      handleAsyncActions(builder, advanceSearch, 'advanceSearchRes');
+      handleAsyncActions(builder, advanceSearch, 'advanceSearchRes', (state, action) => {
+        /*
+        update the botConversation of the conversation
+        */
+       if(action?.payload?.context?.agentType === "botAgent"){
+         let botReqId = action?.meta?.arg?.params?.reqId
+         let questions = cloneDeep(state?.questions)
+
+         if (questions?.[botReqId]?.hasOwnProperty('botConversation')){
+           questions[botReqId].botConversation[action?.payload?.messageId] = action?.payload
+           state.questions = questions
+         }
+       }
+        console.log("state", "action", state, action)
+      });
       handleAsyncActions(builder, fetchHistory, 'historyRes', (state, action)=> {
         if(action?.meta?.arg?.onload) {
           state.history = state.historyRes
@@ -161,7 +184,9 @@ export const {
   setEnabledCustomTemplates,
   setGptUploadedFiles, 
   setCustomData,
-  setChatInterfaceOptions
+  setChatInterfaceOptions,
+  setBotSDKInstance,
+  setEnableKoreBotSDK
 } = globalSlice.actions;
 
 export default globalSlice

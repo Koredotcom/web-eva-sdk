@@ -6,6 +6,7 @@ import History from './history'
 import DemoComp from './selectedContextDemoComp'
 import AskFollowup from '../Attachments/askFollowup'
 import MultiResponseTestComp from './MultiResponseTestComp'
+import BotAgentTestComponent from './botAgentTestComponent'
 // import { submitUserFeedback } from '../Feedback'
 
 
@@ -20,7 +21,7 @@ const ChatTestComp = (props) => {
         // Create an instance of ChatInterface
         chatInterface.current = ChatInterface();
 
-        chatInterface.current.options({contentStreaming: false})
+        chatInterface.current.options({contentStreaming: true})
         // Show the input bar in a specific DOM element
         // chatInterface.current.showComposeBar('composeBar');
 
@@ -63,7 +64,7 @@ const ChatTestComp = (props) => {
                         if (item?.templateType === 'agent_welcome_template') {
                             return <AgentWelcomeTemplate item={item} />
                         }
-                        if (item.templateType === 'gpt_form_template') {
+                        if (item?.templateType === 'gpt_form_template') {
                             return (
                                 item.status === 'terminated' ? (
                                     <div>{item?.answer}</div>
@@ -73,7 +74,7 @@ const ChatTestComp = (props) => {
                                 )
                             );
                         }
-                        if (item?.templateType === 'search_answer') {
+                        if (item?.templateType === 'search_answer' && item?.viewType !== "threadView") {
                             return (
                                 <>
                                     <div>{item?.answer}</div>
@@ -125,7 +126,7 @@ const ChatTestComp = (props) => {
                                 </>
                             )
                         }
-                        if(item.templateType === "multi_responses"){
+                        if(item?.templateType === "multi_responses"){
                             return (
                                 <>
                                 {item?.responses?.map((response, index) => {
@@ -137,6 +138,11 @@ const ChatTestComp = (props) => {
                                     )
                                 })}
                                 </>
+                            )
+                        }
+                        if (item?.viewType === "threadView"){
+                            return(
+                                <BotAgentTestComponent question={item}/>
                             )
                         }
                         return null;
@@ -156,7 +162,7 @@ const ChatTestComp = (props) => {
                 <button onClick={() => chatInterface.current.cancelMessageReqAction()}>Stop</button>
             </div>
             <div>
-                {/* <History history = {props?.history} /> */}
+                <History />
                 {/* <DemoComp/> */}
             </div>
         </>
