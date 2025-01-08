@@ -1,6 +1,6 @@
 import BotConversation from "./chat/botAgent/getBotConversation";
-import CustomTemplateComponentManager from "./customTemplatesFolder/CustomTemplateComponentManager";
-import HoldConversationTemplateManager from "./customTemplatesFolder/HoldConversationTemplateManager";
+// import CustomTemplateComponentManager from "./chat/botAgent/customTemplatesFolder/CustomTemplateComponentManager";
+// import HoldConversationTemplateManager from "./chat/botAgent/customTemplatesFolder/HoldConversationTemplateManager";
 import { fetchAgents, fetchConfigData, fetchProfileData, fetchHistory, fetchRecentFiles, presenceStart } from "./redux/actions/global.action";
 import store from "./redux/store";
 import { WebSocketService } from "./socket/socket.service";
@@ -53,7 +53,7 @@ export const initializeSDK = async (config) => {
     const botInstance = BotConversation()
     botInstance.enableEVABotSdk(true) /*if user want to use html of kore bot sdk */
     botInstance.initializeBotSDK(config?.initializeBotSDK)
-    botInstance.installOwnTemplate(CustomTemplateComponentManager())
-    botInstance.installOwnTemplate(HoldConversationTemplateManager())
+    // botInstance.installOwnTemplate(CustomTemplateComponentManager())
+    // botInstance.installOwnTemplate(HoldConversationTemplateManager())
   }
 };

@@ -10,7 +10,7 @@
     "build": "rollup -c"
   },
   "dependencies": {
-    "@koredev/kore-web-sdk": "^11.8.1-rc.2a85011",
+    "@koredev/kore-web-sdk": "^11.9.0-rc.9d91139",
     "@reduxjs/toolkit": "^2.2.6",
     "@rollup/plugin-alias": "^5.1.0",
     "@rollup/plugin-replace": "^5.0.7",

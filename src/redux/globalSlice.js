@@ -44,7 +44,7 @@ const initialState = {
   chatInterfaceOptions: {},
   botTemplateElementReference: null,
   botSDkInstance: null,
-  enableKoreBotSDK: false
+  enableKoreBotSDK: false // use to enable the bot sdk custom templates
 };
 
 const globalSlice = createSlice({

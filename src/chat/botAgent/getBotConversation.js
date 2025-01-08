@@ -42,7 +42,7 @@ const BotConversation = (args) => {
             question = questions[getReqIdByMessageId(detail?.pId)]
             if (isEmpty(question)) {
                 //corresponding bot question is unavailable
-                console.log(`bot question with id: ${detail?.messageId} is unavailable, please check the store`)
+                console.error(`bot question with id: ${detail?.messageId} is unavailable, please check the store`)
             } else {
                 if (!question?.hasOwnProperty('botConversation')) {
                     question.botConversation = {}

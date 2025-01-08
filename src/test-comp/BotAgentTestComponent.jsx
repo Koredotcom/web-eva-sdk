@@ -44,6 +44,15 @@ const BotAgentTestComponent = (props) => {
         }
         BotConversation().submitBotResponse(payload)
     }
+
+    const onChange = async (event, conversation) => {
+        if (event.keyCode === 13 && !event.shiftKey) {
+            event.preventDefault()
+            sendAnswer(conversation)
+            setInput('')
+        }
+    }
+
     if (Object?.values(botConversation || {})?.length) {
         return (
             <>
@@ -80,7 +89,9 @@ const BotAgentTestComponent = (props) => {
                                 <input
                                     type="text"
                                     value={input}
-                                    onChange={(e) => changeInput(e)}
+                                    // onChange={(e) => changeInput(e)}
+                                    onKeyDown={(e)=> onChange(e, conversation)}
+                                    onInput={(e) => changeInput(e)}
                                     placeholder="Enter bot response"
                                 >
 

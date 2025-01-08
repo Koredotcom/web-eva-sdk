@@ -7,6 +7,9 @@ import DemoComp from './selectedContextDemoComp'
 import AskFollowup from '../Attachments/askFollowup'
 import MultiResponseTestComp from './MultiResponseTestComp'
 import BotAgentTestComponent from './botAgentTestComponent'
+import BotConversation from '../chat/botAgent/getBotConversation'
+import CustomTemplateComponentManager from "../chat/botAgent/customTemplatesFolder/CustomTemplateComponentManager"
+import HoldConversationTemplateManager from '../chat/botAgent/customTemplatesFolder/HoldConversationTemplateManager'
 // import { submitUserFeedback } from '../Feedback'
 
 
@@ -33,6 +36,10 @@ const ChatTestComp = (props) => {
         });
 
         chatInterface.current.enableCustomTemplate({gpt_form_template: true})
+
+        // Installing custom templates for BOT Agent
+        BotConversation().installOwnTemplate(CustomTemplateComponentManager())
+        BotConversation().installOwnTemplate(HoldConversationTemplateManager())
 
         // chatInterface.current.storeCustomData({"test" : "yes"})
 
