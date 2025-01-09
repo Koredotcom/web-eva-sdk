@@ -41,13 +41,13 @@ const ChatInterface = (props) => {
         }
         const qId = constructQuestionInitial({ ...params, ...payload })
 
-        if(!isEmpty(selectedContext)) {
+        if(!isEmpty(selectedContext?.data)) {
           let _agents = cloneDeep(enabledAgents)
           let isAgentSetAsSource = _agents.find(ag => ag.id === selectedContext?.data?.sources?.[0]?.source)
           let isAgent = isAgentSetAsSource ? "agent" : null
           if(isAgent) {
             // when setted context is an agent
-            payload.context = selectedContext?.data?.context || selectedContext?.data?.sources?.[0]
+            payload.context = {"sources": [selectedContext?.data?.context || selectedContext?.data?.sources?.[0]]}
             if(selectedContext?.data?.messageId) {
               payload.contextParams = {messageId: selectedContext?.data?.messageId}
             }

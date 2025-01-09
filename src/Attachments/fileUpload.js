@@ -21,9 +21,14 @@ const FileUpload = (props) => {
             state = store.getState().global;
             // If callback exists and API call is completed, invoke it
             if (state.selectedContext?.status !== 'loading' && callback) {
-                if(!state?.selectedContext?.data) return;
-                const {sources, sessionId, quickactions, error} = state?.selectedContext?.data;
-                callback(sources, sessionId, quickactions, error);
+                if(!state?.selectedContext?.data){
+                    //When there is no selected context, we are not calling the callback, so sending all the values to be null for subscribe.
+                    callback(null, null, null, null);
+                    return;
+                } else {
+                    const {sources, sessionId, quickactions, error} = state?.selectedContext?.data;
+                    callback(sources, sessionId, quickactions, error);
+                }
             }
         });
 
@@ -175,7 +180,7 @@ const FileUpload = (props) => {
         if (args.loading) {
             //If the source is loading and user terminated the call in between, we are removing that in selected Context and updating the state
             return removeItem({state, item:args})
-        } else if (state.selectedContext.data.loading) {
+        } else if (state?.selectedContext?.data?.loading) {
             //If there is a selectedContext call loading and user wants to remove already added file, returning with no action.
             let resp = {
                 success : false,
