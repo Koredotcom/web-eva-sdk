@@ -17,6 +17,7 @@ const BotConversation = (args) => {
         botOptions.clientId = botDetails?.webhook?.clientId;
         botOptions.clientSecret = botDetails?.webhook?.clientSecret;
         let botSDKInstance =  new chatWindow(chatConfig)
+        console.log("bot sdk initialized: ", botSDKInstance)
         currentBotSDKInstance = botSDKInstance
         store.dispatch(setBotSDKInstance(botSDKInstance))
     }      
@@ -105,6 +106,8 @@ const BotConversation = (args) => {
             "messageId": data?.messageId,
             "source": "bot"
         }
+        console.log("state data: ", state)
+        console.log("params data: ", data)
         store.dispatch(advanceSearch({ params, payload, userId: state?.profile?.data?.id || data?.userId}))
     }
     const installOwnTemplate = (templateInstance) => {
