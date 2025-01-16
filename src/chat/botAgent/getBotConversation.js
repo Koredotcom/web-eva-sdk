@@ -94,17 +94,18 @@ const BotConversation = (args) => {
          "source": "bot"
          }
          */
-        if (!state?.profile?.data?.id){
-            let state = store.getState().global
-        }
+        state = store.getState().global
         const params = {
             "reqId": data?.cId //use reqId
         }
-        const payload = {
+        let payload = {
             "question": data?.input,
             "context": data?.context,
             "messageId": data?.messageId,
             "source": "bot"
+        }
+        if (!isEmpty(state.customData)) {
+            payload.customData = state.customData
         }
         console.log("state data: ", state)
         console.log("params data: ", data)
