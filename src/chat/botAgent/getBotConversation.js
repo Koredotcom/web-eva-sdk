@@ -12,7 +12,7 @@ const BotConversation = (args) => {
     const initializeBotSDK = (botDetails) => {
         let botOptions = chatConfig.botOptions;        
         botOptions.JWTUrl = "https://mk2r2rmj21.execute-api.us-east-1.amazonaws.com/dev/users/sts";
-        botOptions.userIdentity = state?.profile?.data?.emailId;// Provide users email id here
+        botOptions.userIdentity = state?.profile?.data?.emailId || botDetails?.userEmailId;// Provide users email id here
         botOptions.botInfo = { name: botDetails?.name, "_id": botDetails?.streamId }; // bot name is case sensitive
         botOptions.clientId = botDetails?.webhook?.clientId;
         botOptions.clientSecret = botDetails?.webhook?.clientSecret;
@@ -93,6 +93,9 @@ const BotConversation = (args) => {
          "source": "bot"
          }
          */
+        if (!state?.profile?.data?.id){
+            let state = store.getState().global
+        }
         const params = {
             "reqId": data?.cId //use reqId
         }
@@ -102,7 +105,7 @@ const BotConversation = (args) => {
             "messageId": data?.messageId,
             "source": "bot"
         }
-        store.dispatch(advanceSearch({ params, payload, userId: state.profile.data.id }))
+        store.dispatch(advanceSearch({ params, payload, userId: state?.profile?.data?.id || data?.userId}))
     }
     const installOwnTemplate = (templateInstance) => {
         currentBotSDKInstance?.templateManager?.installTemplate(templateInstance) //Here templateInstance should be a component
