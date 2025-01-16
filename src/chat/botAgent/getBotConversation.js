@@ -93,6 +93,9 @@ const BotConversation = (args) => {
          "source": "bot"
          }
          */
+        if (!state?.profile?.data?.id){
+            let state = store.getState().global
+        }
         const params = {
             "reqId": data?.cId //use reqId
         }
@@ -102,7 +105,7 @@ const BotConversation = (args) => {
             "messageId": data?.messageId,
             "source": "bot"
         }
-        store.dispatch(advanceSearch({ params, payload, userId: state.profile.data.id }))
+        store.dispatch(advanceSearch({ params, payload, userId: state?.profile?.data?.id || data?.userId}))
     }
     const installOwnTemplate = (templateInstance) => {
         currentBotSDKInstance?.templateManager?.installTemplate(templateInstance) //Here templateInstance should be a component
