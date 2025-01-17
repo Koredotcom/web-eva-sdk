@@ -17,6 +17,7 @@ const BotConversation = (args) => {
         botOptions.clientId = botDetails?.webhook?.clientId;
         botOptions.clientSecret = botDetails?.webhook?.clientSecret;
         let botSDKInstance =  new chatWindow(chatConfig)
+        console.log("bot sdk initialized: ", botSDKInstance)
         currentBotSDKInstance = botSDKInstance
         store.dispatch(setBotSDKInstance(botSDKInstance))
     }      
@@ -93,18 +94,21 @@ const BotConversation = (args) => {
          "source": "bot"
          }
          */
-        if (!state?.profile?.data?.id){
-            let state = store.getState().global
-        }
+        state = store.getState().global
         const params = {
             "reqId": data?.cId //use reqId
         }
-        const payload = {
+        let payload = {
             "question": data?.input,
             "context": data?.context,
             "messageId": data?.messageId,
             "source": "bot"
         }
+        if (!isEmpty(state.customData)) {
+            payload.customData = state.customData
+        }
+        console.log("state data: ", state)
+        console.log("params data: ", data)
         store.dispatch(advanceSearch({ params, payload, userId: state?.profile?.data?.id || data?.userId}))
     }
     const installOwnTemplate = (templateInstance) => {
