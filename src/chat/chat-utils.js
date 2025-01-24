@@ -1,5 +1,5 @@
 import { v4 as uuid } from 'uuid';
-import { updateChatData, setActiveBoardId, setCurrentQuestion } from '../redux/globalSlice';
+import { updateChatData, setActiveBoardId, setCurrentQuestion, setSelectedContext } from '../redux/globalSlice';
 import store from '../redux/store';
 import { cloneDeep } from 'lodash';
 import constructGptForm from './gptTemplate/gptTemplateBody';
@@ -234,6 +234,18 @@ export const constructQuestionPostCall = (data, qId) => {
         }else{
             store.dispatch(setActiveBoardId(data?.payload?.boardId))
         } 
+    }
+    if (data?.payload?.followUpContext && state.enableContextByFollowupContext) {
+        // console.log("data?.payload?.followUpContext", { ...data?.payload?.followUpContext, messageId: data?.payload?.messageId })
+        let context = {
+            context: data?.payload?.followUpContext,
+            messageId: data?.payload?.messageId,
+            sources: data?.payload?.sources,
+            viewType: data?.payload?.viewType,
+            type: "agent",
+            'isAgent': true
+        }
+        store.dispatch(setSelectedContext({data: context}))
     }
     store.dispatch(updateChatData(questions))
 

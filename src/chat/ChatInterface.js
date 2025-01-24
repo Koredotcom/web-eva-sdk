@@ -1,5 +1,5 @@
 import { advanceSearch, cancelAdvancedSearch } from "../redux/actions/global.action";
-import { setChatInterfaceOptions, setCurrentQuestion, setCustomData, setEnabledCustomTemplates } from "../redux/globalSlice"
+import { setChatInterfaceOptions, setCurrentQuestion, setCustomData, setEnableContextByFollowupContext, setEnabledCustomTemplates } from "../redux/globalSlice"
 import { updateChatData } from "../redux/globalSlice";
 import store from "../redux/store";
 import { v4 as uuid } from 'uuid';
@@ -149,6 +149,10 @@ const ChatInterface = (props) => {
       store.dispatch(setEnabledCustomTemplates(payload))
     }
 
+    const enableContextByFollowupContext = (payload) => {
+      store.dispatch(setEnableContextByFollowupContext(payload))
+    }
+
     const storeCustomData = (payload) => {
       store.dispatch(setCustomData(payload))
     }
@@ -233,7 +237,8 @@ const ChatInterface = (props) => {
         enableCustomTemplate,
         storeCustomData,
         contentStreaming,
-        options
+        options,
+        enableContextByFollowupContext
     }
 }
 

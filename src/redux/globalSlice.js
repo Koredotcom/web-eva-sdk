@@ -44,7 +44,8 @@ const initialState = {
   chatInterfaceOptions: {},
   botTemplateElementReference: null,
   botSDkInstance: null,
-  enableKoreBotSDK: false // use to enable the bot sdk custom templates
+  enableKoreBotSDK: false, // use to enable the bot sdk custom templates
+  enableContextByFollowupContext: false // use to set the context by followup context
 };
 
 const globalSlice = createSlice({
@@ -92,7 +93,10 @@ const globalSlice = createSlice({
       }, 
       setEnableKoreBotSDK: (state, action) => {
         state.enableKoreBotSDK = action.payload
-      }
+      },
+      setEnableContextByFollowupContext: (state, action) => {
+        state.enableContextByFollowupContext = action.payload
+      },  
       // deleteHistoryItem : (state, action) =>{
       //   state.AllHistory = action.payload
       // },
@@ -186,7 +190,8 @@ export const {
   setCustomData,
   setChatInterfaceOptions,
   setBotSDKInstance,
-  setEnableKoreBotSDK
+  setEnableKoreBotSDK,
+  setEnableContextByFollowupContext
 } = globalSlice.actions;
 
 export default globalSlice

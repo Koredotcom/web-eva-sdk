@@ -61,9 +61,9 @@ const MultiResponseTestComp = ({ item }) => {
                                         {(subItem?.value?.type === "dropdown" && !subItem?.value?.multi) && (
                                             <>
                                                 <div>{subItem?.label}</div>
-                                                <select id={`dropdownValue-${subItem?.key}-${subIndex}`} onChange={(e) => {if(subItem?.key === 'prompts'){UpdateGPTPromptValue(item,subIndex, e.target.value)}}}>
+                                                <select id={`dropdownValue-${subItem?.key}-${subIndex}`} >
                                                     {subItem?.value?.choices?.map((choice, choiceIndex) => {
-                                                        return <option value={choice?.id}>{choice?.label}</option>
+                                                        return <option value={choice?.label}>{choice?.label}</option>
                                                     })}
                                                 </select>
                                             </>
