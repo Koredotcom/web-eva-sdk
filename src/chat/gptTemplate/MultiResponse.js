@@ -188,7 +188,14 @@ const MultiResponse = () => {
                     } else {
                         reqdValue = reqdInputElement.value; 
                     }
-                    console.log(`Form field is ${`(dropdownValue-${field?.key})`} and value is {${reqdInputElement.value}}`)
+
+                    //for the filed 'prompts' sdk should pass the id of the selected option
+                    if(field?.key === 'prompts'){
+                        const promptId = field?.value?.choices?.find(choice => choice.label === reqdValue)?.id;
+                        reqdValue = promptId;
+                    }
+
+                    console.log(`Form field is ${`(dropdownValue-${field?.key})`} and value is {${reqdValue}}`)
                 } else { 
                     reqdInputElement = document.getElementById(`inputValue-${field?.key}-${index}`)
                     reqdValue = reqdInputElement?.value || reqdInputElement?.textContent || ""
