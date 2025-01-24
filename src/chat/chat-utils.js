@@ -235,7 +235,7 @@ export const constructQuestionPostCall = (data, qId) => {
             store.dispatch(setActiveBoardId(data?.payload?.boardId))
         } 
     }
-    if (data?.payload?.followUpContext) {
+    if (data?.payload?.followUpContext && state.enableContextByFollowupContext) {
         // console.log("data?.payload?.followUpContext", { ...data?.payload?.followUpContext, messageId: data?.payload?.messageId })
         let context = {
             context: data?.payload?.followUpContext,
