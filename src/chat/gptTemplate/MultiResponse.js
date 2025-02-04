@@ -40,9 +40,9 @@ const MultiResponse = () => {
 
     const getChoices = (len, contextField) => {
         // The Content dropdown will have the initial response and the rest of the responses to select
-        let choices = [{ "id": "0", "label": "Initial Response" }]
+        let choices = [{ "id": "0", "label": "Original Content" }]
         for (let i = 0; i < len; i++) {
-            choices.push({ "id": `${i + 1}`, "label": `Response ${i + 1}` })
+            choices.push({ "id": `${i + 1}`, "label": `Output ${i + 1}`})
         }
         let contextDropDownField = {
             "id": contextField?.id,

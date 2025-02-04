@@ -45,7 +45,8 @@ const initialState = {
   botTemplateElementReference: null,
   botSDkInstance: null,
   enableKoreBotSDK: false, // use to enable the bot sdk custom templates
-  enableContextByFollowupContext: false // use to set the context by followup context
+  enableContextByFollowupContext: false, // use to set the context by followup context,
+  errorState : []
 };
 
 const globalSlice = createSlice({
@@ -103,6 +104,9 @@ const globalSlice = createSlice({
       // updateHistoryItem : (state, action) => {
       //   state.AllHistory = action.payload
       // }
+      setErrorState: (state, action) => {
+        state.errorState = action.payload
+      },
     },
     extraReducers: (builder) => {
       handleAsyncActions(builder, fetchConfigData, 'config', (state, action) => {
@@ -191,7 +195,8 @@ export const {
   setChatInterfaceOptions,
   setBotSDKInstance,
   setEnableKoreBotSDK,
-  setEnableContextByFollowupContext
+  setEnableContextByFollowupContext,
+  setErrorState
 } = globalSlice.actions;
 
 export default globalSlice

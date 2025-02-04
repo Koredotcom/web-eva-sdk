@@ -19,6 +19,7 @@ const ChatTestComp = (props) => {
     const [input, setInput] = useState('')
     const [selectedItem, setSelectedItem] = useState(null)
     const [showDislikeMenu, setShowDislikeMenu] = useState(null)
+    const [errorStates, setErrorStates] = useState([])
     const chatInterface = useRef()
     useEffect(() => {
         // Create an instance of ChatInterface
@@ -28,10 +29,11 @@ const ChatTestComp = (props) => {
         // chatInterface.current.showComposeBar('composeBar');
 
         // Subscribe to updates
-        const unsubscribe = chatInterface.current.subscribe((question, searchResponse, moreAvailable) => {
+        const unsubscribe = chatInterface.current.subscribe((question, searchResponse, moreAvailable, errorStates) => {
             // Handle the API response data
-            console.log('Received data from chat API:', question, searchResponse, moreAvailable);
+            console.log('Received data from chat API:', question, searchResponse, moreAvailable, errorStates);
             setQuestions(question)
+            setErrorStates(errorStates)
         });
 
         chatInterface.current.enableCustomTemplate({gpt_form_template: true})
@@ -85,8 +87,8 @@ const ChatTestComp = (props) => {
                                 item.status === 'terminated' ? (
                                     <div>{item?.answer}</div>
                                 ) : (
-                                    // <MultiResponseTestComp item={item} />
-                                    <div dangerouslySetInnerHTML={{ __html: item.template_html }}></div>
+                                    <MultiResponseTestComp item={item} />
+                                    // <div dangerouslySetInnerHTML={{ __html: item.template_html }}></div>
                                 )
                             );
                         }
@@ -180,6 +182,13 @@ const ChatTestComp = (props) => {
             <div>
                 <History />
                 {/* <DemoComp/> */}
+            </div>
+            <div>
+                    {errorStates.length > 0 && errorStates?.map(item => {
+                        return (
+                            <div>{`${item?.failedCall} Call Failed with Error ${item?.error?.code} and Message ${item?.error?.msg}`}</div>
+                        )
+                    })}
             </div>
         </>
     )

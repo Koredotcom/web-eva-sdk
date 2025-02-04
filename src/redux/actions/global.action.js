@@ -1,5 +1,6 @@
 import { createAsyncThunk  } from "@reduxjs/toolkit";
 import axiosInstance from "../../api/axiosInstance";
+import { handleErrorState } from "../../utils/helpers";
 
 // Asynchronous actions (thunks)
 export const fetchConfigData = createAsyncThunk(
@@ -9,6 +10,7 @@ export const fetchConfigData = createAsyncThunk(
             const response = await axiosInstance.get(`1.1/ka/users/${userId}/sdk/config`);
             return response.data;
         } catch (error) {
+            handleErrorState(error, "Config");
             return rejectWithValue(error.response.data);
         }
     }
@@ -21,6 +23,7 @@ export const fetchProfileData = createAsyncThunk(
             const response = await axiosInstance.get(`1.1/ka/users/${userId}/profile`);
             return response.data;
         } catch (error) {
+            handleErrorState(error, "Profile");
             return rejectWithValue(error.response.data);
         }
     }
@@ -33,6 +36,7 @@ export const fetchAgents = createAsyncThunk(
             const response = await axiosInstance.get(`1.1/users/${arg.userId}/agents`, arg?.params);
             return response.data;
         } catch (error) {
+            handleErrorState(error, "Agents");
             return rejectWithValue(error.response.data);
         }
     }
@@ -51,6 +55,7 @@ export const advanceSearch = createAsyncThunk(
             });
             return response.data;
         } catch (error) {
+            handleErrorState(error, "Advance Search");
             return thunkAPI.rejectWithValue(error.response.data);
         }
     }
@@ -74,6 +79,7 @@ export const cancelAdvancedSearch = createAsyncThunk(
             
             return response.data;
         } catch (error) {
+            handleErrorState(error, "Cancel Advance Search");
             return thunkAPI.rejectWithValue(error.response.data);
         }
     }
@@ -90,6 +96,7 @@ export const fetchHistory = createAsyncThunk(
             });
             return response.data;
         } catch (error) {
+            handleErrorState(error, "History");
             return rejectWithValue(error.response.data);
         }
     }
@@ -106,6 +113,7 @@ export const fetchRecentFiles = createAsyncThunk(
             });
             return response.data;
         } catch (error) {
+            handleErrorState(error, "Recent Files");
             return rejectWithValue(error.response.data);
         }
     }
@@ -121,6 +129,7 @@ export const getRecentFileDownloadUrl = createAsyncThunk(
             });
             return response.data;
         } catch (error) {
+            handleErrorState(error, "Download File");
             return rejectWithValue(error.response.data);
         }
     }
@@ -136,6 +145,7 @@ export const deleteHistory = createAsyncThunk(
             });
             return response.data;
         } catch (error) {
+            handleErrorState(error, "Delete History");
             return rejectWithValue(error.response.data);
         }
     }
@@ -148,6 +158,7 @@ export const updateHistory = createAsyncThunk(
             const response = await axiosInstance.put(`1.1/ka/boards/${arg?.params?.boardId}`,arg?.payload);
             return response.data;
         } catch (error) {
+            handleErrorState(error, "Update History");
             return rejectWithValue(error.response.data);
         }
     }
@@ -164,6 +175,7 @@ export const getSearchHistory = createAsyncThunk(
             });
             return response.data;
         } catch (error) {
+            handleErrorState(error, "Get History");
             return rejectWithValue(error.response.data);
         }
     }
@@ -187,6 +199,7 @@ export const searchSession = createAsyncThunk(
             }
         }
         catch (error){
+            handleErrorState(error, "Search Session");
             return rejectWithValue(error.response.data)
         }
     }
@@ -199,6 +212,7 @@ export const submitFeedback = createAsyncThunk(
             const response = await axiosInstance.put(`kora/boards/${arg?.boardId}/messages/${arg?.messageId}/feedback`, arg.payload);
             return response;
         } catch (error) {
+            handleErrorState(error, "Feedback");
             return thunkAPI.rejectWithValue(error.response.data);
         }
     }

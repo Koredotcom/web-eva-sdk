@@ -2,6 +2,7 @@
 import moment from "moment";
 import store from "../redux/store";
 import { cloneDeep } from "lodash";
+import { setErrorState } from "../redux/globalSlice";
 
 export const Timedifference = (time) => {
     let daysdiff = new Date().getDate() - new Date(time).getDate();
@@ -142,4 +143,18 @@ export const getCurrentQuestion = (item) => {
     let _questions = cloneDeep(state.questions);
     let requiredQuestion = Object.values(_questions).find(it => it.reqId === item?.reqId);
     return requiredQuestion;
+}
+
+export const handleErrorState = (error, name = null) => {
+    let currentErrorState = cloneDeep(store.getState().global.errorState) || [];
+    let obj = {
+        error : error?.response?.data?.errors?.[0]
+    }
+
+    if(name) {
+        obj.failedCall = name;
+    }
+
+    currentErrorState.push(obj);
+    store.dispatch(setErrorState(currentErrorState));
 }

@@ -1,4 +1,4 @@
-import { setActiveBoardId, setGptUploadedFiles, updateChatData, setSelectedContext, setCurrentQuestion } from "../redux/globalSlice"
+import { setActiveBoardId, setGptUploadedFiles, updateChatData, setSelectedContext, setCurrentQuestion, setErrorState } from "../redux/globalSlice"
 import store from "../redux/store"
 
 const NewChat = () => {
@@ -8,6 +8,7 @@ const NewChat = () => {
     store.dispatch(setGptUploadedFiles(null))
     store.dispatch(setSelectedContext({}))
     store.dispatch(setCurrentQuestion({}))
+    store.dispatch(setErrorState([]))
 }
 
 export default NewChat
