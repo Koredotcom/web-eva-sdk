@@ -1,5 +1,5 @@
 import { v4 as uuid } from 'uuid';
-import { updateChatData, setActiveBoardId, setCurrentQuestion, setSelectedContext } from '../redux/globalSlice';
+import { updateChatData, setActiveBoardId, setCurrentQuestion, setSelectedContext, setErrorState } from '../redux/globalSlice';
 import store from '../redux/store';
 import { cloneDeep } from 'lodash';
 import constructGptForm from './gptTemplate/gptTemplateBody';
@@ -77,6 +77,11 @@ export const constructQuestionPostCall = (data, qId) => {
             //     MenuOptions(data?.payload)
             // }, 1000);
         }
+    }
+
+    if(data?.payload?.queryExhaustionInfo?.queryLimitExhausted){
+        question.queryExhaustionInfo = data?.payload?.queryExhaustionInfo;
+        store.dispatch(setErrorState(data?.payload?.queryExhaustionInfo))
     }
     
 

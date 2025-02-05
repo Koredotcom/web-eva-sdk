@@ -1,5 +1,5 @@
 import { advanceSearch, cancelAdvancedSearch } from "../redux/actions/global.action";
-import { setChatInterfaceOptions, setCurrentQuestion, setCustomData, setEnableContextByFollowupContext, setEnabledCustomTemplates } from "../redux/globalSlice"
+import { setChatInterfaceOptions, setCurrentQuestion, setCustomData, setEnableContextByFollowupContext, setEnabledCustomTemplates, setErrorState } from "../redux/globalSlice"
 import { updateChatData } from "../redux/globalSlice";
 import store from "../redux/store";
 import { v4 as uuid } from 'uuid';
@@ -17,7 +17,7 @@ const ChatInterface = (props) => {
             state = store.getState().global;
             // If callback exists and API call is completed, invoke it
             // if (state.advanceSearchRes.status !== 'loading' && callback) {
-                callback(state.questions, state.advanceSearchRes, state.chatHistoryMoreAvailable);
+                callback(state.questions, state.advanceSearchRes, state.chatHistoryMoreAvailable, state.errorState);
                 // console.log(state.questions, state.advanceSearchRes, state.chatHistoryMoreAvailable)
             // }
         });
@@ -227,6 +227,11 @@ const ChatInterface = (props) => {
       store.dispatch(setChatInterfaceOptions({...chatOptions, ..._options}))
     }
 
+    const clearErrorState = () => {
+      // The current function can be used to clear all the error states that are stored whenever an API call fails.
+      store.dispatch(setErrorState([]))
+    }
+
     return {
         subscribe,
         sendMessageAction,
@@ -238,7 +243,8 @@ const ChatInterface = (props) => {
         storeCustomData,
         contentStreaming,
         options,
-        enableContextByFollowupContext
+        enableContextByFollowupContext,
+        clearErrorState
     }
 }
 
