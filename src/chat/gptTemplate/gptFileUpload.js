@@ -9,8 +9,12 @@ let gptFileData = null;
 
 const GptFileUpload = (event, id) => {
     return new Promise((resolve, reject) => {
-        if (event.target.files.length > 0) {
-            uploadFileInitial(event.target.files[0], id, resolve, reject)
+        /*
+            Adding event.detail.files as Morgan stanley drag and drop functionality stores the drag and dropped files in event.detail
+        */
+        const files = event?.target?.files || event?.detail?.files; 
+        if (files?.length > 0) {
+            uploadFileInitial(files?.[0], id, resolve, reject)
         }
     })
     
