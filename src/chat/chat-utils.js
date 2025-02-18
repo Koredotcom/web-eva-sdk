@@ -248,7 +248,8 @@ export const constructQuestionPostCall = (data, qId) => {
             sources: data?.payload?.sources,
             viewType: data?.payload?.viewType,
             type: "agent",
-            'isAgent': true
+            'isAgent': true,
+            sessionId: data?.payload?.followUpContext?.sessionId
         }
         store.dispatch(setSelectedContext({data: context}))
     }

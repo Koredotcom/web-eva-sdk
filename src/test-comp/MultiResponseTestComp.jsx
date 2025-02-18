@@ -25,19 +25,19 @@ const MultiResponseTestComp = ({ item }) => {
                                 <div contentEditable="true" placeholder={contextField?.value?.placeholder} value={contextField?.value} id={`inputValue-${contextField?.key}`}></div>
                             )}
 
-                            {(contextField?.value?.type === "file") && (
+                            {(contextField?.value?.type === "file" || contextField?.value?.canUploadFile) && (
                                 <>
-                                    <input type="file" id={`fileUpload-${contextField?.key}`} onChange={(e) => GptFileUpload(e, `${contextField?.key}`)}/>
+                                    <input type="file" id={`fileUpoad-${contextField?.key}`} onChange={(e) => GptFileUpload(e, `${contextField?.key}`)}/>
                                     <button onClick={(e) => RemoveUploadedGPTFile(e, `${contextField?.key}`)} id = {`removeButton-${contextField?.key}`}style={{display: "none"}}>Remove</button>
                                 </>
                             )}
 
-                            {contextField?.value?.canUploadFile && (
+                            {/* {contextField?.value?.canUploadFile && (
                                 <>  
                                     <input type="file" id={`fileUpload-${contextField?.key}`} onChange={(e) => GptFileUpload(e, `${contextField?.key}`)}/>
                                     <button onClick={(e) => RemoveUploadedGPTFile(e, `${contextField?.key}`)} id = {`removeButton-${contextField?.key}`}style={{display: "none"}}>Remove</button>
                                 </>
-                            )}
+                            )} */}
                         </>
                     )
                 })}

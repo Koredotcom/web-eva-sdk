@@ -137,7 +137,13 @@ const MultiResponse = () => {
             // Checking the Type of Context Field and getting Input Values
             if(contextFields?.value?.type === "file"){  
                 let contextFieldDiv = document.getElementById(`fileUpload-${contextFields?.key}`);
-                reqdValue = contextFieldDiv.value;
+
+                // "MORGAN STANLEY REQUIREMENT" -> TO HANDLE CASES WHICH DOES NOT HAVE DEPENDENCY ON ID OF THE FILE UPLOADER. 
+                if(contextFieldDiv){
+                    reqdValue = contextFieldDiv.value;
+                }else {
+                   reqdValue = '' 
+                }
             }else{
                 let contextFieldDiv = document.getElementById(`inputValue-${contextFields?.key}`);
                 reqdValue = contextFieldDiv.value || contextFieldDiv.textContent;
@@ -169,6 +175,9 @@ const MultiResponse = () => {
             // Checking if the Required Field is not empty and setting the value to the payloadContext
             if(reqdValue?.length > 0 && payloadContext[contextFields?.key]?.type !== "file"){
                 payloadContext[contextFields?.key].value = reqdValue;
+            }else if (reqdValue?.length === 0 && payloadContext[contextFields?.key]?.type === "file"){
+                // If there is no file uploaded, then we should send an empty object in Context Field
+                payloadContext[contextFields?.key] = {};
             }
         }
 
