@@ -70,7 +70,7 @@ export const cancelAdvancedSearch = createAsyncThunk(
 
             const response = await axiosInstance({
                 url: `1.1/kora/users/${arg.userId}/advancedsearch/cancelrequest/${reqdQuestionId}`, 
-                method: 'DELETE',
+                method: 'POST',
                 data: arg.payload
             });
 

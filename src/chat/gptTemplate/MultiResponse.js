@@ -133,20 +133,30 @@ const MultiResponse = () => {
         if (!isEmpty(contextFields)) {
 
             let reqdValue;
-
+            console.log("Recieved Context Fields", contextFields)
             // Checking the Type of Context Field and getting Input Values
             if(contextFields?.value?.type === "file"){  
                 let contextFieldDiv = document.getElementById(`fileUpload-${contextFields?.key}`);
 
                 // "MORGAN STANLEY REQUIREMENT" -> TO HANDLE CASES WHICH DOES NOT HAVE DEPENDENCY ON ID OF THE FILE UPLOADER. 
                 if(contextFieldDiv){
-                    reqdValue = contextFieldDiv.value;
+                    reqdValue = contextFieldDiv?.value || '';
                 }else {
                    reqdValue = '' 
                 }
+            }else if(contextFields?.value?.canUploadFile){
+                // "MORGAN STANLEY REQUIREMENT" -> TO HANDLE CASES WHICH DOES NOT HAVE DEPENDENCY ON ID OF THE FILE UPLOADER. 
+                // FOR CASES WITH LONGTEXT AND SIMPLETEXT AS WELL, WE HAVE TO NOT RELY ON THE KEY OF THE FILE UPLOADER.
+                let contextFieldDiv = document.getElementById(`fileUpload-${contextFields?.key}`);
+                if(contextFieldDiv){
+                    reqdValue = contextFieldDiv?.value || '';
+                }else {
+                    contextFieldDiv = document.getElementById(`inputValue-${contextFields?.key}`);
+                    reqdValue = contextFieldDiv?.value || contextFieldDiv?.textContent || '';
+                 }
             }else{
                 let contextFieldDiv = document.getElementById(`inputValue-${contextFields?.key}`);
-                reqdValue = contextFieldDiv.value || contextFieldDiv.textContent;
+                reqdValue = contextFieldDiv?.value || contextFieldDiv?.textContent || '';
             }
 
             // Constructing the payloadContext
@@ -158,12 +168,14 @@ const MultiResponse = () => {
                 }    
             }
 
+            console.log("Modified Payload Context", payloadContext)
+
             // Checking if the Context Field has a file and getting the file from the uploadedFiles
             if(contextFields?.value?.canUploadFile && uploadedFiles && (Object.keys(uploadedFiles)?.includes(`${contextFields?.key}`))) {
                 let ind = Object.keys(uploadedFiles).indexOf(`${contextFields?.key}`);
                 if (ind !== -1) {
                     payloadContext[contextFields?.key] = Object.values(uploadedFiles)[ind];
-                    reqdValue = payloadContext[contextFields?.key].value;
+                    reqdValue = payloadContext[contextFields?.key].value || '';
                 }
             }
 
@@ -182,6 +194,8 @@ const MultiResponse = () => {
         }
 
         payload.formData.contextFields = payloadContext;
+
+        console.log("Final Context Field", payloadContext)
 
         // Constructing requestParams
         let requestParams = allResponseFields?.map((field, index) => {
