@@ -10,6 +10,7 @@ import BotAgentTestComponent from './botAgentTestComponent'
 import BotConversation from '../chat/botAgent/getBotConversation'
 import CustomTemplateComponentManager from "../chat/botAgent/customTemplatesFolder/CustomTemplateComponentManager"
 import HoldConversationTemplateManager from '../chat/botAgent/customTemplatesFolder/HoldConversationTemplateManager'
+import Notifications from './Notifications'
 // import { submitUserFeedback } from '../Feedback'
 
 
@@ -182,6 +183,7 @@ const ChatTestComp = (props) => {
             <div>
                 <History />
                 {/* <DemoComp/> */}
+                <Notifications />
             </div>
             <div>
                     {errorStates.length > 0 && errorStates?.map(item => {

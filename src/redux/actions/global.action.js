@@ -230,3 +230,16 @@ export const presenceStart = createAsyncThunk(
         }
     }
 );
+
+export const getNotification = createAsyncThunk(
+    'global/getNotification',
+    async (userId, { rejectWithValue }) => {
+        try {
+            const response = await axiosInstance.get(`1.1/ka/users/${userId}/notifications`);
+            return response.data;
+        } catch (error) {
+            handleErrorState(error, "Get Notification");
+            return rejectWithValue(error.response.data);
+        }
+    }
+);

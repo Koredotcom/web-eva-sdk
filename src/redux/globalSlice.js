@@ -9,7 +9,8 @@ import {
   getRecentFileDownloadUrl,
   searchSession,
   submitFeedback,
-  presenceStart
+  presenceStart,
+  getNotification
 } from './actions/global.action';
 import { handleAsyncActions } from '../utils/handleAsyncActions';
 import { cloneDeep, concat, uniqBy } from 'lodash';
@@ -46,7 +47,8 @@ const initialState = {
   botSDkInstance: null,
   enableKoreBotSDK: false, // use to enable the bot sdk custom templates
   enableContextByFollowupContext: false, // use to set the context by followup context,
-  errorState : []
+  errorState : [],
+  notifications : []
 };
 
 const globalSlice = createSlice({
@@ -107,6 +109,9 @@ const globalSlice = createSlice({
       setErrorState: (state, action) => {
         state.errorState = action.payload
       },
+      setNotifications: (state, action) => {
+        state.notifications = action.payload
+      }
     },
     extraReducers: (builder) => {
       handleAsyncActions(builder, fetchConfigData, 'config', (state, action) => {
@@ -174,6 +179,7 @@ const globalSlice = createSlice({
         state.questions = questions
       });
       handleAsyncActions(builder, presenceStart, 'presenceStart');
+      // handleAsyncActions(builder, getNotification, 'notifications');
     }
 });
 
@@ -196,7 +202,8 @@ export const {
   setBotSDKInstance,
   setEnableKoreBotSDK,
   setEnableContextByFollowupContext,
-  setErrorState
+  setErrorState,
+  setNotifications
 } = globalSlice.actions;
 
 export default globalSlice
