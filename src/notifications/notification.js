@@ -25,8 +25,8 @@ const Notification = () => {
         store.dispatch(setNotifications(res.payload))
     }
 
-    const notifyLatestNotification = () => {
-        console.log("notifyLatestNotification")
+    const notifyLatestNotification = async (notification) => {
+        console.log("notifyLatestNotification", notification)
     }
 
     const redirectToNotificationChatThread = (notification) => {
