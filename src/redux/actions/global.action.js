@@ -231,11 +231,18 @@ export const presenceStart = createAsyncThunk(
     }
 );
 
+//Call to get Notifications
 export const getNotification = createAsyncThunk(
     'global/getNotification',
-    async (userId, { rejectWithValue }) => {
+    async (arg, { rejectWithValue }) => {
         try {
-            const response = await axiosInstance.get(`1.1/ka/users/${userId}/notifications`);
+            let response;
+            if(arg?.loadMore){
+                response = await axiosInstance.get(`1.1/ka/users/${arg?.userId}/notifications?offSet=${arg?.offset}&limit=${arg?.limit}`);
+            }
+            else{
+                response = await axiosInstance.get(`1.1/ka/users/${arg?.userId}/notifications`);
+            }
             return response.data;
         } catch (error) {
             handleErrorState(error, "Get Notification");
@@ -243,3 +250,18 @@ export const getNotification = createAsyncThunk(
         }
     }
 );
+
+//Call to mark all notifications as read
+export const readNotification = createAsyncThunk(
+    'global/readNotification',
+    async (arg, { rejectWithValue }) => {
+        try {
+            const response = await axiosInstance.put(`1.1/ka/users/${arg?.userId}/notifications`, arg?.payload);
+            return response.data;
+        } catch (error) {
+            handleErrorState(error, "Mark All As Read");
+            return rejectWithValue(error.response.data);
+        }
+    }
+);
+

@@ -16,11 +16,15 @@ const JoinChatThread = async (props) => {
         chatHistoryOffset = 1
     }
 
-    const params = {
+    let params = {
         // limit: props?.limit || 20,
         // offset: chatHistoryOffset * (props?.limit || 20)
         limit: 20,
         offset: chatHistoryOffset * 20
+    }
+
+    if(props?.redirectFromNotification) {
+        params.showdata = true
     }
 
     const Res = await store.dispatch(getSearchHistory({boardId: props.boardId, params}))

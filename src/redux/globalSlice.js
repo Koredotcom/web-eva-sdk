@@ -48,7 +48,7 @@ const initialState = {
   enableKoreBotSDK: false, // use to enable the bot sdk custom templates
   enableContextByFollowupContext: false, // use to set the context by followup context,
   errorState : [],
-  notifications : []
+  notifications : {}
 };
 
 const globalSlice = createSlice({
@@ -179,7 +179,6 @@ const globalSlice = createSlice({
         state.questions = questions
       });
       handleAsyncActions(builder, presenceStart, 'presenceStart');
-      // handleAsyncActions(builder, getNotification, 'notifications');
     }
 });
 
