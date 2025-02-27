@@ -107,9 +107,30 @@ const BotConversation = (args) => {
         if (!isEmpty(state.customData)) {
             payload.customData = state.customData
         }
-        console.log("state data: ", state)
+        console.log("state data: ", state)        
+        /*need to add a loading state for the current question */
+        addLoadingStateToCurrentQuestion(data?.cId, data?.messageId)
         console.log("params data: ", data)
         store.dispatch(advanceSearch({ params, payload, userId: state?.profile?.data?.id || data?.userId}))
+    }
+
+    const addLoadingStateToCurrentQuestion = (reqId, messageId) => {
+        let questions = cloneDeep(state?.questions)
+        let currentQuestion = questions[reqId]
+        if (currentQuestion) {
+            let botConversation = currentQuestion?.botConversation
+            if (botConversation) {
+                let currentBotQuestion = botConversation?.[messageId]
+                if (currentBotQuestion) {                    
+                    currentBotQuestion.loading = true
+                    console.log("added loading state: ", currentBotQuestion)
+                    botConversation[messageId] = currentBotQuestion
+                    currentQuestion.botConversation = botConversation
+                    questions[reqId] = currentQuestion                    
+                    store.dispatch(updateChatData(questions))
+                }
+            }
+        }
     }
     const installOwnTemplate = (templateInstance) => {
         currentBotSDKInstance?.templateManager?.installTemplate(templateInstance) //Here templateInstance should be a component
