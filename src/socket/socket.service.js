@@ -1,6 +1,7 @@
 import io from "socket.io-client";
 import { ChatInterface } from "../chat";
 import BotConversation from "../chat/botAgent/getBotConversation";
+import Notification from "../notifications/notification";
 
 class WebSocketClient {
     constructor() {
@@ -64,6 +65,9 @@ class WebSocketClient {
                     ChatInterface().contentStreaming(msg)
                 }
             });
+            this.socket.on("notification", (msg) => {
+                Notification().notifyLatestNotification(msg)
+            })
         } catch (err) {
             console.error('AI for Work exception in socket connection', err?.message);
             return null;
