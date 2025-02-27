@@ -97,7 +97,7 @@ const BotAgentTestComponent = (props) => {
 
                                 </input>
                                 <button onClick={() => { sendAnswer(conversation) }}>
-                                    submit
+                                    {conversation?.loading ? "Sending..." : "Send"}
                                 </button>
                             </div>
                         )
