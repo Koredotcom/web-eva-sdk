@@ -37,7 +37,7 @@ const BotAgentTestComponent = (props) => {
          }
          */        
         const payload = {
-            "cId": props?.question?.cId,
+            "cId": props?.question?.cId || props?.question?.reqId, //reqId in case of botAgent from history
             "input": input,
             "context": props?.question?.context,
             "messageId": conversation?.messageId,
@@ -106,6 +106,7 @@ const BotAgentTestComponent = (props) => {
                         return (
                             <div>
                                 render your own template for the *{conversation?.content?.payload?.template_type}* template
+                                selected option is *{conversation?.renderMsgPayload}*
                             </div>
                         )
                     }

@@ -128,14 +128,24 @@ const globalSlice = createSlice({
         /*
         update the botConversation of the conversation
         */
-       if(action?.payload?.context?.agentType === "botAgent"){
+       if(action?.meta?.arg?.params?.from === "botAgent"){
          let botReqId = action?.meta?.arg?.params?.reqId
          let questions = cloneDeep(state?.questions)
-
-         if (questions?.[botReqId]?.hasOwnProperty('botConversation')){
-           questions[botReqId].botConversation[action?.payload?.messageId] = action?.payload
-           state.questions = questions
+         const currentBotAgentQuestion = Object.values(questions).find((ques) => ques.reqId === botReqId)
+         if(currentBotAgentQuestion){      
+          /*for history question we need to rely on id */    
+          if(currentBotAgentQuestion?.historicalData){
+            if(questions?.[currentBotAgentQuestion?.id]?.hasOwnProperty('botConversation')) {
+              questions[currentBotAgentQuestion?.id].botConversation[action?.payload?.messageId] = action?.payload
+            }
+          }else{
+            if (questions?.[currentBotAgentQuestion?.reqId]?.hasOwnProperty('botConversation')) {
+              questions[currentBotAgentQuestion?.reqId].botConversation[action?.payload?.messageId] = action?.payload              
+            }
+          }
+           state.questions = questions           
          }
+         
        }
         console.log("state", "action", state, action)
       });

@@ -23,6 +23,10 @@ const BotConversation = (args) => {
     }      
     if(currentBotSDKInstance){
         currentBotSDKInstance.sendMessage = (msg, renderTxt) => {
+            /*
+            msg is the payload to be sent to server,
+            renderTxt is the object that cotains the data to be rendered at the client application
+            */
             if (msg) {
                 console.log(msg, renderTxt)
                 submitBotResponse({
@@ -30,7 +34,8 @@ const BotConversation = (args) => {
                     "cId": state?.currentQuestion?.reqId,
                     "messageId": Object.values(store.getState().global?.currentQuestion?.botConversation)?.find(c => c.hasOwnProperty('template_html') && c.status === "in-progress")?.messageId,
                     "context": state?.currentQuestion?.context,
-                    "source": "bot"
+                    "source": "bot",
+                    "renderMsgPayload": renderTxt?.renderMsg
                 })
             }
         }
@@ -69,13 +74,26 @@ const BotConversation = (args) => {
                 }
             }
         }
-        if(detail?.action === "update"){
+        if(detail?.action === "update"){            
             question = questions[getReqIdByMessageId(detail?.messageId)]
-            question = {...question, ...detail?.message}
+            /*should retain the id of the question when accessing from history */
+            if(question?.historicalData){
+                const questionHistoryId = question.id
+                question = { ...question, ...detail?.message }
+                question.id = questionHistoryId
+            }else{
+                question = { ...question, ...detail?.message }
+            }           
             console.log("question after update: ", question)
         }        
         store.dispatch(setCurrentQuestion(question))
-        questions[question?.reqId] = question
+        /*In case of history data we need to depend on id of the question */
+        if(question?.historicalData){
+            questions[question?.id] = question
+        }else{
+            questions[question?.reqId] = question
+        }        
+        // questions[question?.reqId] = question
         store.dispatch(updateChatData(questions))
     }
 
@@ -96,13 +114,17 @@ const BotConversation = (args) => {
          */
         state = store.getState().global
         const params = {
-            "reqId": data?.cId //use reqId
+            "reqId": data?.cId, //use reqId
+            "from": "botAgent"
         }
         let payload = {
             "question": data?.input,
             "context": data?.context,
             "messageId": data?.messageId,
             "source": "bot"
+        }
+        if (data?.renderMsgPayload){
+            payload.renderMsgPayload = data?.renderMsgPayload 
         }
         if (!isEmpty(state.customData)) {
             payload.customData = state.customData
