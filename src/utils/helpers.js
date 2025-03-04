@@ -81,7 +81,7 @@ export const getReqIdByMessageId = (messageId) => {
     let questions = cloneDeep(store.getState().global?.questions)
     for (const key in questions) {
         if (questions[key]?.messageId === messageId) {
-            return questions[key]?.reqId;
+            return questions[key]?.historicalData ? questions[key]?.id : questions[key]?.reqId;
         }
     }
     return null; // or an appropriate value if no match is found

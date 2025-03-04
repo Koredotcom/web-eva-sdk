@@ -1,4 +1,4 @@
-import { orderBy } from "lodash"
+import { keyBy, orderBy } from "lodash"
 import { getSearchHistory } from "../redux/actions/global.action"
 import store from "../redux/store"
 import { v4 as uuid } from 'uuid';
@@ -37,14 +37,14 @@ const JoinChatThread = async (props) => {
         chatHistoryOffset++
     }
 
-    const afterApiCallSuccess = (data, args) => {
+    const afterApiCallSuccess = async(data, args) => {
         const {history, moreAvailable} = Res.payload;
 
         let historyData = [];
 
         historyData = orderBy(history, 'cOn', 'asc')
         let updatedQuestions = {}
-        historyData?.map(q => {
+        for(const q of historyData){
             let msgId = uuid();
             let obj = {
                 ...q,
@@ -79,6 +79,22 @@ const JoinChatThread = async (props) => {
             //     }
             //     obj = {...obj, ...ConnectionObj}
             // }
+            if(q?.viewType === "threadView") {
+                let params = {
+                    limit: 20,
+                    showdata: true,
+                    pId: q?.messageId
+                }
+                const botChatData = await store.dispatch(getSearchHistory({"boardId":q?.boardId,  params }))                
+                if(botChatData?.payload?.history?.length) {
+                const orderedBotChatData = orderBy(botChatData.payload.history, 'msgNo', 'asc')
+                /*constructing botConversation from orderedBotChatData */
+                obj.botConversation = keyBy(orderedBotChatData, 'messageId')
+                console.log("ordered bot chat data: ", orderedBotChatData)
+                }else{
+                    obj.botConversation = {}
+                }
+            }
 
             if(q?.templateType === 'gpt_form_template') {
                 const gptFormConstructedData = constructGptForm(q)
@@ -109,7 +125,7 @@ const JoinChatThread = async (props) => {
     
             updatedQuestions[msgId] = obj;
             // return obj;
-        })
+        }
     
         let _questions = {}
         if(props?.pagination) {
@@ -126,9 +142,21 @@ const JoinChatThread = async (props) => {
         store.dispatch(setChatHistoryMoreAvailable(moreAvailable))
         store.dispatch(updateChatData(_questions))
     }
-    afterApiCallSuccess()
+    await afterApiCallSuccess()
 
     console.log(Res)
+}
+
+const constructBotAgentDataStructure = async (q) => {      
+
+    let params = {
+        limit: 20,
+        showdata: true,
+        pId: q?.messageId
+    }
+
+
+    const Res = await store.dispatch(getSearchHistory({ params }))
 }
 
 export default JoinChatThread
