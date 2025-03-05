@@ -51,6 +51,10 @@ const ChatInterface = (props) => {
             if(selectedContext?.data?.messageId) {
               payload.contextParams = {messageId: selectedContext?.data?.messageId}
             }
+            /*writing especially for botAgent, will remove this once search session api gives the context data, when we click on askFollowup after bot completion */
+            if(selectedContext?.data?.sessionId){
+              payload.context.sessionId = selectedContext?.data?.sessionId
+            }
           } else {
             // when setted context is an attachment
             payload.context = {

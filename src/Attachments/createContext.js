@@ -255,7 +255,13 @@ export const setContext = async (state, args, callback, type) => {
                 } else return { ...obj, docId: p?.contentId, source: type }
             }
             else {
-                return { ...obj, docId: p?.docId, source: p?.source }
+                if(p?.docId){
+                    obj.docId = p?.docId
+                }
+                if(p?.source){
+                    obj.source = p?.source
+                }
+                return obj
             }
         })
     }
