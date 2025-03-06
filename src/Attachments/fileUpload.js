@@ -193,6 +193,12 @@ const FileUpload = (props) => {
         }
     }
 
+    /*This function is the clear the context set by agent or its followup, the existing implementation is we are making an searchSession api call to clear the session */
+    /*the below method will rules out the api depedency as clearing context should be handled client side */
+    const clearContext = () => {
+        store.dispatch(setSelectedContext({}))
+    }
+
     const fileUploadError = (msg, data) => {
         // console.log(msg, data, allFilesCount)
         let _selectedContext = {};
@@ -271,7 +277,8 @@ const FileUpload = (props) => {
         removeContext,
         setAttachmentContext,
         askFollowup,
-        uploadFile
+        uploadFile,
+        clearContext
     }
 }
 

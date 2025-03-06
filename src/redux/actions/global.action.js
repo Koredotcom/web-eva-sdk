@@ -194,7 +194,8 @@ export const searchSession = createAsyncThunk(
                 return response.data
             }
             else if(arg?.params?.action === "remove"){
-                const response = await axiosInstance.delete(`/kora/users/${arg?.userId}/searchsession/${arg?.params?.sessionId}/sources/${arg?.params?.docId}`)
+                // const response = await axiosInstance.delete(`/kora/users/${arg?.userId}/searchsession/${arg?.params?.sessionId}/sources/${arg?.params?.docId}`) // DELETE wont work due to CORS error, so going with PUT
+                const response = await axiosInstance.put(`/kora/users/${arg?.userId}/searchsession/${arg?.params?.sessionId}`, arg?.payload)
                 return response.data
             }
         }

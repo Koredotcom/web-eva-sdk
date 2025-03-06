@@ -292,7 +292,8 @@ export const setContext = async (state, args, callback, type) => {
     if (args?.action === "update" || args?.action === "remove") {
         params.sessionId = state.selectedContext?.data?.sessionId
         if (args?.action === "remove") {
-            params.docId = args?.payload?.[0]?.docId
+            // params.docId = args?.payload?.[0]?.docId
+            payload.removeSources = args?.payload?.map(obj => obj?.docId)
         }
     }
     const response = await store.dispatch(searchSession({ params, payload, userId }))
