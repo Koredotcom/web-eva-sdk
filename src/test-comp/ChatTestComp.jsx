@@ -167,9 +167,16 @@ const ChatTestComp = (props) => {
                             return(
                                 <>
                                     <BotAgentTestComponent question={item} />
-                                    {item?.status === "completed" && <button onClick={() => {                                                                             
-                                        followupInstance.current.askFollowup(item)
-                                    }}>set context</button>}
+                                    {item?.status === "completed" && (<>
+                                        <button onClick={() => {
+                                            followupInstance.current.askFollowup(item)
+                                        }}>set context</button>
+                                        <button onClick={() => {
+                                            followupInstance.current.clearContext({})
+                                        }}>clear context</button>
+                                    </>)
+                                    
+                                    }
                                 </>
                                 
                             )
