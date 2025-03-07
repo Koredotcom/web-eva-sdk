@@ -74,16 +74,28 @@ const BotConversation = (args) => {
                 }
             }
         }
-        if(detail?.action === "update"){            
-            question = questions[getReqIdByMessageId(detail?.messageId)]
-            /*should retain the id of the question when accessing from history */
-            if(question?.historicalData){
-                const questionHistoryId = question.id
-                question = { ...question, ...detail?.message }
-                question.id = questionHistoryId
+        if(detail?.action === "update"){         
+            /*reqId only comes when updating the parentMessage clo */   
+            if (detail?.message?.hasOwnProperty('reqId')) {
+                const currentQuestion = Object.values(questions).find(ques => ques.reqId === detail.message.reqId)
+                if(currentQuestion?.historicalData){
+                    question = questions?.[currentQuestion?.id]
+                }else{
+                    question = questions?.[currentQuestion?.reqId]
+                }                
+                question = {...question, 'answer': detail?.message?.answer, 'status': detail?.message?.status}
             }else{
-                question = { ...question, ...detail?.message }
-            }           
+                question = questions[getReqIdByMessageId(detail?.message?.pId)]
+                question.botConversation[detail?.messageId] = detail?.message
+            }         
+            /*should retain the id of the question when accessing from history */
+            // if(question?.historicalData){
+            //     const questionHistoryId = question.id
+            //     question = { ...question, ...detail?.message }
+            //     question.id = questionHistoryId
+            // }else{
+            //     // question = { ...question, ...detail?.message }
+            // }           
             console.log("question after update: ", question)
         }        
         store.dispatch(setCurrentQuestion(question))
