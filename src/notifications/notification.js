@@ -38,10 +38,13 @@ const Notification = () => {
         store.dispatch(setNotifications(_notificationState))
     }
 
-    const redirectToNotificationChatThread = (notification) => {
-        //Method to redirect to the current notification chat thread
+    const redirectToNotificationChatThread = async (notification) => {
+        /* adding the logic to change the 'read' state of the notification if it is unread */
+        if (!notification?.isRead) {
+            await markNotificationAsRead(notification)
+        }
         let reqdBoardId = notification?.cd?.ed?.payload?.boardId
-        JoinChatThread({ boardId: reqdBoardId , redirectFromNotification: true})
+        JoinChatThread({ boardId: reqdBoardId, redirectFromNotification: true })
 
     }
 
@@ -76,12 +79,13 @@ const Notification = () => {
 
     const redirectToLatestAlert = async (notification) => {
         //Method to redirect to the latest alert
+        /*the below read method is handled in  redirectToNotificationChatThread, so commenting the below*/
         let id = notification?.cd?.nId
-        let userId = state?.profile?.data?.id
-        let payload = {
-            "read": id
-        }
-        const res = await store.dispatch(readNotification({userId, payload}))
+        // let userId = state?.profile?.data?.id
+        // let payload = {
+        //     "read": id
+        // }
+        // const res = await store.dispatch(readNotification({userId, payload}))        
         redirectToNotificationChatThread(notification)
 
         //Clearing the alert from the state
@@ -95,6 +99,29 @@ const Notification = () => {
        store.dispatch(setNotifications({}))
     }
 
+    const markNotificationAsRead = async (notification) => {
+        if(notification?.isRead) return;
+        let userId = state?.profile?.data?.id
+        let id = notification?.cd?.nId || notification?._id 
+        let payload = {
+            "read": id
+        }   
+        const res = await store.dispatch(readNotification({userId, payload}))
+        if(res?.payload?.SUCCESS){
+            // let _notificationState = cloneDeep(state?.notifications);
+
+            // _notificationState.notifications = _notificationState.notifications.map(notification => {
+            //     if((notification?.cd?.nId || notification?._id) === id){
+            //         notification.isRead = true;
+            //     }
+            //     return notification;
+            // });
+            // store.dispatch(setNotifications(_notificationState))
+            console.log("notification marked as read: ", id)
+        }
+        
+    }
+
     return {
         subscribe,
         getNotifications,
@@ -103,7 +130,8 @@ const Notification = () => {
         getMoreNotifications,
         markAllAsRead,
         redirectToLatestAlert,
-        clearNotifications
+        clearNotifications,
+        markNotificationAsRead
     }
 }
 
