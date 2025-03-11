@@ -1,4 +1,4 @@
-import { cloneDeep } from "lodash"
+import { cloneDeep, isEmpty } from "lodash"
 import { JoinChatThread } from "../chat"
 import { getNotification, readNotification } from "../redux/actions/global.action"
 import { setNotifications } from "../redux/globalSlice"
@@ -88,11 +88,11 @@ const Notification = () => {
         // const res = await store.dispatch(readNotification({userId, payload}))        
         redirectToNotificationChatThread(notification)
 
-        //Clearing the alert from the state
-        let _notificationState = cloneDeep(state?.notifications);
-        _notificationState.alert = _notificationState.alert.filter(alert => alert?.cd?.nId !== id)
-        _notificationState.bell = _notificationState.bell - 1;
-        store.dispatch(setNotifications(_notificationState))
+        // Clearing the alert from the state
+        // let _notificationState = cloneDeep(state?.notifications);
+        // _notificationState.alert = _notificationState.alert.filter(alert => alert?.cd?.nId !== id)
+        // _notificationState.bell = _notificationState.bell - 1;
+        // store.dispatch(setNotifications(_notificationState))
     }
 
     const clearNotifications = async () => {
@@ -108,15 +108,26 @@ const Notification = () => {
         }   
         const res = await store.dispatch(readNotification({userId, payload}))
         if(res?.payload?.SUCCESS){
-            // let _notificationState = cloneDeep(state?.notifications);
+            let _notificationState;
+            if(isEmpty(state?.notifications)){
+                getMoreNotifications();
+            }
+            _notificationState = cloneDeep(state?.notifications);
+            if(_notificationState?.hasOwnProperty("alert")){
+                //Clearing the alert from the state                
+                _notificationState.alert = _notificationState.alert.filter(alert => alert?.cd?.nId !== id)
+                _notificationState.bell = _notificationState.bell - 1;                
 
-            // _notificationState.notifications = _notificationState.notifications.map(notification => {
-            //     if((notification?.cd?.nId || notification?._id) === id){
-            //         notification.isRead = true;
-            //     }
-            //     return notification;
-            // });
-            // store.dispatch(setNotifications(_notificationState))
+            }else{
+                _notificationState.notifications = _notificationState.notifications.map(notification => {
+                    if ((notification?.cd?.nId || notification?._id) === id) {
+                        notification.isRead = true;
+                    }
+                    return notification;
+                });
+            }
+            
+            store.dispatch(setNotifications(_notificationState))
             console.log("notification marked as read: ", id)
         }
         
