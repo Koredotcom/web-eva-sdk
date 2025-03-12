@@ -12,6 +12,9 @@ const LoadMoreHistoryData = async (props) => {
     limit: props?.limit || 10,
     offset: props?.initialData ? 0 : null || historyOffset * (props?.limit || 10)
   }
+  if(props?.initialData){
+    historyOffset = 1
+  }
 
   const state = store.getState();
   store.dispatch(setAllHistory({...state.global.AllHistory, status: 'loading'}))
