@@ -7,6 +7,7 @@ const Notifications = () => {
     const [notifications, setNotifications] = useState([])
     const [hasMore, setHasMore] = useState(false)
     const [notifyAlert, setNotifyAlert] = useState(false)
+    const [notificationsCount, setNotificationsCount] = useState(0)
 
     useEffect(() => {
         NotificationRef.current = Notification()
@@ -14,15 +15,17 @@ const Notifications = () => {
             setNotifications(notifications)
             setHasMore(hasMore)
             setNotifyAlert(alerts)
+            setNotificationsCount(unreadCount?.bell)
             console.log("notifications", notifications, hasMore, unreadCount, alerts)
         })
     }, [])
     return (
         <>
             <h1>Notifications</h1>
+            {<h2>Unread Notifications: {notificationsCount}</h2>}
             {notifyAlert?.length > 0 && notifyAlert?.map((alert, index) => {
                 return <div key={index} onClick={() => NotificationRef.current.redirectToLatestAlert(alert)}>{alert?.message?.title}</div>
-            })}
+            })}            
             {notifications?.map((notification, index) => {
                 return (<>
                     <div key={index} onClick={() => NotificationRef.current.redirectToNotificationChatThread(notification)}>
