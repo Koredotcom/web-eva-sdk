@@ -23,6 +23,7 @@ const Notification = () => {
         //Method to get notifications
         let userId = state?.profile?.data?.id
         const res = await store.dispatch(getNotification({userId}))
+        /*bell count object format should be changed */
         store.dispatch(setNotifications(res.payload))
     }
 
@@ -31,7 +32,7 @@ const Notification = () => {
         
         //Method to notify the latest notification
         let _notificationState = cloneDeep(state?.notifications);
-        _notificationState.bell = notification?.nStats?.bell;
+        _notificationState.bell = { 'bell': notification?.nStats?.bell };
         let alerts = _notificationState?.alert?.length ? _notificationState?.alert : [];
         alerts.unshift({message : notification?.notification, cd : notification?.customdata});
         _notificationState.alert = alerts;
@@ -73,6 +74,8 @@ const Notification = () => {
                 notification.isRead = true;
                 return notification;
             });
+            /*Bell count is should be update to 0, as all notifications are read */
+            _notificationState.bell = {bell: 0};
             store.dispatch(setNotifications(_notificationState))
         }
     }
@@ -115,8 +118,7 @@ const Notification = () => {
             _notificationState = cloneDeep(state?.notifications);
             if(_notificationState?.hasOwnProperty("alert")){
                 //Clearing the alert from the state                
-                _notificationState.alert = _notificationState.alert.filter(alert => alert?.cd?.nId !== id)
-                _notificationState.bell = _notificationState.bell - 1;                
+                _notificationState.alert = _notificationState.alert.filter(alert => alert?.cd?.nId !== id)                            
 
             }else{
                 _notificationState.notifications = _notificationState.notifications.map(notification => {
@@ -126,7 +128,9 @@ const Notification = () => {
                     return notification;
                 });
             }
-            
+            if (_notificationState?.bell?.bell){
+                _notificationState.bell = { 'bell': _notificationState?.bell?.bell - 1 };   
+            }            
             store.dispatch(setNotifications(_notificationState))
             console.log("notification marked as read: ", id)
         }
