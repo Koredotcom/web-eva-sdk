@@ -169,12 +169,29 @@ const BotConversation = (args) => {
     const installOwnTemplate = (templateInstance) => {
         currentBotSDKInstance?.templateManager?.installTemplate(templateInstance) //Here templateInstance should be a component
     }
+
+    const generateHTMLforBotTemplate = (templatePayload) => {        
+        const xoTemplatePayload = {
+            "type": "bot_response",
+            "from": "bot",
+            "messageId": templatePayload?.messageId,
+            "message": [
+                {
+                    "type": "text",
+                    "component": templatePayload?.content
+                }
+            ]
+        }
+        return currentBotSDKInstance.generateMessageDOM(xoTemplatePayload)
+        
+    }
     return{
         setBotConversation,
         submitBotResponse,
         installOwnTemplate,
         initializeBotSDK,
-        enableEVABotSdk
+        enableEVABotSdk,
+        generateHTMLforBotTemplate
     }
 }
 

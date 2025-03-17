@@ -6,6 +6,7 @@ import { setActiveBoardId, updateChatData, setChatHistoryMoreAvailable } from ".
 import constructGptForm from "./gptTemplate/gptTemplateBody";
 import gptFormFunctionality from "./gptTemplate/gptTemplateFunc";
 import MultiResponse from "./gptTemplate/MultiResponse";
+import BotConversation from "./botAgent/getBotConversation";
 
 let chatHistoryOffset = 0
 
@@ -89,6 +90,14 @@ const JoinChatThread = async (props) => {
                 if(botChatData?.payload?.history?.length) {
                 const orderedBotChatData = orderBy(botChatData.payload.history, 'msgNo', 'asc')
                 /*constructing botConversation from orderedBotChatData */
+                /*if templateType is bot_template, need to include template_html key in the object */
+                orderedBotChatData.map(detail => {
+                    if (detail?.templateType === "bot_template"){
+                        if (state?.enableKoreBotSDK){
+                            detail.template_html = BotConversation().generateHTMLforBotTemplate(detail)
+                        }                    
+
+                    }})                
                 obj.botConversation = keyBy(orderedBotChatData, 'messageId')
                 console.log("ordered bot chat data: ", orderedBotChatData)
                 }else{
