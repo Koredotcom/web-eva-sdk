@@ -266,3 +266,30 @@ export const readNotification = createAsyncThunk(
     }
 );
 
+
+export const getSpecificSkills = createAsyncThunk(
+    'global/getSpecificSkills',
+    async (arg, { rejectWithValue }) => {
+        try {
+            const response = await axiosInstance.get(`/1.1/ka/users/${arg?.userId}/connectors/${arg?.connectorId}`);
+            return response.data;
+        } catch (error) {
+            handleErrorState(error, "Get Specific Skills");
+            return rejectWithValue(error.response.data);
+        }
+    }
+);
+
+export const thirdPartySSO = createAsyncThunk(
+    'global/thirdPartySSO',
+    async (arg, thunkAPI) => {
+        try {
+            const response = await axiosInstance.post(`/users/${arg?.userId}/connections`, arg?.payload);
+            return response.data;
+        } catch (error) {
+            handleErrorState(error, "Third Party SSO");
+            return thunkAPI.rejectWithValue(error.response.data);
+        }
+    }
+);
+
