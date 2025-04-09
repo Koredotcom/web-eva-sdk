@@ -7,34 +7,16 @@ import { encodeHtml } from "../utils/helper";
  * @param {Object} data Question data
  * @returns {string} HTML string
  */
-export function renderQuestionBubble(data) {
+export function renderQuestionBubble(data, userIconTemplate = false) {
 	const { question, timestamp, icon } = data;
-
 	return `
         <div class="message-bubble question">
-            ${
-				icon
-					? `
-                <div class="user-icon">
-                    <img src="${encodeHtml(icon)}" alt="User" />
-                </div>
-            `
-					: ""
-			}
             <div class="message-content">
                 <div class="message-text">${encodeHtml(question)}</div>
-                ${
-					timestamp
-						? `
-                    <div class="message-timestamp">${encodeHtml(
-						timestamp
-					)}</div>
-                `
-						: ""
-				}
+                ${userIconTemplate ? userIconTemplate : ""}
             </div>
         </div>
-    `;
+        `;
 }
 
 /**
@@ -46,7 +28,7 @@ export function renderAnswerBubble(data) {
 	const { answer, timestamp, icon, source, status } = data;
 
 	return `
-        <div class="message-bubble answer ${status || ""}">
+        < div class="${status || ""}" >
             ${
 				icon
 					? `
@@ -58,29 +40,29 @@ export function renderAnswerBubble(data) {
             `
 					: ""
 			}
-            <div class="message-content">
-                <div class="message-text">
-                    ${typeof answer === "string" ? encodeHtml(answer) : answer}
-                </div>
-                ${
-					timestamp
-						? `
+    <div class="message-content">
+        <div class="message-text">
+            ${typeof answer === "string" ? encodeHtml(answer) : answer}
+        </div>
+        ${
+			timestamp
+				? `
                     <div class="message-timestamp">${encodeHtml(
 						timestamp
 					)}</div>
                 `
-						: ""
-				}
-                ${
-					source
-						? `
+				: ""
+		}
+        ${
+			source
+				? `
                     <div class="message-source">${encodeHtml(source)}</div>
                 `
-						: ""
-				}
-            </div>
-        </div>
-    `;
+				: ""
+		}
+    </div>
+        </ >
+        `;
 }
 
 /**
@@ -88,30 +70,26 @@ export function renderAnswerBubble(data) {
  * @param {Object} data Loading data
  * @returns {string} HTML string
  */
-export function renderLoading(data = {}) {
-	const { text = "Thinking...", icon } = data;
-
-	return `
-        <div class="message-bubble loading">
-            ${
-				icon
-					? `
-                <div class="bot-icon">
-                    <img src="${encodeHtml(icon)}" alt="Loading" />
-                </div>
-            `
-					: ""
-			}
-            <div class="message-content">
-                <div class="loading-text">${encodeHtml(text)}</div>
-                <div class="loading-dots">
-                    <span></span>
-                    <span></span>
-                    <span></span>
+export function renderLoading(
+	data = {},
+	assistantIconTemplate,
+	loadingText,
+	userIconTemplate
+) {
+	// const { text = "Thinking...", icon } = data;
+	const text = loadingText || "Thinking...";
+	return ` <div class="message-bubble question">
+                <div class="message-content">
+                    <div class="message-text">${encodeHtml(
+						data?.question
+					)}</div>
+                    ${userIconTemplate ? userIconTemplate : ""}
                 </div>
             </div>
-        </div>
-    `;
+            <div class="message-bubble loading" >
+                ${assistantIconTemplate ? assistantIconTemplate : ""}
+                <div class="loading-text">${encodeHtml(text)}</div>   
+            </div>`;
 }
 
 /**
@@ -122,14 +100,13 @@ export function renderLoading(data = {}) {
  */
 export function wrapTemplate(content, data) {
 	const { type, className = "", id } = data;
-
-	return `
-        <div class="message-container ${type || ""} ${className}" ${
+	return `<div >
+                <div class="message-container ${type || ""} ${className}" ${
 		id ? `id="${id}"` : ""
 	}>
-            ${content}
-        </div>
-    `;
+                    ${content}
+                </div >
+            </div > `;
 }
 
 /**
@@ -141,7 +118,7 @@ export function renderError(data) {
 	const { message, code, icon } = data;
 
 	return `
-        <div class="message-bubble error">
+        < div class="message-bubble error" >
             ${
 				icon
 					? `
@@ -151,20 +128,20 @@ export function renderError(data) {
             `
 					: ""
 			}
-            <div class="message-content">
-                <div class="error-message">${encodeHtml(message)}</div>
-                ${
-					code
-						? `
+    <div class="message-content">
+        <div class="error-message">${encodeHtml(message)}</div>
+        ${
+			code
+				? `
                     <div class="error-code">Error code: ${encodeHtml(
 						code
 					)}</div>
                 `
-						: ""
-				}
-            </div>
-        </div>
-    `;
+				: ""
+		}
+    </div>
+        </div >
+        `;
 }
 
 /**
@@ -178,7 +155,7 @@ export function renderFeedback(data) {
 	if (!enabled) return "";
 
 	return `
-        <div class="message-feedback">
+        < div class="message-feedback" >
             <button class="feedback-btn" data-value="positive" aria-label="Helpful">
                 <svg class="thumbs-up" viewBox="0 0 24 24">
                     <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
@@ -189,8 +166,8 @@ export function renderFeedback(data) {
                     <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
                 </svg>
             </button>
-        </div>
-    `;
+        </div >
+        `;
 }
 
 export const renderIcon = (icon) => {

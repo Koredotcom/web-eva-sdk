@@ -16,11 +16,6 @@ function renderSearchInfo(data) {
 	return `
         <div class="generating-answer-block">
             <div class="generating-answer-block-item">
-                <div class="icon">
-                    <svg class="tick-mark" width="18" height="18">
-                        <path d="M15 4.5L6.75 12.75L3 9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                </div>
                 <div class="msg">Searching for: <span>${encodeHtml(
 					data.suggestion
 				)}</span></div>

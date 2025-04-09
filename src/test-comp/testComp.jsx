@@ -14,6 +14,8 @@ import Notifications from "./Notifications";
 import { FileUpload } from "../Attachments";
 import { cloneDeep } from "lodash";
 import { TemplateRenderer } from "../templateRenderer";
+import { convertTemplateToHtml } from "../utils/helpers";
+
 // import { submitUserFeedback } from '../Feedback'
 
 const TestComp = (props) => {
@@ -272,9 +274,25 @@ const TestComp = (props) => {
 							// 	);
 							// }
 							// return null;
-							let html =
-								TemplateRenderer.generateHTMLTemplate(item);
+							const assistantIconTemplate = () => {
+								return <Solidstar04 size={20} />;
+							};
 
+							const userIconTemplate = () => {
+								return (
+									<div className="ic-text">
+										<span className="text-wrapper">AP</span>
+									</div>
+								);
+							};
+							let html = TemplateRenderer.generateHTMLTemplate(
+								item,
+								{
+									assistantIconTemplate,
+									userIconTemplate,
+									loadingText: "Analyzing",
+								}
+							);
 							return (
 								<div
 									dangerouslySetInnerHTML={{
@@ -327,3 +345,49 @@ const TestComp = (props) => {
 };
 
 export default TestComp;
+export const Solidstar04 = ({
+	size,
+	color,
+	className = "",
+	strokeWidth = "",
+}) => {
+	return (
+		<svg
+			width={size}
+			height={size}
+			viewBox="0 0 24 24"
+			fill="none"
+			xmlns="http://www.w3.org/2000/svg"
+		>
+			<mask id="path-1-inside-1_623_13570" fill="white">
+				<path d="M0 12C0 5.37258 5.37258 0 12 0C18.6274 0 24 5.37258 24 12C24 18.6274 18.6274 24 12 24C5.37258 24 0 18.6274 0 12Z" />
+			</mask>
+			<path
+				d="M0 12C0 5.37258 5.37258 0 12 0C18.6274 0 24 5.37258 24 12C24 18.6274 18.6274 24 12 24C5.37258 24 0 18.6274 0 12Z"
+				fill="url(#paint0_linear_623_13570)"
+			/>
+			<path
+				d="M0 0H24H0ZM24 12.4706C24 19.098 18.6274 24.4706 12 24.4706C5.37258 24.4706 0 19.098 0 12.4706V12C0 18.3675 5.37258 23.5294 12 23.5294C18.6274 23.5294 24 18.3675 24 12V12.4706ZM0 24V0V24ZM24 0V24V0Z"
+				fill="#D0D5DD"
+				mask="url(#path-1-inside-1_623_13570)"
+			/>
+			<path
+				d="M12.4973 6.47567C12.418 6.2697 12.2202 6.13379 11.9995 6.13379C11.7788 6.13379 11.5809 6.2697 11.5017 6.47567L10.4287 9.26558C10.2684 9.68214 10.2181 9.80217 10.1492 9.89902C10.0801 9.9962 9.99522 10.0811 9.89805 10.1502C9.8012 10.2191 9.68116 10.2694 9.2646 10.4296L6.47469 11.5027C6.26872 11.5819 6.13281 11.7798 6.13281 12.0005C6.13281 12.2211 6.26872 12.419 6.47469 12.4982L9.2646 13.5713C9.68116 13.7315 9.8012 13.7818 9.89805 13.8507C9.99522 13.9198 10.0801 14.0047 10.1492 14.1019C10.2181 14.1987 10.2684 14.3188 10.4287 14.7353L11.5017 17.5252C11.5809 17.7312 11.7788 17.8671 11.9995 17.8671C12.2202 17.8671 12.418 17.7312 12.4973 17.5252L13.5703 14.7353C13.7305 14.3188 13.7809 14.1987 13.8497 14.1019C13.9188 14.0047 14.0037 13.9198 14.1009 13.8507C14.1978 13.7818 14.3178 13.7315 14.7344 13.5713L17.5243 12.4982C17.7302 12.419 17.8661 12.2211 17.8661 12.0005C17.8661 11.7798 17.7302 11.5819 17.5243 11.5027L14.7344 10.4296C14.3178 10.2694 14.1978 10.2191 14.1009 10.1502C14.0037 10.0811 13.9188 9.9962 13.8497 9.89902C13.7809 9.80217 13.7305 9.68214 13.5703 9.26558L12.4973 6.47567Z"
+				fill="white"
+			/>
+			<defs>
+				<linearGradient
+					id="paint0_linear_623_13570"
+					x1="12"
+					y1="-29.6471"
+					x2="34.6039"
+					y2="-17.3054"
+					gradientUnits="userSpaceOnUse"
+				>
+					<stop stopColor="#7DD4EB" />
+					<stop offset="1" stopColor="#2574F0" />
+				</linearGradient>
+			</defs>
+		</svg>
+	);
+};

@@ -63,7 +63,7 @@ const ChatInterface = (props) => {
           }
         }
 
-        const Res = await store.dispatch(advanceSearch({ params, payload, userId: state.profile.data.id }))
+        const Res = await store.dispatch(advanceSearch({ params, payload, userId: state.profile?.data?.id }))
         constructQuestionPostCall(Res, qId)
         resIndexRef = 0
       }
@@ -91,6 +91,12 @@ const ChatInterface = (props) => {
       let params = { reqId: generateShortUUID() }
       let payload = {}
       let replaceExistingQsn = false;
+
+      if(arg?.params?.reqId) {
+        params.reqId = arg.params.reqId;
+        replaceExistingQsn = true;
+      }
+
       if(state.activeBoardId) {
         payload.boardId = state.activeBoardId
       }

@@ -17,7 +17,7 @@ const ConnectionProviderFunc = (data) => {
             }
             new SSOMethods().connect(data?.provider, null, config);
         }else{
-            //basic auth
+            
         }
     }
 

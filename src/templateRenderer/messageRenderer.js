@@ -16,12 +16,23 @@ import * as errorMessage from "./templates/error-message-template";
 import * as genericErrorTemplate from "./templates/generic-error-template";
 import * as feedbackTemplate from "./templates/feedback-template";
 import { encodeHtml } from "./utils/helper";
-export function render(data) {
+import { convertTemplateToHtml } from "../utils/helpers";
+import botConversation from "./templates/bot-conversation";
+// import customMarkdownRenderer from "./utils/customMarkdownRenderer";
+export function render(
+	data,
+	{ assistantIconTemplate, userIconTemplate, loadingText }
+) {
 	try {
 		// Handle loading state
-		if (data.loading) {
+		if (data?.loading) {
 			return TemplateComponents.wrapTemplate(
-				TemplateComponents.renderLoading(data),
+				TemplateComponents.renderLoading(
+					data,
+					assistantIconTemplate,
+					loadingText,
+					userIconTemplate
+				),
 				{ type: "loading", id: data.id }
 			);
 		}
@@ -38,26 +49,23 @@ export function render(data) {
 
 		// Add question bubble if needed
 		if (data.question && shouldShowQuestion(data.templateType)) {
-			content += TemplateComponents.renderQuestionBubble(data);
+			content += TemplateComponents.renderQuestionBubble(
+				data,
+				userIconTemplate
+			);
 		}
 
 		// Render template content based on type
-		content += renderTemplateContent(data);
+		content += (
+			renderTemplateContent(data, assistantIconTemplate)
+		);
 
-		// if(data.sources.length > 0){
-		// 	content += renderAnsFromChip(data);
-		// }
-
-		// Add feedback if supported
-		if (supportsFeedback(data.templateType)) {
-			content += feedbackTemplate.render(data);
-		}
-
-		return TemplateComponents.wrapTemplate(content, {
+		let ele = TemplateComponents.wrapTemplate(content, {
 			type: data.templateType,
 			id: data.id,
 			className: data.className,
 		});
+		return ele;
 	} catch (error) {
 		console.error("Error rendering message:", error);
 		return genericErrorTemplate.render({
@@ -69,71 +77,93 @@ export function render(data) {
 	}
 }
 
-export function renderTemplateContent(data) {
-	switch (data.templateType) {
-		case "resolve_ambiguity":
-			return ambiguityTemplate.render(data);
+export function renderTemplateContent(data, assistantIconTemplate) {
+	let htmlTemplate = "";
+	if (data.viewType === "threadView") {
+		htmlTemplate = botConversation.render(data);
+	} else {
+		switch (data.templateType) {
+			case "resolve_ambiguity":
+				htmlTemplate = ambiguityTemplate.render(data);
+				break;
 
-		case "intent_ambiguity":
-			return intentAmbiguityTemplate.render(data);
+			case "intent_ambiguity":
+				htmlTemplate = intentAmbiguityTemplate.render(data);
+				break;
 
-		case "action_send_email":
-			return actionSendEmail.render(data);
+			case "action_send_email":
+				htmlTemplate = actionSendEmail.render(data);
+				break;
 
-		case "integrations_action_form":
-			return integrationActionTemplate.render(data);
+			case "integrations_action_form":
+				htmlTemplate = integrationActionTemplate.render(data);
+				break;
 
-		case "interruption_template":
-			return interruptionTemplate.render(data);
+			case "interruption_template":
+				htmlTemplate = interruptionTemplate.render(data);
+				break;
 
-		case "gpt_form_template":
-			return gptFormTemplate.render(data);
+			case "gpt_form_template":
+				htmlTemplate = gptFormTemplate.render(data);
+				break;
 
-		case "action_send_slack_message":
-			return actionSendSlackMessage.render(data);
+			case "action_send_slack_message":
+				htmlTemplate = actionSendSlackMessage.render(data);
+				break;
 
-		case "connection_provider":
-		case "admin_config_action":
-		case "error_message":
-			return connectionProvider.render({
-				...data,
-				llm: data.templateType !== "connection_provider",
-				error: data.templateType === "error_message",
-			});
+			case "connection_provider":
+			case "admin_config_action":
+			case "error_message":
+				htmlTemplate = connectionProvider.render({
+					...data,
+					llm: data.templateType !== "connection_provider",
+					error: data.templateType === "error_message",
+				});
+				break;
 
-		case "agent_welcome_template":
-			return agentWelcomeTemplate.render(data);
+			case "agent_welcome_template":
+				htmlTemplate = agentWelcomeTemplate.render(data);
+				break;
+			// case "bot_template":
+			// 	console.log("bottttt", data.template_html);
+			// 	htmlTemplate = renderBotConversation(data);
+			// 	break;
 
-		case "search_answer":
-		case "search_results":
-			return searchAnswer.render(data);
+			case "search_answer":
+			case "search_results":
+				htmlTemplate = searchAnswer.render(data);
+				break;
 
-		case "multi_intent_execution":
-			return multiIntentExecution.render(data);
+			case "multi_intent_execution":
+				htmlTemplate = multiIntentExecution.render(data);
+				break;
 
-		case "multi_responses":
-			return multiResponses.render(data);
+			case "multi_responses":
+				htmlTemplate = multiResponses.render(data);
+				break;
 
-		case "hold_conversation":
-			return holdConversation.render(data);
+			case "hold_conversation":
+				htmlTemplate = holdConversation.render(data);
+				break;
 
-		case "bot_template":
-			return renderBotConversation(data);
-
-		default:
-			// Handle thread view or conversation
-			if (data.thread || data.viewType === "threadView") {
-				return renderBotConversation(data);
-			}
-			console.warn(`Unknown template type: ${data.templateType}`);
-			return TemplateComponents.renderAnswerBubble(data);
+			default:
+				// Handle thread view or conversation
+				if (data.thread || data.viewType === "threadView") {
+					htmlTemplate = renderBotConversation(data);
+				}
+				console.warn(`Unknown template type: ${data.templateType}`);
+				htmlTemplate = TemplateComponents.renderAnswerBubble(data);
+		}
 	}
+	// Add feedback if supported
+	// if (supportsFeedback(data.templateType)) {
+	// 	htmlTemplate += feedbackTemplate.render(data);
+	// }
+	return `<div class="message-bubble answer"> ${
+		assistantIconTemplate ? assistantIconTemplate : ""
+	} <div class="answerCntr">${htmlTemplate}</div>
+	</div>`;
 }
-
-// export const renderAnsFromChip = (data) => {
-// 	//On Hold
-// 	return 
-// }
 
 export function renderBotConversation(data) {
 	let content = "";

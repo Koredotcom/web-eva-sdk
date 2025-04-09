@@ -39,8 +39,8 @@ export default class SSOMethods {
         this.config = config;
         this.details = details;
         this.apiurl =  window.sdkConfig.api_url || "";
-        // let a = "https://eva-qa.kore.ai/";
-        // let b = "https://dev.kore.ai";
+        let a = "https://eva-qa.kore.ai";
+        let b = "https://dev.kore.ai";
         const popupWinWidth = 800,
             popupWinHeight = 500,
             // eslint-disable-next-line no-undef
@@ -48,7 +48,7 @@ export default class SSOMethods {
             // eslint-disable-next-line no-undef
             top = (screen.height - popupWinHeight) / 2;
         this.ssoWindow = window.open(
-            `${this.apiurl}api/serviceProvider/${type}/login?redirect_url=${window.location.origin}/web-redirection.html`,
+            `${this.apiurl}serviceProvider/${type}/login?redirect_url=${a}/web-redirection.html`,
             '_blank',
             `width=${popupWinWidth},height=${popupWinHeight}, top=${top}, left=${left}, e_internal=true`,
         );

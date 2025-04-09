@@ -6,7 +6,7 @@ export function render(item) {
 	// const { agentName, description, item } = data;
 
 	const entirediv = document.createElement("div");
-
+	entirediv.className = "answerCntr";
 	const div1 = document.createElement("div");
 	div1.className = "threadName maxLength";
 	div1.textContent = item?.answer;

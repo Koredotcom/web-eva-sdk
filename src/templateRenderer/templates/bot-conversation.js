@@ -1,103 +1,174 @@
-import { encodeHtml } from "../utils/helper";
+// import BotConversation from "../chat/botAgent/getBotConversation.js"
+import { isEmpty } from "lodash";
+import BotConversation from "../../chat/botAgent/getBotConversation";
 
-function render(data) {
-	if (data.loading) {
-		return renderLoading();
-	}
-
-	return `
-        <div class="bot-conversation-container">
-            ${renderGeneratingMessage(data)}
-            ${renderConversationContent(data)}
-            ${renderFeedback(data)}
-        </div>
-    `;
+function escapeHTML(str) {
+	if (!str) return "";
+	return str
+		.replace(/&/g, "&amp;")
+		.replace(/</g, "&lt;")
+		.replace(/>/g, "&gt;")
+		.replace(/"/g, "&quot;")
+		.replace(/'/g, "&#039;");
 }
 
-function renderGeneratingMessage(data) {
-	if (!data.status || data.status === "terminated") return "";
-
-	return `
-        <div class="generating-answer-block mb-30">
-            <div class="generating-answer-block-item">
-                <div class="icon">
-                    <svg class="tick-mark" width="18" height="18">
-                        <path d="M15 4.5L6.75 12.75L3 9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                </div>
-                <div class="msg">
-                    <span>${encodeHtml(
-						`Transferring to: "${data?.sources?.[0]?.title}" agent`
-					)}</span>
-                </div>
-            </div>
-        </div>
-    `;
-}
-
-function renderConversationContent(data) {
-	if (data.status === "terminated") {
+function createConversationHTML(conversation, props) {
+	if (
+		conversation?.hasOwnProperty("template_html") ||
+		conversation?.templateType === "hold_conversation"
+	) {
 		return `
-            <div class="threadName">
-                I see you interrupted the answer generation. Please feel free to provide more details or let me know how can I assist you further
-            </div>
+            <div class="botTemplate-${conversation?.messageId}"></div>
         `;
 	}
 
-	return `
-        <div class="conversation-content">
-            ${data.thread ? renderThread(data.thread) : ""}
-            ${
-				data.answer
-					? `
-                <div class="threadName maxLength">
-                    ${data.answer}
+	if (conversation?.templateType === "search_answer") {
+		if (conversation?.status === "completed" && conversation?.answer) {
+			return `
+                <div>
+                    <div>${escapeHTML(conversation?.question)}</div>
+                    <br>
+                    <div>
+                        <input 
+                            type="text" 
+                            value="${escapeHTML(conversation?.answer)}" 
+                            readonly
+                        >
+                    </div>
                 </div>
-            `
-					: ""
-			}
-        </div>
-    `;
-}
+            `;
+		}
 
-function renderThread(thread) {
-	if (!thread) return "";
-
-	return `
-        <div class="thread-container">
-            ${
-				thread.messages
-					?.map(
-						(message) => `
-                <div class="thread-message ${message.type}">
-                    ${message.content}
+		if (props?.status !== "completed") {
+			return `
+                <div>
+                    <div>${escapeHTML(conversation?.question)}</div>
+                    <input
+                        type="text"
+                        class="bot-input"
+                        placeholder="Enter bot response"
+                        data-message-id="${conversation?.messageId}"
+                    >
+                    <button 
+                        class="send-button" 
+                        data-message-id="${conversation?.messageId}"
+                        ${conversation?.loading ? "disabled" : ""}
+                    >
+                        ${conversation?.loading ? "Sending..." : "Send"}
+                    </button>
                 </div>
-            `
-					)
-					.join("") || ""
+            `;
+		}
+		if (props?.status === "completed" && props.answer) {
+			return `
+                <div>
+                    <div>${escapeHTML(props?.question)}</div>
+                    <br>
+                    <div>
+                       ${escapeHTML(props?.answer)}
+                    </div>
+                </div>
+            `;
+		}
+		return `<div>Thread ended</div>`;
+	}
+
+	return "";
+}
+
+function handleSubmit(conversation, input, props) {
+	const payload = {
+		cId: props?.cId || props?.reqId,
+		input: input,
+		context: props?.context,
+		messageId: conversation?.messageId,
+	};
+	BotConversation().submitBotResponse(payload);
+}
+
+function setupEventListeners(botConversation, props) {
+	// Input handlers
+	document.querySelectorAll(".bot-input").forEach((input) => {
+		input.addEventListener("keydown", (event) => {
+			if (event.keyCode === 13 && !event.shiftKey) {
+				event.preventDefault();
+				const messageId = event.target.dataset.messageId;
+				const conversation = Object.values(botConversation).find(
+					(conv) => conv.messageId === messageId
+				);
+
+				if (conversation) {
+					handleSubmit(conversation, event.target.value, props);
+					event.target.value = "";
+				}
 			}
-        </div>
-    `;
+		});
+	});
+
+	// Button handlers
+	document.querySelectorAll(".send-button").forEach((button) => {
+		button.addEventListener("click", (event) => {
+			const messageId = event.target.dataset.messageId;
+			const input = document.querySelector(
+				`.bot-input[data-message-id="${messageId}"]`
+			);
+			const conversation = Object.values(botConversation).find(
+				(conv) => conv.messageId === messageId
+			);
+
+			if (conversation && input) {
+				handleSubmit(conversation, input.value, props);
+				input.value = "";
+			}
+		});
+	});
 }
 
-function renderFeedback(data) {
-	if (!data.apiSuccess || data.status === "terminated") return "";
+function setupTemplates(botConversation) {
+	if (!isEmpty(botConversation)) {
+		const templateConversations = Object.values(botConversation)?.filter(
+			(conversation) => conversation?.hasOwnProperty("template_html")
+		);
+
+		if (templateConversations?.length) {
+			templateConversations.forEach((conversation) => {
+				const templateDiv = document.querySelector(
+					`.botTemplate-${conversation?.messageId}`
+				);
+				if (templateDiv && conversation?.template_html) {
+					templateDiv.appendChild(conversation.template_html);
+				}
+			});
+		}
+	}
+}
+
+function renderBotConversation(props) {
+	const botConversation = props?.botConversation;
+
+	if (!Object.values(botConversation || {})?.length) {
+		return "";
+	}
+
+	const conversationsHTML = Object.values(botConversation)
+		.map((conversation) => createConversationHTML(conversation, props))
+		.join("");
 
 	return `
-        <div class="feedback-container">
-            <!-- Feedback component placeholder -->
+        <div class="bot-conversation-wrapper">
+            ${conversationsHTML}
         </div>
     `;
 }
 
-function renderLoading() {
-	return `
-        <div class="generating-answer-block">
-            <div class="generating-answer-block-item">
-                <div class="dot-flashing"></div>
-            </div>
-        </div>
-    `;
+// Main function to be exported
+export function render(props) {
+	const html = renderBotConversation(props);
+	let timer;
+	timer = setTimeout(() => {
+		setupEventListeners(props?.botConversation, props);
+		setupTemplates(props?.botConversation);
+	}, 1000);
+	return html;
 }
-
-return { render };
+export default { render };
