@@ -1,4 +1,4 @@
-import { InitiateChatConversationAction } from "../../chat";
+import { cancelAdvanceSearch, InitiateChatConversationAction } from "../../chat";
 import store from "../../redux/store";
 
 const AmbiguityTemplateFunc = (data) => {
@@ -23,7 +23,7 @@ const AmbiguityTemplateFunc = (data) => {
     }
 
     const cancelHandler = () => {
-        console.log('cancelHandler')
+        cancelAdvanceSearch(data?.reqId)
     }
 
     const container = document.getElementById(`resolve-ambiguity-container-${data?.id}`)

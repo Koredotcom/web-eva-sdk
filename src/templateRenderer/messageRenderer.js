@@ -81,6 +81,8 @@ export function renderTemplateContent(data, assistantIconTemplate) {
 	let htmlTemplate = "";
 	if (data.viewType === "threadView") {
 		htmlTemplate = botConversation.render(data);
+	} else if(data.status === "terminated") {
+		htmlTemplate = `<div>I See you interrupted the answer generation. Please feel free to provide more details or let me know how can I assist you further</div>`
 	} else {
 		switch (data.templateType) {
 			case "resolve_ambiguity":
