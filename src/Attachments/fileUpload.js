@@ -26,8 +26,8 @@ const FileUpload = (props) => {
                     callback(null, null, null, null);
                     return;
                 } else {
-                    const {sources, sessionId, quickactions, error} = state?.selectedContext?.data;
-                    callback(sources, sessionId, quickactions, error);
+                    const {sources, sessionId, quickactions, error, apiResp=state?.selectedContext?.data} = state?.selectedContext?.data;
+                    callback(sources, sessionId, quickactions, error, apiResp);
                 }
             }
         });
