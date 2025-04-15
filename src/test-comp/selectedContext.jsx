@@ -16,8 +16,8 @@ const SelectedContext = () => {
         chatInterface.current = ChatInterface();
         // uploadFile.current.showUploadChip('composeBar')
 
-        const unsubscribe = uploadFile.current.subscribe((context, sessionId, quickActions, errorFiles) => {
-            console.log("Selected Context", context, "Session ID", sessionId, quickActions, errorFiles)
+        const unsubscribe = uploadFile.current.subscribe((context, sessionId, quickActions, errorFiles, apiResp) => {
+            console.log("Selected Context", context, "Session ID", sessionId, quickActions, errorFiles, apiResp)
             setSelectedContext(context)
             setQuickActions(quickActions)
             setErrorMessages(errorFiles)
