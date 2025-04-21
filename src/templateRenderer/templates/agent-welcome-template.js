@@ -3,76 +3,50 @@ import { encodeHtml } from "../utils/helper";
 import TemplateComponents from "./index";
 
 export function render(item) {
-	// const { agentName, description, item } = data;
+	const suggestions = item?.templateInfo?.suggestions?.[0];
+	const utterances = suggestions?.utterances || [];
 
-	const entirediv = document.createElement("div");
-	entirediv.className = "answerCntr";
-	const div1 = document.createElement("div");
-	div1.className = "threadName maxLength";
-	div1.textContent = item?.answer;
-	const div2 = document.createElement("div");
-	div2.className = "threadName maxLength";
+	const utteranceHtml = utterances
+		.map((utterance, i) => {
+			return `
+				<div class="chipone" id="awt-${item?.id}-${i}">
+					<div class="leftBlock">
+						<span class="newtext" key="${i}">${utterance?.label}</span>
+					</div>
+					${
+						item?.utterances?.isNew
+							? `
+						<div class="rightBlock">
+							<div class="rbText">New</div>
+						</div>`
+							: ""
+					}
+				</div>
+			`;
+		})
+		.join("");
 
-	const answersChip = document.createElement("div");
-	answersChip.className = "Answerschip msutteranceChip";
-	const ansDocWrap = document.createElement("div");
-	ansDocWrap.className = "ansdocwrap";
-
-	const chipHeaderType = document.createElement("div");
-	chipHeaderType.className = "chipheadertype";
-	chipHeaderType.textContent = item?.templateInfo?.suggestions?.[0]?.title;
-
-	ansDocWrap.appendChild(chipHeaderType);
-	answersChip.appendChild(ansDocWrap);
-
-	const mulAnsChip = document.createElement("div");
-	mulAnsChip.className = "mulanschip";
-
-	item?.templateInfo?.suggestions?.[0]?.utterances?.forEach(
-		(utterance, i) => {
-			const chipOne = document.createElement("div");
-			chipOne.className = "chipone";
-			chipOne.id = `awt-${item?.id}-${i}`;
-			// chipOne.onclick = () => InvokeGptAgentTemplate({ item, utterance });
-
-			const leftBlock = document.createElement("div");
-			leftBlock.className = "leftBlock";
-
-			const span = document.createElement("span");
-			span.className = "newtext";
-			span.textContent = utterance?.label;
-			span.setAttribute("key", i);
-
-			leftBlock.appendChild(span);
-			chipOne.appendChild(leftBlock);
-
-			if (item?.utterances?.isNew) {
-				const rightBlock = document.createElement("div");
-				rightBlock.className = "rightBlock";
-
-				const rbText = document.createElement("div");
-				rbText.className = "rbText";
-				rbText.textContent = "New";
-
-				rightBlock.appendChild(rbText);
-				chipOne.appendChild(rightBlock);
-			}
-
-			mulAnsChip.appendChild(chipOne);
-		}
-	);
-
-	answersChip.appendChild(mulAnsChip);
-	div2.appendChild(answersChip);
-
-	entirediv.appendChild(div1);
-	entirediv.appendChild(div2);
+	const html = `
+		<div class="answerCntr">
+			<div class="threadName maxLength">${item?.answer}</div>
+			<div class="threadName maxLength">
+				<div class="Answerschip msutteranceChip">
+					<div class="ansdocwrap">
+						<div class="chipheadertype">${suggestions?.title}</div>
+					</div>
+					<div class="mulanschip">
+						${utteranceHtml}
+					</div>
+				</div>
+			</div>
+		</div>
+	`;
 
 	setTimeout(() => {
 		AgentWelcomeFunc(item);
 	}, 1000);
 
-	return entirediv.innerHTML;
+	return html;
 }
 
 export default { render };

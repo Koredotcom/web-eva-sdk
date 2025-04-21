@@ -1,77 +1,111 @@
+import store from "../../redux/store";
 import ConnectionProviderFunc from "../functionality/connection-provider";
-import { encodeHtml } from "../utils/helper";
+import eventBus from "../utils/eventbus";
 
-import TemplateComponents from "./index";
+eventBus.on("basicAuth", basicAuthHandler);
+
+function basicAuthHandler({ detail }) {
+	const { response, data } = detail;
+	const inputFields = response?.payload?.authProfiles?.[0]?.inputFields;
+
+	const inputsHTML = inputFields
+		?.filter((inputField) => inputField?.hidden !== true)
+		?.map((field) => {
+			const required = field?.required ? "required" : "";
+			const help = field?.helpText
+				? `<small>${field.helpText}</small>`
+				: "";
+			return `
+        <div class="input-field">
+            <label>${field?.label}</label>
+            <input 
+                id="basicAuthInput-${data?.id}-${field?.key}"
+                name="${field.key}"
+                placeholder="Enter ${field?.label}"
+                type="${field?.value?.type || "text"}"
+                ${required}
+            />
+            ${help}
+        </div>
+      `;
+		})
+		.join("");
+
+	const html = `
+    <dialog id="basicAuthDialog-${data?.id}" class="formDialog" style="width:500px; padding:20px;">
+      <div class="formModalContent">
+        <form id="basicAuthForm-${data?.id}">
+          <div class="connectionTitle">${data?.provider}</div>
+          <div class="autorisation-form">${inputsHTML}</div>
+          <div class="footer">
+            <button type="button" class="basicAuth-cancel-btn" id="basicAuthCancelBtn-${data?.id}">Cancel</button>
+            <button class="basicAuth-submit-btn" id="basicAuthSubmitBtn-${data?.id}" type="submit">Done</button>
+          </div>
+        </form>
+      </div>
+    </dialog>
+  `;
+
+	const container = document.createElement("div");
+	container.innerHTML = html;
+	const dialog = container.firstElementChild;
+	document.body.appendChild(dialog);
+	dialog.showModal();
+
+	let timeout;
+	clearTimeout(timeout);
+	timeout = setTimeout(() => {
+		ConnectionProviderFunc(data, response);
+	}, 1000);
+}
 
 function render(data) {
-    // const { providers, selectedProvider, status, validation } = data;
+	const state = store.getState().global;
+	const { profile } = state;
 
-    const accountBox = document.createElement("div");
-    accountBox.class = "accountBox";
+	const providerName = data?.templateInfo?.label || data?.label || "";
+	const providerIcon = data?.templateInfo?.icon || data?.icon || "";
 
-    const mainActWrap = document.createElement("div");
-    mainActWrap.class = "mainactwrap";
+	const isMicrosoftOrGoogle = ["outlook", "gmail", "gdrive", "onedrive"].includes(
+		data?.provider
+	);
 
-    const choosenImage = document.createElement("div");
-    choosenImage.class = "choosenimage";
+	const authText = isMicrosoftOrGoogle
+		? `Please provide the authentication to ${profile?.data?.emailId} so we can proceed with your request.;`
+		: `Please complete the ${providerName} authentication so we can proceed with your request.`;
 
-    const img = document.createElement("img");
-    img.src = data?.templateInfo?.icon || data?.icon || "";
-    img.alt = "";
+	const html = `
+    <div class="accountBox">
+      <div class="mainactwrap">
+        <div class="choosenimage">
+          <img src="${providerIcon}" alt="" />
+        </div>
+        <div class="choosedtext">${providerName}</div>
+      </div>
+      <div class="authenticationstatus">
+        <div class="authenticateverify">${authText}</div>
+        <div class="addConnection" id="addConnection-${data?.id}">
+          <div class="acIcon"><svg width="13" height="13" fill="#155EEF"></svg></div>
+          <div class="acText">Add connection</div>
+        </div>
+      </div>
+    </div>
+  `;
 
-    choosenImage.appendChild(img);
+	const container = document.createElement("div");
+	container.innerHTML = html;
 
-    const choosedText = document.createElement("div");
-    choosedText.class = "choosedtext";
-    choosedText.textContent = data?.templateInfo?.label || data?.label || "";
+	// container.querySelector(`#addConnection-${data?.id}`)?.addEventListener("click", () => {
+	// 	addConnectionHandler();
+	// });
 
-    mainActWrap.appendChild(choosenImage);
-    mainActWrap.appendChild(choosedText);
+	let timeout;
+	clearTimeout(timeout);
+	timeout = setTimeout(() => {
+		ConnectionProviderFunc(data);
+	}, 1000);
 
-    const authenticationStatus = document.createElement("div");
-    authenticationStatus.class = "authenticationstatus";
-
-    const authenticateVerify = document.createElement("div");
-    authenticateVerify.class = "authenticateverify";
-
-    if (
-        ["outlook", "gmail", "gdrive", "onedrive"].includes(data?.provider)
-    ) {
-        authenticateVerify.textContent = `Please provide the authentication to ${profile?.emailId} so we can proceed with your request.;`
-    } else {
-        authenticateVerify.textContent = `Please complete the ${data?.label || data?.templateInfo?.label
-            } authentication so we can proceed with your request.`;
-    }
-
-    authenticationStatus.appendChild(authenticateVerify);
-
-    const addConnection = document.createElement("div");
-    addConnection.class = "addConnection";
-    addConnection.onclick = () => addConnectionHandler();
-
-    const acIcon = document.createElement("div");
-    acIcon.class = "acIcon";
-    acIcon.innerHTML = `<svg width="13" height="13" fill="#155EEF"></svg>`;
-
-    const acText = document.createElement("div");
-    acText.class = "acText";
-    acText.id = `addConnection-${data?.id}`;
-    acText.textContent = "Add connection";
-
-    addConnection.appendChild(acIcon);
-    addConnection.appendChild(acText);
-    authenticationStatus.appendChild(addConnection);
-
-    accountBox.appendChild(mainActWrap);
-    accountBox.appendChild(authenticationStatus);
-
-    let timeout;
-    clearTimeout(timeout)
-    timeout = setTimeout(() => {
-        ConnectionProviderFunc(data);
-    }, 1000);
-
-    return accountBox.innerHTML;
+	return container.innerHTML;
 }
 
 export { render };

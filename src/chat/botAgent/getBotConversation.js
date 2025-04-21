@@ -9,6 +9,7 @@ import {
 	setEnableKoreBotSDK,
 } from "../../redux/globalSlice";
 import { advanceSearch } from "../../redux/actions/global.action";
+import { constructQuestionPostCall } from "../chat-utils";
 
 const BotConversation = (args) => {
 	let state = store.getState().global;
@@ -151,7 +152,7 @@ const BotConversation = (args) => {
 		store.dispatch(setEnableKoreBotSDK(payload));
 	};
 
-	const submitBotResponse = (data) => {
+	const submitBotResponse = async (data) => {
 		/**
          * needed payload
          payload = {
@@ -178,20 +179,26 @@ const BotConversation = (args) => {
 		if (!isEmpty(state.customData)) {
 			payload.customData = state.customData;
 		}
+
 		console.log("state data: ", state);
 		/*need to add a loading state for the current question */
-		addLoadingStateToCurrentQuestion(data?.cId, data?.messageId);
+		addLoadingStateToCurrentQuestion(
+			data?.cId,
+			data?.messageId,
+			data.input
+		);
 		console.log("params data: ", data);
-		store.dispatch(
+		const res = await store.dispatch(
 			advanceSearch({
 				params,
 				payload,
 				userId: state?.profile?.data?.id || data?.userId,
 			})
 		);
+		constructQuestionPostCall(res, data?.cId);
 	};
 
-	const addLoadingStateToCurrentQuestion = (reqId, messageId) => {
+	const addLoadingStateToCurrentQuestion = (reqId, messageId, input) => {
 		let questions = cloneDeep(state?.questions);
 		let currentQuestion = questions[reqId];
 		if (currentQuestion) {
@@ -200,6 +207,7 @@ const BotConversation = (args) => {
 				let currentBotQuestion = botConversation?.[messageId];
 				if (currentBotQuestion) {
 					currentBotQuestion.loading = true;
+					currentBotQuestion.answer = input;
 					console.log("added loading state: ", currentBotQuestion);
 					botConversation[messageId] = currentBotQuestion;
 					currentQuestion.botConversation = botConversation;

@@ -299,7 +299,7 @@ export const basicAuth = createAsyncThunk(
     async (arg, thunkAPI) => {
         try {
             const response = await axiosInstance.post(`/users/${arg?.userId}/connections`, arg?.payload);   
-            return response.data;
+            return response;
         } catch (error) {
             handleErrorState(error, "Basic Auth");
             return thunkAPI.rejectWithValue(error.response.data);

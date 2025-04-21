@@ -140,7 +140,7 @@ export const renderIcons = (provider, extIcon, providerIcon) => {
 	Icondiv.className = "srcimg";
 
 	const img = document.createElement("img");
-	img.src = providerIcon;
+	img.src = icon;
 	img.className = "backgroundIcon";
 
 	Icondiv.appendChild(img);

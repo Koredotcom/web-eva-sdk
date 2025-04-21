@@ -1,16 +1,3 @@
-// import cancelAdvanceSearch from "../cancelAdvanceSearch";
-// import store from "../../redux/store";
-// import GptSubmitAction from "./gptSubmitAction";
-// import GptFileUpload from "./gptFileUpload";
-// import { setGptUploadedFiles } from "../../redux/globalSlice";
-// import { cloneDeep } from "lodash";
-// import UpdateGPTPromptValue from "./updateGPTPromptValue";
-// import AddAdditionalGPTResponse from "./addAdditionalGPTResponse";
-// import DeleteGPTResponse from "./deleteGPTResponse";
-// import RemoveUploadedGPTFile from "./removeUploadedGPTFile";
-// import { getCurrentQuestion } from "../../utils/helpers";
-// import SubmitGPTForm from "./submitGPTForm";
-
 import cancelAdvanceSearch from "../../chat/cancelAdvanceSearch";
 import SubmitGPTForm from "../../chat/gptTemplate/submitGPTForm";
 import { getCurrentQuestion } from "../../utils/helpers";

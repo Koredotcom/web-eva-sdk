@@ -1,234 +1,150 @@
+import InterruptionTemplateFunc from "../functionality/interruption-template";
 import { encodeHtml } from "../utils/helper";
 
 import TemplateComponents from "./index";
 
-function render(data) {
-	const { templateInfo, answer } = data;
-
-	return `
-        <div class="interruption-template">
-            ${renderAnswer(answer)}
-            ${renderInterruptionFields(templateInfo?.interruptionFields)}
-        </div>
-    `;
-}
-
-function renderAnswer(answer) {
-	if (!answer) return "";
-
-	return `
-        <div class="interruption-answer">
-            ${encodeHtml(answer)}
-        </div>
-    `;
-}
-
-function renderInterruptionFields(fields) {
-	if (!fields?.length) return "";
-
-	return `
-        <div class="interruption-fields">
-            ${fields.map((field) => renderField(field)).join("")}
-        </div>
-    `;
-}
-
-function renderField(field) {
-	const { key, label, value } = field;
-
-	switch (value?.type) {
-		case "heading":
-			return `
-                <div class="field-heading">
-                    <div class="field-label">${encodeHtml(label)}</div>
-                    <div class="field-value">${encodeHtml(value.value)}</div>
-                </div>
-            `;
-
-		case "textarea":
-			return `
-                <div class="field-textarea">
-                    <div class="field-label">${encodeHtml(label)}</div>
-                    <textarea 
-                        class="comment-textarea"
-                        placeholder="${encodeHtml(value.placeholder || "")}"
-                        data-field="${key}"
-                    ></textarea>
-                </div>
-            `;
-
-		case "buttons":
-			return `
-                <div class="field-buttons">
-                    ${value.buttons
-						.map(
-							(button) => `
-                        <button 
-                            class="kr-${
-								button.type === "cancel"
-									? "secondary"
-									: "primary-black"
-							}-btn btn-sm"
-                            data-action="${button.id || button.type}"
-                        >
-                            ${encodeHtml(button.label)}
-                        </button>
-                    `
-						)
-						.join("")}
-                </div>
-            `;
-
-		case "choices":
-			return renderChoices(field);
-
-		default:
-			return "";
-	}
-}
-
-function renderChoices(field) {
-	const { key, label, value } = field;
-	const isMulti = value.multi || false;
-
-	if (value.groups) {
-		return renderGroupedChoices(field);
-	}
-
-	return `
-        <div class="field-choices">
-            ${
-				label
-					? `<div class="field-label">${encodeHtml(label)}</div>`
-					: ""
-			}
-            <div class="choices-list">
-                ${value.choices
-					.map(
-						(choice) => `
-                    <div class="choice-item">
-                        ${
-							isMulti
-								? renderCheckbox(choice, key)
-								: renderRadio(choice, key)
-						}
-                        ${renderNestedChoices(choice, key)}
-                    </div>
-                `
-					)
-					.join("")}
-            </div>
-        </div>
-    `;
-}
-
-function renderGroupedChoices(field) {
-	const { key, label, value } = field;
-	const isMulti = value.multi || false;
-
-	return `
-        <div class="field-choices grouped">
-            ${
-				label
-					? `<div class="field-label">${encodeHtml(label)}</div>`
-					: ""
-			}
-            ${value.groups
-				.map(
-					(group) => `
-                <div class="choice-group">
-                    ${
-						group.label
-							? `
-                        <div class="group-label">${encodeHtml(
-							group.label
-						)}</div>
-                    `
-							: ""
-					}
-                    <div class="choices-list">
-                        ${group.choices
-							.map(
-								(choice) => `
-                            <div class="choice-item">
-                                ${
-									isMulti
-										? renderCheckbox(choice, key)
-										: renderRadio(choice, key)
-								}
-                                ${renderNestedChoices(choice, key)}
+function createGmailDriveInterruptions(data) {
+    const interruptionFields = data?.templateInfo?.interruptionFields;
+    return `
+    <div class="interruption-block">
+        ${interruptionFields?.map(option => `
+            <div class="option-block-wrapper">
+                ${option?.value?.type !== "groupedCheckbox" ? `
+                    <div class="prTitle">${option?.label}</div>
+                ` : ""}
+                <div class="project-group-wrapper ${option.key}">
+                    ${(option?.value?.type === "checkbox" || option?.value?.type === "nestedCheckbox") ? `
+                        ${option?.value?.choices?.map(choice => `
+                            <div class="field-radiobutton withoutBorder${choice?.nested?.value?.type === "checkbox" ? " wrapBox" : ""}">
+                                <input type="radio" id="binary-${choice.id}" ${false ? "checked" : ""} />
+                                <label for="binary-${choice.id}">${choice.label}</label>
+                                ${choice?.nested?.value?.type === "checkbox" ? `
+                                    <div class="pojectsGroup">
+                                        ${choice?.nested?.value?.choices?.map(subChoice => `
+                                            <input type="checkbox" id="binary-${choice.id}-${subChoice.id}" ${false ? "checked" : ""} />
+                                            <label for="binary-${choice.id}-${subChoice.id}">${subChoice.label}</label>
+                                        `).join('')}
+                                    </div>
+                                ` : ""}
                             </div>
-                        `
-							)
-							.join("")}
-                    </div>
+                        `).join('')}
+                    ` : ""}
+                    ${option?.value?.type === "dropdown" && option?.dynamic === true ? `
+                        <div class="inputDropdowngroup">
+                            <div class="drInputSection">
+                                ${dropDownChoice ? `
+                                    <div class="selectedChoice">
+                                        <div class="selectedChip">
+                                            <div class="selectedImg">
+                                                <img src="${dropDownChoice.icon}" style="width: 20px; height: 20px;" />
+                                            </div>
+                                            <div class="selectionLabel">${dropDownChoice.label}</div>
+                                            <div>×</div>
+                                        </div>
+                                    </div>
+                                ` : ""}
+                                <input type="text" placeholder="Select ${option.key}" value="${searchText}" class="${dropDownChoice ? "hide" : "autocompleteInput"}" />
+                                ${searchText ? `
+                                    <div class="dropDown">
+                                        ${ddOptions && ddOptions.length > 0 ? ddOptions.map(opt => `
+                                            <div class="dd-options">
+                                                <div class="drimg">
+                                                    <img src="${opt.icon}" style="width: 20px; height: 20px;" />
+                                                </div>
+                                                <div class="drName">${opt.label}</div>
+                                            </div>
+                                        `).join('') : ""}
+                                    </div>
+                                ` : ""}
+                            </div>
+                        </div>
+                    ` : ""}
+                    ${(option?.value?.type === "text" || option?.value?.type === "number") ? `
+                        <div class="inputDropdowngroup">
+                            <div class="drInputSection">
+                                <input type="${option.value.type === "number" ? "number" : "text"}" placeholder="Enter ${option.key}" />
+                            </div>
+                        </div>
+                    ` : ""}
+                    ${option?.value?.type === "groupedCheckbox" ? `
+                        <div class="field-radiobutton withoutBorder wrapBox">
+                            ${option?.value?.groups?.map((group,index) => `
+                                <div class="prTitle">${group.label}</div>
+                                <div class="checkbox-group-${index}">
+                                    ${group?.choices?.map((choice, index) => `
+                                        <div class="checkboxWithLable">
+                                            <input type="radio" id="groupedCheckbox-${index}" name="radio-${option.key}" key="${index}"/>
+                                            <label for="groupedCheckbox-${index}">${choice.label}</label>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            `).join('')}
+                        </div>
+                    ` : ""}
+                    ${option?.value?.type === "date" ? `
+                        <div class="inputDropdowngroup">
+                            <div class="drInputSection">
+                                <input type="date" placeholder="Enter due date" class="entityValue" />
+                            </div>
+                        </div>
+                    ` : ""}
+                    ${option?.value?.type === "heading" ? `
+                        <div class="heading">${option.value.value}</div>
+                    ` : ""}
+                    ${option?.value?.type === "textarea" ? `
+                        <div class="textarea">
+                            <textarea class="textarea-${option.value.type}" placeholder="${option.value.placeholder}"></textarea>
+                        </div>
+                    ` : ""}
+                    ${option?.value?.type === "buttons" ? `
+                        <div class="btnsGroup moreGroup">
+                            ${option?.value?.buttons?.map((button, index) => `
+                                <button class="buttons-${index}">
+                                ${button?.label}
+                                </button>`
+                            ).join('')}
+                        </div>` : ''
+                    }
                 </div>
-            `
-				)
-				.join("")}
-        </div>
-    `;
-}
-
-function renderCheckbox(choice, fieldKey) {
-	return `
-        <label class="choice-label checkbox">
-            <input 
-                type="checkbox"
-                class="choice-checkbox"
-                data-field="${fieldKey}"
-                data-choice-id="${choice.id}"
-                ${choice.checked ? "checked" : ""}
-            />
-            <span class="choice-text">${encodeHtml(choice.label)}</span>
-        </label>
-    `;
-}
-
-function renderRadio(choice, fieldKey) {
-	return `
-        <label class="choice-label radio">
-            <input 
-                type="radio"
-                name="${fieldKey}"
-                class="choice-radio"
-                data-field="${fieldKey}"
-                data-choice-id="${choice.id}"
-                ${choice.checked ? "checked" : ""}
-            />
-            <span class="choice-text">${encodeHtml(choice.label)}</span>
-        </label>
-    `;
-}
-
-function renderNestedChoices(choice, parentKey) {
-	if (!choice.nested) return "";
-
-	const nestedValue = choice.nested.value;
-	const isMulti = nestedValue.multi || false;
-
-	return `
-        <div class="nested-choices" data-parent-choice="${choice.id}">
-            <div class="choices-list">
-                ${nestedValue.choices
-					.map(
-						(nestedChoice) => `
-                    <div class="choice-item">
-                        ${
-							isMulti
-								? renderCheckbox(
-										nestedChoice,
-										choice.nested.key
-								  )
-								: renderRadio(nestedChoice, choice.nested.key)
-						}
-                    </div>
-                `
-					)
-					.join("")}
             </div>
-        </div>
+        `).join('')}
+        ${!interruptionFields?.some(f => f?.value?.type === "buttons") ? `
+            <div class="buttons-wrapper">
+                <button class="cancel-btn-${data?.id}">Cancel</button>
+                <button class="continue-btn-${data?.id}">Continue</button>
+            </div>
+        ` : ""}
+    </div>
     `;
+}
+
+function render(data) {
+    const html = `
+    <div id="interruption-template-${data?.id}">
+        ${data?.status !== "discard" ? `
+            <div class="interruptionAnswer">
+                We didn't locate relevant sources in your past two weeks' data. We'll now search comprehensively. Please confirm few things before we proceed.
+            </div>
+        ` : ""}
+        <div class="threadName">
+            ${data?.status === "discard" ? `
+                Discarded. I see you interrupted the action. Please let me know how I can assist you further.
+            ` : `
+                <div class="interruption-wrapper">
+                    ${createGmailDriveInterruptions(data)}
+                </div>
+            `}
+        </div>
+    </div>
+    `;
+    
+    let timeout;
+    clearTimeout(timeout);
+    timeout = setTimeout(() => {
+        InterruptionTemplateFunc(data);
+    }, 1000);
+    
+    return html;
 }
 
 export { render };

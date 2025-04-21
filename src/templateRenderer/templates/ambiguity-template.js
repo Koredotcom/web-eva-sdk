@@ -1,108 +1,63 @@
-// import { encodeHtml } from "../utils/helper";
-// import TemplateComponents from "./index";
-
 import AmbiguityTemplateFunc from "../functionality/ambiguity-template";
 
 export function render(data) {
-	// const { options, message } = data;
+	const ambiguous = data?.templateInfo?.ambiguous || [];
 
-    // const data = {}; // your actual data
-    const multiselectedOptions = {};
-    const selectedOptions = {};
-    
-    const ambiguityContainer = document.createElement('div');
-    ambiguityContainer.id = `resolve-ambiguity-container-${data?.id}`;
-    ambiguityContainer.className = 'resolve-ambiguity-container';
+	const renderOptions = (el) =>
+		(el?.value?.choices || [])
+			.map((choice) => {
+				const value = choice.value || choice.name;
+				const label = choice.label || choice.name;
+				return `<option value="${value}">${label}</option>`;
+			})
+			.join("");
 
-    const threadNameContainer = document.createElement('div');
-    threadNameContainer.className = 'threadName';
-    threadNameContainer.textContent = data?.answer || AmbiguityNameDisplayer();
-    
-    const mainContainer = document.createElement('div');
-    mainContainer.className = 'threadName';
-    
-    const dropdownBox = document.createElement('div');
-    dropdownBox.className = 'maildrpbox';
-    dropdownBox.id = 'ambquityDropdown';
-    
-    (data?.templateInfo?.ambiguous || []).forEach((el, index) => {
-        const box = document.createElement('div');
-        box.className = 'drpdwnboxclass';
-    
-        const tooltipDiv = document.createElement('div');
-        tooltipDiv.className = 'headerdropdowns';
-        tooltipDiv.title = tooltipText(el);
-        tooltipDiv.textContent = el?.label;
-    
-        const select = document.createElement('select');
-        select.id = `resolve-ambiguity-select-${data?.id}`;
-        if (el?.value?.multi) {
-            select.multiple = true;
-        }
-    
-        (el?.value?.choices || []).forEach(choice => {
-            const opt = document.createElement('option');
-            opt.value = choice.value || choice.name;
-            opt.textContent = choice.label || choice.name;
-            select.appendChild(opt);
-        });
-    
-        box.appendChild(tooltipDiv);
-        box.appendChild(select);
-        dropdownBox.appendChild(box);
-    });
-    
-    const actionBox = document.createElement('div');
-    actionBox.className = 'amb-action-box';
-    actionBox.id = `resolve-ambiguity-action-box-${data?.id}`;
-    
-    const cancelBtn = document.createElement('button');
-    cancelBtn.className = 'amb-cancel-btn';
-    cancelBtn.id = `resolve-ambiguity-cancel-btn-${data?.id}`;
-    cancelBtn.textContent = 'Cancel';
-    
-    const confirmBtn = document.createElement('button');
-    confirmBtn.className = `amb-confirm-btn`;
-    confirmBtn.id = `resolve-ambiguity-confirm-btn-${data?.id}`;
-    confirmBtn.textContent = 'Confirm';
-    
-    actionBox.appendChild(cancelBtn);
-    actionBox.appendChild(confirmBtn);
-    dropdownBox.appendChild(actionBox);
-    
-    mainContainer.appendChild(dropdownBox);
+	const renderSelects = ambiguous
+		.map((el, index) => {
+			const multiple = el?.value?.multi ? "multiple" : "";
+			return `
+				<div class="drpdwnboxclass">
+					<div class="headerdropdowns" title="Tooltip for ${el.label}">${el.label}</div>
+					<select id="resolve-ambiguity-select-${data?.id}" ${multiple}>
+						${renderOptions(el)}
+					</select>
+				</div>
+			`;
+		})
+		.join("");
 
-    ambiguityContainer.appendChild(threadNameContainer);
-    ambiguityContainer.appendChild(mainContainer);
-    
-    // Append everything to body or desired container
-    // document.body.appendChild(threadNameContainer);
+	const html = `
+		<div id="resolve-ambiguity-container-${data?.id}" class="resolve-ambiguity-container">
+			<div class="threadName">${data?.answer || AmbiguityNameDisplayer()}</div>
+			<div class="threadName">
+				<div class="maildrpbox" id="ambquityDropdown">
+					${renderSelects}
+					<div class="amb-action-box" id="resolve-ambiguity-action-box-${data?.id}">
+						<button class="amb-cancel-btn" id="resolve-ambiguity-cancel-btn-${data?.id}">Cancel</button>
+						<button class="amb-confirm-btn" id="resolve-ambiguity-confirm-btn-${data?.id}">Confirm</button>
+					</div>
+				</div>
+			</div>
+		</div>
+	`;
 
-    let timer;
-    clearTimeout(timer);
-    timer = setTimeout(() => {
-        AmbiguityTemplateFunc(data);
-    }, 1000);
-    
-    return ambiguityContainer.outerHTML;
-    
-    // Placeholder functions
-    function AmbiguityNameDisplayer() {
-        var names = [];
-        for (var i = 0; i < data?.templateInfo?.ambiguous?.length; i++) {
-            var name = data?.templateInfo?.ambiguous[i]?.label;
-            names.push(name);
-        }
-        if (names.length > 1) {
-            return `There are conflicts on few inputs. Please confirm`;
-        } else {
-            return `We found more than one result for "${names[0]}". Please confirm.`;
-        }
-    }
-    function tooltipText(el) {
-        return `Tooltip for ${el.label}`;
-    }
-    
+	let timer;
+	clearTimeout(timer);
+	timer = setTimeout(() => {
+		AmbiguityTemplateFunc(data);
+	}, 1000);
+
+	return html;
+
+	// Helper functions
+	function AmbiguityNameDisplayer() {
+		const names = ambiguous.map((item) => item?.label);
+		if (names.length > 1) {
+			return `There are conflicts on few inputs. Please confirm`;
+		} else {
+			return `We found more than one result for "${names[0]}". Please confirm.`;
+		}
+	}
 }
 
 export default { render };

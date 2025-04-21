@@ -1,5 +1,6 @@
 import store from "../../redux/store";
 import { thirdPartySSO } from "../../redux/actions/global.action";
+import eventBus from "./eventbus";
 
 export default class SSOMethods {
     ssoListener = async (e) => {
@@ -28,7 +29,9 @@ export default class SSOMethods {
                         details: this.details
                     }
                     const res = await store.dispatch(thirdPartySSO({userId: userId, payload: payload}));
-                    console.log("res", res);
+                    if(res?.payload?.status === 200){    
+                        eventBus.dispatch("postOauth2Connection", {res});
+                    }
                 }
             // }
         }

@@ -1,13 +1,22 @@
 import { encodeHtml } from "../utils/helper";
 
 function render(data) {
-	return `
+
+//     let html = `
+//     <div class="search-answer-container">
+//         ${renderSearchInfo(data)}
+//         ${renderAnswer(data)}
+//         ${renderSources(data)}
+//     </div>
+// `;
+
+    let html = `
         <div class="search-answer-container">
-            ${renderSearchInfo(data)}
             ${renderAnswer(data)}
-            ${renderSources(data)}
         </div>
     `;
+
+    return html;
 }
 
 function renderSearchInfo(data) {
@@ -27,11 +36,12 @@ function renderSearchInfo(data) {
 function renderAnswer(data) {
 	if (!data.answer) return "";
 
-	return `
+    let html = `
         <div id="answer-${data.id}" class="threadName maxLength">
             ${data.answer}
         </div>
     `;
+    return html;
 }
 
 function renderSources(data) {
