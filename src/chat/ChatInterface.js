@@ -24,7 +24,6 @@ import {
 } from "../utils/helpers";
 import { cloneDeep, isEmpty } from "lodash";
 import BotConversation from "./botAgent/getBotConversation";
-import BotConversation from "./botAgent/getBotConversation";
 
 const ChatInterface = (props) => {
 	let state = store.getState().global,
