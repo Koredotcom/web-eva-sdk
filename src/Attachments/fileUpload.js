@@ -19,24 +19,23 @@ import FileUploader from "../utils/FileUploader";
 const FileUpload = (props) => {
 	let state = store.getState().global;
 
-	// Subscribe to store updates
-	const subscribe = (cb) => {
-		let callback = cb;
-		const unsubscribe = store.subscribe(() => {
-			state = store.getState().global;
-			// If callback exists and API call is completed, invoke it
-			if (state.selectedContext?.status !== "loading" && callback) {
-				if (!state?.selectedContext?.data) {
-					//When there is no selected context, we are not calling the callback, so sending all the values to be null for subscribe.
-					callback(null, null, null, null);
-					return;
-				} else {
-					const { sources, sessionId, quickactions, error } =
-						state?.selectedContext?.data;
-					callback(sources, sessionId, quickactions, error);
-				}
-			}
-		});
+    // Subscribe to store updates
+    const subscribe = (cb) => {
+        let callback = cb;
+        const unsubscribe = store.subscribe(() => {
+            state = store.getState().global;
+            // If callback exists and API call is completed, invoke it
+            if (state.selectedContext?.status !== 'loading' && callback) {
+                if(!state?.selectedContext?.data){
+                    //When there is no selected context, we are not calling the callback, so sending all the values to be null for subscribe.
+                    callback(null, null, null, null);
+                    return;
+                } else {
+                    const {sources, sessionId, quickactions, error, apiResp=state?.selectedContext?.data} = state?.selectedContext?.data;
+                    callback(sources, sessionId, quickactions, error, apiResp);
+                }
+            }
+        });
 
 		// Return a function to unsubscribe
 		return () => {
