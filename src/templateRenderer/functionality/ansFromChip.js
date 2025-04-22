@@ -20,7 +20,15 @@ const AnsFromChipFunctionality = ({item, regeneratingAnswer}) => {
         }
         if ((item?.sources?.length === 1) && item?.sources[0]?.hasOwnProperty("redirectUrl")){
             openInNewTab(item?.sources?.[0]) 
-        } else {
+        } else if (item?.sources?.length > 1){
+            let state = store.getState()?.global;
+            let _questions = cloneDeep(state?.questions);
+            let constId = item?.cId || item?.id;
+            let showMultiSourceList = !!_questions[constId]?.showMultiSourceList;
+            _questions[constId].showMultiSourceList = !showMultiSourceList;
+            store.dispatch(updateChatData(_questions));
+        }
+        else {
             let state = store.getState()?.global;
             let _questions = cloneDeep(state?.questions);
             let constId = item?.cId || item?.id;
@@ -53,8 +61,37 @@ const AnsFromChipFunctionality = ({item, regeneratingAnswer}) => {
 
     const knowledgeChipLogic = () => {
 
-        if (item?.sources?.length > 1 && item?.showMultiSourceList) {
+        if (item?.sources?.length > 1) {
+            let chip = document.getElementById(`ansFromChip-${item?.id}`);
+            if(chip && !chip.eventListenerAdded){
+                chip.addEventListener('click', (e) => {
+                    e?.preventDefault();
+                    e?.stopPropagation();
+                    showDataAction();
+                });
+                chip.eventListenerAdded = true;
+            }
+        }
 
+        if(item?.showMultiSourceList){
+            item?.sources?.map((data, i) => {
+                let listItem = document.getElementById(`multiSourceListItem-${item?.id}-${data?.docId}`);
+                let askFollowupButton = document.getElementById(`askFollowupButton-${item?.id}-${data?.docId}`);
+                if(listItem && !listItem.eventListenerAdded){
+                    listItem.addEventListener('click', () => {
+                        openInNewTab(data);
+                    });
+                    listItem.eventListenerAdded = true;
+                }
+                if(askFollowupButton && !askFollowupButton.eventListenerAdded){
+                    askFollowupButton.addEventListener('click', (e) => {
+                        e?.preventDefault();
+                        e?.stopPropagation();
+                        onSetAsSource(e, data);
+                    });
+                    askFollowupButton.eventListenerAdded = true;
+                }
+            })
         }
 
         if (item?.sources?.length === 1) {

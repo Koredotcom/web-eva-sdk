@@ -34,7 +34,7 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
     const ansFromChip = () => {
         if (item?.sources?.length > 1) {
             return `
-                <div class="leftWrapperBlock">
+                <div class="leftWrapperBlock" id = "ansFromChip-${item?.id}">
                     <span class="ansFrom">Answer From :</span>
                     <span class="krSpecName">${item?.sources?.length} Sources</span>
                 </div>
@@ -71,7 +71,8 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 
         if (item?.sources?.length > 1 && item?.showMultiSourceList) {
             const multiSourceList = item?.sources?.map((_, i) => `
-                <div class="multiSourceListItem" key="${i}" id = "multiSourceListItem-${item?.id}-${_?.id}"></div>
+                <div class="multiSourceListItem" key="${i}" id = "multiSourceListItem-${item?.id}-${_?.docId}">${_?.title}</div>
+                <button class="askFollowupButton" id = "askFollowupButton-${item?.id}-${_?.docId}">Ask Followup</button>
             `).join('');
 
             body += `<div class="MultiSourceListView">${multiSourceList}</div>`;
