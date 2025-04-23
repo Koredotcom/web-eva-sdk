@@ -79,7 +79,7 @@ export function render(
 				)
 			);
 		}
-		if (data.sources?.length) {
+		if (!!data?.sources?.length) {
 			let chip = AnsFromChip({ item: data });
 			content += chip;
 		}
@@ -117,7 +117,13 @@ export function renderTemplateContent(
 		return `<div class="message-bubble answer"> 
 					<div class="answerCntr">${htmlTemplate}</div>
 				</div>`;
-	} else {
+	} else if(data?.status === "terminated"){
+		return `<div class="message-bubble answer"> 
+					I see you interrupted the answer generation. Please feel free to provide more details or let me know how can I assist you further
+				</div>`;
+	}
+	
+	else {
 		switch (data.templateType) {
 			case "resolve_ambiguity":
 				htmlTemplate = ambiguityTemplate.render(data);

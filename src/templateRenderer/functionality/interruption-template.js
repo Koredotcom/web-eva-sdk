@@ -51,8 +51,8 @@ const InterruptionTemplateFunc = (data) => {
             }
         }
 
-        const params = { qId: data?.id, type: data?.type, reqId: data?.reqId }
-        console.log(payload, params)
+        const params = { qId: data?.id, type: data?.type, reqId: data?.reqId, messageId: data?.messageId}
+        InitiateChatConversationAction({payload, params});
     }
 
     const transformData = (originalData) => {
@@ -90,8 +90,6 @@ const InterruptionTemplateFunc = (data) => {
     const cancelAction = () => {
         cancelAdvanceSearch(data?.reqId)
     }
-
-
 
     const container = document.getElementById(`interruption-template-${data?.id}`);
 
