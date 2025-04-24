@@ -44,7 +44,10 @@ const BotConversation = (args) => {
     
     const setBotConversation = (detail) => {
         let question;
-        let questions = cloneDeep(state?.questions)        
+        let questions = cloneDeep(state?.questions)   
+        if (isEmpty(questions)) {
+            return;
+        }     
         if(detail?.action === "create"){
             question = questions[getReqIdByMessageId(detail?.pId)]
             if (isEmpty(question)) {
