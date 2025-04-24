@@ -253,7 +253,7 @@ const ChatInterface = (props) => {
      */
     const sendMessage = (input, question) => {
       // Check if this is a bot conversation
-      if(question?.botConversation) {
+      if(question?.botConversation && question?.status !== 'completed') {
         // Get the conversation which is in-progress
         const conversation = Object.values(question?.botConversation)?.find(c => c?.status === 'in-progress')
         
