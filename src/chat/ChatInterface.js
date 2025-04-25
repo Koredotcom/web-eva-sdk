@@ -41,7 +41,8 @@ const ChatInterface = (props) => {
 				state.questions,
 				state.advanceSearchRes,
 				state.chatHistoryMoreAvailable,
-				state.errorState
+				state.errorState,
+				state.quickActions
 			);
 			// console.log(state.questions, state.advanceSearchRes, state.chatHistoryMoreAvailable)
 			// }
@@ -210,7 +211,7 @@ const ChatInterface = (props) => {
 	};
 
 	const askQuickActions = (arg) => {
-		const payload = {
+		let payload = {
 			action: arg,
 		};
 		initiateChatConversationAction({ payload });

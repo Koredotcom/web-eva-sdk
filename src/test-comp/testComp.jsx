@@ -24,6 +24,7 @@ const TestComp = (props) => {
 	const [selectedItem, setSelectedItem] = useState(null);
 	const [showDislikeMenu, setShowDislikeMenu] = useState(null);
 	const [errorStates, setErrorStates] = useState([]);
+	const [quickActions, setQuickActions] = useState([]);
 	const chatInterface = useRef();
 	const followupInstance = useRef();
 	useEffect(() => {
@@ -36,17 +37,19 @@ const TestComp = (props) => {
 
 		// Subscribe to updates
 		const unsubscribe = chatInterface.current.subscribe(
-			(question, searchResponse, moreAvailable, errorStates) => {
+			(question, searchResponse, moreAvailable, errorStates, quickActions) => {
 				// Handle the API response data
 				console.log(
 					"Received data from chat API:",
 					question,
 					searchResponse,
 					moreAvailable,
-					errorStates
+					errorStates,
+					quickActions
 				);
 				setQuestions(question);
 				setErrorStates(errorStates);
+				setQuickActions(quickActions);
 			}
 		);
 
@@ -98,7 +101,6 @@ const TestComp = (props) => {
 				<div>
 					{questions &&
 						Object.values(questions).map((item) => {
-							// if (
 							// 	item?.templateType === "agent_welcome_template"
 							// ) {
 							// 	return <AgentWelcomeTemplate item={item} />;
@@ -308,6 +310,11 @@ const TestComp = (props) => {
 						})}
 				</div>
 				<div>
+					{quickActions?.map((item) => {
+						return <div key={item?.id} onClick={() => {
+							chatInterface.current.askQuickActions(item);
+						}}>{item?.label}</div>;
+					})}
 					<textarea
 						id="composeBar"
 						onKeyDown={onChange}

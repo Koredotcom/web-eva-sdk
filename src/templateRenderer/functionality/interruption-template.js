@@ -7,15 +7,72 @@ const InterruptionTemplateFunc = (data) => {
         let textareaValue = "";
 
         const interruptionFields = data?.templateInfo?.interruptionFields;
+        let selectedIndex;
         interruptionFields?.forEach(option => {
             if (option?.value?.type === "checkbox" || option?.value?.type === "nestedCheckbox") {
+                const selectedValues = [];
+                option?.value?.choices?.forEach(choice => {
+                    const mainCheckbox = document.getElementById(`binary-${choice.id}`);
+                    if (mainCheckbox?.checked) {
+                        let obj = {
+                            id: choice?.id,
+                            label: choice?.label,
+                            isFieldMulti : option?.value?.multi 
+                        }
+                        selectedValues.push(obj);
+                    }
 
+                    let subchoices = [];
+                    let getSubChoices = !!selectedValues?.find(item => item.id === choice?.id);
+                    let getIndex = selectedValues?.findIndex(item => item.id === choice?.id);
+        
+                    if (choice?.nested?.value?.type === "checkbox" && getSubChoices) {
+                        selectedValues[getIndex].customType = choice?.nested?.key;
+                        choice?.nested?.value?.choices?.forEach(subChoice => {
+                            const subCheckbox = document.getElementById(`binary-${choice.id}-${subChoice.id}`);
+                            if (subCheckbox?.checked) {
+                                let obj = {
+                                    id: subChoice?.id,
+                                    label: subChoice?.label
+                                }
+                                subchoices.push(obj);
+                            }
+                            selectedValues.find(item => item.id === choice?.id).nestedChoices = subchoices
+                        });
+                    }
+
+                    if(choice?.nested?.value?.type === "dropdown" && getSubChoices){
+                        selectedValues[getIndex].customType = choice?.nested?.key;
+                        choice?.nested?.value?.choices?.forEach(subChoice => {
+                            const subCheckbox = document.getElementById(`binary-${choice.id}-${subChoice.id}`);
+                            if(subCheckbox?.checked){
+                                let obj = {
+                                    id: subChoice?.id,
+                                    label: subChoice?.label
+                                }
+                                subchoices.push(obj);
+                            }
+                            selectedValues.find(item => item.id === choice?.id).nestedChoices = subchoices
+                        });
+                    }
+                }
+            );
+            
+            selectedChoices[option?.key] = selectedValues;
             } else if (option?.value?.type === "dropdown" && option?.dynamic === true) {
 
-            } else if (option?.value?.type === "text" || option?.value?.type === "number") {
+                //Not in use currently
 
+            } else if (option?.value?.type === "text" || option?.value?.type === "number") {
+                let inputValue = document.getElementById(`inputValue-${option?.key}`)?.value;
+                if(inputValue){
+                    let obj = {
+                        label: inputValue,
+                        isFieldMulti : option?.value?.multi || false
+                    }
+                    selectedChoices[option?.key] = [obj];
+                }
             } else if (option?.value?.type === "groupedCheckbox") {
-                let selectedIndex;
                 option?.value?.groups?.forEach((group, index) => {
                     const checkboxGroup = document.querySelector(`input[name="radio-${option.key}"]:checked`);
                     selectedIndex = checkboxGroup.getAttribute("key");
@@ -24,12 +81,16 @@ const InterruptionTemplateFunc = (data) => {
                 })
                ;
             } else if (option?.value?.type === "date") {
-
-            } else if (option?.value?.type === "heading") {
-
+                let dateValue = document.getElementById(`date-${option?.key}`)?.value;
+                if(dateValue){
+                    let obj = {
+                        label: dateValue,
+                        isFieldMulti : option?.value?.multi || false
+                    }
+                    selectedChoices[option?.key] = [obj];
+                }
             } else if (option?.value?.type === "textarea") {
-                textareaValue = document.querySelector(`.textarea-${option?.value?.type}`).value;
-
+                textareaValue = document.getElementById(`textarea-${option?.key}`)?.value || document.getElementById(`textarea-${option?.key}`)?.innerText;
             } else if (option?.value?.type === "buttons") {
                 if(actionId === option?.value?.buttons[0]?.id){
                     selectedChoices[option?.key] = option?.value?.buttons[0]?.label;
@@ -102,7 +163,7 @@ const InterruptionTemplateFunc = (data) => {
             buttons?.forEach((button, index) => {
                 const buttonElement = document.querySelector(`.buttons-${index}`);
                 buttonElement?.addEventListener("click", () => {
-                    continueAction(button);
+                    continueAction(button?.id);
                 });
             });
         });

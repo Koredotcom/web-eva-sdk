@@ -218,3 +218,15 @@ export function encodeHtml(text) {
 	text = text?.replace(/&apos;/g, "'");
 	return text;
 }
+
+export const formatToDDMMYY = (dateStr) => {
+	const date = new Date(dateStr);
+	if (isNaN(date)) return '';
+  
+	const dd = String(date.getDate()).padStart(2, '0');
+	const mm = String(date.getMonth() + 1).padStart(2, '0'); // Month is 0-based
+	const yy = String(date.getFullYear()).slice(-2);
+  
+	return `${dd}/${mm}/${yy}`;
+  };
+  

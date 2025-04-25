@@ -2,21 +2,104 @@ import { cloneDeep } from "lodash";
 import { updateChatData } from "../../redux/globalSlice";
 import store from "../../redux/store";
 import { sessionItemHandler } from "../../Attachments/createContext";
+import { getRelevantQuestions } from "../../redux/actions/global.action";
+import { highlightQuotedText } from "../utils/helper";
+import { InitiateChatConversationAction } from "../../chat";
 
-const AnsFromChipFunctionality = ({item, regeneratingAnswer}) => {
+const AnsFromChipFunctionality = ({item}) => {
 
-    const regeneratingAnswerListener = () => {
-        console.log('regeneratingAnswerListener');
+    const getRelevantQuestionsData = async () => {
+        let state = store.getState()?.global;
+        let _questions = cloneDeep(state?.questions);
+        let constId = item?.cId || item?.id;
+
+        if(item?.altQuestions?.showAltQuestions){
+            _questions[constId].altQuestions.showAltQuestions = false;
+        }else if(item?.altQuestions?.questions?.length > 0 && item?.altQuestions?.showAltQuestions === false){
+            _questions[constId].altQuestions.showAltQuestions = true;
+        }
+        else{
+            let userId = state?.profile?.data?.id;
+    
+            let context = item?.context;
+     
+            let params = {
+                "userId": userId,
+                "sessionId": context?.sessionId,
+                "appId": context?.tabId,
+                "qId": item?.id,
+            }
+    
+            const response = await store.dispatch(getRelevantQuestions(params));
+    
+            if(!!response?.payload){
+                let altQuestions = response?.payload?.altQuestions;
+                let alternateQuestionsObj = {
+                    questions: altQuestions,
+                    showAltQuestions: true
+                }
+                _questions[constId].altQuestions = alternateQuestionsObj;
+            }
+        }
+        store.dispatch(updateChatData(_questions));   
     }
 
     const tableChipLogic = () => {
-        console.log('tableChipLogic');
+        let chip = document.getElementById(`ansFromChip-${item?.id}`);
+        if (chip && !chip.eventListenerAdded) {
+            chip.addEventListener('click', (e) => {
+                e?.preventDefault();
+                e?.stopPropagation();
+                showDataAction();
+            });
+            chip.eventListenerAdded = true;
+        }
+
+        if (item?.showData) {
+            // any actions on Table Chip has to be added here
+
+            if (item?.sources?.[0]?.canSetAsSourceContext !== false && (item?.context?.source === "jira" || item?.context?.source === "hubspot" || item?.context?.source === "zendesk")) {
+                let relevantQuestions = document.getElementById(`relevantQuestions-${item?.id}`);
+                if (relevantQuestions && !relevantQuestions.eventListenerAdded) {
+                    relevantQuestions.addEventListener('click', (e) => {
+                        e?.preventDefault();
+                        e?.stopPropagation();
+                        getRelevantQuestionsData();
+                    });
+                    relevantQuestions.eventListenerAdded = true;
+                }
+
+                if (item?.altQuestions?.showAltQuestions && item?.altQuestions?.questions?.length > 0) {
+                    item?.altQuestions?.questions?.map((question, i) => {
+                        let relevantQuestionsItem = document.getElementById(`relevantQuestionsItem-${item?.id}-${i}`);
+                        if(relevantQuestionsItem && !relevantQuestionsItem.eventListenerAdded){
+                            relevantQuestionsItem.addEventListener('click', (e) => {
+                                e?.preventDefault();
+                                e?.stopPropagation();
+                                let payload = {
+                                    question: question
+                                }
+                                InitiateChatConversationAction({payload});
+                            });
+                            relevantQuestionsItem.eventListenerAdded = true;
+                        }
+                    });
+                }
+
+
+            }
+        }
     }
 
     const showDataAction = () => {
 
         if (!!item?.context && (item?.context?.type === "gptAgent"|| item?.context?.agentType === "gptAgent" || item?.context?.agentType === 'galeAgent')) {
-            // TODO: Implement the logic for the gptAgent
+            let state = store.getState()?.global;
+            let _questions = cloneDeep(state?.questions);
+            let constId = item?.cId || item?.id;
+            let showGPTDialog = !!_questions[constId]?.showGPTDialog;
+            _questions[constId].showGPTDialog = !showGPTDialog;
+            store.dispatch(updateChatData(_questions));
         }
         if ((item?.sources?.length === 1) && item?.sources[0]?.hasOwnProperty("redirectUrl")){
             openInNewTab(item?.sources?.[0]) 
@@ -126,12 +209,22 @@ const AnsFromChipFunctionality = ({item, regeneratingAnswer}) => {
                 }
             });
         }
+
+        if(item?.showGPTDialog){
+            let dialog = document.getElementById(`gptDialog-${item?.id}`);
+            let closeBtn = document.getElementById(`close-btn-dialog-${item?.id}`);
+            if(closeBtn && !closeBtn.eventListenerAdded){
+                closeBtn.addEventListener('click', () => {
+                    dialog.close();
+                    dialog.remove();
+                });
+                closeBtn.eventListenerAdded = true;
+            }
+        }
     }
 
     const renderLogic = () => {
-        if (regeneratingAnswer) {
-            regeneratingAnswerListener();
-        } else if (item?.viewType === "table") {
+        if (item?.viewType === "table") {
             tableChipLogic();
         } else {
             knowledgeChipLogic();

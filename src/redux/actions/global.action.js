@@ -307,4 +307,18 @@ export const basicAuth = createAsyncThunk(
     }
 );
 
+export const getRelevantQuestions = createAsyncThunk(
+    'global/getRelevantQuestions',
+    async (arg, { rejectWithValue }) => {
+        try {
+            const response = await axiosInstance.get(`/kora/users/${arg?.userId}/advancedsearch/session/${arg?.sessionId}/altQuestions?tabId=${arg?.appId}`);
+            return response.data;   
+        } catch (error) {
+            handleErrorState(error, "Get Relevant Questions");
+            return rejectWithValue(error.response.data);
+        }
+    }
+);
+
+
 

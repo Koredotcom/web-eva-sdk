@@ -79,7 +79,7 @@ export function render(
 				)
 			);
 		}
-		if (!!data?.sources?.length) {
+		if (!!data?.sources?.length && data?.templateType === "search_answer") {
 			let chip = AnsFromChip({ item: data });
 			content += chip;
 		}

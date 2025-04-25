@@ -1,7 +1,7 @@
 import { cloneDeep, isEmpty} from "lodash";
 import store from "../redux/store";
 import { searchSession } from "../redux/actions/global.action";
-import { setSelectedContext } from "../redux/globalSlice";
+import { setQuickActions, setSelectedContext } from "../redux/globalSlice";
 
 export const removeItemfromSources = ({ state, item }) => {
     const { selectedContext } = state;
@@ -337,6 +337,8 @@ const getContextData = (state, data) => {
         return store.dispatch(setSelectedContext(selectedContextData));
     } else {
         console.log(data?.response)
+        let _quickActions = data?.response?.payload?.quickactions;
+        store.dispatch(setQuickActions(_quickActions));
     }
     // if comes in this condition means all items removed from existing session
     if (data?.args?.action === "remove" && (data?.response?.payload?.sources?.length === 0)) {

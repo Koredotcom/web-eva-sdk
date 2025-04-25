@@ -18,6 +18,13 @@ export const encodeHtml = (str) => {
 		.replace(/'/g, "&#039;");
 };
 
+export const highlightQuotedText = (input) => {
+	return input.replace(/"([^"]+)"/g, (match, p1) => {
+	  return `"​<span class="highlightedText">${p1}</span>"`;
+	});
+  }
+
+
 // return {
 // 	validateInput,
 // 	encodeHtml,

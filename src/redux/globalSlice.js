@@ -49,6 +49,7 @@ const initialState = {
 	enableContextByFollowupContext: false, // use to set the context by followup context,
 	errorState: [],
 	notifications: {},
+	quickActions : []
 };
 
 const globalSlice = createSlice({
@@ -111,6 +112,9 @@ const globalSlice = createSlice({
 		},
 		setNotifications: (state, action) => {
 			state.notifications = action.payload;
+		},
+		setQuickActions: (state, action) => {
+			state.quickActions = action.payload;
 		},
 	},
 	extraReducers: (builder) => {
@@ -285,6 +289,7 @@ export const {
 	setEnableContextByFollowupContext,
 	setErrorState,
 	setNotifications,
+	setQuickActions
 } = globalSlice.actions;
 
 export default globalSlice;

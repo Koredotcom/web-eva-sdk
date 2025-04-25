@@ -12,57 +12,76 @@ function createGmailDriveInterruptions(data) {
                 ${option?.value?.type !== "groupedCheckbox" ? `
                     <div class="prTitle">${option?.label}</div>
                 ` : ""}
-                <div class="project-group-wrapper ${option.key}">
+                    <div class="project-group-wrapper ${option.key}">
                     ${(option?.value?.type === "checkbox" || option?.value?.type === "nestedCheckbox") ? `
-                        ${option?.value?.choices?.map(choice => `
-                            <div class="field-radiobutton withoutBorder${choice?.nested?.value?.type === "checkbox" ? " wrapBox" : ""}">
-                                <input type="radio" id="binary-${choice.id}" ${false ? "checked" : ""} />
-                                <label for="binary-${choice.id}">${choice.label}</label>
+                        ${option?.value?.choices?.[0]?.nested?.value?.type === "checkbox" ? `
+                        ${option?.value?.choices?.map((choice, index) => `
+                            <div class="field-radiobutton withoutBorder${choice?.nested?.value?.type === "checkbox" ? ' wrapBox' : ''}">
+                            <div class="field-radiobutton withoutBorder">
+                                <input type="checkbox" id="binary-${choice?.id}" key="${index}" name="${option?.key}" />
+                                <label for="binary-${choice?.id}">${choice?.label}</label>
+                            </div>
+                            <div class="prjWhiteBoxGroup">
+                                <div class="prjParentGroup">
                                 ${choice?.nested?.value?.type === "checkbox" ? `
                                     <div class="pojectsGroup">
-                                        ${choice?.nested?.value?.choices?.map(subChoice => `
-                                            <input type="checkbox" id="binary-${choice.id}-${subChoice.id}" ${false ? "checked" : ""} />
-                                            <label for="binary-${choice.id}-${subChoice.id}">${subChoice.label}</label>
-                                        `).join('')}
+                                    ${choice?.nested?.value?.choices?.map((subChoice, subIndex) => `
+                                        <div class="field-checkbox">
+                                        <input type="checkbox" id="binary-${choice?.id}-${subChoice?.id}" key="${subIndex}" />
+                                        <label for="binary-${choice?.id}-${subChoice?.id}">${subChoice?.label}</label>
+                                        </div>
+                                    `).join('')}
                                     </div>
-                                ` : ""}
+                                ` : ''}
+                                </div>
+                            </div>
                             </div>
                         `).join('')}
-                    ` : ""}
-                    ${option?.value?.type === "dropdown" && option?.dynamic === true ? `
-                        <div class="inputDropdowngroup">
-                            <div class="drInputSection">
-                                ${dropDownChoice ? `
-                                    <div class="selectedChoice">
-                                        <div class="selectedChip">
-                                            <div class="selectedImg">
-                                                <img src="${dropDownChoice.icon}" style="width: 20px; height: 20px;" />
-                                            </div>
-                                            <div class="selectionLabel">${dropDownChoice.label}</div>
-                                            <div>×</div>
+                        ` : `
+                        ${option?.value?.choices?.map((choice, index) => `
+                            ${choice?.nested ? `
+                            <div class="field-checkbox-dropdown">
+                                <div class="leftBox">
+                                <input type="checkbox" id="binary-${choice?.id}" key="${index}" />
+                                <label for="binary-${choice?.id}">${choice?.label}</label>
+                                </div>
+                                ${choice?.nested?.value?.type === "dropdown" ? `
+                                    <div class="custom-dropdown">
+                                        <div class="dropdown-label">${choice?.nested?.value?.label}</div>
+                                        <div class="dropdown-options">
+                                        ${choice?.nested?.value?.choices?.map((subChoice, subIndex) => `
+                                            <label>
+                                            <input type="checkbox" value="${subChoice?.label}" id = "binary-${choice?.id}-${subChoice?.id}" key="${subIndex}" />
+                                            ${subChoice?.label}
+                                            </label>
+                                        `).join('')}
                                         </div>
                                     </div>
-                                ` : ""}
-                                <input type="text" placeholder="Select ${option.key}" value="${searchText}" class="${dropDownChoice ? "hide" : "autocompleteInput"}" />
-                                ${searchText ? `
-                                    <div class="dropDown">
-                                        ${ddOptions && ddOptions.length > 0 ? ddOptions.map(opt => `
-                                            <div class="dd-options">
-                                                <div class="drimg">
-                                                    <img src="${opt.icon}" style="width: 20px; height: 20px;" />
-                                                </div>
-                                                <div class="drName">${opt.label}</div>
-                                            </div>
-                                        `).join('') : ""}
+                                    ` : ''}
+                                ${choice?.nested?.value?.type === "checkbox" ? `
+                                ${choice?.nested?.value?.choices?.map((subChoice, subIndex) => `
+                                    <div class="field-checkbox">
+                                    <input type="checkbox" id="binary-${choice?.id}-${subChoice?.id}" key="${subIndex}" />
+                                    <label for="binary-${choice?.id}-${subChoice?.id}">${subChoice?.label}</label>
                                     </div>
-                                ` : ""}
+                                `).join('')}
+                                ` : ''}
                             </div>
-                        </div>
-                    ` : ""}
+                            ` : `
+                            <div class="${option?.key !== 'timeline' ? 'field-checkbox' : 'field-radiobutton'}">
+                                <input type="${option?.key !== 'timeline' ? 'checkbox' : 'radio'}" id="binary-${choice?.id}" key="${index}" name="${option?.key}" />
+                                <label for="binary-${choice?.id}">${choice?.label}</label>
+                            </div>
+                            `}
+                        `).join('')}
+                        `}
+                    ` : ''}
+                    </div>
+
                     ${(option?.value?.type === "text" || option?.value?.type === "number") ? `
                         <div class="inputDropdowngroup">
                             <div class="drInputSection">
-                                <input type="${option.value.type === "number" ? "number" : "text"}" placeholder="Enter ${option.key}" />
+                                <input type="${option.value.type === "number" ? "number" : "text"}" placeholder="Enter ${option.key}" id = "inputValue-${option.key}" />
                             </div>
                         </div>
                     ` : ""}
@@ -73,7 +92,7 @@ function createGmailDriveInterruptions(data) {
                                 <div class="checkbox-group-${index}">
                                     ${group?.choices?.map((choice, index) => `
                                         <div class="checkboxWithLable">
-                                            <input type="radio" id="groupedCheckbox-${index}" name="radio-${option.key}" key="${index}"/>
+                                            <input type="checkbox" id="groupedCheckbox-${index}" name="radio-${option.key}" key="${index}"/>
                                             <label for="groupedCheckbox-${index}">${choice.label}</label>
                                         </div>
                                     `).join('')}
@@ -84,7 +103,7 @@ function createGmailDriveInterruptions(data) {
                     ${option?.value?.type === "date" ? `
                         <div class="inputDropdowngroup">
                             <div class="drInputSection">
-                                <input type="date" placeholder="Enter due date" class="entityValue" />
+                                <input type="date" placeholder="Enter due date" class="entityValue" id = "date-${option.key}" />
                             </div>
                         </div>
                     ` : ""}
@@ -93,7 +112,7 @@ function createGmailDriveInterruptions(data) {
                     ` : ""}
                     ${option?.value?.type === "textarea" ? `
                         <div class="textarea">
-                            <textarea class="textarea-${option.value.type}" placeholder="${option.value.placeholder}"></textarea>
+                            <textarea class="textarea" id = "textarea-${option.key}" placeholder="${option.value.placeholder}"></textarea>
                         </div>
                     ` : ""}
                     ${option?.value?.type === "buttons" ? `
