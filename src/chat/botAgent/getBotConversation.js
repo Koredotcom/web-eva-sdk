@@ -4,6 +4,7 @@ import store from "../../redux/store";
 import { getReqIdByMessageId } from "../../utils/helpers";
 import { updateChatData, setBotSDKInstance, setCurrentQuestion, setEnableKoreBotSDK } from "../../redux/globalSlice";
 import { advanceSearch } from "../../redux/actions/global.action";
+import { constructQuestionPostCall } from "../chat-utils";
 
 const BotConversation = (args) => {
     let state = store.getState().global
@@ -43,7 +44,10 @@ const BotConversation = (args) => {
     
     const setBotConversation = (detail) => {
         let question;
-        let questions = cloneDeep(state?.questions)        
+        let questions = cloneDeep(state?.questions)   
+        if (isEmpty(questions)) {
+            return;
+        }     
         if(detail?.action === "create"){
             question = questions[getReqIdByMessageId(detail?.pId)]
             if (isEmpty(question)) {
@@ -74,16 +78,28 @@ const BotConversation = (args) => {
                 }
             }
         }
-        if(detail?.action === "update"){            
-            question = questions[getReqIdByMessageId(detail?.messageId)]
-            /*should retain the id of the question when accessing from history */
-            if(question?.historicalData){
-                const questionHistoryId = question.id
-                question = { ...question, ...detail?.message }
-                question.id = questionHistoryId
+        if(detail?.action === "update"){         
+            /*reqId only comes when updating the parentMessage clo */   
+            if (detail?.message?.hasOwnProperty('reqId') && Object.keys(questions || {}).length > 0) {
+                const currentQuestion = Object.values(questions).find(ques => ques.reqId === detail.message.reqId)
+                if(currentQuestion?.historicalData){
+                    question = questions?.[currentQuestion?.id]
+                }else{
+                    question = questions?.[currentQuestion?.reqId]
+                }                
+                question = {...question, 'answer': detail?.message?.answer, 'status': detail?.message?.status}
             }else{
-                question = { ...question, ...detail?.message }
-            }           
+                question = questions[getReqIdByMessageId(detail?.message?.pId)]
+                question.botConversation[detail?.messageId] = detail?.message
+            }         
+            /*should retain the id of the question when accessing from history */
+            // if(question?.historicalData){
+            //     const questionHistoryId = question.id
+            //     question = { ...question, ...detail?.message }
+            //     question.id = questionHistoryId
+            // }else{
+            //     // question = { ...question, ...detail?.message }
+            // }           
             console.log("question after update: ", question)
         }        
         store.dispatch(setCurrentQuestion(question))
@@ -102,7 +118,7 @@ const BotConversation = (args) => {
     }
 
 
-    const submitBotResponse = (data) => {
+    const submitBotResponse = async (data) => {
         /**
          * needed payload
          payload = {
@@ -133,7 +149,8 @@ const BotConversation = (args) => {
         /*need to add a loading state for the current question */
         addLoadingStateToCurrentQuestion(data?.cId, data?.messageId)
         console.log("params data: ", data)
-        store.dispatch(advanceSearch({ params, payload, userId: state?.profile?.data?.id || data?.userId}))
+        const res = await store.dispatch(advanceSearch({ params, payload, userId: state?.profile?.data?.id || data?.userId}))
+        constructQuestionPostCall(res, data?.cId)
     }
 
     const addLoadingStateToCurrentQuestion = (reqId, messageId) => {
@@ -157,12 +174,29 @@ const BotConversation = (args) => {
     const installOwnTemplate = (templateInstance) => {
         currentBotSDKInstance?.templateManager?.installTemplate(templateInstance) //Here templateInstance should be a component
     }
+
+    const generateHTMLforBotTemplate = (templatePayload) => {        
+        const xoTemplatePayload = {
+            "type": "bot_response",
+            "from": "bot",
+            "messageId": templatePayload?.messageId,
+            "message": [
+                {
+                    "type": "text",
+                    "component": templatePayload?.content
+                }
+            ]
+        }
+        return currentBotSDKInstance.generateMessageDOM(xoTemplatePayload)
+        
+    }
     return{
         setBotConversation,
         submitBotResponse,
         installOwnTemplate,
         initializeBotSDK,
-        enableEVABotSdk
+        enableEVABotSdk,
+        generateHTMLforBotTemplate
     }
 }
 

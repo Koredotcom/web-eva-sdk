@@ -102,7 +102,7 @@ const BotAgentTestComponent = (props) => {
                             </div>
                         )
                     }
-                    else {
+                    {/* else {
                         return (
                             <div>
                                 render your own template for the *{conversation?.content?.payload?.template_type}* template
@@ -110,7 +110,7 @@ const BotAgentTestComponent = (props) => {
                                 selected option id is *{conversation?.answer}*
                             </div>
                         )
-                    }
+                    } */}
                 })}
             </>
         )

@@ -1,7 +1,7 @@
 import { v4 as uuid } from 'uuid';
 import { updateChatData, setActiveBoardId, setCurrentQuestion, setSelectedContext, setErrorState } from '../redux/globalSlice';
 import store from '../redux/store';
-import { cloneDeep } from 'lodash';
+import { cloneDeep, isEmpty } from 'lodash';
 import constructGptForm from './gptTemplate/gptTemplateBody';
 import gptFormFunctionality from './gptTemplate/gptTemplateFunc';
 import { getCidByMessageId } from '../utils/helpers';
@@ -69,7 +69,7 @@ export const constructQuestionPostCall = (data, qId) => {
         }
     }
 
-    if(data?.payload?.templateType === chatTemplateTypes.SEARCH_ANSWER){
+    if((data?.payload?.templateType === chatTemplateTypes.SEARCH_ANSWER) && (isEmpty(data?.payload?.thread))){
         if(data?.payload?.sources?.length > 0 ){
             const ansFromChipData = AnswerFromChip({item : data?.payload})
             question.answerFrom_html = ansFromChipData.outerHTML
@@ -84,7 +84,27 @@ export const constructQuestionPostCall = (data, qId) => {
         store.dispatch(setErrorState(data?.payload?.queryExhaustionInfo))
     }
     
+    //for synchronous task
+    // if(Object.keys(data?.payload?.thread || {})?.length){
+    //         if (!question?.botConversation) {
+    //         question.botConversation = {}
+    //         data?.payload?.thread?.messages?.map(message => {
+    //             question.botConversation[message?.messageId] = message
+    //         })            
+    //     }
+    //     if (data?.payload?.thread && data?.payload?.thread?.nextMessages && data?.payload?.thread?.nextMessages?.length) {            
+    //         question.botConversation[data?.payload?.messageId].status = data?.payload?.status
+    //         question.botConversation[data?.payload?.messageId].answer = data?.payload?.answer
+    //         data?.payload?.thread?.nextMessages?.map(message => {
+    //             question.botConversation[message?.messageId] = message
+    //         })
+    //         if (data?.payload?.thread?.parentMessage?.status === "completed") {
+    //             question.parentMessage = data?.payload?.thread?.parentMessage                        
+    //         }
+    //     }        
+    // }
 
+    
     // if(data?.params?.arg?.retry) {
     //     delete question?.error;
     // }
@@ -153,8 +173,11 @@ export const constructQuestionPostCall = (data, qId) => {
             let terminatedAnswerResponse = "I see you interrupted the answer generation. Please feel free to provide more details or let me know how can I assist you further"
             question = { ...question,  ...data?.payload?.history, answer : terminatedAnswerResponse};
     }
-    else {
-        question = { ...question, ...data?.payload};
+    else {      
+        if(!question?.hasOwnProperty('botConversation')) {
+            question = { ...question, ...data?.payload}; 
+        }
+                        
     }
    
     // let context;
@@ -174,38 +197,30 @@ export const constructQuestionPostCall = (data, qId) => {
     // const _selectedContext = {...selectedContext, messageId: data?.res?.messageId };
 
     //if the response contains thread intiating the bot conversation
-    // if (data?.res?.thread) {
-    //     //rename the answer to question and include botConversation object.
-    //     // question.question = data?.res?.thread?.previousMessage?.question
+    if (data?.payload?.thread) {
+        //rename the answer to question and include botConversation object.
+        // question.question = data?.res?.thread?.previousMessage?.question
 
-    //     if (!question?.botConversation) {
-    //         question.botConversation = {}
-    //         data?.res?.thread?.messages?.map(message => {
-    //             question.botConversation[message?.messageId] = message
-    //         })
-    //         question.collapseBotConversation = false
-    //         updateState({
-    //             isBotRunning: true
-    //         })
-    //         console.log("is bot running", isBotRunning)
-    //     }
-    //     if (data?.res?.thread && data?.res?.thread?.nextMessages && data?.res?.thread?.nextMessages?.length) {
-    //         question = updatedQuestions?.[currentQuestion]
-    //         question.botConversation[data?.res?.messageId].status = data?.res?.status
-    //         question.botConversation[data?.res?.messageId].answer = data?.res?.answer
-    //         data?.res?.thread?.nextMessages?.map(message => {
-    //             question.botConversation[message?.messageId] = message
-    //         })
-    //         if (data?.res?.thread?.nextMessages[0]?.status === "completed" && data?.res?.thread?.parentMessage?.status === "completed") {
-    //             question.parentMessage = data?.res?.thread?.parentMessage
-    //             question.collapseBotConversation = true
-    //             updateState({
-    //                 isBotRunning: false
-    //             })
-    //         }
-    //     }
-    //     question.question = data?.res?.question
-    // }
+        if (!question?.botConversation) {
+            question.botConversation = {}
+            data?.payload?.thread?.messages?.map(message => {
+                question.botConversation[message?.messageId] = message
+            })                        
+        }
+        if (data?.payload?.thread && data?.payload?.thread?.nextMessages && data?.payload?.thread?.nextMessages?.length) {            
+            question.botConversation[data?.payload?.messageId].status = data?.payload?.status
+            question.botConversation[data?.payload?.messageId].answer = data?.payload?.answer
+            data?.payload?.thread?.nextMessages?.map(message => {
+                question.botConversation[message?.messageId] = message
+            })
+            if (data?.payload?.thread?.parentMessage?.status === "completed") {
+                question.status = "completed"                
+                question.parentMessage = data?.payload?.thread?.parentMessage
+                
+            }
+        }
+        // question.question = data?.res?.question
+    }
 
     // if(data?.res?.viewType === "threadView"){
     //     if(!question.hasOwnProperty("botConversation")){

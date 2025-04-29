@@ -11,6 +11,8 @@ import BotConversation from '../chat/botAgent/getBotConversation'
 import CustomTemplateComponentManager from "../chat/botAgent/customTemplatesFolder/CustomTemplateComponentManager"
 import HoldConversationTemplateManager from '../chat/botAgent/customTemplatesFolder/HoldConversationTemplateManager'
 import Notifications from './Notifications'
+import { FileUpload } from '../Attachments'
+import { cloneDeep } from 'lodash'
 // import { submitUserFeedback } from '../Feedback'
 
 
@@ -22,8 +24,10 @@ const ChatTestComp = (props) => {
     const [showDislikeMenu, setShowDislikeMenu] = useState(null)
     const [errorStates, setErrorStates] = useState([])
     const chatInterface = useRef()
+    const followupInstance = useRef()
     useEffect(() => {
         // Create an instance of ChatInterface
+        followupInstance.current = FileUpload()
         chatInterface.current = ChatInterface();        
         chatInterface.current.options({contentStreaming: true})
         // Show the input bar in a specific DOM element
@@ -161,7 +165,20 @@ const ChatTestComp = (props) => {
                         }
                         if (item?.viewType === "threadView"){
                             return(
-                                <BotAgentTestComponent question={item}/>
+                                <>
+                                    <BotAgentTestComponent question={item} />
+                                    {item?.status === "completed" && (<>
+                                        <button onClick={() => {
+                                            followupInstance.current.askFollowup(item)
+                                        }}>set context</button>
+                                        <button onClick={() => {
+                                            followupInstance.current.clearContext({})
+                                        }}>clear context</button>
+                                    </>)
+                                    
+                                    }
+                                </>
+                                
                             )
                         }
                         return null;

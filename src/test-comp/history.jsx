@@ -1,18 +1,21 @@
-import { useEffect, useRef, useState } from "react"
+import { use, useEffect, useRef, useState } from "react"
 import deleteChatThread from "../history/deleteHistoryData"
 import updateHistoryData from "../history/updateHistoryData"
 import { HistoryData, HistoryInterface, LoadMoreHistoryData } from "../history"
 import { JoinChatThread } from "../chat"
+import { LoadMoreRecentFiles, RecentFiles } from "../files"
 
 const History = (props) => {
     const [historyData, setHistoryData] = useState(null)
     const historyInterface = useRef()
+    const recentFilesInterface = useRef()
 
     useEffect(() => {
         // fetchHistoryData()
 
         // Create an instance of HistoryInterface
         historyInterface.current = HistoryInterface();
+        recentFilesInterface.current = RecentFiles();
 
         // Subscribe to updates
         const unsubscribe = historyInterface.current.subscribe((allhistoryData, apiRes) => {
@@ -20,6 +23,11 @@ const History = (props) => {
             console.log('Received data from History API:', allhistoryData, apiRes);
             setHistoryData(allhistoryData)
         });
+
+        // recentFilesInterface.current.subscribe((allRecentFilesData, apiRes) => {
+        //     console.log('Received data from Recent Files API:', allRecentFilesData, apiRes);
+        // })
+
 
         // Cleanup on component unmount
         return () => {
@@ -36,6 +44,11 @@ const History = (props) => {
     const fetchLoadMoreHistoryInitial = async () => {
         const res = await LoadMoreHistoryData({limit: 20, initialData: true})
         console.log('All History', res)
+    }
+
+    const fetchRecentFilesInitial = async () => {
+        const res = await LoadMoreRecentFiles({limit: 20, initialData: true})   
+        console.log('All Recent Files', res)
     }
 
     const fetchLoadMoreHistory = async () => {
@@ -85,6 +98,11 @@ const History = (props) => {
                     )
                 })}
             </div>
+            <div>
+                <h1>Recent Files</h1>
+                <button onClick={fetchRecentFilesInitial}>Initial Recent files data with custom param</button>
+                {/* <button onClick={fetchLoadMoreHistory}>Load more Recent files</button>                 */}
+            </div>            
         </div>
     )
 }

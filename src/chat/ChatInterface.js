@@ -6,6 +6,7 @@ import { v4 as uuid } from 'uuid';
 import { constructQuestionInitial, constructQuestionPostCall } from "./chat-utils";
 import { generateShortUUID, getCidByMessageId, getCidByReqId } from "../utils/helpers";
 import { cloneDeep, isEmpty } from "lodash";
+import BotConversation from "./botAgent/getBotConversation";
 
 const ChatInterface = (props) => {
     let state = store.getState().global, input = '', resIndexRef = 0;
@@ -50,6 +51,10 @@ const ChatInterface = (props) => {
             payload.context = {"sources": [selectedContext?.data?.context || selectedContext?.data?.sources?.[0]]}
             if(selectedContext?.data?.messageId) {
               payload.contextParams = {messageId: selectedContext?.data?.messageId}
+            }
+            /*writing especially for botAgent, will remove this once search session api gives the context data, when we click on askFollowup after bot completion */
+            if(selectedContext?.data?.sessionId){
+              payload.context.sessionId = selectedContext?.data?.sessionId
             }
           } else {
             // when setted context is an attachment
@@ -232,6 +237,41 @@ const ChatInterface = (props) => {
       store.dispatch(setErrorState([]))
     }
 
+    /**
+     * Sends a message to either a bot conversation or initiates a regular chat message
+     * 
+     * @param {Object} question - The question object containing conversation details
+     * @param {Object} conversation - The conversation object containing message details
+     * @param {string} input - The user's input message to be sent
+     * 
+     * @description
+     * This function handles two types of message sending:
+     * 1. Bot Conversation: If the question has botConversation flag set, it sends the message
+     *    to the bot conversation system with the required context and identifiers
+     * 2. Regular Chat: If not a bot conversation, it uses the standard sendMessageAction
+     *    to process the message through the regular chat flow
+     */
+    const sendMessage = (input, question) => {
+      // Check if this is a bot conversation
+      if(question?.botConversation && question?.status !== 'completed') {
+        // Get the conversation which is in-progress
+        const conversation = Object.values(question?.botConversation)?.find(c => c?.status === 'in-progress')
+        
+        // Prepare payload for bot conversation
+        const payload = {
+          "cId": question?.cId || question?.reqId, // Use conversation ID or request ID
+          "input": input, // User's input message
+          "context": question?.context, // Conversation context
+          "messageId": conversation?.messageId, // Message identifier
+        }
+        // Submit the response to the bot conversation system
+        BotConversation().submitBotResponse(payload)
+      } else {
+        // Handle as a regular chat message
+        sendMessageAction(input)
+      }
+    }
+
     return {
         subscribe,
         sendMessageAction,
@@ -244,7 +284,8 @@ const ChatInterface = (props) => {
         contentStreaming,
         options,
         enableContextByFollowupContext,
-        clearErrorState
+        clearErrorState,
+        sendMessage
     }
 }
 

@@ -1,4 +1,4 @@
-import { cloneDeep } from "lodash"
+import { cloneDeep, isEmpty } from "lodash"
 import { JoinChatThread } from "../chat"
 import { getNotification, readNotification } from "../redux/actions/global.action"
 import { setNotifications } from "../redux/globalSlice"
@@ -23,6 +23,7 @@ const Notification = () => {
         //Method to get notifications
         let userId = state?.profile?.data?.id
         const res = await store.dispatch(getNotification({userId}))
+        /*bell count object format should be changed */
         store.dispatch(setNotifications(res.payload))
     }
 
@@ -31,17 +32,20 @@ const Notification = () => {
         
         //Method to notify the latest notification
         let _notificationState = cloneDeep(state?.notifications);
-        _notificationState.bell = notification?.nStats?.bell;
+        _notificationState.bell = { 'bell': notification?.nStats?.bell };
         let alerts = _notificationState?.alert?.length ? _notificationState?.alert : [];
         alerts.unshift({message : notification?.notification, cd : notification?.customdata});
         _notificationState.alert = alerts;
         store.dispatch(setNotifications(_notificationState))
     }
 
-    const redirectToNotificationChatThread = (notification) => {
-        //Method to redirect to the current notification chat thread
+    const redirectToNotificationChatThread = async (notification) => {
+        /* adding the logic to change the 'read' state of the notification if it is unread */
+        if (!notification?.isRead) {
+            await markNotificationAsRead(notification)
+        }
         let reqdBoardId = notification?.cd?.ed?.payload?.boardId
-        JoinChatThread({ boardId: reqdBoardId , redirectFromNotification: true})
+        JoinChatThread({ boardId: reqdBoardId, redirectFromNotification: true })
 
     }
 
@@ -70,29 +74,67 @@ const Notification = () => {
                 notification.isRead = true;
                 return notification;
             });
+            /*Bell count is should be update to 0, as all notifications are read */
+            _notificationState.bell = {bell: 0};
             store.dispatch(setNotifications(_notificationState))
         }
     }
 
     const redirectToLatestAlert = async (notification) => {
         //Method to redirect to the latest alert
+        /*the below read method is handled in  redirectToNotificationChatThread, so commenting the below*/
         let id = notification?.cd?.nId
-        let userId = state?.profile?.data?.id
-        let payload = {
-            "read": id
-        }
-        const res = await store.dispatch(readNotification({userId, payload}))
+        // let userId = state?.profile?.data?.id
+        // let payload = {
+        //     "read": id
+        // }
+        // const res = await store.dispatch(readNotification({userId, payload}))        
         redirectToNotificationChatThread(notification)
 
-        //Clearing the alert from the state
-        let _notificationState = cloneDeep(state?.notifications);
-        _notificationState.alert = _notificationState.alert.filter(alert => alert?.cd?.nId !== id)
-        _notificationState.bell = _notificationState.bell - 1;
-        store.dispatch(setNotifications(_notificationState))
+        // Clearing the alert from the state
+        // let _notificationState = cloneDeep(state?.notifications);
+        // _notificationState.alert = _notificationState.alert.filter(alert => alert?.cd?.nId !== id)
+        // _notificationState.bell = _notificationState.bell - 1;
+        // store.dispatch(setNotifications(_notificationState))
     }
 
     const clearNotifications = async () => {
        store.dispatch(setNotifications({}))
+    }
+
+    const markNotificationAsRead = async (notification) => {
+        if(notification?.isRead) return;
+        let userId = state?.profile?.data?.id
+        let id = notification?.cd?.nId || notification?._id 
+        let payload = {
+            "read": id
+        }   
+        const res = await store.dispatch(readNotification({userId, payload}))
+        if(res?.payload?.SUCCESS){
+            let _notificationState;
+            if(isEmpty(state?.notifications)){
+                getMoreNotifications();
+            }
+            _notificationState = cloneDeep(state?.notifications);
+            if(_notificationState?.hasOwnProperty("alert")){
+                //Clearing the alert from the state                
+                _notificationState.alert = _notificationState.alert.filter(alert => alert?.cd?.nId !== id)                            
+
+            }else{
+                _notificationState.notifications = _notificationState.notifications.map(notification => {
+                    if ((notification?.cd?.nId || notification?._id) === id) {
+                        notification.isRead = true;
+                    }
+                    return notification;
+                });
+            }
+            if (_notificationState?.bell?.bell){
+                _notificationState.bell = { 'bell': _notificationState?.bell?.bell - 1 };   
+            }            
+            store.dispatch(setNotifications(_notificationState))
+            console.log("notification marked as read: ", id)
+        }
+        
     }
 
     return {
@@ -103,7 +145,8 @@ const Notification = () => {
         getMoreNotifications,
         markAllAsRead,
         redirectToLatestAlert,
-        clearNotifications
+        clearNotifications,
+        markNotificationAsRead
     }
 }
 
