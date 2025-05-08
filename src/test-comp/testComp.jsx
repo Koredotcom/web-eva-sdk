@@ -101,6 +101,7 @@ const TestComp = (props) => {
 				<div>
 					{questions &&
 						Object.values(questions).map((item) => {
+							if(item?.isTask) return;
 							// 	item?.templateType === "agent_welcome_template"
 							// ) {
 							// 	return <AgentWelcomeTemplate item={item} />;

@@ -27,6 +27,8 @@ export function render(
 	{ assistantIconTemplate, userIconTemplate, loadingText }
 ) {
 	try {
+
+		// if(data?.isTask) return; //Agentic Flow
 		// Handle loading state
 		if (data?.loading) {
 			return TemplateComponents.wrapTemplate(

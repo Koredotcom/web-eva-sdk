@@ -15,6 +15,22 @@ const InvokeAgent = (agent) => {
         "icon": agent?.icon,
         isAgent: true
     }
+
+    if(agent?.type === "agenticApp") {
+        const intentList = [];
+        agent?.config?.executionPipeline?.map((task, index) => {
+            task?.intents?.map((intent) => {
+                if(intentList?.find((i) => i?.agentMeta?.name === intent?.agentMeta?.name)) return;
+                intentList?.push(intent)
+            })
+        });
+        agentDetails.agenticAppIcons = intentList;
+    }
+
+    payload.context = {
+        sources : [agentDetails]
+    }
+    
     sessionItemHandler({item: agentDetails, invokeAgent: true, type : 'agent'})
     InitiateChatConversationAction({payload})
 }

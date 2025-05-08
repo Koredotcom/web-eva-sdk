@@ -30,16 +30,41 @@ export const constructQuestionInitial = (args) => {
 	const activeBoardId = store.getState().global.activeBoardId;
 
 	let question = args?.question;
-	let obj = {
-		cId: uniqueMsgId,
-		question,
-		answer: "",
-		loading: true,
-		type: "search",
-		reqId: uniqueMsgId,
-	};
 
-	questions[uniqueMsgId] = obj;
+	let obj = {};
+
+	if(args?.multiIntentExecution){
+
+		obj = {
+			...args?.task,
+			id: args?.stepId,
+			question: args?.task?.utterance,
+			answer: "",
+			loading: true,
+			type: "search",
+			isTask: true,
+			parentMsgId: args?.reqId,
+			cId: args?.stepId,
+			reqId: args?.stepId,
+			showResponse: true,
+		}
+
+		questions[args?.stepId] = obj;
+		uniqueMsgId = args?.stepId;
+		
+	}
+	else{
+		obj = {
+			cId: uniqueMsgId,
+			question,
+			answer: "",
+			loading: true,
+			type: "search",
+			reqId: uniqueMsgId,
+		};
+
+		questions[uniqueMsgId] = obj;
+	}
 
 	store.dispatch(updateChatData(questions));
 	store.dispatch(setCurrentQuestion(obj));
@@ -216,12 +241,19 @@ export const constructQuestionPostCall = (data, qId) => {
 		// if(data?.errInfo?.errors[0]?.code === 'MaximumPointsExceeded'){
 		//     _limitExhausted = data?.errInfo?.errors[0]
 		// }
-	} else if (data?.params?.multiIntentExecution) {
-		// const stepIndex = question?.stepIndex;
-		// question = { ...question, ...data?.res, showResponse: true};
-		// updatedQuestions[question?.parentMsgId].executingActionId = question?.id
-		// if(stepIndex === 0) {
-		//     updatedQuestions[question?.parentMsgId].status = 'in-progress'
+	} else if (data?.meta?.arg?.multiIntentExecution) {
+		const stepIndex = question?.stepIndex;
+		question = { ...question, ...data?.payload, showResponse: true};
+		questions[question?.parentMsgId].executingActionId = question?.id
+		if(stepIndex === 0) {
+		    questions[question?.parentMsgId].status = 'in-progress'
+		}
+		// if(question?.isTask) {
+		// 	// if(data?.params?.multiIntentExecution) {
+		// 		// setTimeout(() => {
+		// 		const stepIndex = question?.stepIndex;
+		// 		props.MultiIntentExecutionRef.current.runNextTask(stepIndex, data?.res?.status , question)
+		// 	// }, 1000);
 		// }
 	} else if (data?.payload?.history?.status === msgStatus.TERMINATED) {
 		if (

@@ -79,7 +79,7 @@ const ChatInterface = (props) => {
 					payload.context = {
 						sources: [
 							selectedContext?.data?.context ||
-								selectedContext?.data?.sources?.[0],
+							selectedContext?.data?.sources?.[0],
 						],
 					};
 					if (selectedContext?.data?.messageId) {
@@ -131,6 +131,8 @@ const ChatInterface = (props) => {
 	};
 
 	const initiateChatConversationAction = async (arg) => {
+		const { enabledAgents, selectedContext } = state;
+
 		state = store.getState().global;
 		let params = { reqId: generateShortUUID() };
 		let payload = {};
@@ -162,18 +164,65 @@ const ChatInterface = (props) => {
 			payload.customData = state.customData;
 		}
 
-		const qId = constructQuestionInitial({
-			...params,
-			...payload,
-			replaceExistingQsn,
-		});
+		let qId = null;
+		if(arg?.multiIntentExecution){
+			qId = constructQuestionInitial({
+				...arg?.params,
+				...arg?.payload,
+				multiIntentExecution : true
+			});
+		}else{
+			qId = constructQuestionInitial({
+				...params,
+				...payload,
+				replaceExistingQsn,
+			});
+		}
+
+		if(arg?.multiIntentExecution){
+			// params.qId = arg?.params?.stepId;
+		}else {
+			if (!isEmpty(selectedContext?.data)) {
+				let _agents = cloneDeep(enabledAgents);
+				let isAgentSetAsSource = _agents.find(
+					(ag) =>
+						ag.id === selectedContext?.data?.sources?.[0]?.source
+				);
+				let isAgent = isAgentSetAsSource ? "agent" : null;
+				if (isAgent) {
+					// when setted context is an agent
+					payload.context = {
+						sources: [
+							selectedContext?.data?.context ||
+							selectedContext?.data?.sources?.[0],
+						],
+					};
+					if (selectedContext?.data?.messageId) {
+						payload.contextParams = {
+							messageId: selectedContext?.data?.messageId,
+						};
+					}
+					/*writing especially for botAgent, will remove this once search session api gives the context data, when we click on askFollowup after bot completion */
+					if (selectedContext?.data?.sessionId) {
+						payload.context.sessionId =
+							selectedContext?.data?.sessionId;
+					}
+				} else {
+					// when setted context is an attachment
+					payload.context = {
+						sessionId: selectedContext?.data?.sessionId,
+					};
+				}
+			}
+		}
+
 
 		const Res = await store.dispatch(
-			advanceSearch({ params, payload, userId: state?.profile?.data?.id })
+			advanceSearch({ params, payload, userId: state?.profile?.data?.id, multiIntentExecution: arg?.multiIntentExecution })
 		);
 		/*
-      below condition triggers when templatetype is gpt_form_template and user doesnt have any input fields to enter, so application needs to make advancesearch api call with {} formData, as per EVA
-      */
+	  below condition triggers when templatetype is gpt_form_template and user doesnt have any input fields to enter, so application needs to make advancesearch api call with {} formData, as per EVA
+	  */
 		if (
 			Res?.payload?.templateType === "gpt_form_template" &&
 			Res?.payload?.content?.formFields?.inputFields?.length === 0
@@ -204,7 +253,8 @@ const ChatInterface = (props) => {
 		if (!item?.templateInfo?.suggestions?.[0]?.comingSoon) {
 			let payload = {};
 			let context = arg?.item?.context;
-			payload.context = { ...context, sources: item?.sources };
+			payload.context = { ...context, sources: item?.sources, isAgent: true };
+			payload.source = item?.sources?.[0]?.source;
 			payload.question = arg.utterance.label;
 			initiateChatConversationAction({ payload });
 		}
@@ -304,61 +354,61 @@ const ChatInterface = (props) => {
 		);
 	};
 
-    const clearErrorState = () => {
-      // The current function can be used to clear all the error states that are stored whenever an API call fails.
-      store.dispatch(setErrorState([]))
-    }
+	const clearErrorState = () => {
+		// The current function can be used to clear all the error states that are stored whenever an API call fails.
+		store.dispatch(setErrorState([]))
+	}
 
-    /**
-     * Sends a message to either a bot conversation or initiates a regular chat message
-     * 
-     * @param {Object} question - The question object containing conversation details
-     * @param {Object} conversation - The conversation object containing message details
-     * @param {string} input - The user's input message to be sent
-     * 
-     * @description
-     * This function handles two types of message sending:
-     * 1. Bot Conversation: If the question has botConversation flag set, it sends the message
-     *    to the bot conversation system with the required context and identifiers
-     * 2. Regular Chat: If not a bot conversation, it uses the standard sendMessageAction
-     *    to process the message through the regular chat flow
-     */
-    const sendMessage = (input, question) => {
-      // Check if this is a bot conversation
-      if(question?.botConversation && question?.status !== 'completed') {
-        // Get the conversation which is in-progress
-        const conversation = Object.values(question?.botConversation)?.find(c => c?.status === 'in-progress')
-        
-        // Prepare payload for bot conversation
-        const payload = {
-          "cId": question?.cId || question?.reqId, // Use conversation ID or request ID
-          "input": input, // User's input message
-          "context": question?.context, // Conversation context
-          "messageId": conversation?.messageId, // Message identifier
-        }
-        // Submit the response to the bot conversation system
-        BotConversation().submitBotResponse(payload)
-      } else {
-        // Handle as a regular chat message
-        sendMessageAction(input)
-      }
-    }
+	/**
+	 * Sends a message to either a bot conversation or initiates a regular chat message
+	 * 
+	 * @param {Object} question - The question object containing conversation details
+	 * @param {Object} conversation - The conversation object containing message details
+	 * @param {string} input - The user's input message to be sent
+	 * 
+	 * @description
+	 * This function handles two types of message sending:
+	 * 1. Bot Conversation: If the question has botConversation flag set, it sends the message
+	 *    to the bot conversation system with the required context and identifiers
+	 * 2. Regular Chat: If not a bot conversation, it uses the standard sendMessageAction
+	 *    to process the message through the regular chat flow
+	 */
+	const sendMessage = (input, question) => {
+		// Check if this is a bot conversation
+		if (question?.botConversation && question?.status !== 'completed') {
+			// Get the conversation which is in-progress
+			const conversation = Object.values(question?.botConversation)?.find(c => c?.status === 'in-progress')
 
-    return {
-        subscribe,
-        sendMessageAction,
-        initiateChatConversationAction,
-        cancelMessageReqAction,
-        invokeGptAgentTemplate,
-        askQuickActions,
-        enableCustomTemplate,
-        storeCustomData,
-        contentStreaming,
-        options,
-        enableContextByFollowupContext,
-        clearErrorState,
-        sendMessage
-    }
+			// Prepare payload for bot conversation
+			const payload = {
+				"cId": question?.cId || question?.reqId, // Use conversation ID or request ID
+				"input": input, // User's input message
+				"context": question?.context, // Conversation context
+				"messageId": conversation?.messageId, // Message identifier
+			}
+			// Submit the response to the bot conversation system
+			BotConversation().submitBotResponse(payload)
+		} else {
+			// Handle as a regular chat message
+			sendMessageAction(input)
+		}
+	}
+
+	return {
+		subscribe,
+		sendMessageAction,
+		initiateChatConversationAction,
+		cancelMessageReqAction,
+		invokeGptAgentTemplate,
+		askQuickActions,
+		enableCustomTemplate,
+		storeCustomData,
+		contentStreaming,
+		options,
+		enableContextByFollowupContext,
+		clearErrorState,
+		sendMessage
+	}
 }
 
 export default ChatInterface;

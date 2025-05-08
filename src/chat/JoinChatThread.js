@@ -20,8 +20,8 @@ const JoinChatThread = async (props) => {
     let params = {
         // limit: props?.limit || 20,
         // offset: chatHistoryOffset * (props?.limit || 20)
-        limit: 20,
-        offset: chatHistoryOffset * 20
+        limit: props?.limit || 20,
+        offset: props?.offset || chatHistoryOffset * 20
     }
 
     if(props?.redirectFromNotification) {

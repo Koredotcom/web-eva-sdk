@@ -1,82 +1,74 @@
+import { cloneDeep } from "lodash";
+import store from "../../redux/store";
+import { multiIntentExecutionFunc } from "../functionality/multi-intent-execution";
+import TemplateRenderer from "../templateRenderer";
 import { encodeHtml } from "../utils/helper";
 
 import TemplateComponents from "./index";
 
 function render(data) {
-	const { executionPipeline = [], status } = data;
 
-	if (status === "terminated" || executionPipeline.length === 0) {
-		return `
-            <div class="threadName">
-                I see you interrupted the answer generation. Please feel free to provide more details or let me know how can I assist you further
-            </div>
+    let state = store?.getState()?.global;
+    let _questions = cloneDeep(state?.questions);
+    let items = data || {};
+
+    let initialState = items?.status === "draft"
+
+    let header = `
+        <div id="answer-${items?.id}" class="threadName maxLength" >
+            ${items?.templateInfo?.label}
+        </div>
+
+        ${items?.status === 'draft' && items?.executionPipeline?.length > 0 ? `
+            <button class="startBtn" id = "startBtn-${items?.id}">${items?.templateInfo?.action}</button>
+            <button class="editBtn" id = "editBtn-${items?.id}">Edit</button>
+        ` : ''}
         `;
-	}
 
-	return `
-        <div class="multi-intent-execution ${status || ""}">
-            ${renderExecutionPipeline(executionPipeline)}
+    let body = `
+        ${items?.executionPipeline?.map((task, index) => {
+            task = {...task, ..._questions[task?._id]};
+            let html = TemplateRenderer.generateHTMLTemplate(task);
+            return `
+                <div className='addNewLineWrapper'>
+                  <div className='addNewLine'>
+                      <span className='stepIcon'> ------------------------------------- + </span>
+                  </div>
+                </div>
+                <div class="taskItem">
+                    <div class="taskItemHeader">
+                        <div class="taskItemHeaderTitle">Task ${index + 1}</div>
+                        <div class="utterance">${task?.utterance}</div>
+                        ${task?.showResponse ? `
+                            <div class="bottomCard">
+                            ${html?.innerHTML}
+                            </div>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+        }).join('')}
+    `;
+
+    
+    let multiIntentExecution = `
+        <div class="multiIntentExecution ${items?.status} ${items?.executionPipeline?.length === 0 ? 'd-none' : ''}">
+            ${header}
+            ${body}
         </div>
     `;
+
+    // multiIntentExecution += header;
+
+
+    let timeout 
+    clearTimeout(timeout)
+    timeout = setTimeout(() => {
+        multiIntentExecutionFunc(data);
+    }, 1000);
+
+    return multiIntentExecution;
 }
 
-function renderExecutionPipeline(pipeline) {
-	return `
-        <div class="execution-pipeline">
-            ${pipeline
-				.map((item, index) => renderPipelineItem(item, index))
-				.join("")}
-        </div>
-    `;
-}
-
-function renderPipelineItem(item, index) {
-	return `
-        <div class="pipeline-item ${item.status || ""}" data-index="${index}">
-            <div class="item-header">
-                <span class="item-number">${index + 1}</span>
-                <span class="item-title">${encodeHtml(item.title || "")}</span>
-                ${renderItemStatus(item.status)}
-            </div>
-            <div class="item-content">
-                ${renderItemContent(item)}
-            </div>
-        </div>
-    `;
-}
-
-function renderItemStatus(status) {
-	if (!status) return "";
-
-	const statusIcons = {
-		completed: "CheckCircle",
-		running: "Loading",
-		pending: "Clock",
-		error: "Error",
-	};
-
-	return `
-        <span class="item-status ${status}">
-            ${
-				statusIcons[status]
-					? TemplateComponents.renderIcon(statusIcons[status])
-					: ""
-			}
-            ${encodeHtml(status)}
-        </span>
-    `;
-}
-
-function renderItemContent(item) {
-	if (item.error) {
-		return `
-            <div class="error-message">
-                ${encodeHtml(item.error.message || "An error occurred")}
-            </div>
-        `;
-	}
-
-	return item.content || "";
-}
 
 export { render };

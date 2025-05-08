@@ -7,6 +7,8 @@ import { WebSocketService } from "./socket/socket.service";
 export const initializeSDK = async (config) => {
   const requiredKeys = ['accessToken', 'api_url', 'userId']
 
+  let initialHistoryLimit = config?.initialHistoryLimit || 10;
+
   let misConfig = false;
   requiredKeys.map(key => {
     if(!Object.keys(config).includes(key)) {
@@ -27,7 +29,7 @@ export const initializeSDK = async (config) => {
   store.dispatch(fetchProfileData(config.userId))
   store.dispatch(fetchAgents({userId: config.userId}))
   store.dispatch(fetchHistory({onload: true, params: {limit: 10}}))
-  store.dispatch(fetchRecentFiles({onload: true, userId: config.userId, params: {limit: 10}}))
+  store.dispatch(fetchRecentFiles({onload: true, userId: config.userId, params: {limit: initialHistoryLimit}}))
   
   // once presenceStart call success than get the sToken which is required to connect socket
   await store.dispatch(presenceStart())

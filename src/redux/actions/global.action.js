@@ -320,5 +320,18 @@ export const getRelevantQuestions = createAsyncThunk(
     }
 );
 
+export const executionPipelineActions = createAsyncThunk(
+    'global/executionPipelineActions',
+    async (arg, { rejectWithValue }) => {
+        try {
+            const response = await axiosInstance.put(`kora/boards/${arg?.boardId}/messages/${arg?.messageId}/executionpipeline`, arg?.payload);
+            return response.data;
+        } catch (error) {
+            handleErrorState(error, "Execution Pipeline Actions");
+            return rejectWithValue(error.response.data);
+        }
+    }
+);
+
 
 
