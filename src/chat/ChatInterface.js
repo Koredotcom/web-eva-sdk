@@ -24,6 +24,7 @@ import {
 } from "../utils/helpers";
 import { cloneDeep, isEmpty } from "lodash";
 import BotConversation from "./botAgent/getBotConversation";
+import { sessionItemHandler } from "../Attachments/createContext";
 
 const ChatInterface = (props) => {
 	let state = store.getState().global,
@@ -56,7 +57,7 @@ const ChatInterface = (props) => {
 
 	const sendMessageAction = async (value) => {
 		if (value) {
-			const { enabledAgents, selectedContext } = state;
+			const { allAgents, selectedContext } = state;
 			let params = { reqId: generateShortUUID() };
 			let payload = { question: value };
 			if (state.activeBoardId) {
@@ -68,7 +69,7 @@ const ChatInterface = (props) => {
 			const qId = constructQuestionInitial({ ...params, ...payload });
 
 			if (!isEmpty(selectedContext?.data)) {
-				let _agents = cloneDeep(enabledAgents);
+				let _agents = cloneDeep(allAgents?.data?.agents);
 				let isAgentSetAsSource = _agents.find(
 					(ag) =>
 						ag.id === selectedContext?.data?.sources?.[0]?.source
@@ -375,24 +376,40 @@ const ChatInterface = (props) => {
 	 */
 	const sendMessage = (input, question) => {
 		// Check if this is a bot conversation
-		if (question?.botConversation && question?.status !== 'completed') {
+		if (question?.botConversation) {
 			// Get the conversation which is in-progress
 			const conversation = Object.values(question?.botConversation)?.find(c => c?.status === 'in-progress')
 
 			// Prepare payload for bot conversation
 			const payload = {
-				"cId": question?.cId || question?.reqId, // Use conversation ID or request ID
-				"input": input, // User's input message
-				"context": question?.context, // Conversation context
-				"messageId": conversation?.messageId, // Message identifier
-			}
+				cId: question?.cId || question?.reqId, // Use conversation ID or request ID
+				input: input, // User's input message
+				context: question?.context, // Conversation context
+				messageId: conversation?.messageId, // Message identifier
+			};
 			// Submit the response to the bot conversation system
-			BotConversation().submitBotResponse(payload)
+			BotConversation().submitBotResponse(payload);
 		} else {
 			// Handle as a regular chat message
-			sendMessageAction(input)
+			sendMessageAction(input);
 		}
-	}
+	};
+
+	const setAgentContext = (agent) => {
+		const agentDetails = {
+			name: agent?.name,
+			docId: agent?.id,
+			source: agent?.id,
+			title: agent?.name,
+			icon: agent?.icon,
+			isAgent: true,
+		};
+		sessionItemHandler({
+			item: agentDetails,
+			invokeAgent: true,
+			type: "agent",
+		});
+	};
 
 	return {
 		subscribe,
@@ -407,8 +424,9 @@ const ChatInterface = (props) => {
 		options,
 		enableContextByFollowupContext,
 		clearErrorState,
-		sendMessage
-	}
-}
+		sendMessage,
+		setAgentContext,
+	};
+};
 
 export default ChatInterface;

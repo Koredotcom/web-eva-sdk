@@ -21,14 +21,13 @@ import botConversation from "./templates/bot-conversation";
 import customMarkdownRenderer from "./utils/customMarkdownRenderer";
 import * as itemsAmbiguityTemplate from "./templates/items-ambiguity-template";
 import AnsFromChip from "./templates/ansFromChip";
+import DOMPurify from "dompurify";
 
 export function render(
 	data,
 	{ assistantIconTemplate, userIconTemplate, loadingText }
 ) {
 	try {
-
-		// if(data?.isTask) return; //Agentic Flow
 		// Handle loading state
 		if (data?.loading) {
 			return TemplateComponents.wrapTemplate(
@@ -44,10 +43,13 @@ export function render(
 
 		// Handle error state
 		if (data.error) {
-			return TemplateComponents.wrapTemplate(errorMessage.render(data), {
-				type: "error",
-				id: data.id,
-			});
+			return TemplateComponents.wrapTemplate(
+				errorMessage.render(data, assistantIconTemplate),
+				{
+					type: "error",
+					id: data.id,
+				}
+			);
 		}
 
 		let content = "";
@@ -65,11 +67,13 @@ export function render(
 
 		// Render template content based on type
 		if (data.botConversation || data.viewType === "threadView") {
-			content += renderTemplateContent(
-				data,
-				assistantIconTemplate,
-				userIconTemplate,
-				loadingText
+			content += DOMPurify.sanitize(
+				renderTemplateContent(
+					data,
+					assistantIconTemplate,
+					userIconTemplate,
+					loadingText
+				)
 			);
 		} else {
 			content += customMarkdownRenderer(
@@ -119,13 +123,11 @@ export function renderTemplateContent(
 		return `<div class="message-bubble answer"> 
 					<div class="answerCntr">${htmlTemplate}</div>
 				</div>`;
-	} else if(data?.status === "terminated"){
+	} else if (data?.status === "terminated") {
 		return `<div class="message-bubble answer"> 
 					I see you interrupted the answer generation. Please feel free to provide more details or let me know how can I assist you further
 				</div>`;
-	}
-	
-	else {
+	} else {
 		switch (data.templateType) {
 			case "resolve_ambiguity":
 				htmlTemplate = ambiguityTemplate.render(data);

@@ -1,6 +1,6 @@
 import marked from "marked";
-// import DOMPurify from "dompurify";
 import { encodeHtml } from "../../utils/helpers"; // optional, if you still need it
+import DOMPurify from "dompurify";
 
 // Set marked config
 marked.setOptions({
@@ -19,10 +19,9 @@ const customMarkdownRenderer = (text) => {
 	rawHtml = rawHtml.replace("<a", '<a target="_blank"');
 
 	// Sanitize to prevent XSS (recommended)
-	//   const sanitizedHtml = DOMPurify.sanitize(rawHtml);
+	const sanitizedHtml = DOMPurify.sanitize(rawHtml);
 
-	// Optionally encode HTML if needed by your system
-	return encodeHtml ? encodeHtml(rawHtml) : rawHtml;
+	return encodeHtml ? encodeHtml(sanitizedHtml) : sanitizedHtml;
 };
 
 export default customMarkdownRenderer;

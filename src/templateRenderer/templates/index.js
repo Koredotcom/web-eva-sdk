@@ -100,13 +100,11 @@ export function renderLoading(
  */
 export function wrapTemplate(content, data) {
 	const { type, className = "", id } = data;
-	return `<div >
-                <div class="message-container ${type || ""} ${className}" ${
+	return `<div class="message-container ${type || ""} ${className}" ${
 		id ? `id="${id}"` : ""
 	}>
-                    ${content}
-                </div >
-            </div > `;
+            ${content}    
+        </div > `;
 }
 
 /**
@@ -115,10 +113,12 @@ export function wrapTemplate(content, data) {
  * @returns {string} HTML string
  */
 export function renderError(data) {
-	const { message, code, icon } = data;
+	const { message, code, icon, assistantIconTemplate } = data;
 
 	return `
-        < div class="message-bubble error" >
+    <div class="message-bubble answer">
+        ${assistantIconTemplate}
+        <div class="message-bubble error" >
             ${
 				icon
 					? `
@@ -128,20 +128,24 @@ export function renderError(data) {
             `
 					: ""
 			}
-    <div class="message-content">
-        <div class="error-message">${encodeHtml(message)}</div>
-        ${
-			code
-				? `
-                    <div class="error-code">Error code: ${encodeHtml(
-						code
-					)}</div>
-                `
-				: ""
-		}
-    </div>
+            <div class="message-content">
+                <div class="error-message">${
+					encodeHtml(message) ||
+					"Sorry, there seems to be a problem connecting to the server. Please try again later."
+				}</div>
+                ${
+					code
+						? `
+                            <div class="error-code">Error code: ${encodeHtml(
+								code
+							)}</div>
+                        `
+						: ""
+				}
+            </div>
         </div >
-        `;
+    </div>
+    `;
 }
 
 /**

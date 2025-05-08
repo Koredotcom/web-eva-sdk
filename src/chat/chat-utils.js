@@ -129,12 +129,16 @@ export const constructQuestionPostCall = (data, qId) => {
 				multiResponseData,
 				data?.payload
 			);
-			question.template_html = gptFormConstructedData.outerHTML;
-			setTimeout(() => {
-				gptFormFunctionality(multiResponseData, data?.payload);
-			}, 1000);
+			// question.template_html = gptFormConstructedData.outerHTML;
+			// setTimeout(() => {
+			// 	gptFormFunctionality(multiResponseData, data?.payload);
+			// }, 1000);
 		}
 	}
+	// question.template_html = gptFormConstructedData.outerHTML;
+	// setTimeout(() => {
+	// 	gptFormFunctionality(multiResponseData, data?.payload);
+	// }, 1000);
 
 	if (data?.payload?.templateType === chatTemplateTypes.SEARCH_ANSWER) {
 		if (data?.payload?.sources?.length > 0) {

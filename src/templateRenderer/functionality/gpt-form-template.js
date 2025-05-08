@@ -110,7 +110,8 @@ const gptFormFunctionality = (formData, item) => {
 	}
 
 	const submitButton = document.getElementById("submitGptForm");
-	if (submitButton) {
+	if (submitButton && !submitButton?.eventListenerAdded) {
+		submitButton.eventListenerAdded = true;
 		submitButton.addEventListener("click", (event) =>
 			submitAnswer(event, item)
 		);

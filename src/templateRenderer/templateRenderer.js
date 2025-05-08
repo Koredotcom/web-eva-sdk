@@ -9,25 +9,25 @@ import * as TemplateComponents from "./templates";
  */
 export function generateHTMLTemplate(
 	data,
-	// {
-	// 	assistantIconTemplate = () => {},
-	// 	userIconTemplate = () => {},
-	// 	loadingText,
-	// }
+	{
+		assistantIconTemplate = () => {},
+		userIconTemplate = () => {},
+		loadingText,
+	}
 ) {
-	// assistantIconTemplate = convertTemplateToHtml(assistantIconTemplate());
-	// userIconTemplate = convertTemplateToHtml(userIconTemplate());
+	assistantIconTemplate = convertTemplateToHtml(assistantIconTemplate());
+	userIconTemplate = convertTemplateToHtml(userIconTemplate());
 	try {
 		// Render the message to HTML string
 		const html = MessageRenderer.render(data, {
-			// assistantIconTemplate,
-			// userIconTemplate,
-			// loadingText,
+			assistantIconTemplate,
+			userIconTemplate,
+			loadingText,
 		});
 
 		// Create temporary container
 		const container = document.createElement("div");
-		container.innerHTML = html?.trim();
+		container.innerHTML = html.trim();
 
 		// Get the first child (our message element)
 		const messageElement = container.firstChild;
@@ -43,6 +43,7 @@ export function generateHTMLTemplate(
 		errorContainer.innerHTML = TemplateComponents.renderError({
 			message: "Failed to generate message",
 			code: "DOM_ERROR",
+			assistantIconTemplate,
 		});
 		return errorContainer.firstChild;
 	}

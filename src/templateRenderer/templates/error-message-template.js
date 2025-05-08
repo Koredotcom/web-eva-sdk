@@ -1,17 +1,23 @@
 import { encodeHtml } from "../utils/helper";
 
-export function render(data) {
+export function render(data, assistantIconTemplate) {
 	const { error } = data;
 
+	let msg =
+		error?.message ||
+		"Sorry, there seems to be a problem connecting to the server. Please try again later.";
 	return `
+    <div class="message-bubble answer">
+        ${assistantIconTemplate}
         <div class="error-message">
             <div class="error-icon">⚠️</div>
             <div class="error-content">
                 <h3>Error</h3>
-                <p>${error.message}</p>
+                <p>${msg}</p>
                 ${error.code ? `<code>${error.code}</code>` : ""}
             </div>
         </div>
+    </div>
     `;
 }
 

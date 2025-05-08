@@ -16,6 +16,7 @@
     "@rollup/plugin-replace": "^5.0.7",
     "axios": "^1.7.2",
     "choices.js": "^11.0.2",
+    "dompurify": "^3.2.5",
     "html-dom-parser": "^5.0.12",
     "lodash": "^4.17.21",
     "marked": "^2.1.3",

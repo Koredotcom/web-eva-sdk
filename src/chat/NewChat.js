@@ -1,15 +1,23 @@
-import { setActiveBoardId, setGptUploadedFiles, updateChatData, setSelectedContext, setCurrentQuestion, setErrorState, setQuickActions } from "../redux/globalSlice"
-import store from "../redux/store"
+import {
+	setActiveBoardId,
+	setGptUploadedFiles,
+	updateChatData,
+	setSelectedContext,
+	setCurrentQuestion,
+	setErrorState,
+	setQuickActions,
+} from "../redux/globalSlice";
+import store from "../redux/store";
 
 const NewChat = () => {
-    // Set board id as null
-    store.dispatch(setActiveBoardId(null))
-    store.dispatch(updateChatData({}))
-    store.dispatch(setGptUploadedFiles(null))
-    store.dispatch(setSelectedContext({}))
-    store.dispatch(setCurrentQuestion({}))
-    store.dispatch(setErrorState([]))
-    store.dispatch(setQuickActions([]))
-}
+	// Set board id as null
+	store.dispatch(setActiveBoardId(null));
+	store.dispatch(updateChatData({}));
+	store.dispatch(setGptUploadedFiles(null));
+	store.dispatch(setSelectedContext({}));
+	store.dispatch(setCurrentQuestion({}));
+	store.dispatch(setErrorState([]));
+	store.dispatch(setQuickActions([]));
+};
 
-export default NewChat
+export default NewChat;

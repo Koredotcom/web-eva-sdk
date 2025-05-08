@@ -1,22 +1,22 @@
 import { sessionItemHandler } from "../Attachments/createContext";
-import InitiateChatConversationAction from './InitiateChatConversationAction';
+import InitiateChatConversationAction from "./InitiateChatConversationAction";
 
 const InvokeAgent = (agent) => {
-    let payload = {
-        intent: "welcome",
-        question: `How can the "${agent?.name}" agent assist me`,
-        source: agent?.id
-    }
-    const agentDetails = {
-        "name": agent?.name,
-        "docId": agent?.id,
-        "source": agent?.id,
-        "title": agent?.name,
-        "icon": agent?.icon,
-        isAgent: true
-    }
+	let payload = {
+		intent: "welcome",
+		question: `How can the "${agent?.name}" agent assist me`,
+		source: agent?.id,
+	};
+	const agentDetails = {
+		name: agent?.name,
+		docId: agent?.id,
+		source: agent?.id,
+		title: agent?.name,
+		icon: agent?.icon,
+		isAgent: true,
+	};
 
-    if(agent?.type === "agenticApp") {
+	if(agent?.type === "agenticApp") {
         const intentList = [];
         agent?.config?.executionPipeline?.map((task, index) => {
             task?.intents?.map((intent) => {
@@ -35,4 +35,4 @@ const InvokeAgent = (agent) => {
     InitiateChatConversationAction({payload})
 }
 
-export default InvokeAgent
+export default InvokeAgent;

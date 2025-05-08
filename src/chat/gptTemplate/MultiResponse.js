@@ -136,7 +136,7 @@ const MultiResponse = () => {
             console.log("Recieved Context Fields", contextFields)
             // Checking the Type of Context Field and getting Input Values
             if(contextFields?.value?.type === "file"){  
-                let contextFieldDiv = document.getElementById(`fileUpload-${contextFields?.key}-${item?.messageId}`);
+                let contextFieldDiv = document.getElementById(`fileUpload-${contextFields?.key}`);
 
                 // "MORGAN STANLEY REQUIREMENT" -> TO HANDLE CASES WHICH DOES NOT HAVE DEPENDENCY ON ID OF THE FILE UPLOADER. 
                 if(contextFieldDiv){
@@ -147,24 +147,15 @@ const MultiResponse = () => {
             }else if(contextFields?.value?.canUploadFile){
                 // "MORGAN STANLEY REQUIREMENT" -> TO HANDLE CASES WHICH DOES NOT HAVE DEPENDENCY ON ID OF THE FILE UPLOADER. 
                 // FOR CASES WITH LONGTEXT AND SIMPLETEXT AS WELL, WE HAVE TO NOT RELY ON THE KEY OF THE FILE UPLOADER.
-
-                /*Handling the case, where type can be be anything i.e.., simpleText, longText, richText and canUploadFile can be true, but user may or may not 
-                upload the file. So, we need to check if the file is uploaded or not from the store and then get the value accordingly.
-                */                
-                if(state.GptUploadedFiles && (Object.keys(state.GptUploadedFiles)?.includes(`${contextFields?.key}-${item?.messageId}`))){
-                    let ind = Object.keys(state.GptUploadedFiles).indexOf(`${contextFields?.key}-${item?.messageId}`);
-                    reqdValue = Object.values(state.GptUploadedFiles)[ind]?.value || '';
-                }
-                // if(contextFieldDiv){
-                //     reqdValue = contextFieldDiv?.value || '';
-                // }
-                else {
-                    // let contextFieldDiv = document.getElementById(`fileUpload-${contextFields?.key}-${item?.messageId}`);
-                    let contextFieldDiv = document.getElementById(`inputValue-${contextFields?.key}-${item?.messageId}`);
+                let contextFieldDiv = document.getElementById(`fileUpload-${contextFields?.key}`);
+                if(contextFieldDiv){
+                    reqdValue = contextFieldDiv?.value || '';
+                }else {
+                    contextFieldDiv = document.getElementById(`inputValue-${contextFields?.key}`);
                     reqdValue = contextFieldDiv?.value || contextFieldDiv?.textContent || '';
                  }
             }else{
-                let contextFieldDiv = document.getElementById(`inputValue-${contextFields?.key}-${item?.messageId}`);
+                let contextFieldDiv = document.getElementById(`inputValue-${contextFields?.key}`);
                 reqdValue = contextFieldDiv?.value || contextFieldDiv?.textContent || '';
             }
 
@@ -212,7 +203,7 @@ const MultiResponse = () => {
                 let reqdInputElement;
                 let reqdValue;
                 if (field?.value?.type === 'dropdown') {
-                    reqdInputElement = document.getElementById(`dropdownValue-${field?.key}-${item?.messageId}-${index}`);
+                    reqdInputElement = document.getElementById(`dropdownValue-${field?.key}-${index}`);
                 
                     if (field?.value?.multi) {
                         const reqdValues = Array.from(reqdInputElement.selectedOptions).map(option => option.value);
@@ -229,9 +220,9 @@ const MultiResponse = () => {
 
                     console.log(`Form field is ${`(dropdownValue-${field?.key})`} and value is {${reqdValue}}`)
                 } else { 
-                    reqdInputElement = document.getElementById(`inputValue-${field?.key}-${item?.messageId}-${index}`)
+                    reqdInputElement = document.getElementById(`inputValue-${field?.key}-${index}`)
                     reqdValue = reqdInputElement?.value || reqdInputElement?.textContent || ""
-                    console.log(`Form field is ${`(inputValue-${field?.key})`} and value is {${reqdInputElement?.value}}`)
+                    console.log(`Form field is ${`(inputValue-${field?.key})`} and value is {${reqdInputElement.value}}`)
                 }
     
                 acc[field.key] = {
@@ -245,13 +236,13 @@ const MultiResponse = () => {
 
                 if(field?.value?.nested?.key === "prompt" || field?.key === 'prompt'){
                     // Need to send the Prompt Field Value as the prompt can be changed manually by the user if editable
-                    let promptField = document.getElementById(`inputValue-${field?.key}-${item?.messageId}-${index}`); 
+                    let promptField = document.getElementById(`inputValue-${field?.key}-${index}`); 
                     acc["prompt"] = promptField.value || promptField.textContent;
                 }
     
                 // Checking if the Field has a file and getting the file from the uploadedFiles
                 if (field?.value?.canUploadFile && uploadedFiles && (Object.keys(uploadedFiles)?.includes(`${field?.key}-${index}`))) {
-                    let ind = Object.keys(uploadedFiles).indexOf(`${field?.key}-${item?.messageId}-${index}`);
+                    let ind = Object.keys(uploadedFiles).indexOf(`${field?.key}-${index}`);
                     if (ind !== -1) { 
                         acc[field.key] = Object.values(uploadedFiles)[ind];
                         reqdValue = acc[field.key].value;

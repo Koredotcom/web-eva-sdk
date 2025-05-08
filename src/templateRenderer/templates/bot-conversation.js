@@ -8,27 +8,32 @@ import customMarkdownRenderer from "../utils/customMarkdownRenderer";
 function escapeHTML(str) {
 	if (!str) return "";
 	return str
-		.replace(/&/g, "&amp;")
-		.replace(/</g, "&lt;")
-		.replace(/>/g, "&gt;")
-		.replace(/"/g, "&quot;")
-		.replace(/'/g, "&#039;");
+		?.replace(/&/g, "&amp;")
+		?.replace(/</g, "&lt;")
+		?.replace(/>/g, "&gt;")
+		?.replace(/"/g, "&quot;")
+		?.replace(/'/g, "&#039;");
 }
 
 function renderUserQuestion(question, userIconTemplate) {
-	return `<div class="message-bubble question">
-				<div class="message-content">
-					<div class="message-text">${encodeHtml(question)}</div>
-					${userIconTemplate ? userIconTemplate : ""}
-				</div>
-			</div>`;
+	if (question) {
+		return `<div class="message-bubble question">
+					<div class="message-content">
+						<div class="message-text">${encodeHtml(question)}</div>
+						${userIconTemplate ? userIconTemplate : ""}
+					</div>
+				</div>`;
+	}
+	return "";
 }
 
 function renderAssistantQuestion(question, assistantIconTemplate) {
-	return `<div>
-				${assistantIconTemplate}
-				${customMarkdownRenderer(escapeHTML(question))}
-			</div>`;
+	if (question) {
+		return `<div>
+					${assistantIconTemplate}
+					${customMarkdownRenderer(escapeHTML(question))}
+				</div>`;
+	}
 }
 
 function createConversationHTML(
@@ -39,8 +44,7 @@ function createConversationHTML(
 	loadingText
 ) {
 	if (
-		(conversation?.hasOwnProperty("template_html") &&
-			conversation?.status === "in-progress") ||
+		conversation?.hasOwnProperty("template_html") ||
 		conversation?.templateType === "hold_conversation"
 	) {
 		return customMarkdownRenderer(`
