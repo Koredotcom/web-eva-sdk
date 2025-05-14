@@ -18,6 +18,7 @@ import { chatTemplateTypes, msgStatus } from "../utils/constants";
 import MultiResponse from "./gptTemplate/MultiResponse";
 import moment from "moment";
 import { fetchHistory } from "../redux/actions/global.action";
+import { multiIntentExecutionFunc } from "../templateRenderer/functionality/multi-intent-execution";
 
 export const constructQuestionInitial = (args) => {
 	let uniqueMsgId = args?.reqId;
@@ -252,13 +253,12 @@ export const constructQuestionPostCall = (data, qId) => {
 		if(stepIndex === 0) {
 		    questions[question?.parentMsgId].status = 'in-progress'
 		}
-		// if(question?.isTask) {
-		// 	// if(data?.params?.multiIntentExecution) {
-		// 		// setTimeout(() => {
-		// 		const stepIndex = question?.stepIndex;
-		// 		props.MultiIntentExecutionRef.current.runNextTask(stepIndex, data?.res?.status , question)
-		// 	// }, 1000);
-		// }
+		if(question?.isTask) {
+				const stepIndex = question?.stepIndex;
+				setTimeout(() => {
+					multiIntentExecutionFunc().runNextTask(stepIndex, data?.payload?.status , question)
+				}, 1000);
+		}
 	} else if (data?.payload?.history?.status === msgStatus.TERMINATED) {
 		if (
 			data?.payload?.history?.templateType ===

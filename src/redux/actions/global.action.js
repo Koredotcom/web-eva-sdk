@@ -324,7 +324,7 @@ export const executionPipelineActions = createAsyncThunk(
     'global/executionPipelineActions',
     async (arg, { rejectWithValue }) => {
         try {
-            const response = await axiosInstance.put(`kora/boards/${arg?.boardId}/messages/${arg?.messageId}/executionpipeline`, arg?.payload);
+            const response = await axiosInstance.put(`kora/boards/${arg?.params?.boardId}/messages/${arg?.params?.messageId}/executionpipeline`, arg?.payload);
             return response.data;
         } catch (error) {
             handleErrorState(error, "Execution Pipeline Actions");
@@ -333,5 +333,30 @@ export const executionPipelineActions = createAsyncThunk(
     }
 );
 
+export const getSuggestedContactListNew = createAsyncThunk(
+    'global/getSuggestedContactListNew',
+    async (arg, { rejectWithValue }) => {
+        try{
+            const response = await axiosInstance.post(`/1.1/ka/users/${arg?.params?.userId}/connectors/${arg?.params?.source}/actions/send_email/resolveFields`, arg?.payload);
+            return response.data;
+        } catch (error) {
+            handleErrorState(error, "Get Suggested Contact List New");
+            return rejectWithValue(error.response.data);
+        }
+    }
+);
+
+export const smartComposeEmail = createAsyncThunk(
+    'global/smartComposeEmail',
+    async (arg, { rejectWithValue }) => {
+        try {
+            const response = await axiosInstance.post(`/1.1/ka/users/${arg?.params?.userId}/nlp/generations/text`, arg?.payload);
+            return response.data;
+        } catch (error) {
+            handleErrorState(error, "Smart Compose Email");
+            return rejectWithValue(error.response.data);
+        }
+    }
+);
 
 

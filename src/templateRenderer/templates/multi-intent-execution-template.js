@@ -27,10 +27,10 @@ function render(data) {
             ${items?.templateInfo?.label}
         </div>
 
-        ${items?.status === 'draft' && items?.executionPipeline?.length > 0 ? `
+        ${items?.status === 'draft' ? items?.executionPipeline?.length > 0 ? `
             <button class="startBtn" id = "startBtn-${items?.id}">${items?.templateInfo?.action}</button>
-            <button class="editBtn" id = "editBtn-${items?.id}">Edit</button>
-        ` : ''}
+            <button class="editFlowBtn" id = "editFlowBtn-${items?.id}">Edit Flow</button>
+        ` : '' : ''}
         `;
 
         
@@ -38,16 +38,25 @@ function render(data) {
         ${items?.executionPipeline?.map((task, index) => {
             task = {...task, ..._questions[task?._id]};
             let html = TemplateRenderer.generateHTMLTemplate(task, {});
+            
+            if(task?.type === 'addTask' || task?.type === 'modify'){
+                return addNewTaskRenderer(task, index, items);
+            }
+
             return `
                 <div className='addNewLineWrapper'>
                   <div className='addNewLine'>
-                      <span className='stepIcon'> ------------------------------------- + </span>
+                      <button class="addNewTaskBtn" id = "addNewTaskBtn-${index}">+</button>
                   </div>
                 </div>
                 <div class="taskItem">
                     <div class="taskItemHeader">
                         <div class="taskItemHeaderTitle">Task ${index + 1}</div>
                         <div class="utterance">${task?.utterance}</div>
+                        <div class="optionsWrapper">
+                            <button class="editBtn" id = "editBtn-${items?.id}-${index}">Edit</button>
+                            <button class="deleteBtn" id = "deleteBtn-${items?.id}-${index}">Delete</button>
+                        </div>
                         ${task?.showResponse ? `
                             <div class="bottomCard">
                             ${html?.innerHTML}
@@ -78,6 +87,33 @@ function render(data) {
 
     return multiIntentExecution;
 }
+
+const addNewTaskRenderer = (task, index, items) => {
+    return `
+      <div className='addingNewTask'>
+        <div className="headerSec">
+            ${task?.type === 'addTask' ? `<div className="headerMsg">
+               ? ${task?.headerMsg}
+            </div>` : ''}
+          <div className="headerInfo">
+            <div className='step'>${task?.step || `Step ${index+1}`}</div>
+              ${items?.executionPipeline?.length > 1 ? 
+                `<button class="deleteBtn" id = "deleteNewTaskBtn-${items?.id}-${index}">Delete</button>`
+              : ''}
+          </div>
+          <div className="addDescription">
+            <input type="text" value = "${task?.utterance}" placeholder="Add the description of step(s) which I missed!" id = "utterance-${items?.id}-${index}" />
+          </div>
+          <div className="footerSec">
+            <div className="btns">
+                <button class="cancelBtn" id = "cancelBtn-${items?.id}-${index}">Cancel</button>
+                <button class="doneBtn" id = "doneBtn-${items?.id}-${index}">Done</button>
+            </div>
+          </div>
+        </div>
+    `;
+}
+
 
 
 export { render };

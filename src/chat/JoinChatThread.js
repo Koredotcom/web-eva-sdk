@@ -52,7 +52,7 @@ const JoinChatThread = async (props) => {
 		historyData = orderBy(history, "cOn", "asc");
 		let updatedQuestions = {};
 		for (const q of historyData) {
-			let msgId = uuid();
+			let msgId = q?.reqId || uuid();
 			let obj = {
 				...q,
 				id: msgId,
