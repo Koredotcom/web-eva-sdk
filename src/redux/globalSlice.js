@@ -48,7 +48,8 @@ const initialState = {
   enableKoreBotSDK: false, // use to enable the bot sdk custom templates
   enableContextByFollowupContext: false, // use to set the context by followup context,
   errorState : [],
-  notifications : {}
+  notifications : {},
+  enableDebugging: false
 };
 
 const globalSlice = createSlice({
@@ -111,6 +112,9 @@ const globalSlice = createSlice({
       },
       setNotifications: (state, action) => {
         state.notifications = action.payload
+      },
+      setEnabledDebugging: (state, action) => {
+        state.enableDebugging = action.payload
       }
     },
     extraReducers: (builder) => {
@@ -212,7 +216,8 @@ export const {
   setEnableKoreBotSDK,
   setEnableContextByFollowupContext,
   setErrorState,
-  setNotifications
+  setNotifications,
+  setEnabledDebugging
 } = globalSlice.actions;
 
 export default globalSlice
