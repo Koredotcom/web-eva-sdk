@@ -50,6 +50,15 @@ function render(data) {
                 <div class="taskItem">
                     <div class="taskItemHeader">
                         <div class="taskItemHeaderTitle">Task ${index + 1}</div>
+                        ${Array.isArray(task?.intents) && task.intents.length > 0 ? `
+                            <div class="agentIcons">
+                            ${task.intents.slice(0, 2).map((intent, idx) => `
+                                <div class="agentIcon">
+                                    <img src="${intent?.agentMeta?.icon}" alt="Agent ${idx + 1}" />
+                                </div>
+                            `).join('')}
+                            </div>
+                        ` : ''}
                         <div class="utterance">${task?.utterance}</div>
                         <div class="optionsWrapper">
                             <button class="editBtn" id = "editBtn-${items?.id}-${index}">Edit</button>
