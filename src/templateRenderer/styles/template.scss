@@ -20,3 +20,36 @@
 
 /* Template-specific styles */
 /* ... (CSS from previous response) ... */
+
+.multiIntentExecution {
+    &.draft {
+        .addNewLineWrapper {
+            &:hover {
+                .addNewLine {               
+                    visibility: visible;
+                    opacity: 1;
+                }
+            }
+            .addNewLine {
+                visibility: hidden;
+                opacity: 0;
+            }
+        }
+        .taskItem {
+            &:hover {
+                .taskItemHeader {
+                    .optionsWrapper {
+                        visibility: visible;
+                        opacity: 1;
+                    }
+                }
+            }
+            .taskItemHeader {
+                .optionsWrapper {
+                    visibility: hidden;
+                    opacity: 0;
+                }
+            }
+        }
+    }
+}
