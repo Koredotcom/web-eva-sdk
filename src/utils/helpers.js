@@ -1,8 +1,9 @@
 import moment from "moment";
 import store from "../redux/store";
-import { cloneDeep } from "lodash";
+import { cloneDeep, debounce } from "lodash";
 import { setErrorState } from "../redux/globalSlice";
 import ReactDOM from "react-dom/server";
+import { getSuggestedContactListNew } from "../redux/actions/global.action";
 
 export const Timedifference = (time) => {
 	let daysdiff = new Date().getDate() - new Date(time).getDate();
@@ -229,4 +230,30 @@ export const formatToDDMMYY = (dateStr) => {
   
 	return `${dd}/${mm}/${yy}`;
   };
-  
+
+  export const delayedSearchCallback = async (value, type) => {
+	let userId = store?.getState()?.global?.profile?.data?.id;
+
+    if (type === 'getSuggestedContactList') {
+        // store.dispatch(getSuggestedContactList(value?.value));
+    } else {
+        // store.dispatch(getContactList(value?.value));
+        let params = {
+            source: value?.connectionSource,
+			userId : userId,			
+        }
+        let payload = {
+            "dataType": "listPeople",
+            "fieldId": "to",
+            "connectionId": value?.connectionId,
+            "params": {
+                "q": value?.value
+            },
+            "meta": {
+                "page": 0
+            }
+        }
+        const response = await store.dispatch(getSuggestedContactListNew({params, payload}))
+        return response?.payload?.choices;
+    }
+}
