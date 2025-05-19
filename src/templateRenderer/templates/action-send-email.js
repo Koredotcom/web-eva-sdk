@@ -1,5 +1,6 @@
 import sendEmailFunctionality from "../functionality/action-send-email";
 import { encodeHtml } from "../utils/helper";
+import "./../styles/template.scss";
 
 export function render(data) {
     const { to, subject, body, cc, bcc } = data?.content;

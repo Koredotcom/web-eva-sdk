@@ -2,9 +2,7 @@ import { cloneDeep } from "lodash";
 import store from "../../redux/store";
 import { multiIntentExecutionFunc } from "../functionality/multi-intent-execution";
 import TemplateRenderer from "../templateRenderer";
-import { encodeHtml } from "../utils/helper";
-
-import TemplateComponents from "./index";
+import "./../styles/template.scss";
 
 
 const assistantIconTemplate = () => {
