@@ -44,8 +44,8 @@ function render(data) {
             }
 
             return `
-                <div className='addNewLineWrapper'>
-                  <div className='addNewLine'>
+                <div class='addNewLineWrapper'>
+                  <div class='addNewLine'>
                       <button class="addNewTaskBtn" id = "addNewTaskBtn-${index}">+</button>
                   </div>
                 </div>
@@ -90,22 +90,22 @@ function render(data) {
 
 const addNewTaskRenderer = (task, index, items) => {
     return `
-      <div className='addingNewTask'>
-        <div className="headerSec">
-            ${task?.type === 'addTask' ? `<div className="headerMsg">
+      <div class='addingNewTask'>
+        <div class="headerSec">
+            ${task?.type === 'addTask' ? `<div class="headerMsg">
                ? ${task?.headerMsg}
             </div>` : ''}
-          <div className="headerInfo">
-            <div className='step'>${task?.step || `Step ${index+1}`}</div>
+          <div class="headerInfo">
+            <div class='step'>${task?.step || `Step ${index+1}`}</div>
               ${items?.executionPipeline?.length > 1 ? 
                 `<button class="deleteBtn" id = "deleteNewTaskBtn-${items?.id}-${index}">Delete</button>`
               : ''}
           </div>
-          <div className="addDescription">
+          <div class="addDescription">
             <input type="text" value = "${task?.utterance}" placeholder="Add the description of step(s) which I missed!" id = "utterance-${items?.id}-${index}" />
           </div>
-          <div className="footerSec">
-            <div className="btns">
+          <div class="footerSec">
+            <div class="btns">
                 <button class="cancelBtn" id = "cancelBtn-${items?.id}-${index}">Cancel</button>
                 <button class="doneBtn" id = "doneBtn-${items?.id}-${index}">Done</button>
             </div>
