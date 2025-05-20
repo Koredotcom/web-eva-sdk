@@ -5,10 +5,12 @@ import { getReqIdByMessageId } from "../../utils/helpers";
 import { updateChatData, setBotSDKInstance, setCurrentQuestion, setEnableKoreBotSDK } from "../../redux/globalSlice";
 import { advanceSearch } from "../../redux/actions/global.action";
 import { constructQuestionPostCall } from "../chat-utils";
+import { setBotInstance, getBotInstance } from "./botSDKManager";
+
 
 const BotConversation = (args) => {
     let state = store.getState().global
-    let currentBotSDKInstance = state.botSDkInstance;
+    let currentBotSDKInstance = getBotInstance();
 
     const initializeBotSDK = (botDetails) => {
         let botOptions = chatConfig.botOptions;        
@@ -18,9 +20,12 @@ const BotConversation = (args) => {
         botOptions.clientId = botDetails?.webhook?.clientId;
         botOptions.clientSecret = botDetails?.webhook?.clientSecret;
         let botSDKInstance =  new chatWindow(chatConfig)
-        console.log("bot sdk initialized: ", botSDKInstance)
+        if(state?.enableDebugging){
+            console.log("bot sdk initialized: ", botSDKInstance)
+        }
         currentBotSDKInstance = botSDKInstance
-        store.dispatch(setBotSDKInstance(botSDKInstance))
+        // store.dispatch(setBotSDKInstance(botSDKInstance))
+        setBotInstance(currentBotSDKInstance)
     }      
     if(currentBotSDKInstance){
         currentBotSDKInstance.sendMessage = (msg, renderTxt) => {
@@ -29,7 +34,9 @@ const BotConversation = (args) => {
             renderTxt is the object that cotains the data to be rendered at the client application
             */
             if (msg) {
-                console.log(msg, renderTxt)
+                if(state?.enableDebugging){
+                    console.log(msg, renderTxt)
+                }
                 submitBotResponse({
                     "input": msg,
                     "cId": state?.currentQuestion?.reqId,
@@ -72,7 +79,10 @@ const BotConversation = (args) => {
                                 }
                             ]
                         }
-                        console.log("template html: ", currentBotSDKInstance.generateMessageDOM(templatePayload))
+                        currentBotSDKInstance.chatEle = document.getElementById("chatTestComp")
+                        if(state?.enableDebugging){
+                            console.log("template html: ", currentBotSDKInstance.generateMessageDOM(templatePayload))
+                        }
                         question.botConversation[detail?.messageId].template_html = currentBotSDKInstance.generateMessageDOM(templatePayload)
                     }                    
                 }
@@ -99,8 +109,10 @@ const BotConversation = (args) => {
             //     question.id = questionHistoryId
             // }else{
             //     // question = { ...question, ...detail?.message }
-            // }           
-            console.log("question after update: ", question)
+            // }  
+            if(state?.enableDebugging){
+                console.log("question after update: ", question)
+            }         
         }        
         store.dispatch(setCurrentQuestion(question))
         /*In case of history data we need to depend on id of the question */
@@ -145,10 +157,14 @@ const BotConversation = (args) => {
         if (!isEmpty(state.customData)) {
             payload.customData = state.customData
         }
-        console.log("state data: ", state)        
+        if(state?.enableDebugging){
+            console.log("state data: ", state)        
+        }
         /*need to add a loading state for the current question */
         addLoadingStateToCurrentQuestion(data?.cId, data?.messageId)
-        console.log("params data: ", data)
+        if(state?.enableDebugging){
+            console.log("params data: ", data)
+        }
         const res = await store.dispatch(advanceSearch({ params, payload, userId: state?.profile?.data?.id || data?.userId}))
         constructQuestionPostCall(res, data?.cId)
     }
@@ -162,7 +178,9 @@ const BotConversation = (args) => {
                 let currentBotQuestion = botConversation?.[messageId]
                 if (currentBotQuestion) {                    
                     currentBotQuestion.loading = true
-                    console.log("added loading state: ", currentBotQuestion)
+                    if(state?.enableDebugging){
+                        console.log("added loading state: ", currentBotQuestion)
+                    }
                     botConversation[messageId] = currentBotQuestion
                     currentQuestion.botConversation = botConversation
                     questions[reqId] = currentQuestion                    
@@ -187,6 +205,7 @@ const BotConversation = (args) => {
                 }
             ]
         }
+        currentBotSDKInstance.chatEle = document.getElementById("chatTestComp")
         return currentBotSDKInstance.generateMessageDOM(xoTemplatePayload)
         
     }

@@ -336,7 +336,9 @@ const getContextData = (state, data) => {
         selectedContextData.data = _selectedContext
         return store.dispatch(setSelectedContext(selectedContextData));
     } else {
-        console.log(data?.response)
+        if(state?.enableDebugging){
+            console.log(data?.response)
+        }
     }
     // if comes in this condition means all items removed from existing session
     if (data?.args?.action === "remove" && (data?.response?.payload?.sources?.length === 0)) {

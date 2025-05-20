@@ -80,7 +80,7 @@ const ChatTestComp = (props) => {
     }
 
     return (
-        <>
+        <div id="chatTestComp">
             <div>
                 <div>
                     {questions && Object.values(questions).map(item => {
@@ -165,7 +165,7 @@ const ChatTestComp = (props) => {
                         }
                         if (item?.viewType === "threadView"){
                             return(
-                                <>
+                                <div className="bot-agent-container">
                                     <BotAgentTestComponent question={item} />
                                     {item?.status === "completed" && (<>
                                         <button onClick={() => {
@@ -177,7 +177,7 @@ const ChatTestComp = (props) => {
                                     </>)
                                     
                                     }
-                                </>
+                                </div>
                                 
                             )
                         }
@@ -209,7 +209,7 @@ const ChatTestComp = (props) => {
                         )
                     })}
             </div>
-        </>
+        </div>
     )
 }
 

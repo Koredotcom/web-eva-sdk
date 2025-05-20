@@ -4,11 +4,13 @@ import updateHistoryData from "../history/updateHistoryData"
 import { HistoryData, HistoryInterface, LoadMoreHistoryData } from "../history"
 import { JoinChatThread } from "../chat"
 import { LoadMoreRecentFiles, RecentFiles } from "../files"
+import store from "../redux/store"
 
 const History = (props) => {
     const [historyData, setHistoryData] = useState(null)
     const historyInterface = useRef()
     const recentFilesInterface = useRef()
+    const state = store.getState().global
 
     useEffect(() => {
         // fetchHistoryData()
@@ -20,7 +22,9 @@ const History = (props) => {
         // Subscribe to updates
         const unsubscribe = historyInterface.current.subscribe((allhistoryData, apiRes) => {
             // Handle the API response data
-            console.log('Received data from History API:', allhistoryData, apiRes);
+            if(state?.enableDebugging) {
+                console.log('Received data from History API:', allhistoryData, apiRes);
+            }
             setHistoryData(allhistoryData)
         });
 
@@ -43,17 +47,17 @@ const History = (props) => {
 
     const fetchLoadMoreHistoryInitial = async () => {
         const res = await LoadMoreHistoryData({limit: 20, initialData: true})
-        console.log('All History', res)
+        // console.log('All History', res)
     }
 
     const fetchRecentFilesInitial = async () => {
         const res = await LoadMoreRecentFiles({limit: 20, initialData: true})   
-        console.log('All Recent Files', res)
+        // console.log('All Recent Files', res)
     }
 
     const fetchLoadMoreHistory = async () => {
         const res = await LoadMoreHistoryData({limit: 10})
-        console.log('All History', res)
+        // console.log('All History', res)
     }
 
     const editNamePopup = (item) => {
@@ -90,7 +94,7 @@ const History = (props) => {
             <div>
                 {historyData?.data?.length > 0 && historyData?.data?.map(item => {
                     return (
-                        <div className={`historyGrp-${item?.id}`} onClick={()=> joinChatHistory(item)}>
+                        <div className={`historyGrp-${item?.id}`} onClick={()=> joinChatHistory(item)} key={item?.id}>
                             <button onClick={(e) => { e.preventDefault(); deleteChatThread(item) }}>Delete</button>
                             <span>{item?.name}</span>
                             <button onClick={(e) => { e.preventDefault(); editNamePopup(item) }}>Edit</button>

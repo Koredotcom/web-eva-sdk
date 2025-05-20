@@ -16,16 +16,16 @@ const Agents = () => {
 
     const fetchRecentAgentsData = async () => {
         const res = await recentAgents()
-        console.log(res)
+        // console.log(res)
         setAgents(res)
     }
     const fetchEnabledAgentsData = async () => {
         const res = await EnabledAgents()
-        console.log(res)
+        // console.log(res)
     }
     const fetchAllAgentsData = async () => {
         const res = await AllAgents()
-        console.log(res)
+        // console.log(res)
     }
 
     const agentHandler = (agent) => {

@@ -99,7 +99,9 @@ const JoinChatThread = async (props) => {
 
                     }})                
                 obj.botConversation = keyBy(orderedBotChatData, 'messageId')
-                console.log("ordered bot chat data: ", orderedBotChatData)
+                if(state?.enableDebugging){
+                    console.log("ordered bot chat data: ", orderedBotChatData)
+                }
                 }else{
                     obj.botConversation = {}
                 }
@@ -152,8 +154,9 @@ const JoinChatThread = async (props) => {
         store.dispatch(updateChatData(_questions))
     }
     await afterApiCallSuccess()
-
-    console.log(Res)
+    if(state?.enableDebugging){
+        console.log(Res)
+    }
 }
 
 const constructBotAgentDataStructure = async (q) => {      

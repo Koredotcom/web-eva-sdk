@@ -3,6 +3,7 @@ import store from "../redux/store"
 import BotConversation from "../chat/botAgent/getBotConversation.js"
 import { isEmpty } from "lodash"
 
+
 const BotAgentTestComponent = (props) => {
     const state = store.getState().global
     const [input, setInput] = useState()
@@ -89,9 +90,9 @@ const BotAgentTestComponent = (props) => {
                                 <input
                                     type="text"
                                     value={input}
-                                    // onChange={(e) => changeInput(e)}
+                                    onChange={(e) => changeInput(e)}
                                     onKeyDown={(e)=> onChange(e, conversation)}
-                                    onInput={(e) => changeInput(e)}
+                                    // onInput={(e) => changeInput(e)}
                                     placeholder="Enter bot response"
                                 >
 
