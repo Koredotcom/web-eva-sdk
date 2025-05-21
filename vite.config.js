@@ -5,6 +5,9 @@ import react from "@vitejs/plugin-react";
 export default defineConfig({
   server: {
       open: true,
+      // host: "dev.kore.ai",
+      // port: 80,
+      // strictPort: true,
   },
   plugins: [react()],
   build: {

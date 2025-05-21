@@ -24,7 +24,10 @@ const IntentAmbiguityFunc = (data) => {
             ambiguousData?.value?.choices?.forEach((val, i) => {
                 if (val?.connId?.length) {
                     const intentDiv = document.getElementById(`intent-${i}`);
-                    intentDiv.addEventListener("click", (e) => sendIntent(e, i, val));
+                    if(intentDiv && !intentDiv?.eventListenerAdded){
+                        intentDiv.addEventListener("click", (e) => sendIntent(e, i, val));
+                        intentDiv.eventListenerAdded = true;
+                    }
                 }
             });
         }

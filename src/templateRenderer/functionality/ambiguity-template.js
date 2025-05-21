@@ -32,8 +32,15 @@ const AmbiguityTemplateFunc = (data) => {
         const submitBtn = document.getElementById(`resolve-ambiguity-confirm-btn-${data?.id}`)
         const cancelBtn = document.getElementById(`resolve-ambiguity-cancel-btn-${data?.id}`)
 
-        submitBtn.addEventListener('click', submitHandler)
-        cancelBtn.addEventListener('click', cancelHandler)
+        if(submitBtn && !submitBtn?.eventListenerAdded){
+            submitBtn.addEventListener('click', submitHandler)
+            submitBtn.eventListenerAdded = true;
+        }
+
+        if(cancelBtn && !cancelBtn?.eventListenerAdded){
+            cancelBtn.addEventListener('click', cancelHandler)
+            cancelBtn.eventListenerAdded = true;
+        }
     }
 
 

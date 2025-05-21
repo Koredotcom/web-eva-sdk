@@ -92,7 +92,7 @@ function createGmailDriveInterruptions(data) {
                                 <div class="checkbox-group-${index}">
                                     ${group?.choices?.map((choice, index) => `
                                         <div class="checkboxWithLable">
-                                            <input type="checkbox" id="groupedCheckbox-${index}" name="radio-${option.key}" key="${index}"/>
+                                            <input type="radio" id="groupedCheckbox-${index}" name="radio-${option.key}" key="${index}" value = "${index}"/>
                                             <label for="groupedCheckbox-${index}">${choice.label}</label>
                                         </div>
                                     `).join('')}
@@ -129,8 +129,8 @@ function createGmailDriveInterruptions(data) {
         `).join('')}
         ${!interruptionFields?.some(f => f?.value?.type === "buttons") ? `
             <div class="buttons-wrapper">
-                <button class="cancel-btn-${data?.id}">Cancel</button>
-                <button class="continue-btn-${data?.id}">Continue</button>
+                <button class="cancel-btn" id = "cancel-btn-${data?.reqId}">Cancel</button>
+                <button class="continue-btn" id = "continue-btn-${data?.reqId}">Continue</button>
             </div>
         ` : ""}
     </div>

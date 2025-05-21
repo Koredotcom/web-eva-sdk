@@ -34,6 +34,9 @@ export const constructQuestionInitial = (args) => {
 
 	let obj = {};
 
+	let isTask = questions[args?.reqId]?.isTask;
+	let stepIndex = isTask ? questions[args?.reqId]?.stepIndex : null;
+
 	if(args?.multiIntentExecution){
 
 		obj = {
@@ -53,6 +56,23 @@ export const constructQuestionInitial = (args) => {
 		questions[args?.stepId] = obj;
 		uniqueMsgId = args?.stepId;
 		
+	}
+	else if(isTask){
+		obj = {
+			cId: uniqueMsgId,
+			question,
+			answer: "",
+			loading: true,
+			type: "search",
+			reqId: uniqueMsgId,
+			showResponse: true,
+			isTask: true,
+			parentMsgId: args?.reqId,
+			isMultiIntentExecution: true,
+			stepIndex: stepIndex,
+		};
+
+		questions[uniqueMsgId] = obj;
 	}
 	else{
 		obj = {
@@ -246,7 +266,7 @@ export const constructQuestionPostCall = (data, qId) => {
 		// if(data?.errInfo?.errors[0]?.code === 'MaximumPointsExceeded'){
 		//     _limitExhausted = data?.errInfo?.errors[0]
 		// }
-	} else if (data?.meta?.arg?.multiIntentExecution) {
+	} else if (data?.meta?.arg?.multiIntentExecution || question?.isMultiIntentExecution) {
 		const stepIndex = question?.stepIndex;
 		question = { ...question, ...data?.payload, showResponse: true};
 		questions[question?.parentMsgId].executingActionId = question?.id

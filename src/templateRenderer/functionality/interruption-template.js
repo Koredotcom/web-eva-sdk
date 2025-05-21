@@ -109,8 +109,7 @@ const InterruptionTemplateFunc = (data) => {
 					const checkboxGroup = document.querySelector(
 						`input[name="radio-${option.key}"]:checked`
 					);
-					selectedIndex = checkboxGroup.getAttribute("key");
-					console.log(checkboxGroup, selectedIndex);
+					selectedIndex = Number(checkboxGroup.getAttribute("value"));
 					selectedChoices[option.key] = [
 						group.choices[selectedIndex],
 					];
@@ -227,19 +226,17 @@ const InterruptionTemplateFunc = (data) => {
 		});
 
 		if (!interruptionFields?.some((f) => f?.value?.type === "buttons")) {
-			const cancelBtn = document.querySelector(`.cancel-btn-${data?.id}`);
-			const continueBtn = document.querySelector(
-				`.continue-btn-${data?.id}`
-			);
+			const cancelBtn = document.getElementById(`cancel-btn-${data?.reqId}`);
+			const continueBtn = document.getElementById(`continue-btn-${data?.reqId}`);
 
-			if (!cancelBtn.eventListenerAdded) {
+			if (!cancelBtn?.eventListenerAdded) {
 				cancelBtn?.addEventListener("click", () => {
 					cancelAction();
 					cancelBtn.eventListenerAdded = true;
 				});
 			}
 
-			if (!continueBtn.eventListenerAdded) {
+			if (!continueBtn?.eventListenerAdded) {
 				continueBtn?.addEventListener("click", () => {
 					continueAction();
 					continueBtn.eventListenerAdded = true;

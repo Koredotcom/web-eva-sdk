@@ -31,39 +31,41 @@ function render(data) {
         ` : '' : ''}
         `;
 
-        
+       
     let body = `
         ${items?.executionPipeline?.map((task, index) => {
-            task = {...task, ..._questions[task?._id]};
+            task = {...task, ..._questions[task?._id], isTask: true};
             let html = TemplateRenderer.generateHTMLTemplate(task, {});
-            
+           
             if(task?.type === 'addTask' || task?.type === 'modify'){
                 return addNewTaskRenderer(task, index, items);
             }
 
             return `
                 <div class='addNewLineWrapper'>
-                  <div class='addNewLine'>
+                  ${initialState ? `<div class='addNewLine'>
                       <button class="addNewTaskBtn" id = "addNewTaskBtn-${index}">+</button>
-                  </div>
+                  </div>` : ''}
                 </div>
                 <div class="taskItem">
                     <div class="taskItemHeader">
                         <div class="taskItemHeaderTitle">Task ${index + 1}</div>
-                        ${Array.isArray(task?.intents) && task.intents.length > 0 ? `
-                            <div class="agentIcons">
-                            ${task.intents.slice(0, 2).map((intent, idx) => `
-                                <div class="agentIcon">
-                                    <img src="${intent?.agentMeta?.icon}" alt="Agent ${idx + 1}" />
+                        <div class="contentBlock">
+                            ${Array.isArray(task?.intents) && task.intents.length > 0 ? `
+                                <div class="agentIcons">
+                                ${task.intents.slice(0, 2).map((intent, idx) => `
+                                    <div class="agentIcon">
+                                        <img src="${intent?.agentMeta?.icon}" alt="Agent ${idx + 1}" />
+                                    </div>
+                                `).join('')}
                                 </div>
-                            `).join('')}
-                            </div>
-                        ` : ''}
-                        <div class="utterance">${task?.utterance}</div>
-                        <div class="optionsWrapper">
+                            ` : ''}
+                            <div class="utterance">${task?.utterance}</div>
+                        </div>
+                        ${initialState ? `<div class="optionsWrapper">
                             <button class="editBtn" id = "editBtn-${items?.id}-${index}">Edit</button>
                             <button class="deleteBtn" id = "deleteBtn-${items?.id}-${index}">Delete</button>
-                        </div>
+                        </div>` : ''}
                         ${task?.showResponse ? `
                             <div class="bottomCard">
                             ${html?.innerHTML}
@@ -75,7 +77,7 @@ function render(data) {
         }).join('')}
     `;
 
-    
+   
     let multiIntentExecution = `
         <div class="multiIntentExecution ${items?.status} ${items?.executionPipeline?.length === 0 ? 'd-none' : ''}">
             ${header}
@@ -86,7 +88,7 @@ function render(data) {
     // multiIntentExecution += header;
 
 
-    let timeout 
+    let timeout
     clearTimeout(timeout)
     timeout = setTimeout(() => {
         multiIntentExecutionFunc(data);
@@ -104,7 +106,7 @@ const addNewTaskRenderer = (task, index, items) => {
             </div>` : ''}
           <div class="headerInfo">
             <div class='step'>${task?.step || `Step ${index+1}`}</div>
-              ${items?.executionPipeline?.length > 1 ? 
+              ${items?.executionPipeline?.length > 1 ?
                 `<button class="deleteBtn" id = "deleteNewTaskBtn-${items?.id}-${index}">Delete</button>`
               : ''}
           </div>

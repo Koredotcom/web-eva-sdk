@@ -3,7 +3,10 @@ import { encodeHtml } from "../utils/helper";
 import "./../styles/template.scss";
 
 export function render(data) {
-    const { to, subject, body, cc, bcc } = data?.content;
+
+    if(data?.status === 'completed') {
+        return renderEmailSummary(data);
+    }
 
     let emailList = data?.templateInfo?.connections;
     let defaultConnectionId = data?.templateInfo?.defaultConnections;
@@ -12,41 +15,56 @@ export function render(data) {
         <div class="email-template">
         <div class='email-selection-field'>
             <div class="email-field">
-                <select>
-                    ${emailList?.map((email, index) => 
-                        `<option id = ${index} value="${email?.id}" ${email?.id === defaultConnectionId ? 'selected' : ''}>${email?.emailId}</option>`
+                <select id = ${`email-connection-${data?.reqId}`}>
+                    ${emailList?.map((email, index) =>
+                        `<option id = email-connection-${index} value="${email?.id}" ${email?.id === defaultConnectionId ? 'selected' : ''}>${email?.emailId}</option>`
                     ).join('')}
                 </select>
             </div>
             <div class="email-header">
                 <div class="email-field">
                     <label>To:</label>
-                    <input type="text" placeholder="Enter email address" id = ${`email-to-${data?.reqId}`} />
-                    ${data?.toChoices ? data?.toChoices?.map((email, index) => 
-                        `<option id = ${index} value="${email?.id}">${email?.id}</option>`
-                    ).join('') : ''}
+                    ${getEmailValue(data, 'to')}
+                    <input type="text" placeholder="Enter email address" id = ${`email-to-${data?.reqId}`} value = "${data?.toChoices ? data?.toChoices?.input : ''}"/>
+                    <div class="email-suggestions-dropdown">
+                        ${data?.toChoices ? data?.toChoices?.res?.map((email, index) =>
+                            `<option id = email-to-${data?.reqId}-${index} value="${email?.id}">${email?.id}</option>`
+                        ).join('') : ''}
+                    </div>
                 </div>
                 <div class="email-field">
                     <label>CC:</label>
-                    <input type="text" placeholder="Enter email address" id = ${`email-cc-${data?.reqId}`} />
-                    ${data?.ccChoices ? data?.ccChoices?.map((email, index) => 
-                        `<option id = ${index} value="${email?.id}">${email?.id}</option>`
-                    ).join('') : ''}
+                    ${getEmailValue(data, 'cc')}
+                    <input type="text" placeholder="Enter email address" id = ${`email-cc-${data?.reqId}`} value = "${data?.ccChoices ? data?.ccChoices?.input : ''}" />
+                    <div class="email-suggestions-dropdown">
+                        ${data?.ccChoices ? data?.ccChoices?.res?.map((email, index) =>
+                            `<option id = email-cc-${data?.reqId}-${index} value="${email?.id}">${email?.id}</option>`
+                        ).join('') : ''}
+                    </div>
                 </div>
                 <div class="email-field">
                     <label>BCC:</label>
-                    <input type="text" placeholder="Enter email address" id = ${`email-bcc-${data?.reqId}`} />
-                    ${data?.bccChoices ? data?.bccChoices?.map((email, index) => 
-                        `<option id = ${index} value="${email?.id}">${email?.id}</option>`
-                    ).join('') : ''}
+                    ${getEmailValue(data, 'bcc')}
+                    <input type="text" placeholder="Enter email address" id = ${`email-bcc-${data?.reqId}`} value = "${data?.bccChoices ? data?.bccChoices?.input : ''}" />
+                    <div class="email-suggestions-dropdown">
+                        ${data?.bccChoices ? data?.bccChoices?.res?.map((email, index) =>
+                            `<option id = email-bcc-${data?.reqId}-${index} value="${email?.id}">${email?.id}</option>`
+                        ).join('') : ''}
+                    </div>
                 </div>
                 <div class="email-field">
                     <label>Subject:</label>
-                    <input type="text" placeholder="Enter subject" id = ${`email-subject-${data?.reqId}`} value = 'Subject'/>
+                    <input type="text" placeholder="Enter subject" id = ${`email-subject-${data?.reqId}`} value = "${data?.content?.subject ? data?.content?.subject : ''}"/>
                 </div>
             </div>
             <div class="email-body">
-                <textarea id = ${`email-body-${data?.reqId}`}></textarea>
+                <div
+                    class="email-body-container"
+                    id="${`email-body-${data?.reqId}`}"
+                    contenteditable="true"
+                >
+                    ${data?.content?.body ? data?.content?.body : ''}
+                </div>
             </div>
             <div class="email-footer">
                 <div class="email-field">
@@ -82,12 +100,52 @@ const getSmartComposeData = (data) => {
     `
 
     let suggestionsArray = [['Apply leave', 'Approve request'], ['Rephrase', 'Make it shorter']];
-    
-    
+   
+   
     return `
         ${smartComposeButton}
         ${smartComposeInput}
     `
+}
+
+const getEmailValue = (data, type) => {
+    let html = `
+    <div class="email-value-container">
+      ${data?.content?.[type]
+        ?.map(
+          (email, index) => `
+            <span class="email-value-item">
+              <span class="email-value">${email?.id}</span>
+              <span class="email-value-remove" id="email-value-remove-${data?.reqId}-${index}">X</span>
+            </span>
+          `
+        )
+        .join('')}
+    </div>
+  `;
+  
+    return html;    
+}
+
+const renderEmailSummary = (data) => {
+
+    let allRecievers = [...data?.content?.to, ...data?.content?.cc, ...data?.content?.bcc];
+
+    let html = `
+        <div class="email-summary">
+            <h2>${data?.content?.subject}</h2>
+        </div>
+        <div class="email-summary-body">
+                <div class="email-summary-to">
+                    ${allRecievers?.map(email => `<span class="email-summary-to-item">${email?.name}</span>`).join('')}
+                </div>
+            <div class="email-summary-body-content">
+                ${data?.content?.body}
+            </div>
+        </div>
+    `
+
+    return html;
 }
 
 export default { render };

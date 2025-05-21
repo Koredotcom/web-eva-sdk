@@ -359,4 +359,15 @@ export const smartComposeEmail = createAsyncThunk(
     }
 );
 
-
+export const sendEmail = createAsyncThunk(
+    'global/sendEmail',
+    async (arg, { rejectWithValue }) => {
+        try {
+            const response = await axiosInstance.post(`/1.1/ka/users/${arg?.params?.userId}/connectors/${arg?.params?.provider || "gmail"}/actions/send_email`, arg?.payload);
+            return response.data;
+        } catch (error) {
+            handleErrorState(error, "Send Email");
+            return rejectWithValue(error.response.data);
+        }
+    }
+);
