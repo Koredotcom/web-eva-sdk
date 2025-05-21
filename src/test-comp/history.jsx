@@ -4,9 +4,13 @@ import updateHistoryData from "../history/updateHistoryData"
 import { HistoryData, HistoryInterface, LoadMoreHistoryData } from "../history"
 import { JoinChatThread } from "../chat"
 import { LoadMoreRecentFiles, RecentFiles } from "../files"
+import getBookMarkedChatThreads from "../history/getBookMarkedChatThreads"
+import bookMarkChatThread from "../history/bookMarkChatThread"
+import loadMoreBookMarkedChatThreads from "../history/loadMoreBookMarkedChatThreads"
 
 const History = (props) => {
     const [historyData, setHistoryData] = useState(null)
+    const [bookMarkedThreads, setBookMarkedThreads] = useState(null)
     const historyInterface = useRef()
     const recentFilesInterface = useRef()
 
@@ -16,12 +20,14 @@ const History = (props) => {
         // Create an instance of HistoryInterface
         historyInterface.current = HistoryInterface();
         recentFilesInterface.current = RecentFiles();
+        getBookMarkedThreads()
 
         // Subscribe to updates
-        const unsubscribe = historyInterface.current.subscribe((allhistoryData, apiRes) => {
+        const unsubscribe = historyInterface.current.subscribe((allhistoryData, apiRes, bookMarkedChatThreads) => {
             // Handle the API response data
-            console.log('Received data from History API:', allhistoryData, apiRes);
+            console.log('Received data from History API:', allhistoryData, apiRes, bookMarkedChatThreads);
             setHistoryData(allhistoryData)
+            setBookMarkedThreads(bookMarkedChatThreads)
         });
 
         // recentFilesInterface.current.subscribe((allRecentFilesData, apiRes) => {
@@ -80,7 +86,19 @@ const History = (props) => {
 
     const joinChatHistory = (board) => {
         JoinChatThread({ boardId: board?.id })
-    };    
+    };
+
+    const getBookMarkedThreads = () => {
+        getBookMarkedChatThreads({limit: 10})
+    }
+
+    const loadMoreBookMarkedThreads = () => {
+        loadMoreBookMarkedChatThreads({limit: 10})
+    }
+
+    const bookMarkChatThreadItem = (item) => {
+        bookMarkChatThread(item)
+    }
 
     return (
         <div>
@@ -94,6 +112,18 @@ const History = (props) => {
                             <button onClick={(e) => { e.preventDefault(); deleteChatThread(item) }}>Delete</button>
                             <span>{item?.name}</span>
                             <button onClick={(e) => { e.preventDefault(); editNamePopup(item) }}>Edit</button>
+                            <button onClick={(e) => { e.preventDefault(); e?.stopPropagation(); bookMarkChatThreadItem(item) }}>{item?.bookMarked ? 'UnBook Mark' : 'Book Mark'}</button>
+                        </div>
+                    )
+                })}
+            </div>
+            <div>
+                <h1>Book Marked Chat Thread</h1>
+                <button onClick={loadMoreBookMarkedThreads}>Get More Book Marked Chat Threads</button>
+                {bookMarkedThreads?.boards?.length > 0 && bookMarkedThreads?.boards?.map(item => {
+                    return (
+                        <div className={`bookMarkedGrp-${item?.id}`} onClick={()=> joinChatHistory(item)}>
+                            <span>{item?.name}</span>
                         </div>
                     )
                 })}

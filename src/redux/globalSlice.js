@@ -48,7 +48,8 @@ const initialState = {
   enableKoreBotSDK: false, // use to enable the bot sdk custom templates
   enableContextByFollowupContext: false, // use to set the context by followup context,
   errorState : [],
-  notifications : {}
+  notifications : {},
+  bookMarkedChatThreads: []
 };
 
 const globalSlice = createSlice({
@@ -111,6 +112,9 @@ const globalSlice = createSlice({
       },
       setNotifications: (state, action) => {
         state.notifications = action.payload
+      },
+	  setBookMarkedChatThreads: (state, action) => {
+        state.bookMarkedChatThreads = action.payload
       }
     },
     extraReducers: (builder) => {
@@ -161,6 +165,10 @@ const globalSlice = createSlice({
           } else {
             allHistory = uniqBy(concat(allHistory, state.historyRes?.data?.boards), 'id')
           }
+			allHistory = allHistory?.map(item => {
+				item = {...item, bookMarked: item?.pinnedAt > 0}
+			return item
+		  })
           state.AllHistory.data = allHistory
           state.AllHistory.status = state.historyRes.status
           state.AllHistory.error = state.historyRes.error
@@ -212,7 +220,8 @@ export const {
   setEnableKoreBotSDK,
   setEnableContextByFollowupContext,
   setErrorState,
-  setNotifications
+  setNotifications,
+  setBookMarkedChatThreads
 } = globalSlice.actions;
 
 export default globalSlice
