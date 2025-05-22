@@ -23,7 +23,10 @@ const GptFileUpload = (event, id) => {
 export default GptFileUpload;
 
 const uploadFileInitial = (file, id, resolve, reject) => {
-    console.log(window.sdkConfig)
+    const state = store.getState().global
+    if(state?.enableDebugging){
+        console.log(window.sdkConfig)
+    }
     let userId = window.sdkConfig.userId;
     let userAccessToken = window.sdkConfig.accessToken;
     const source = axios.CancelToken.source();
@@ -50,8 +53,7 @@ const uploadFileInitial = (file, id, resolve, reject) => {
 
     u.start(
         (res) => { }, (file) => {
-            let componentId = generateComponentId();
-            console.log(file)
+            let componentId = generateComponentId();                        
             let f = {
                 ...file,
                 loading: false,
@@ -85,8 +87,7 @@ const uploadFileInitial = (file, id, resolve, reject) => {
 
             resolve(currentFileData, f)
         },
-        (msg) => {
-            console.log(msg);
+        (msg) => {            
             const reqdInputField = document.getElementById(`fileUpload-${id}`)
             if(reqdInputField) {
                 reqdInputField.value = ''

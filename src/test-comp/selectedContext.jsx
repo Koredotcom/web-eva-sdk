@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { FileUpload } from "../Attachments";
 import { ChatInterface } from "../chat";
 import RemoveContext from "../Attachments/removeContext";
+import store from "../redux/store";
 
 const SelectedContext = () => {
 
@@ -10,14 +11,16 @@ const SelectedContext = () => {
     const [errorMessages, setErrorMessages] = useState(null)
     const uploadFile = useRef()
     const chatInterface = useRef()
-
+    const state = store.getState().global
     useEffect(() => {
         uploadFile.current = FileUpload();
         chatInterface.current = ChatInterface();
         // uploadFile.current.showUploadChip('composeBar')
 
         const unsubscribe = uploadFile.current.subscribe((context, sessionId, quickActions, errorFiles, apiResp) => {
-            console.log("Selected Context", context, "Session ID", sessionId, quickActions, errorFiles, apiResp)
+            if(state?.enableDebugging) {
+                console.log("Selected Context", context, "Session ID", sessionId, quickActions, errorFiles, apiResp)
+            }            
             setSelectedContext(context)
             setQuickActions(quickActions)
             setErrorMessages(errorFiles)

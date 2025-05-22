@@ -49,7 +49,8 @@ const initialState = {
   enableContextByFollowupContext: false, // use to set the context by followup context,
   errorState : [],
   notifications : {},
-  bookMarkedChatThreads: []
+  bookMarkedChatThreads: [],
+  enableDebugging: false
 };
 
 const globalSlice = createSlice({
@@ -115,6 +116,9 @@ const globalSlice = createSlice({
       },
 	  setBookMarkedChatThreads: (state, action) => {
         state.bookMarkedChatThreads = action.payload
+      },
+      setEnabledDebugging: (state, action) => {
+        state.enableDebugging = action.payload
       }
     },
     extraReducers: (builder) => {
@@ -144,7 +148,11 @@ const globalSlice = createSlice({
             }
           }else{
             if (questions?.[currentBotAgentQuestion?.reqId]?.hasOwnProperty('botConversation')) {
-              questions[currentBotAgentQuestion?.reqId].botConversation[action?.payload?.messageId] = action?.payload              
+              questions[currentBotAgentQuestion?.reqId].botConversation[action?.payload?.messageId] = {
+                ...questions[currentBotAgentQuestion?.reqId].botConversation[action?.payload?.messageId],
+                "status": action?.payload?.status,
+                "answer": action?.payload?.answer
+              }           
             }
           }
            state.questions = questions           
@@ -221,7 +229,8 @@ export const {
   setEnableContextByFollowupContext,
   setErrorState,
   setNotifications,
-  setBookMarkedChatThreads
+  setBookMarkedChatThreads,
+  setEnabledDebugging
 } = globalSlice.actions;
 
 export default globalSlice

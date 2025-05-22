@@ -132,7 +132,9 @@ const Notification = () => {
                 _notificationState.bell = { 'bell': _notificationState?.bell?.bell - 1 };   
             }            
             store.dispatch(setNotifications(_notificationState))
-            console.log("notification marked as read: ", id)
+            if(state?.enableDebugging){
+                console.log("notification marked as read: ", id)
+            }
         }
         
     }

@@ -149,7 +149,9 @@ const FileUpload = (props) => {
             (res) => { },
             (file) => {
                 let componentId = generateComponentId();
-                console.log(file);
+                if(state?.enableDebugging){
+                    console.log(file);
+                }
                 let f = {
                     ...file,
                     loading: false,
