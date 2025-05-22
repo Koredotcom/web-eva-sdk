@@ -45,6 +45,7 @@ const History = (props) => {
             unsubscribe();
         };
     }, [])
+    
 
     // const fetchHistoryData = async () => {
     //     const res = await HistoryData()
@@ -123,6 +124,7 @@ const History = (props) => {
             </div>
             <div>
                 <h1>Book Marked Chat Thread</h1>
+                <button onClick={getBookMarkedThreads}>Get Book Marked Chat Threads</button>
                 <button onClick={loadMoreBookMarkedThreads}>Get More Book Marked Chat Threads</button>
                 {bookMarkedThreads?.boards?.length > 0 && bookMarkedThreads?.boards?.map(item => {
                     return (

@@ -4,6 +4,7 @@ import ChatTestComp from './test-comp/ChatTestComp';
 import File from './test-comp/File';
 import Agents from './test-comp/agents';
 import SelectedContext from './test-comp/selectedContext';
+import TestComp from "./test-comp/testComp";
 
 
 const App = () => {
@@ -22,7 +23,8 @@ const App = () => {
   
   return (
     <div>
-      <ChatTestComp/>
+      {/* <ChatTestComp/> */}
+      <TestComp />
       <Agents />
       {/* <File /> */}
       <SelectedContext/>

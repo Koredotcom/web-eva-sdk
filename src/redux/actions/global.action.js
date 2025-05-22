@@ -299,4 +299,109 @@ export const getBookMarkedChatThreads = createAsyncThunk(
     }
 );
 
+export const getSpecificSkills = createAsyncThunk(
+    'global/getSpecificSkills',
+    async (arg, { rejectWithValue }) => {
+        try {
+            const response = await axiosInstance.get(`/1.1/ka/users/${arg?.userId}/connectors/${arg?.connectorId}`);
+            return response.data;
+        } catch (error) {
+            handleErrorState(error, "Get Specific Skills");
+            return rejectWithValue(error.response.data);
+        }
+    }
+);
+
+export const thirdPartySSO = createAsyncThunk(
+    'global/thirdPartySSO',
+    async (arg, thunkAPI) => {
+        try {
+            const response = await axiosInstance.post(`/users/${arg?.userId}/connections`, arg?.payload);
+            return response.data;
+        } catch (error) {
+            handleErrorState(error, "Third Party SSO");
+            return thunkAPI.rejectWithValue(error.response.data);
+        }
+    }
+);
+
+
+export const basicAuth = createAsyncThunk(
+    'global/basicAuth',
+    async (arg, thunkAPI) => {
+        try {
+            const response = await axiosInstance.post(`/users/${arg?.userId}/connections`, arg?.payload);   
+            return response;
+        } catch (error) {
+            handleErrorState(error, "Basic Auth");
+            return thunkAPI.rejectWithValue(error.response.data);
+        }
+    }
+);
+
+export const getRelevantQuestions = createAsyncThunk(
+    'global/getRelevantQuestions',
+    async (arg, { rejectWithValue }) => {
+        try {
+            const response = await axiosInstance.get(`/kora/users/${arg?.userId}/advancedsearch/session/${arg?.sessionId}/altQuestions?tabId=${arg?.appId}`);
+            return response.data;   
+        } catch (error) {
+            handleErrorState(error, "Get Relevant Questions");
+            return rejectWithValue(error.response.data);
+        }
+    }
+);
+
+export const executionPipelineActions = createAsyncThunk(
+    'global/executionPipelineActions',
+    async (arg, { rejectWithValue }) => {
+        try {
+            const response = await axiosInstance.put(`kora/boards/${arg?.params?.boardId}/messages/${arg?.params?.messageId}/executionpipeline`, arg?.payload);
+            return response.data;
+        } catch (error) {
+            handleErrorState(error, "Execution Pipeline Actions");
+            return rejectWithValue(error.response.data);
+        }
+    }
+);
+
+export const getSuggestedContactListNew = createAsyncThunk(
+    'global/getSuggestedContactListNew',
+    async (arg, { rejectWithValue }) => {
+        try{
+            const response = await axiosInstance.post(`/1.1/ka/users/${arg?.params?.userId}/connectors/${arg?.params?.source}/actions/send_email/resolveFields`, arg?.payload);
+            return response.data;
+        } catch (error) {
+            handleErrorState(error, "Get Suggested Contact List New");
+            return rejectWithValue(error.response.data);
+        }
+    }
+);
+
+export const smartComposeEmail = createAsyncThunk(
+    'global/smartComposeEmail',
+    async (arg, { rejectWithValue }) => {
+        try {
+            const response = await axiosInstance.post(`/1.1/ka/users/${arg?.params?.userId}/nlp/generations/text`, arg?.payload);
+            return response.data;
+        } catch (error) {
+            handleErrorState(error, "Smart Compose Email");
+            return rejectWithValue(error.response.data);
+        }
+    }
+);
+
+export const sendEmail = createAsyncThunk(
+    'global/sendEmail',
+    async (arg, { rejectWithValue }) => {
+        try {
+            const response = await axiosInstance.post(`/1.1/ka/users/${arg?.params?.userId}/connectors/${arg?.params?.provider || "gmail"}/actions/send_email`, arg?.payload);
+            return response.data;
+        } catch (error) {
+            handleErrorState(error, "Send Email");
+            return rejectWithValue(error.response.data);
+        }
+    }
+);
+
 
