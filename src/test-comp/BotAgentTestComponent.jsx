@@ -70,7 +70,14 @@ const BotAgentTestComponent = (props) => {
                         return(
                             <>
                                 {conversation?.thoughts?.length > 0 && <div>
-                                    {`Thoughts: ${conversation?.thoughts?.[0]?.content}`}
+                                    {conversation?.thoughts?.map((thought, index) => {
+                                        return (
+                                            <div key={index}>
+                                                {`Thoughts: ${thought?.content}`}
+                                            </div>
+                                        )
+                                    }
+                                    )}
                                 </div>}
                                 {conversation?.status === "completed" ? (                                                      
                                 <div>
