@@ -114,9 +114,9 @@ const History = (props) => {
                 {historyData?.data?.length > 0 && historyData?.data?.map(item => {
                     return (
                         <div className={`historyGrp-${item?.id}`} onClick={()=> joinChatHistory(item)} key={item?.id}>
-                            <button onClick={(e) => { e.preventDefault(); deleteChatThread(item) }}>Delete</button>
+                            <button onClick={(e) => { e.preventDefault();  e?.stopPropagation();deleteChatThread(item) }}>Delete</button>
                             <span>{item?.name}</span>
-                            <button onClick={(e) => { e.preventDefault(); editNamePopup(item) }}>Edit</button>
+                            <button onClick={(e) => { e.preventDefault();  e?.stopPropagation();editNamePopup(item) }}>Edit</button>
                             <button onClick={(e) => { e.preventDefault(); e?.stopPropagation(); bookMarkChatThreadItem(item) }}>{item?.bookMarked ? 'UnBook Mark' : 'Book Mark'}</button>
                         </div>
                     )
