@@ -1,6 +1,9 @@
-import { deleteHistory, updateHistory } from "../redux/actions/global.action";
-import { setAllHistory } from "../redux/globalSlice";
+import { cloneDeep } from "lodash";
+import { bookMarkChatThread, deleteHistory, getBookMarkedChatThreads, updateHistory } from "../redux/actions/global.action";
+import { setAllHistory, setBookMarkedChatThreads } from "../redux/globalSlice";
 import store from "../redux/store";
+
+let bookMarkedThreadsOffset = 1;
 
 const HistoryInterface = (props) => {
     let state = store.getState().global;
@@ -12,7 +15,7 @@ const HistoryInterface = (props) => {
             state = store.getState().global;
             // If callback exists and API call is completed, invoke it
             if (state.historyRes.status !== 'loading' && callback) {
-                callback(state.AllHistory, state.historyRes);
+                callback(state.AllHistory, state.historyRes, state.bookMarkedChatThreads);
             }
         });
 
@@ -56,10 +59,62 @@ const HistoryInterface = (props) => {
             store.dispatch(setAllHistory(newHistory));
         }
     }
+
+    const fetchBookMarkedChatThread = async (arg) => {
+        let params = {
+            limit: arg?.limit || 10
+        }
+        const res = await store.dispatch(getBookMarkedChatThreads(params))
+        store.dispatch(setBookMarkedChatThreads(res?.payload))
+    }
+
+    const loadMoreBookMarkedChatThreads = async (arg) => {
+        let _bookMarkedThreads = cloneDeep(state?.bookMarkedChatThreads)
+        let params = {
+            limit: arg?.limit || 10,
+            offset: bookMarkedThreadsOffset* arg?.limit || 10
+        }
+        const res = await store.dispatch(getBookMarkedChatThreads(params))
+        if(!!res?.payload) {
+            _bookMarkedThreads = {
+                ..._bookMarkedThreads,
+                boards: [..._bookMarkedThreads?.boards, ...res?.payload?.boards], 
+                moreAvailable: res?.payload?.moreAvailable
+            }
+            if(res?.payload?.moreAvailable) {
+                bookMarkedThreadsOffset++
+            }
+            store.dispatch(setBookMarkedChatThreads(_bookMarkedThreads))
+        }
+    }
+
+    const bookMarkChatThreadItem = async (item) => {
+        const payload = {
+            markAsStar: item?.bookMarked ? false : true
+        }
+        const params = {
+            boardId: item?.id
+        }
+        const res = await store.dispatch(bookMarkChatThread({params, payload}))
+        if(res?.payload?.[0] === "SUCCESS") {
+            let _history = cloneDeep(state?.AllHistory)
+            _history.data = _history?.data?.map(historyItem => {
+                if(historyItem?.id === item?.id) {
+                    historyItem = {...historyItem, bookMarked: !historyItem?.bookMarked}
+                }
+                return historyItem
+            })
+            store.dispatch(setAllHistory(_history))
+        }
+    }
+
     return {
         subscribe,
         deleteHistoryBoard,
-        updateHistoryBoardName
+        updateHistoryBoardName,
+        fetchBookMarkedChatThread,
+        loadMoreBookMarkedChatThreads,
+        bookMarkChatThreadItem
     }
 }
 
