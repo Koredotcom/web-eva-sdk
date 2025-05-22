@@ -224,13 +224,17 @@ export const constructQuestionPostCall = (data, qId) => {
         // question.question = data?.res?.question
     }
 
+    if(data?.payload?.viewType === "threadView" && (!data?.payload?.hasOwnProperty('thread'))){
+        question = {...question, ...data?.payload}
+    }
+
     /*cancelrequest / closing the botconversation logic, check for the status as completed and viewType as threadView */
     if(data?.payload?.history?.status === msgStatus.COMPLETED && data?.payload?.history?.viewType === "threadView") {
         question = {
             ...question,
             "status": data?.payload?.history?.status,
             "answer": data?.payload?.history?.answer,
-            
+
         }
     }
 

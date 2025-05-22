@@ -144,7 +144,11 @@ const globalSlice = createSlice({
           /*for history question we need to rely on id */    
           if(currentBotAgentQuestion?.historicalData){
             if(questions?.[currentBotAgentQuestion?.id]?.hasOwnProperty('botConversation')) {
-              questions[currentBotAgentQuestion?.id].botConversation[action?.payload?.messageId] = action?.payload
+              questions[currentBotAgentQuestion?.id].botConversation[action?.payload?.messageId] = {
+                ...questions[currentBotAgentQuestion?.id].botConversation[action?.payload?.messageId],
+                "status": action?.payload?.status,
+                "answer": action?.payload?.answer
+              }
             }
           }else{
             if (questions?.[currentBotAgentQuestion?.reqId]?.hasOwnProperty('botConversation')) {
