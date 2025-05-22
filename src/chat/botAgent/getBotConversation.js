@@ -7,7 +7,6 @@ import { advanceSearch } from "../../redux/actions/global.action";
 import { constructQuestionPostCall } from "../chat-utils";
 import { setBotInstance, getBotInstance } from "./botSDKManager";
 
-
 const BotConversation = (args) => {
     let state = store.getState().global
     let currentBotSDKInstance = getBotInstance();
