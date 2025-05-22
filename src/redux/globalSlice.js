@@ -49,6 +49,7 @@ const initialState = {
   enableContextByFollowupContext: false, // use to set the context by followup context,
   errorState : [],
   notifications : {},
+  bookMarkedChatThreads: [],
   enableDebugging: false
 };
 
@@ -113,6 +114,9 @@ const globalSlice = createSlice({
       setNotifications: (state, action) => {
         state.notifications = action.payload
       },
+	  setBookMarkedChatThreads: (state, action) => {
+        state.bookMarkedChatThreads = action.payload
+      },
       setEnabledDebugging: (state, action) => {
         state.enableDebugging = action.payload
       }
@@ -169,6 +173,10 @@ const globalSlice = createSlice({
           } else {
             allHistory = uniqBy(concat(allHistory, state.historyRes?.data?.boards), 'id')
           }
+			allHistory = allHistory?.map(item => {
+				item = {...item, bookMarked: item?.pinnedAt > 0}
+			return item
+		  })
           state.AllHistory.data = allHistory
           state.AllHistory.status = state.historyRes.status
           state.AllHistory.error = state.historyRes.error
@@ -221,6 +229,7 @@ export const {
   setEnableContextByFollowupContext,
   setErrorState,
   setNotifications,
+  setBookMarkedChatThreads,
   setEnabledDebugging
 } = globalSlice.actions;
 
