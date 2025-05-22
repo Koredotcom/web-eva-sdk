@@ -1,7 +1,7 @@
 import { cloneDeep, isEmpty } from "lodash";
 import {chatWindow, chatConfig} from "@koredev/kore-web-sdk"
 import store from "../../redux/store";
-import { getReqIdByMessageId } from "../../utils/helpers";
+import { checkHistoryAccessed, getReqIdByMessageId } from "../../utils/helpers";
 import { updateChatData, setBotSDKInstance, setCurrentQuestion, setEnableKoreBotSDK } from "../../redux/globalSlice";
 import { advanceSearch } from "../../redux/actions/global.action";
 import { constructQuestionPostCall } from "../chat-utils";
@@ -169,8 +169,13 @@ const BotConversation = (args) => {
         constructQuestionPostCall(res, data?.cId)
     }
 
-    const addLoadingStateToCurrentQuestion = (reqId, messageId) => {
+    const addLoadingStateToCurrentQuestion = (quesReqId, messageId) => {
+        let reqId = quesReqId
         let questions = cloneDeep(state?.questions)
+        const isHistoryAccessed = checkHistoryAccessed(questions)
+        if(isHistoryAccessed){
+            reqId = Object.entries(questions).find(([key, value]) => value?.reqId === reqId)?.[0]
+        }
         let currentQuestion = questions[reqId]
         if (currentQuestion) {
             let botConversation = currentQuestion?.botConversation

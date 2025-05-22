@@ -200,14 +200,16 @@ export const constructQuestionPostCall = (data, qId) => {
     if (data?.payload?.thread) {
         //rename the answer to question and include botConversation object.
         // question.question = data?.res?.thread?.previousMessage?.question
-
-        if (!question?.botConversation) {
+        question = removeOutputMessageId(question, {res: data?.payload})
+        if (!question?.botConversation || isEmpty(question?.botConversation)) {
             question.botConversation = {}
+            question.parentMessage = data.payload.res
             data?.payload?.thread?.messages?.map(message => {
                 question.botConversation[message?.messageId] = message
             })                        
         }
-        if (data?.payload?.thread && data?.payload?.thread?.nextMessages && data?.payload?.thread?.nextMessages?.length) {            
+        if (data?.payload?.thread && data?.payload?.thread?.nextMessages && data?.payload?.thread?.nextMessages?.length) {    
+            /*when the advancedSearch resolves for autonomous agents, need to remove the botConversation key that is formed using outputMessageId */        
             question.botConversation[data?.payload?.messageId].status = data?.payload?.status
             question.botConversation[data?.payload?.messageId].answer = data?.payload?.answer
             data?.payload?.thread?.nextMessages?.map(message => {
@@ -222,6 +224,16 @@ export const constructQuestionPostCall = (data, qId) => {
         // question.question = data?.res?.question
     }
 
+    /*cancelrequest / closing the botconversation logic, check for the status as completed and viewType as threadView */
+    if(data?.payload?.history?.status === msgStatus.COMPLETED && data?.payload?.history?.viewType === "threadView") {
+        question = {
+            ...question,
+            "status": data?.payload?.history?.status,
+            "answer": data?.payload?.history?.answer,
+            
+        }
+    }
+
     // if(data?.res?.viewType === "threadView"){
     //     if(!question.hasOwnProperty("botConversation")){
     //         question.parentMessage = data.res  
@@ -230,8 +242,7 @@ export const constructQuestionPostCall = (data, qId) => {
     //             isBotRunning: true
     //         })
     //     }
-    // }
-
+    // }    
     questions[qId] = {...question, apiSuccess: true};
 
     // updateState({
@@ -281,3 +292,26 @@ export const constructQuestionPostCall = (data, qId) => {
     //     }, 1500);
     // }
 }
+
+const removeOutputMessageId = (question, apiResponse) => {
+        /*check for the outputMessageId's present in either messages / nextMessages array of apiResponse
+        if found remove it from question.botConversation object
+        */
+        if(apiResponse?.res?.thread?.messages && apiResponse?.res?.thread?.messages.length > 0){
+            apiResponse?.res?.thread?.messages.map(message => {
+                if(Object.keys(question?.botConversation)?.length > 0 && question?.botConversation[message?.outputMessageId]) {
+                    delete question?.botConversation[message?.outputMessageId]
+                }
+            })
+        }
+        if(apiResponse?.res?.thread?.nextMessages && apiResponse?.res?.thread?.nextMessages.length > 0){
+            apiResponse?.res?.thread?.nextMessages.map(message => {
+                if(Object.keys(question?.botConversation)?.length > 0 && question?.botConversation[message?.outputMessageId]) {
+                    delete question?.botConversation[message?.outputMessageId]
+                }
+            })
+        }
+
+        return question;
+
+    }

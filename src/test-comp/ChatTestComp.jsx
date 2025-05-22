@@ -6,13 +6,13 @@ import History from './history'
 import DemoComp from './selectedContextDemoComp'
 import AskFollowup from '../Attachments/askFollowup'
 import MultiResponseTestComp from './MultiResponseTestComp'
-import BotAgentTestComponent from './botAgentTestComponent'
 import BotConversation from '../chat/botAgent/getBotConversation'
 import CustomTemplateComponentManager from "../chat/botAgent/customTemplatesFolder/CustomTemplateComponentManager"
 import HoldConversationTemplateManager from '../chat/botAgent/customTemplatesFolder/HoldConversationTemplateManager'
 import Notifications from './Notifications'
 import { FileUpload } from '../Attachments'
 import { cloneDeep } from 'lodash'
+import BotAgentTestComponent from './BotAgentTestComponent'
 // import { submitUserFeedback } from '../Feedback'
 
 

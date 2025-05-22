@@ -57,8 +57,7 @@ const BotAgentTestComponent = (props) => {
     if (Object?.values(botConversation || {})?.length) {
         return (
             <>
-                {Object.values(botConversation)?.map((conversation) => {
-
+                {Object.values(botConversation)?.map((conversation) => {                                                        
                     if (conversation?.hasOwnProperty('template_html') || conversation?.templateType === "hold_conversation") {
                         return (
                             <div className={`botTemplate-${conversation?.messageId}`}
@@ -67,9 +66,13 @@ const BotAgentTestComponent = (props) => {
                             </div>
                         )
                     }
-                    if (conversation?.templateType === "search_answer") {
-                        if (conversation?.status === "completed") {
-                            return (
+                    if (conversation?.templateType === "search_answer") {                        
+                        return(
+                            <>
+                                {conversation?.thoughts?.length > 0 && <div>
+                                    {`Thoughts: ${conversation?.thoughts?.[0]?.content}`}
+                                </div>}
+                                {conversation?.status === "completed" ? (                                                      
                                 <div>
                                     {conversation?.question}
                                     <br></br>
@@ -81,10 +84,8 @@ const BotAgentTestComponent = (props) => {
                                         </input>
                                     </div>
                                 </div>
-
-                            )
-                        }
-                        return (
+                                )
+                            :(
                             <div>
                                 {conversation?.question}
                                 <input
@@ -101,20 +102,17 @@ const BotAgentTestComponent = (props) => {
                                     {conversation?.loading ? "Sending..." : "Send"}
                                 </button>
                             </div>
-                        )
+                            )
+                        }
+                            </>
+                              
+                    )
                     }
-                    {/* else {
-                        return (
-                            <div>
-                                render your own template for the *{conversation?.content?.payload?.template_type}* template
-                                selected option is *{conversation?.renderMsgPayload}*
-                                selected option id is *{conversation?.answer}*
-                            </div>
-                        )
-                    } */}
-                })}
-            </>
-        )
+                }
+            )
+            }
+                </>
+            )                                                        
     }
 }
 

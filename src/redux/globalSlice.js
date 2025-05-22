@@ -144,7 +144,11 @@ const globalSlice = createSlice({
             }
           }else{
             if (questions?.[currentBotAgentQuestion?.reqId]?.hasOwnProperty('botConversation')) {
-              questions[currentBotAgentQuestion?.reqId].botConversation[action?.payload?.messageId] = action?.payload              
+              questions[currentBotAgentQuestion?.reqId].botConversation[action?.payload?.messageId] = {
+                ...questions[currentBotAgentQuestion?.reqId].botConversation[action?.payload?.messageId],
+                "status": action?.payload?.status,
+                "answer": action?.payload?.answer
+              }           
             }
           }
            state.questions = questions           
