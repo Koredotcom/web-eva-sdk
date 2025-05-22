@@ -45,6 +45,7 @@ const History = (props) => {
             unsubscribe();
         };
     }, [])
+    
 
     // const fetchHistoryData = async () => {
     //     const res = await HistoryData()
@@ -113,9 +114,9 @@ const History = (props) => {
                 {historyData?.data?.length > 0 && historyData?.data?.map(item => {
                     return (
                         <div className={`historyGrp-${item?.id}`} onClick={()=> joinChatHistory(item)} key={item?.id}>
-                            <button onClick={(e) => { e.preventDefault(); deleteChatThread(item) }}>Delete</button>
+                            <button onClick={(e) => { e.preventDefault();  e?.stopPropagation();deleteChatThread(item) }}>Delete</button>
                             <span>{item?.name}</span>
-                            <button onClick={(e) => { e.preventDefault(); editNamePopup(item) }}>Edit</button>
+                            <button onClick={(e) => { e.preventDefault();  e?.stopPropagation();editNamePopup(item) }}>Edit</button>
                             <button onClick={(e) => { e.preventDefault(); e?.stopPropagation(); bookMarkChatThreadItem(item) }}>{item?.bookMarked ? 'UnBook Mark' : 'Book Mark'}</button>
                         </div>
                     )
@@ -123,6 +124,7 @@ const History = (props) => {
             </div>
             <div>
                 <h1>Book Marked Chat Thread</h1>
+                <button onClick={getBookMarkedThreads}>Get Book Marked Chat Threads</button>
                 <button onClick={loadMoreBookMarkedThreads}>Get More Book Marked Chat Threads</button>
                 {bookMarkedThreads?.boards?.length > 0 && bookMarkedThreads?.boards?.map(item => {
                     return (

@@ -11,6 +11,7 @@ export * from './agents';
 export * from './files';
 export * from './Attachments';
 export * from './Feedback'
+export * from "./templateRenderer";
 
 // Redux store exports
 export { default as store } from './redux/store';

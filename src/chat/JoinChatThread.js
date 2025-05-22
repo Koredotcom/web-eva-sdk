@@ -8,14 +8,14 @@ import gptFormFunctionality from "./gptTemplate/gptTemplateFunc";
 import MultiResponse from "./gptTemplate/MultiResponse";
 import BotConversation from "./botAgent/getBotConversation";
 
-let chatHistoryOffset = 0
+let chatHistoryOffset = 0;
 
 const JoinChatThread = async (props) => {
     const state = store.getState().global;
 
-    if(props?.pagination) {
-        chatHistoryOffset = 1
-    }
+	if (props?.pagination) {
+		chatHistoryOffset += 1;
+	}
 
     let params = {
         // limit: props?.limit || 20,
@@ -32,11 +32,10 @@ const JoinChatThread = async (props) => {
 
     // Setting active boardId
     store.dispatch(setActiveBoardId(props.boardId))
-
     // offset will increase only if its pagination call
-    if(props?.pagination) {
-        chatHistoryOffset++
-    }
+    // if(props?.pagination) {
+        // chatHistoryOffset++
+    // }
 
     const afterApiCallSuccess = async(data, args) => {
         const {history, moreAvailable} = Res.payload;
@@ -46,7 +45,7 @@ const JoinChatThread = async (props) => {
         historyData = orderBy(history, 'cOn', 'asc')
         let updatedQuestions = {}
         for(const q of historyData){
-            let msgId = uuid();
+        let msgId = q?.reqId || uuid();
             let obj = {
                 ...q,
                 id: msgId,
@@ -169,8 +168,7 @@ const constructBotAgentDataStructure = async (q) => {
         pId: q?.messageId
     }
 
+	const Res = await store.dispatch(getSearchHistory({ params }));
+};
 
-    const Res = await store.dispatch(getSearchHistory({ params }))
-}
-
-export default JoinChatThread
+export default JoinChatThread;

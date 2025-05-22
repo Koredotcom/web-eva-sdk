@@ -7,6 +7,7 @@ import store from "./redux/store";
 import { WebSocketService } from "./socket/socket.service";
 export const initializeSDK = async (config) => {
   const requiredKeys = ['accessToken', 'api_url', 'userId']
+  let initialHistoryLimit = config?.initialHistoryLimit || 10;
 
   let misConfig = false;
   requiredKeys.map(key => {
@@ -27,7 +28,7 @@ export const initializeSDK = async (config) => {
   store.dispatch(fetchConfigData(config.userId))
   store.dispatch(fetchProfileData(config.userId))
   store.dispatch(fetchAgents({userId: config.userId}))
-  store.dispatch(fetchHistory({onload: true, params: {limit: 10}}))
+  store.dispatch(fetchHistory({onload: true, params: {limit: initialHistoryLimit}}))
   store.dispatch(fetchRecentFiles({onload: true, userId: config.userId, params: {limit: 10}}))
   
   // once presenceStart call success than get the sToken which is required to connect socket

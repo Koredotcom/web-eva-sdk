@@ -1,0 +1,116 @@
+.kora-template {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+        sans-serif;
+    line-height: 1.5;
+}
+
+.kora-template.light {
+    --bg-color: #ffffff;
+    --text-color: #333333;
+    --border-color: #e0e0e0;
+    --primary-color: #2fbef3;
+}
+
+.kora-template.dark {
+    --bg-color: #1a1a1a;
+    --text-color: #ffffff;
+    --border-color: #404040;
+    --primary-color: #2fbef3;
+}
+
+/* Template-specific styles */
+/* ... (CSS from previous response) ... */
+
+.multiIntentExecution {
+    &.draft {
+        .addNewLineWrapper {
+            &:hover {
+                .addNewLine {              
+                    visibility: visible;
+                    opacity: 1;
+                }
+            }
+            .addNewLine {
+                visibility: hidden;
+                opacity: 0;
+            }
+        }
+        .taskItem {
+            &:hover {
+                .taskItemHeader {
+                    .optionsWrapper {
+                        visibility: visible;
+                        opacity: 1;
+                    }
+                }
+            }
+            .taskItemHeader {
+                .optionsWrapper {
+                    visibility: hidden;
+                    opacity: 0;
+                }
+                .contentBlock {
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                    .agentIcons {
+                        display: flex;
+                        align-items: center;
+                        gap: 8px;
+                        .agentIcon {
+                            display: flex;
+                            img {
+                                width: 20px;
+                                height: 20px;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+.answerCntr {
+    .email-template {
+        .email-selection-field {
+            .email-header {
+                .email-field {
+                    position: relative;
+                    .email-suggestions-dropdown {
+                        background: #ffffff;
+                        border: 1px solid #000;
+                        position: absolute;
+                        top: 100%;
+                        z-index: 2;
+                        max-height: 200px;
+                        overflow-y: auto;                      
+                    }
+                }
+            }
+        }
+    }
+}
+
+.answerFromChipDiv {
+    .ansFromChip {
+        .leftWrapperBlock {
+            .koraSpecDr {
+                .contextIcon {
+                    .srcimg {
+                        img {
+                            width: 20px;
+                            height: 20px;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+.email-body{
+	.email-body-container{
+		min-height: 100px;
+	}
+}

@@ -13,7 +13,7 @@ import {
   getNotification
 } from './actions/global.action';
 import { handleAsyncActions } from '../utils/handleAsyncActions';
-import { cloneDeep, concat, uniqBy } from 'lodash';
+import { cloneDeep, concat, orderBy, uniqBy } from 'lodash';
 
 const initialState = { 
   profile: {},
@@ -50,7 +50,8 @@ const initialState = {
   errorState : [],
   notifications : {},
   bookMarkedChatThreads: [],
-  enableDebugging: false
+  enableDebugging: false,
+  quickActions: []
 };
 
 const globalSlice = createSlice({
@@ -119,7 +120,10 @@ const globalSlice = createSlice({
       },
       setEnabledDebugging: (state, action) => {
         state.enableDebugging = action.payload
-      }
+      },
+      setQuickActions: (state, action) => {
+        state.quickActions = action.payload;
+      },
     },
     extraReducers: (builder) => {
       handleAsyncActions(builder, fetchConfigData, 'config', (state, action) => {
@@ -234,7 +238,8 @@ export const {
   setErrorState,
   setNotifications,
   setBookMarkedChatThreads,
-  setEnabledDebugging
+  setEnabledDebugging,
+	setQuickActions
 } = globalSlice.actions;
 
-export default globalSlice
+export default globalSlice;
