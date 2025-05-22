@@ -315,51 +315,54 @@ export const constructQuestionPostCall = (data, qId) => {
 	// }
 	// const _selectedContext = {...selectedContext, messageId: data?.res?.messageId };
 
-	//if the response contains thread intiating the bot conversation
-	// if (data?.res?.thread) {
-	//     //rename the answer to question and include botConversation object.
-	//     // question.question = data?.res?.thread?.previousMessage?.question
+    //if the response contains thread intiating the bot conversation
+    if (data?.payload?.thread) {
+        //rename the answer to question and include botConversation object.
+        // question.question = data?.res?.thread?.previousMessage?.question
+        question = removeOutputMessageId(question, {res: data?.payload})
+        if (!question?.botConversation || isEmpty(question?.botConversation)) {
+            question.botConversation = {}
+            question.parentMessage = data.payload.res
+            data?.payload?.thread?.messages?.map(message => {
+                question.botConversation[message?.messageId] = message
+            })                        
+        }
+        if (data?.payload?.thread && data?.payload?.thread?.nextMessages && data?.payload?.thread?.nextMessages?.length) {    
+            /*when the advancedSearch resolves for autonomous agents, need to remove the botConversation key that is formed using outputMessageId */        
+            question.botConversation[data?.payload?.messageId].status = data?.payload?.status
+            question.botConversation[data?.payload?.messageId].answer = data?.payload?.answer
+            data?.payload?.thread?.nextMessages?.map(message => {
+                question.botConversation[message?.messageId] = message
+            })
+            if (data?.payload?.thread?.parentMessage?.status === "completed") {
+                question.status = "completed"                
+                question.parentMessage = data?.payload?.thread?.parentMessage
+                
+            }
+        }
+        // question.question = data?.res?.question
+    }
 
-	//     if (!question?.botConversation) {
-	//         question.botConversation = {}
-	//         data?.res?.thread?.messages?.map(message => {
-	//             question.botConversation[message?.messageId] = message
-	//         })
-	//         question.collapseBotConversation = false
-	//         updateState({
-	//             isBotRunning: true
-	//         })
-	//         console.log("is bot running", isBotRunning)
-	//     }
-	//     if (data?.res?.thread && data?.res?.thread?.nextMessages && data?.res?.thread?.nextMessages?.length) {
-	//         question = updatedQuestions?.[currentQuestion]
-	//         question.botConversation[data?.res?.messageId].status = data?.res?.status
-	//         question.botConversation[data?.res?.messageId].answer = data?.res?.answer
-	//         data?.res?.thread?.nextMessages?.map(message => {
-	//             question.botConversation[message?.messageId] = message
-	//         })
-	//         if (data?.res?.thread?.nextMessages[0]?.status === "completed" && data?.res?.thread?.parentMessage?.status === "completed") {
-	//             question.parentMessage = data?.res?.thread?.parentMessage
-	//             question.collapseBotConversation = true
-	//             updateState({
-	//                 isBotRunning: false
-	//             })
-	//         }
-	//     }
-	//     question.question = data?.res?.question
-	// }
+    /*cancelrequest / closing the botconversation logic, check for the status as completed and viewType as threadView */
+    if(data?.payload?.history?.status === msgStatus.COMPLETED && data?.payload?.history?.viewType === "threadView") {
+        question = {
+            ...question,
+            "status": data?.payload?.history?.status,
+            "answer": data?.payload?.history?.answer,
+            
+        }
+    }
 
-	// if(data?.res?.viewType === "threadView"){
-	//     if(!question.hasOwnProperty("botConversation")){
-	//         question.parentMessage = data.res
-	//         question.botConversation = {}
-	//         updateState({
-	//             isBotRunning: true
-	//         })
-	//     }
-	// }
-
-	questions[qId] = { ...question, apiSuccess: true };
+    // if(data?.res?.viewType === "threadView"){
+    //     if(!question.hasOwnProperty("botConversation")){
+    //         question.parentMessage = data.res  
+    //         question.botConversation = {}
+    //         updateState({
+    //             isBotRunning: true
+    //         })
+    //     }
+    // }    
+    questions[qId] = {...question, apiSuccess: true};
 
 	// updateState({
 	//     searchResultData: data?.res,
@@ -400,14 +403,37 @@ export const constructQuestionPostCall = (data, qId) => {
 	}
 	store.dispatch(updateChatData(questions));
 
-	// if(question?.isTask) {
-	//     setTimeout(() => {
-	//         const stepIndex = question?.stepIndex;
-	//         props.MultiIntentExecutionRef.current.runNextTask(stepIndex, data?.res?.status)
-	//     }, 1000);
-	//     setTimeout(() => {
-	//         let getEl = document.querySelector('.taskItem.loading')
-	//         getEl?.scrollIntoView({ block: "nearest", behavior: 'smooth' });
-	//     }, 1500);
-	// }
-};
+    // if(question?.isTask) {
+    //     setTimeout(() => {
+    //         const stepIndex = question?.stepIndex;
+    //         props.MultiIntentExecutionRef.current.runNextTask(stepIndex, data?.res?.status)
+    //     }, 1000);
+    //     setTimeout(() => {
+    //         let getEl = document.querySelector('.taskItem.loading')
+    //         getEl?.scrollIntoView({ block: "nearest", behavior: 'smooth' });
+    //     }, 1500);
+    // }
+}
+
+const removeOutputMessageId = (question, apiResponse) => {
+        /*check for the outputMessageId's present in either messages / nextMessages array of apiResponse
+        if found remove it from question.botConversation object
+        */
+        if(apiResponse?.res?.thread?.messages && apiResponse?.res?.thread?.messages.length > 0){
+            apiResponse?.res?.thread?.messages.map(message => {
+                if(Object.keys(question?.botConversation)?.length > 0 && question?.botConversation[message?.outputMessageId]) {
+                    delete question?.botConversation[message?.outputMessageId]
+                }
+            })
+        }
+        if(apiResponse?.res?.thread?.nextMessages && apiResponse?.res?.thread?.nextMessages.length > 0){
+            apiResponse?.res?.thread?.nextMessages.map(message => {
+                if(Object.keys(question?.botConversation)?.length > 0 && question?.botConversation[message?.outputMessageId]) {
+                    delete question?.botConversation[message?.outputMessageId]
+                }
+            })
+        }
+
+        return question;
+
+    }

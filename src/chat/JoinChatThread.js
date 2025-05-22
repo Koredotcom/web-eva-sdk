@@ -5,7 +5,7 @@ import { v4 as uuid } from "uuid";
 import {
 	setActiveBoardId,
 	updateChatData,
-	setChatHistoryMoreAvailable,
+	setChatHistoryMoreAvailable, setCurrentQuestion,
 } from "../redux/globalSlice";
 import constructGptForm from "./gptTemplate/gptTemplateBody";
 import gptFormFunctionality from "./gptTemplate/gptTemplateFunc";
@@ -172,13 +172,17 @@ const JoinChatThread = async (props) => {
 			_questions = updatedQuestions;
 		}
 
-		store.dispatch(setChatHistoryMoreAvailable(moreAvailable));
-		store.dispatch(updateChatData(_questions));
-	};
-	await afterApiCallSuccess();
-
-	console.log(Res);
-};
+        /*set the current question when accessed from history i.e question that is not in completed state*/
+        const currentQuestion = Object.values(_questions).find(q => q?.status !== "completed");
+        store.dispatch(setCurrentQuestion(currentQuestion))
+        store.dispatch(setChatHistoryMoreAvailable(moreAvailable))
+        store.dispatch(updateChatData(_questions))
+    }
+    await afterApiCallSuccess()
+    if(state?.enableDebugging){
+        console.log(Res)
+    }
+}
 
 const constructBotAgentDataStructure = async (q) => {
 	let params = {

@@ -9,6 +9,7 @@ import {
 	fetchRecentFiles,
 	presenceStart,
 } from "./redux/actions/global.action";
+import { setEnabledDebugging } from "./redux/globalSlice";
 import store from "./redux/store";
 import { WebSocketService } from "./socket/socket.service";
 export const initializeSDK = async (config) => {
@@ -51,6 +52,9 @@ export const initializeSDK = async (config) => {
 
 	// once presenceStart call success than get the sToken which is required to connect socket
 	await store.dispatch(presenceStart());
+
+  //enablement of debugging i.e console.log statements
+  store.dispatch(setEnabledDebugging(config.enableDebugging))
 
 	// Initialize and connect WebSocket
 	WebSocketService.initialize({

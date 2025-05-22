@@ -31,5 +31,21 @@ const App = () => {
 		</div>
 	);
 };
+  const fetchHistoryWidgetData = async () => {
+    const res = await HistoryWidget({limit: 3, unsorted: true})    
+  }
+  const fetchPossiblitiesWidgetData = async () => {
+    const res = await PossibilitiesWidget()    
+  }
+  
+  return (
+    <div>
+      <ChatTestComp/>
+      <Agents />
+      {/* <File /> */}
+      <SelectedContext/>
+    </div>
+  )
+}
 
 export default App;

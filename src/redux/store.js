@@ -10,7 +10,9 @@ const store = configureStore({
         global: globalSlice.reducer
     },
     middleware: (getDefaultMiddleware) =>
-        getDefaultMiddleware().concat(logger, thunk)
+        getDefaultMiddleware({
+            serializableCheck: false,
+          }).concat(logger)
 });
 
 export default store;

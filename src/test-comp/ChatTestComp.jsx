@@ -1,18 +1,18 @@
-import React, { useEffect, useRef, useState } from "react";
-import ChatInterface from "../chat/ChatInterface";
-import NewChat from "../chat/NewChat";
-import AgentWelcomeTemplate from "./WelcomeTemplate";
-import History from "./history";
-import DemoComp from "./selectedContextDemoComp";
-import AskFollowup from "../Attachments/askFollowup";
-import MultiResponseTestComp from "./MultiResponseTestComp";
-import BotAgentTestComponent from "./BotAgentTestComponent";
-import BotConversation from "../chat/botAgent/getBotConversation";
-import CustomTemplateComponentManager from "../chat/botAgent/customTemplatesFolder/CustomTemplateComponentManager";
-import HoldConversationTemplateManager from "../chat/botAgent/customTemplatesFolder/HoldConversationTemplateManager";
-import Notifications from "./Notifications";
-import { FileUpload } from "../Attachments";
-import { cloneDeep } from "lodash";
+import React, { useEffect, useRef, useState } from 'react'
+import ChatInterface from '../chat/ChatInterface'
+import NewChat from '../chat/NewChat'
+import AgentWelcomeTemplate from './WelcomeTemplate'
+import History from './history'
+import DemoComp from './selectedContextDemoComp'
+import AskFollowup from '../Attachments/askFollowup'
+import MultiResponseTestComp from './MultiResponseTestComp'
+import BotConversation from '../chat/botAgent/getBotConversation'
+import CustomTemplateComponentManager from "../chat/botAgent/customTemplatesFolder/CustomTemplateComponentManager"
+import HoldConversationTemplateManager from '../chat/botAgent/customTemplatesFolder/HoldConversationTemplateManager'
+import Notifications from './Notifications'
+import { FileUpload } from '../Attachments'
+import { cloneDeep } from 'lodash'
+import BotAgentTestComponent from './BotAgentTestComponent'
 // import { submitUserFeedback } from '../Feedback'
 
 const ChatTestComp = (props) => {

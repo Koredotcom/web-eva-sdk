@@ -257,3 +257,6 @@ export const formatToDDMMYY = (dateStr) => {
         return response?.payload?.choices;
     }
 }
+export const checkHistoryAccessed = (questions) => {
+    return Object.values(questions ||{}).every(q => q?.historicalData)
+}

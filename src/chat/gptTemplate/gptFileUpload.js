@@ -26,14 +26,17 @@ const GptFileUpload = (event, id) => {
 export default GptFileUpload;
 
 const uploadFileInitial = (file, id, resolve, reject) => {
-	console.log(window.sdkConfig);
-	let userId = window.sdkConfig.userId;
-	let userAccessToken = window.sdkConfig.accessToken;
-	const source = axios.CancelToken.source();
-	let obj = {
-		mediaName: getUID(6),
-		loading: true,
-	};
+    const state = store.getState().global
+    if(state?.enableDebugging){
+        console.log(window.sdkConfig)
+    }
+    let userId = window.sdkConfig.userId;
+    let userAccessToken = window.sdkConfig.accessToken;
+    const source = axios.CancelToken.source();
+    let obj = {
+        mediaName: getUID(6),
+        loading: true,
+    };
 
 	const uploadConfig = {
 		file,

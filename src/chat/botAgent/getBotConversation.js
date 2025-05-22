@@ -1,7 +1,7 @@
 import { cloneDeep, isEmpty } from "lodash";
 import { chatWindow, chatConfig } from "@koredev/kore-web-sdk";
 import store from "../../redux/store";
-import { getReqIdByMessageId } from "../../utils/helpers";
+import { checkHistoryAccessed, getReqIdByMessageId } from "../../utils/helpers";
 import {
 	updateChatData,
 	setBotSDKInstance,
@@ -10,31 +10,31 @@ import {
 } from "../../redux/globalSlice";
 import { advanceSearch } from "../../redux/actions/global.action";
 import { constructQuestionPostCall } from "../chat-utils";
+import { setBotInstance, getBotInstance } from "./botSDKManager";
+
 
 const BotConversation = (args) => {
 	let state = store.getState().global;
-	let currentBotSDKInstance = state.botSDkInstance;
+	let currentBotSDKInstance = getBotInstance();
 
-	const initializeBotSDK = (botDetails) => {
-		let botOptions = chatConfig.botOptions;
-		botOptions.JWTUrl =
-			"https://mk2r2rmj21.execute-api.us-east-1.amazonaws.com/dev/users/sts";
-		botOptions.userIdentity =
-			state?.profile?.data?.emailId || botDetails?.userEmailId; // Provide users email id here
-		botOptions.botInfo = {
-			name: botDetails?.name,
-			_id: botDetails?.streamId,
-		}; // bot name is case sensitive
-		botOptions.clientId = botDetails?.webhook?.clientId;
-		botOptions.clientSecret = botDetails?.webhook?.clientSecret;
-		let botSDKInstance = new chatWindow(chatConfig);
-		console.log("bot sdk initialized: ", botSDKInstance);
-		currentBotSDKInstance = botSDKInstance;
-		store.dispatch(setBotSDKInstance(botSDKInstance));
-	};
-	if (currentBotSDKInstance) {
-		currentBotSDKInstance.sendMessage = (msg, renderTxt) => {
-			/*
+    const initializeBotSDK = (botDetails) => {
+        let botOptions = chatConfig.botOptions;        
+        botOptions.JWTUrl = "https://mk2r2rmj21.execute-api.us-east-1.amazonaws.com/dev/users/sts";
+        botOptions.userIdentity = state?.profile?.data?.emailId || botDetails?.userEmailId;// Provide users email id here
+        botOptions.botInfo = { name: botDetails?.name, "_id": botDetails?.streamId }; // bot name is case sensitive
+        botOptions.clientId = botDetails?.webhook?.clientId;
+        botOptions.clientSecret = botDetails?.webhook?.clientSecret;
+        let botSDKInstance =  new chatWindow(chatConfig)
+        if(state?.enableDebugging){
+            console.log("bot sdk initialized: ", botSDKInstance)
+        }
+        currentBotSDKInstance = botSDKInstance
+        // store.dispatch(setBotSDKInstance(botSDKInstance))
+        setBotInstance(currentBotSDKInstance)
+    }      
+    if(currentBotSDKInstance){
+        currentBotSDKInstance.sendMessage = (msg, renderTxt) => {
+            /*
             msg is the payload to be sent to server,
             renderTxt is the object that cotains the data to be rendered at the client application
             */
@@ -162,90 +162,88 @@ const BotConversation = (args) => {
          "source": "bot"
          }
          */
-		state = store.getState().global;
-		const params = {
-			reqId: data?.cId, //use reqId
-			from: "botAgent",
-		};
-		let payload = {
-			question: data?.input,
-			context: data?.context,
-			messageId: data?.messageId,
-			source: "bot",
-		};
-		if (data?.renderMsgPayload) {
-			payload.renderMsgPayload = data?.renderMsgPayload;
-		}
-		if (!isEmpty(state.customData)) {
-			payload.customData = state.customData;
-		}
+        state = store.getState().global
+        const params = {
+            "reqId": data?.cId, //use reqId
+            "from": "botAgent"
+        }
+        let payload = {
+            "question": data?.input,
+            "context": data?.context,
+            "messageId": data?.messageId,
+            "source": "bot"
+        }
+        if (data?.renderMsgPayload){
+            payload.renderMsgPayload = data?.renderMsgPayload 
+        }
+        if (!isEmpty(state.customData)) {
+            payload.customData = state.customData
+        }
+        if(state?.enableDebugging){
+            console.log("state data: ", state)        
+        }
+        /*need to add a loading state for the current question */
+        addLoadingStateToCurrentQuestion(data?.cId, data?.messageId)
+        if(state?.enableDebugging){
+            console.log("params data: ", data)
+        }
+        const res = await store.dispatch(advanceSearch({ params, payload, userId: state?.profile?.data?.id || data?.userId}))
+        constructQuestionPostCall(res, data?.cId)
+    }
 
-		console.log("state data: ", state);
-		/*need to add a loading state for the current question */
-		addLoadingStateToCurrentQuestion(
-			data?.cId,
-			data?.messageId,
-			data.input
-		);
-		console.log("params data: ", data);
-		const res = await store.dispatch(
-			advanceSearch({
-				params,
-				payload,
-				userId: state?.profile?.data?.id || data?.userId,
-			})
-		);
-		constructQuestionPostCall(res, data?.cId);
-	};
+    const addLoadingStateToCurrentQuestion = (quesReqId, messageId) => {
+        let reqId = quesReqId
+        let questions = cloneDeep(state?.questions)
+        const isHistoryAccessed = checkHistoryAccessed(questions)
+        if(isHistoryAccessed){
+            reqId = Object.entries(questions).find(([key, value]) => value?.reqId === reqId)?.[0]
+        }
+        let currentQuestion = questions[reqId]
+        if (currentQuestion) {
+            let botConversation = currentQuestion?.botConversation
+            if (botConversation) {
+                let currentBotQuestion = botConversation?.[messageId]
+                if (currentBotQuestion) {                    
+                    currentBotQuestion.loading = true
+                    if(state?.enableDebugging){
+                        console.log("added loading state: ", currentBotQuestion)
+                    }
+                    botConversation[messageId] = currentBotQuestion
+                    currentQuestion.botConversation = botConversation
+                    questions[reqId] = currentQuestion                    
+                    store.dispatch(updateChatData(questions))
+                }
+            }
+        }
+    }
+    const installOwnTemplate = (templateInstance) => {
+        currentBotSDKInstance?.templateManager?.installTemplate(templateInstance) //Here templateInstance should be a component
+    }
 
-	const addLoadingStateToCurrentQuestion = (reqId, messageId, input) => {
-		let questions = cloneDeep(state?.questions);
-		let currentQuestion = questions[reqId];
-		if (currentQuestion) {
-			let botConversation = currentQuestion?.botConversation;
-			if (botConversation) {
-				let currentBotQuestion = botConversation?.[messageId];
-				if (currentBotQuestion) {
-					currentBotQuestion.loading = true;
-					currentBotQuestion.answer = input;
-					console.log("added loading state: ", currentBotQuestion);
-					botConversation[messageId] = currentBotQuestion;
-					currentQuestion.botConversation = botConversation;
-					questions[reqId] = currentQuestion;
-					store.dispatch(updateChatData(questions));
-				}
-			}
-		}
-	};
-	const installOwnTemplate = (templateInstance) => {
-		currentBotSDKInstance?.templateManager?.installTemplate(
-			templateInstance
-		); //Here templateInstance should be a component
-	};
-
-	const generateHTMLforBotTemplate = (templatePayload) => {
-		const xoTemplatePayload = {
-			type: "bot_response",
-			from: "bot",
-			messageId: templatePayload?.messageId,
-			message: [
-				{
-					type: "text",
-					component: templatePayload?.content,
-				},
-			],
-		};
-		return currentBotSDKInstance.generateMessageDOM(xoTemplatePayload);
-	};
-	return {
-		setBotConversation,
-		submitBotResponse,
-		installOwnTemplate,
-		initializeBotSDK,
-		enableEVABotSdk,
-		generateHTMLforBotTemplate,
-		currentBotSDKInstance,
-	};
-};
+    const generateHTMLforBotTemplate = (templatePayload) => {        
+        const xoTemplatePayload = {
+            "type": "bot_response",
+            "from": "bot",
+            "messageId": templatePayload?.messageId,
+            "message": [
+                {
+                    "type": "text",
+                    "component": templatePayload?.content
+                }
+            ]
+        }
+        currentBotSDKInstance.chatEle = document.getElementById("chatTestComp")
+        return currentBotSDKInstance.generateMessageDOM(xoTemplatePayload)
+        
+    }
+    return{
+        setBotConversation,
+        submitBotResponse,
+        installOwnTemplate,
+        initializeBotSDK,
+        enableEVABotSdk,
+        generateHTMLforBotTemplate
+    }
+}
 
 export default BotConversation;

@@ -266,6 +266,43 @@ export const readNotification = createAsyncThunk(
     }
 );
 
+export const bookMarkChatThread = createAsyncThunk(
+    'global/bookMarkChatThread',
+    async (arg, { rejectWithValue }) => {
+        try {
+            const response = await axiosInstance.put(`1.1/ka/boards/${arg?.params?.boardId}/star`, arg?.payload);
+            return response.data;
+        } catch (error) {
+            handleErrorState(error, "Book Mark Chat Thread");
+            return rejectWithValue(error.response.data);
+        }
+    }
+);
+
+export const getBookMarkedChatThreads = createAsyncThunk(
+    'global/getBookMarkedChatThreads',
+    async (arg, { rejectWithValue }) => {
+        try {
+            let url = `1.1/ka/boards?type=history&star=true`
+            if(arg?.limit) {
+                url += `&limit=${arg?.limit}`
+            }
+            if(arg?.offset) {
+                url += `&offset=${arg?.offset}`
+            }
+            const response = await axiosInstance.get(url);
+            return response.data;
+        } catch (error) {
+            handleErrorState(error, "Get Book Marked Chat Thread");
+            return rejectWithValue(error.response.data);
+        }
+    }
+);
+
+
+
+
+
 
 export const getSpecificSkills = createAsyncThunk(
     'global/getSpecificSkills',

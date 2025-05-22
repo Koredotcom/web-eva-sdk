@@ -336,7 +336,9 @@ const getContextData = (state, data) => {
         selectedContextData.data = _selectedContext
         return store.dispatch(setSelectedContext(selectedContextData));
     } else {
-        console.log(data?.response)
+        if(state?.enableDebugging){
+            console.log(data?.response)
+        }
         let _quickActions = data?.response?.payload?.quickactions;
         store.dispatch(setQuickActions(_quickActions));
     }

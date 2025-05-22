@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import Notification from "../notifications/notification";
+import store from "../redux/store";
 
 const Notifications = () => {
 
@@ -8,6 +9,7 @@ const Notifications = () => {
     const [hasMore, setHasMore] = useState(false)
     const [notifyAlert, setNotifyAlert] = useState(false)
     const [notificationsCount, setNotificationsCount] = useState(0)
+    const state = store.getState().global
 
     useEffect(() => {
         NotificationRef.current = Notification()
@@ -16,7 +18,10 @@ const Notifications = () => {
             setHasMore(hasMore)
             setNotifyAlert(alerts)
             setNotificationsCount(unreadCount?.bell)
-            console.log("notifications", notifications, hasMore, unreadCount, alerts)
+            if(state?.enableDebugging) {
+                console.log("notifications", notifications, hasMore, unreadCount, alerts)
+            }
+            
         })
     }, [])
     return (

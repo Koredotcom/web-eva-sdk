@@ -17,13 +17,14 @@ import {
 	constructQuestionInitial,
 	constructQuestionPostCall,
 } from "./chat-utils";
-import {
+import { checkHistoryAccessed,
 	generateShortUUID,
 	getCidByMessageId,
 	getCidByReqId,
 } from "../utils/helpers";
 import { cloneDeep, isEmpty } from "lodash";
 import BotConversation from "./botAgent/getBotConversation";
+import { current } from "@reduxjs/toolkit";
 import { sessionItemHandler } from "../Attachments/createContext";
 
 const ChatInterface = (props) => {
@@ -249,17 +250,23 @@ const ChatInterface = (props) => {
 		resIndexRef = 0;
 	};
 
-	const invokeGptAgentTemplate = (arg) => {
-		const item = arg.item;
-		if (!item?.templateInfo?.suggestions?.[0]?.comingSoon) {
-			let payload = {};
-			let context = arg?.item?.context;
-			payload.context = { ...context, sources: item?.sources, isAgent: true };
-			payload.source = item?.sources?.[0]?.source;
-			payload.question = arg.utterance.label;
-			initiateChatConversationAction({ payload });
-		}
-	};
+    const invokeGptAgentTemplate = (arg) => {
+      const item = arg.item
+      if (!item?.templateInfo?.suggestions?.[0]?.comingSoon) {
+          let payload = {};
+          let context =  arg?.item?.context
+          /*for autonomous agent, the context should contain only sources */
+          if(item?.context?.agentType === "aAAgent"){
+            let _sources = cloneDeep(item?.sources)
+            _sources[0].isAgent = true
+            payload.context = { "sources": _sources, type:"commonAgent"}
+          }else{
+            payload.context = { ...context, "sources": item?.sources }
+          }          
+          payload.question = arg.utterance.label
+          initiateChatConversationAction({payload})
+      }
+    }
 
 	const askQuickActions = (arg) => {
 		let payload = {
@@ -285,9 +292,18 @@ const ChatInterface = (props) => {
 		if (state.chatInterfaceOptions?.contentStreaming === false) return;
 
 		// questionsRef.current - because questions state updates not coming in eventBuzz
-		let question = cloneDeep(state.questions[detail?.data?.reqId]);
+		const questions = cloneDeep(state.questions);
+      /*when resuming the conversation from history, the history data is structured using uuid, so using redId, we can extract the question to be resumed, so need to target the id, present in question with the help of reqId */
+      /*function to check the questions are from history */
+      const isHistoryAccessed = checkHistoryAccessed(questions)
+      let reqId = detail?.data?.reqId
+      if(isHistoryAccessed){
+        /*function to fetch the questio id based on the  requestId*/
+        reqId = Object.entries(questions).find(([key, value]) => value?.reqId === detail?.data?.reqId)?.[0]
+      }
+      let question = cloneDeep(questions[reqId]);
 
-		if (question?.apiSuccess) return; // Means adv search call success now no need to take socket updates
+		if (question?.apiSuccess && question?.viewType !== "threadView") return; // Means adv search call success now no need to take socket updates, added condition for threadView
 
 		if (detail?.data?.status === "in-progress") {
 			if (detail?.data?.templateType === "multi_responses") {
@@ -311,6 +327,29 @@ const ChatInterface = (props) => {
 				// One old index for comparing
 				resIndexRef = resIndex;
 			} else {
+          /*adding streaming for autonomous agent */
+          if(question?.viewType === "threadView"){
+            /*while autonomous agent is streaming, need to add the chunked data to the outputId present in botConversation */
+            if(!question?.botConversation) {
+              question.botConversation = {}
+            }
+            if(detail?.data?.outputMessageId) {
+              if(Object.values(question.botConversation)?.find(conv => conv?.outputMessageId === detail?.data?.outputMessageId)){
+                delete question?.botConversation?.[detail?.data?.outputMessageId]                                
+              }else{
+                question.botConversation[detail?.data?.outputMessageId] = {                    
+                        question: (question?.botConversation?.[detail?.data?.outputMessageId]?.question || "").concat(detail?.data?.chunk),
+                        status: detail?.data?.status,
+                        templateType: detail?.data?.templateType,
+                        "thoughts": question.botConversation[detail?.data?.outputMessageId]?.thoughts || [],
+                    }
+              }
+              questions[reqId] = question
+              store.dispatch(updateChatData(questions))
+              return;               
+            }
+            
+          }
 				question.answer = question?.answer?.concat(detail?.data?.chunk);
 			}
 
@@ -318,14 +357,13 @@ const ChatInterface = (props) => {
 				detail?.data?.templateType || "search_answer";
 			question.streamingStatus = "in-progress";
 
-			if (question?.loading) {
-				delete question?.loading;
-			}
-
-			const questions = cloneDeep(state.questions);
-			questions[detail?.data?.reqId] = question;
-			store.dispatch(updateChatData(questions));
-		}
+        if (question?.loading) {
+          delete question?.loading
+        }
+        
+        questions[reqId] = question
+        store.dispatch(updateChatData(questions))
+      }
 
 		if (
 			detail?.data?.status === "completed" ||
@@ -339,14 +377,43 @@ const ChatInterface = (props) => {
 
 			resIndexRef = 0;
 
-			// setTimeout(() => {
-			//   let dottt = document.querySelector('.dottt')
-			//   if (dottt) {
-			//     document.querySelector('.dottt').remove()
-			//   }
-			// }, 250);
-		}
-	};
+        // setTimeout(() => {
+        //   let dottt = document.querySelector('.dottt')
+        //   if (dottt) {
+        //     document.querySelector('.dottt').remove()
+        //   }
+        // }, 250);
+      }
+    }
+
+    const agentThoughts = (detail) => {
+      let _questions = cloneDeep(state.questions)
+      let reqId = detail?.data?.reqId
+      /*when resuming the conversation from history, the history data is structured using uuid, so using redId, we can extract the question to be resumed, so need to target the id, present in question with the help of reqId */
+      const isHistoryAccessed = checkHistoryAccessed(_questions)
+      if(isHistoryAccessed){
+        reqId = Object.entries(_questions).find(([key, value]) => value?.reqId === detail?.data?.reqId)?.[0]
+      }
+      let currentQuestion = _questions[reqId]
+      if(detail?.data?.answerMeta?.hasOwnProperty('msgId')) {
+        currentQuestion = {...currentQuestion, ...detail?.data?.answerMeta}      
+        currentQuestion.botConversation = {}  
+      }
+      /*we have to create botConversation with the outputMessageId add thoughts to it, once the advanceSearchApi is completed, need to replace that outputMessageId with the response of advSearch API */
+      if(detail?.data?.answerMeta?.hasOwnProperty('outputMessageId')){
+        if(!currentQuestion?.botConversation) {
+              currentQuestion.botConversation = {}
+        }
+        currentQuestion.botConversation[detail?.data?.answerMeta?.outputMessageId] = {
+            "suggestion":detail?.data?.suggestion,
+            "thoughts":detail?.data?.answerMeta?.suggestionThought,
+            "templateType": detail?.data?.templateType || "search_answer",
+        }
+      }      
+      _questions[reqId] = currentQuestion      
+      store.dispatch(updateChatData(_questions))      
+      console.log("agentThoughts", detail)
+    }
 
 	const options = (_options) => {
 		const chatOptions = cloneDeep(state.chatInterfaceOptions);
@@ -421,6 +488,7 @@ const ChatInterface = (props) => {
 		enableCustomTemplate,
 		storeCustomData,
 		contentStreaming,
+        agentThoughts,
 		options,
 		enableContextByFollowupContext,
 		clearErrorState,

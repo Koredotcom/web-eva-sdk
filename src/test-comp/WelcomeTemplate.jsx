@@ -18,7 +18,7 @@ const AgentWelcomeTemplate = (props) => {
                     <div className='mulanschip'>
                         {item?.templateInfo?.suggestions?.[0]?.utterances?.map((utterance, i) => {
                             return (
-                                <div className='chipone'
+                                <div className='chipone' key={i}
                                     onClick={()=> InvokeGptAgentTemplate({item, utterance})}
                                     >
                                     <div className='leftBlock'>

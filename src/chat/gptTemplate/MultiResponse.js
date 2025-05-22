@@ -133,7 +133,9 @@ const MultiResponse = () => {
         if (!isEmpty(contextFields)) {
 
             let reqdValue;
-            console.log("Recieved Context Fields", contextFields)
+            if(state?.enableDebugging){
+                console.log("Recieved Context Fields", contextFields)
+            }
             // Checking the Type of Context Field and getting Input Values
             if(contextFields?.value?.type === "file"){  
                 let contextFieldDiv = document.getElementById(`fileUpload-${contextFields?.key}`);
@@ -167,8 +169,9 @@ const MultiResponse = () => {
                     label: contextFields?.label
                 }    
             }
-
-            console.log("Modified Payload Context", payloadContext)
+            if(state?.enableDebugging){
+                console.log("Modified Payload Context", payloadContext)
+            }
 
             // Checking if the Context Field has a file and getting the file from the uploadedFiles
             if(contextFields?.value?.canUploadFile && uploadedFiles && (Object.keys(uploadedFiles)?.includes(`${contextFields?.key}`))) {
@@ -194,8 +197,9 @@ const MultiResponse = () => {
         }
 
         payload.formData.contextFields = payloadContext;
-
-        console.log("Final Context Field", payloadContext)
+        if(state?.enableDebugging){
+            console.log("Final Context Field", payloadContext)
+        }
 
         // Constructing requestParams
         let requestParams = allResponseFields?.map((field, index) => {
@@ -217,12 +221,15 @@ const MultiResponse = () => {
                         const promptId = field?.value?.choices?.find(choice => choice.label === reqdValue)?.id;
                         reqdValue = promptId;
                     }
-
-                    console.log(`Form field is ${`(dropdownValue-${field?.key})`} and value is {${reqdValue}}`)
+                    if(state?.enableDebugging){
+                        console.log(`Form field is ${`(dropdownValue-${field?.key})`} and value is {${reqdValue}}`)
+                    }
                 } else { 
                     reqdInputElement = document.getElementById(`inputValue-${field?.key}-${index}`)
                     reqdValue = reqdInputElement?.value || reqdInputElement?.textContent || ""
-                    console.log(`Form field is ${`(inputValue-${field?.key})`} and value is {${reqdInputElement.value}}`)
+                    if(state?.enableDebugging){
+                        console.log(`Form field is ${`(inputValue-${field?.key})`} and value is {${reqdInputElement.value}}`)
+                    }
                 }
     
                 acc[field.key] = {
