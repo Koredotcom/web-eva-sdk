@@ -6,13 +6,13 @@ import History from './history'
 import DemoComp from './selectedContextDemoComp'
 import AskFollowup from '../Attachments/askFollowup'
 import MultiResponseTestComp from './MultiResponseTestComp'
-import BotAgentTestComponent from './botAgentTestComponent'
 import BotConversation from '../chat/botAgent/getBotConversation'
 import CustomTemplateComponentManager from "../chat/botAgent/customTemplatesFolder/CustomTemplateComponentManager"
 import HoldConversationTemplateManager from '../chat/botAgent/customTemplatesFolder/HoldConversationTemplateManager'
 import Notifications from './Notifications'
 import { FileUpload } from '../Attachments'
 import { cloneDeep } from 'lodash'
+import BotAgentTestComponent from './BotAgentTestComponent'
 // import { submitUserFeedback } from '../Feedback'
 
 
@@ -80,7 +80,7 @@ const ChatTestComp = (props) => {
     }
 
     return (
-        <>
+        <div id="chatTestComp">
             <div>
                 <div>
                     {questions && Object.values(questions).map(item => {
@@ -165,7 +165,7 @@ const ChatTestComp = (props) => {
                         }
                         if (item?.viewType === "threadView"){
                             return(
-                                <>
+                                <div className="bot-agent-container">
                                     <BotAgentTestComponent question={item} />
                                     {item?.status === "completed" && (<>
                                         <button onClick={() => {
@@ -177,7 +177,7 @@ const ChatTestComp = (props) => {
                                     </>)
                                     
                                     }
-                                </>
+                                </div>
                                 
                             )
                         }
@@ -209,7 +209,7 @@ const ChatTestComp = (props) => {
                         )
                     })}
             </div>
-        </>
+        </div>
     )
 }
 

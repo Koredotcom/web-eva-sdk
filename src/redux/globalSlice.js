@@ -48,7 +48,8 @@ const initialState = {
   enableKoreBotSDK: false, // use to enable the bot sdk custom templates
   enableContextByFollowupContext: false, // use to set the context by followup context,
   errorState : [],
-  notifications : {}
+  notifications : {},
+  enableDebugging: false
 };
 
 const globalSlice = createSlice({
@@ -111,6 +112,9 @@ const globalSlice = createSlice({
       },
       setNotifications: (state, action) => {
         state.notifications = action.payload
+      },
+      setEnabledDebugging: (state, action) => {
+        state.enableDebugging = action.payload
       }
     },
     extraReducers: (builder) => {
@@ -140,7 +144,11 @@ const globalSlice = createSlice({
             }
           }else{
             if (questions?.[currentBotAgentQuestion?.reqId]?.hasOwnProperty('botConversation')) {
-              questions[currentBotAgentQuestion?.reqId].botConversation[action?.payload?.messageId] = action?.payload              
+              questions[currentBotAgentQuestion?.reqId].botConversation[action?.payload?.messageId] = {
+                ...questions[currentBotAgentQuestion?.reqId].botConversation[action?.payload?.messageId],
+                "status": action?.payload?.status,
+                "answer": action?.payload?.answer
+              }           
             }
           }
            state.questions = questions           
@@ -212,7 +220,8 @@ export const {
   setEnableKoreBotSDK,
   setEnableContextByFollowupContext,
   setErrorState,
-  setNotifications
+  setNotifications,
+  setEnabledDebugging
 } = globalSlice.actions;
 
 export default globalSlice

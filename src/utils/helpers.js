@@ -158,3 +158,7 @@ export const handleErrorState = (error, name = null) => {
     currentErrorState.push(obj);
     store.dispatch(setErrorState(currentErrorState));
 }
+
+export const checkHistoryAccessed = (questions) => {
+    return Object.values(questions ||{}).every(q => q?.historicalData)
+}

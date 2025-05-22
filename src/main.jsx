@@ -5,7 +5,7 @@ import { initializeSDK} from './index'; // Adjust the import according to your S
 
 
 
-const getAccessToken = 'lPk8F2EnODeF3zjBA35aLfTO8aVF5Rup8NDs8YvVIa50XpfhYIcJzCgMgek-k44t'; 
+const getAccessToken = 'p1DbjRFk6FkBdUPyFTcs2KSycbTxXILzpQs0S_fH_Iqm9z1YrX-xiNm6FFBc2CRt'; 
 initializeSDK({
     accessToken: getAccessToken,
     api_url: 'https://eva-qa.kore.ai/api/',
@@ -18,7 +18,8 @@ initializeSDK({
             "clientId": "cs-79a89a6f-b0ab-5e2f-b912-8dd1e2f95da0",
             "clientSecret": "VJNwkfbPcMZl4bOa1Qn3XtYRz6rqigwtTgOlaYX25Xs="
         }
-    }
+    },
+    enableDebugging: false
 });
 
 

@@ -14,12 +14,10 @@ const App = () => {
   }, [])
 
   const fetchHistoryWidgetData = async () => {
-    const res = await HistoryWidget({limit: 3, unsorted: true})
-    console.log(res)
+    const res = await HistoryWidget({limit: 3, unsorted: true})    
   }
   const fetchPossiblitiesWidgetData = async () => {
-    const res = await PossibilitiesWidget()
-    console.log(res)
+    const res = await PossibilitiesWidget()    
   }
   
   return (

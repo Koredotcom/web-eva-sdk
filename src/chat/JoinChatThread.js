@@ -2,7 +2,7 @@ import { keyBy, orderBy } from "lodash"
 import { getSearchHistory } from "../redux/actions/global.action"
 import store from "../redux/store"
 import { v4 as uuid } from 'uuid';
-import { setActiveBoardId, updateChatData, setChatHistoryMoreAvailable } from "../redux/globalSlice";
+import { setActiveBoardId, updateChatData, setChatHistoryMoreAvailable, setCurrentQuestion } from "../redux/globalSlice";
 import constructGptForm from "./gptTemplate/gptTemplateBody";
 import gptFormFunctionality from "./gptTemplate/gptTemplateFunc";
 import MultiResponse from "./gptTemplate/MultiResponse";
@@ -99,7 +99,9 @@ const JoinChatThread = async (props) => {
 
                     }})                
                 obj.botConversation = keyBy(orderedBotChatData, 'messageId')
-                console.log("ordered bot chat data: ", orderedBotChatData)
+                if(state?.enableDebugging){
+                    console.log("ordered bot chat data: ", orderedBotChatData)
+                }
                 }else{
                     obj.botConversation = {}
                 }
@@ -147,13 +149,16 @@ const JoinChatThread = async (props) => {
             _questions = updatedQuestions
         }
 
-
+        /*set the current question when accessed from history i.e question that is not in completed state*/
+        const currentQuestion = Object.values(_questions).find(q => q?.status !== "completed");
+        store.dispatch(setCurrentQuestion(currentQuestion))
         store.dispatch(setChatHistoryMoreAvailable(moreAvailable))
         store.dispatch(updateChatData(_questions))
     }
     await afterApiCallSuccess()
-
-    console.log(Res)
+    if(state?.enableDebugging){
+        console.log(Res)
+    }
 }
 
 const constructBotAgentDataStructure = async (q) => {      

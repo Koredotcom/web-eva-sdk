@@ -60,7 +60,10 @@ class WebSocketClient {
             });
 
             this.socket.on('live', (msg) => {
-                if(msg?.entity === "answersuggestion") {}
+                if(msg?.entity === "answersuggestion") {
+                    /*In answer suggestion, will receive thoughts of agents, need to append to the question*/                    
+                        ChatInterface().agentThoughts(msg)                                        
+                }
                 if(msg?.entity === "answerChunk"){
                     ChatInterface().contentStreaming(msg)
                 }

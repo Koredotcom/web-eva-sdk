@@ -8,5 +8,6 @@ export const chatTemplateTypes = {
 export const msgStatus = {
     TERMINATED: 'terminated',
     SUCCESS: 'success',
-    ERROS: 'error'
+    ERROS: 'error',
+    COMPLETED: 'completed',
 }

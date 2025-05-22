@@ -3,7 +3,7 @@ import { GetDownloadUrl, LoadMoreRecentFiles, RecentFiles } from '../files'
 import SetAttachmentContext from '../Attachments/setAttachmentContext'
 
 const File = () => {
-    const [files, setFiles] = useState(null)
+    const [files, setFiles] = useState([])
 
     useEffect(() => {
         // fetchRecentFiles()
@@ -16,12 +16,12 @@ const File = () => {
     }
     const fetchLoadMoreRecentFiles = async (loadmore) => {
         const res = await LoadMoreRecentFiles({ limit: 10, initialData: loadmore ? false : true })
-        console.log('All Recent Files', res)
+        // console.log('All Recent Files', res)
         setFiles(res)
     }
     const downloadHanlder = async (file) => {
         const res = await GetDownloadUrl(file)
-        console.log(res)
+        // console.log(res)
 
         const downloadUrl = res?.data?.downloadUrl;
         // Determine the file extension
@@ -45,7 +45,7 @@ const File = () => {
         <div>
             <h1>Recent Files</h1>
             <ul>
-                {files && files.data.map(file => {
+                {files && files?.data?.map(file => {
                     return (
                         <li key={file.id}>
                             <span onClick={() => downloadHanlder(file)}>{file?.fileName}</span>
