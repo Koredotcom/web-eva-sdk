@@ -275,7 +275,7 @@ const ChatInterface = (props) => {
         reqId = Object.entries(_questions).find(([key, value]) => value?.reqId === detail?.data?.reqId)?.[0]
       }
       let currentQuestion = _questions[reqId]
-      if(detail?.data?.answerMeta?.hasOwnProperty('msgId')) {
+      if(detail?.data?.answerMeta?.hasOwnProperty('messageId')) {
         currentQuestion = {...currentQuestion, ...detail?.data?.answerMeta}      
         currentQuestion.botConversation = {}  
       }
@@ -286,7 +286,7 @@ const ChatInterface = (props) => {
         }
         currentQuestion.botConversation[detail?.data?.answerMeta?.outputMessageId] = {
             "suggestion":detail?.data?.suggestion,
-            "thoughts":detail?.data?.answerMeta?.suggestionThought,
+            "thoughts":detail?.data?.answerMeta?.thoughts,
             "templateType": detail?.data?.templateType || "search_answer",
         }
       }      
