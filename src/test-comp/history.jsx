@@ -130,6 +130,7 @@ const History = (props) => {
                     return (
                         <div className={`bookMarkedGrp-${item?.id}`} onClick={()=> joinChatHistory(item)}>
                             <span>{item?.name}</span>
+                            <button onClick={(e) => { e.preventDefault(); e?.stopPropagation(); bookMarkChatThreadItem(item) }}>UnBook Mark</button>
                         </div>
                     )
                 })}
