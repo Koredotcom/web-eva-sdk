@@ -8,6 +8,7 @@ import { checkHistoryAccessed, generateShortUUID, getCidByMessageId, getCidByReq
 import { cloneDeep, isEmpty } from "lodash";
 import BotConversation from "./botAgent/getBotConversation";
 import { current } from "@reduxjs/toolkit";
+import { sessionItemHandler } from "../Attachments/createContext";
 
 const ChatInterface = (props) => {
     let state = store.getState().global, input = '', resIndexRef = 0;
@@ -19,7 +20,7 @@ const ChatInterface = (props) => {
             state = store.getState().global;
             // If callback exists and API call is completed, invoke it
             // if (state.advanceSearchRes.status !== 'loading' && callback) {
-                callback(state.questions, state.advanceSearchRes, state.chatHistoryMoreAvailable, state.errorState);
+                callback(state.questions, state.advanceSearchRes, state.chatHistoryMoreAvailable, state.errorState, state.quickActions);
                 // console.log(state.questions, state.advanceSearchRes, state.chatHistoryMoreAvailable)
             // }
         });
@@ -32,7 +33,7 @@ const ChatInterface = (props) => {
 
     const sendMessageAction = async (value) => {
       if (value) {
-        const {enabledAgents, selectedContext} = state
+        const { allAgents, selectedContext} = state
         let params = { reqId: generateShortUUID() }
         let payload = { question: value }
         if(state.activeBoardId) {
@@ -44,7 +45,7 @@ const ChatInterface = (props) => {
         const qId = constructQuestionInitial({ ...params, ...payload })
 
         if(!isEmpty(selectedContext?.data)) {
-          let _agents = cloneDeep(enabledAgents)
+          let _agents = cloneDeep(allAgents?.data?.agents)
           let isAgentSetAsSource = _agents.find(ag => ag.id === selectedContext?.data?.sources?.[0]?.source)
           let isAgent = isAgentSetAsSource ? "agent" : null
           if(isAgent) {
@@ -89,11 +90,17 @@ const ChatInterface = (props) => {
     
 
     const initiateChatConversationAction = async (arg) => {
+      const { enabledAgents, selectedContext } = state
       state = store.getState().global
       let params = { reqId: generateShortUUID() }
       let payload = {}
       let replaceExistingQsn = false;
-      if(state.activeBoardId) {
+      if (arg?.params?.reqId) {
+        params.reqId = arg.params.reqId
+        replaceExistingQsn = true
+      }
+
+      if (state.activeBoardId) {
         payload.boardId = state.activeBoardId
       }
       if(arg?.payload) {
@@ -111,27 +118,69 @@ const ChatInterface = (props) => {
         payload.customData = state.customData
       }
 
-      const qId = constructQuestionInitial({ ...params, ...payload, replaceExistingQsn })
+		let qId = null;
+		if(arg?.multiIntentExecution){
+			qId = constructQuestionInitial({...arg?.params, ...arg?.payload, multiIntentExecution : true})
+		}else{
+			qId = constructQuestionInitial({...params, ...payload, replaceExistingQsn})
+		}
 
-      const Res = await store.dispatch(advanceSearch({ params, payload, userId: state?.profile?.data?.id }))
-      /*
-      below condition triggers when templatetype is gpt_form_template and user doesnt have any input fields to enter, so application needs to make advancesearch api call with {} formData, as per EVA
-      */
-      if (Res?.payload?.templateType === "gpt_form_template" && Res?.payload?.content?.formFields?.inputFields?.length === 0){
-        delete payload.context
-        payload.formData = {}
-        // payload.messageId = qId
-        const newRes = await store.dispatch(advanceSearch({ params, payload,  userId: state.profile.data.id }))
-        constructQuestionPostCall(newRes, qId)
-      }else{
-        constructQuestionPostCall(Res, qId)
-      }
+		if(arg?.multiIntentExecution){
+			// params.qId = arg?.params?.stepId;
+		}else {
+			if (!isEmpty(selectedContext?.data)) {
+				let _agents = cloneDeep(enabledAgents);
+				let isAgentSetAsSource = _agents.find(
+					(ag) =>
+						ag.id === selectedContext?.data?.sources?.[0]?.source
+				);
+				let isAgent = isAgentSetAsSource ? "agent" : null;
+				if (isAgent) {
+					// when setted context is an agent
+					payload.context = {
+						sources: [
+							selectedContext?.data?.context ||
+							selectedContext?.data?.sources?.[0],
+						],
+					};
+					if (selectedContext?.data?.messageId) {
+						payload.contextParams = {
+							messageId: selectedContext?.data?.messageId,
+						};
+					}
+					/*writing especially for botAgent, will remove this once search session api gives the context data, when we click on askFollowup after bot completion */
+					if (selectedContext?.data?.sessionId) {
+						payload.context.sessionId =
+							selectedContext?.data?.sessionId;
+					}
+				} else {
+					// when setted context is an attachment
+					payload.context = {
+						sessionId: selectedContext?.data?.sessionId,
+					};
+				}
+			}
+		}
 
-      if(arg?.callback) {
-        arg.callback()
-      }
-      resIndexRef = 0
+
+		const Res = await store.dispatch(advanceSearch({ params, payload, userId: state?.profile?.data?.id, multiIntentExecution: arg?.multiIntentExecution }))
+		/*
+	  below condition triggers when templatetype is gpt_form_template and user doesnt have any input fields to enter, so application needs to make advancesearch api call with {} formData, as per EVA
+	  */
+    if (Res?.payload?.templateType === "gpt_form_template" && Res?.payload?.content?.formFields?.inputFields?.length === 0){
+      delete payload.context
+      payload.formData = {}
+      const newRes = await store.dispatch(advanceSearch({ params, payload, userId: state?.profile?.data?.id }))
+      constructQuestionPostCall(newRes, qId)
+    }else{
+      constructQuestionPostCall(Res, qId)
     }
+
+    if(arg?.callback) {
+      arg.callback()
+    }
+    resIndexRef = 0
+	}
 
     const invokeGptAgentTemplate = (arg) => {
       const item = arg.item
@@ -258,8 +307,8 @@ const ChatInterface = (props) => {
       if (detail?.data?.status === 'completed' || detail?.data?.status === 'aborted') {
         question.streamingStatus = detail?.data?.status // 'completed' or 'aborted'
 
-        const questions = cloneDeep(state.questions);
-        questions[reqId] = question
+        const questions = cloneDeep(state.questions)
+        questions[detail?.data?.reqId] = question
         store.dispatch(updateChatData(questions))
 
         resIndexRef = 0
@@ -328,10 +377,10 @@ const ChatInterface = (props) => {
      */
     const sendMessage = (input, question) => {
       // Check if this is a bot conversation
-      if(question?.botConversation && question?.status !== 'completed') {
+      if(question?.botConversation) {
         // Get the conversation which is in-progress
-        const conversation = Object.values(question?.botConversation)?.find(c => c?.status === 'in-progress')
-        
+      const conversation = Object.values(question?.botConversation)?.find(c => c?.status === 'in-progress')
+
         // Prepare payload for bot conversation
         const payload = {
           "cId": question?.cId || question?.reqId, // Use conversation ID or request ID
@@ -345,6 +394,22 @@ const ChatInterface = (props) => {
         // Handle as a regular chat message
         sendMessageAction(input)
       }
+    }
+
+    const setAgentContext = (agent) => {
+      const agentDetails = {
+			name: agent?.name,
+			docId: agent?.id,
+			source: agent?.id,
+			title: agent?.name,
+			icon: agent?.icon,
+			isAgent: true,
+		};
+		sessionItemHandler({
+			item: agentDetails,
+			invokeAgent: true,
+			type: "agent",
+      })
     }
 
     return {
@@ -362,7 +427,8 @@ const ChatInterface = (props) => {
         options,
         enableContextByFollowupContext,
         clearErrorState,
-        sendMessage
+        sendMessage,
+        setAgentContext
     }
 }
 

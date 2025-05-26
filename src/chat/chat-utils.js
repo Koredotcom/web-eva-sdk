@@ -1,5 +1,5 @@
 import { v4 as uuid } from 'uuid';
-import { updateChatData, setActiveBoardId, setCurrentQuestion, setSelectedContext, setErrorState } from '../redux/globalSlice';
+import { updateChatData, setActiveBoardId, setCurrentQuestion, setSelectedContext, setErrorState, setAllHistory, setQuickActions } from '../redux/globalSlice';
 import store from '../redux/store';
 import { cloneDeep, isEmpty } from 'lodash';
 import constructGptForm from './gptTemplate/gptTemplateBody';
@@ -8,32 +8,97 @@ import { getCidByMessageId } from '../utils/helpers';
 import AnswerFromChip from './AnswerFromChip';
 import { chatTemplateTypes, msgStatus } from '../utils/constants';
 import MultiResponse from './gptTemplate/MultiResponse';
+import moment from "moment";
+import { fetchHistory } from "../redux/actions/global.action";
+import { multiIntentExecutionFunc } from "../templateRenderer/functionality/multi-intent-execution";
 
 export const constructQuestionInitial = (args) => {
-    let uniqueMsgId = args?.reqId;
-    const questions = cloneDeep(store.getState().global.questions)
+	let uniqueMsgId = args?.reqId;
+	const questions = cloneDeep(store.getState().global.questions);
 
-    if(args?.replaceExistingQsn){
-        uniqueMsgId = getCidByMessageId(questions, args?.messageId)
-    }
-    
-    let question = args?.question
-    let obj = {
-        cId: uniqueMsgId,
-        question,
-        answer: "",
-        loading: true,
-        type: "search",
-        reqId: uniqueMsgId
-    }
+	if (args?.replaceExistingQsn && !args?.reqId) {
+		uniqueMsgId = getCidByMessageId(questions, args?.messageId);
+	}
 
-    questions[uniqueMsgId] = obj
+	const activeBoardId = store.getState().global.activeBoardId;
 
-    store.dispatch(updateChatData(questions))
-    store.dispatch(setCurrentQuestion(obj))
+	let question = args?.question;
 
-    return uniqueMsgId
-}
+	let obj = {};
+
+	let isTask = questions[args?.reqId]?.isTask;
+	let stepIndex = isTask ? questions[args?.reqId]?.stepIndex : null;
+
+	if(args?.multiIntentExecution){
+
+		obj = {
+			...args?.task,
+			id: args?.stepId,
+			question: args?.task?.utterance,
+			answer: "",
+			loading: true,
+			type: "search",
+			isTask: true,
+			parentMsgId: args?.reqId,
+			cId: args?.stepId,
+			reqId: args?.stepId,
+			showResponse: true,
+		}
+
+		questions[args?.stepId] = obj;
+		uniqueMsgId = args?.stepId;
+		
+	}
+	else if(isTask){
+		obj = {
+			cId: uniqueMsgId,
+			question,
+			answer: "",
+			loading: true,
+			type: "search",
+			reqId: uniqueMsgId,
+			showResponse: true,
+			isTask: true,
+			parentMsgId: args?.reqId,
+			isMultiIntentExecution: true,
+			stepIndex: stepIndex,
+		};
+
+		questions[uniqueMsgId] = obj;
+	}
+	else{
+		obj = {
+			cId: uniqueMsgId,
+			question,
+			answer: "",
+			loading: true,
+			type: "search",
+			reqId: uniqueMsgId,
+		};
+
+		questions[uniqueMsgId] = obj;
+	}
+
+	store.dispatch(updateChatData(questions));
+	store.dispatch(setCurrentQuestion(obj));
+
+	if (!activeBoardId) {
+		let arr = store.getState().global?.history?.data?.boards || [];
+		let threadObj = {
+			createdOn: moment().valueOf(),
+			name: "loader",
+			loading: true,
+		};
+		store.dispatch(
+			setAllHistory({
+				...store.getState().global?.AllHistory,
+				data: [threadObj, ...arr],
+			})
+		);
+	}
+
+	return uniqueMsgId;
+};
 
 export const constructQuestionPostCall = (data, qId) => {
 
@@ -48,7 +113,11 @@ export const constructQuestionPostCall = (data, qId) => {
     let question = questions?.[qId]
     delete question?.loading;
 
-
+	if (!activeBoardId) {
+		store.dispatch(
+			fetchHistory({ deleteLoader: true, params: { limit: 10 } })
+		);
+	}
     if(state.enabledCustomTemplates?.[data?.payload?.templateType]) {
         if(data?.payload?.templateType === chatTemplateTypes.GPT_FORM_TEMPLATE) {
             let multiResponseData = MultiResponse().getInitialFormData(data?.payload)
@@ -56,55 +125,70 @@ export const constructQuestionPostCall = (data, qId) => {
         }
         // If custom template enabled for this data?.payload?.templateType template type
     } else {
-
         // DEFAULT GPT FORM TEMPLATE
         if(data?.payload?.history?.status !== msgStatus.TERMINATED && data?.payload?.templateType === chatTemplateTypes.GPT_FORM_TEMPLATE) {
             let multiResponseData = MultiResponse().getInitialFormData(data?.payload);
             question.gpt_forms = multiResponseData;
             const gptFormConstructedData = constructGptForm(multiResponseData, data?.payload)
-            question.template_html = gptFormConstructedData.outerHTML
-            setTimeout(() => {
-                gptFormFunctionality(multiResponseData, data?.payload);
-            }, 1000);
-        }
-    }
+			// question.template_html = gptFormConstructedData.outerHTML;
+			// setTimeout(() => {
+			// 	gptFormFunctionality(multiResponseData, data?.payload);
+			// }, 1000);
+		}
+	}
 
-    if((data?.payload?.templateType === chatTemplateTypes.SEARCH_ANSWER) && (isEmpty(data?.payload?.thread))){
-        if(data?.payload?.sources?.length > 0 ){
-            const ansFromChipData = AnswerFromChip({item : data?.payload})
-            question.answerFrom_html = ansFromChipData.outerHTML
-            // setTimeout(() => {
-            //     MenuOptions(data?.payload)
-            // }, 1000);
-        }
-    }
+	if (data?.payload?.templateType === chatTemplateTypes.SEARCH_ANSWER) {
+		if (data?.payload?.sources?.length > 0 ){
+			// const ansFromChipData = AnswerFromChip({item: data?.payload });
+			// question.answerFrom_html = ansFromChipData.outerHTML;
+			// setTimeout(() => {
+			//     MenuOptions(data?.payload)
+			// }, 1000);
+		}
+		if (Object.values(data?.payload?.thread || {})?.length > 0) {
+			if (!question?.botConversation) {
+				question.botConversation = {};
+				question.parentMessage = data?.payload;
+				data?.payload?.thread?.messages?.map((message) => {
+					question.botConversation[message?.messageId] = message;
+				});
+			} else {
+				if (data?.payload?.thread?.nextMessages?.length) {
+					// question = updatedQuestions?.[currentQuestion]
+					question.botConversation[data?.payload?.messageId].status =
+						data?.payload?.status;
+					question.botConversation[data?.payload?.messageId].answer =
+						data?.payload?.answer;
+					data?.payload?.thread?.nextMessages?.map((message) => {
+						question.botConversation[message?.messageId] = message;
+					});
+					if (
+						data?.payload?.thread?.parentMessage?.status ===
+						"completed"
+					) {
+						question.parentMessage =
+							data?.payload?.thread?.parentMessage;
+						question.status = "completed";
+						// question.collapseBotConversation = true
+						// updateState({
+						//     isBotRunning: false
+						// })
+					}
+				}
+			}
+		}
+	}
 
     if(data?.payload?.queryExhaustionInfo?.queryLimitExhausted){
-        question.queryExhaustionInfo = data?.payload?.queryExhaustionInfo;
+        question.queryExhaustionInfo = data?.payload?.queryExhaustionInfo
         store.dispatch(setErrorState(data?.payload?.queryExhaustionInfo))
     }
-    
-    //for synchronous task
-    // if(Object.keys(data?.payload?.thread || {})?.length){
-    //         if (!question?.botConversation) {
-    //         question.botConversation = {}
-    //         data?.payload?.thread?.messages?.map(message => {
-    //             question.botConversation[message?.messageId] = message
-    //         })            
-    //     }
-    //     if (data?.payload?.thread && data?.payload?.thread?.nextMessages && data?.payload?.thread?.nextMessages?.length) {            
-    //         question.botConversation[data?.payload?.messageId].status = data?.payload?.status
-    //         question.botConversation[data?.payload?.messageId].answer = data?.payload?.answer
-    //         data?.payload?.thread?.nextMessages?.map(message => {
-    //             question.botConversation[message?.messageId] = message
-    //         })
-    //         if (data?.payload?.thread?.parentMessage?.status === "completed") {
-    //             question.parentMessage = data?.payload?.thread?.parentMessage                        
-    //         }
-    //     }        
-    // }
 
-    
+	if(data?.payload?.quickactions){
+		store.dispatch(setQuickActions(data?.payload?.quickactions));
+	}else{
+		store.dispatch(setQuickActions([]));
+	}
     // if(data?.params?.arg?.retry) {
     //     delete question?.error;
     // }
@@ -157,24 +241,29 @@ export const constructQuestionPostCall = (data, qId) => {
         // if(data?.errInfo?.errors[0]?.code === 'MaximumPointsExceeded'){
         //     _limitExhausted = data?.errInfo?.errors[0]
         // }
-    }
-    else if(data?.params?.multiIntentExecution) {
-        // const stepIndex = question?.stepIndex;
-        // question = { ...question, ...data?.res, showResponse: true};
-        // updatedQuestions[question?.parentMsgId].executingActionId = question?.id
-        // if(stepIndex === 0) {
-        //     updatedQuestions[question?.parentMsgId].status = 'in-progress'
-        // }
-    }
+	} else if (data?.meta?.arg?.multiIntentExecution || question?.isMultiIntentExecution) {
+		const stepIndex = question?.stepIndex;
+		question = { ...question, ...data?.payload, showResponse: true};
+		questions[question?.parentMsgId].executingActionId = question?.id
+		if(stepIndex === 0) {
+		    questions[question?.parentMsgId].status = 'in-progress'
+		}
+		if(question?.isTask) {
+				const stepIndex = question?.stepIndex;
+				setTimeout(() => {
+					multiIntentExecutionFunc().runNextTask(stepIndex, data?.payload?.status , question)
+				}, 1000);
+		}
+	}
     else if(data?.payload?.history?.status === msgStatus.TERMINATED){
         if(data?.payload?.history?.templateType === chatTemplateTypes.GPT_FORM_TEMPLATE){
             delete question.template_html
         }
-            let terminatedAnswerResponse = "I see you interrupted the answer generation. Please feel free to provide more details or let me know how can I assist you further"
-            question = { ...question,  ...data?.payload?.history, answer : terminatedAnswerResponse};
-    }
+        let terminatedAnswerResponse = "I see you interrupted the answer generation. Please feel free to provide more details or let me know how can I assist you further"
+        question = { ...question,  ...data?.payload?.history, answer : terminatedAnswerResponse};
+	} 
     else {      
-        if(!question?.hasOwnProperty('botConversation')) {
+        if(data?.meta?.arg?.params?.from !== "botAgent") {
             question = { ...question, ...data?.payload}; 
         }
                         

@@ -1,8 +1,9 @@
-
 import moment from "moment";
 import store from "../redux/store";
-import { cloneDeep } from "lodash";
+import { cloneDeep, debounce } from "lodash";
 import { setErrorState } from "../redux/globalSlice";
+import ReactDOM from "react-dom/server";
+import { getSuggestedContactListNew } from "../redux/actions/global.action";
 
 export const Timedifference = (time) => {
     let daysdiff = new Date().getDate() - new Date(time).getDate();
@@ -75,7 +76,6 @@ export const getCidByMessageId = (data, messageId) => {
     }
     return null; // or an appropriate value if no match is found
 };
-
 
 export const getReqIdByMessageId = (messageId) => {
     let questions = cloneDeep(store.getState().global?.questions)
@@ -155,10 +155,72 @@ export const handleErrorState = (error, name = null) => {
         obj.failedCall = name;
     }
 
-    currentErrorState.push(obj);
-    store.dispatch(setErrorState(currentErrorState));
+	currentErrorState.push(obj);
+	store.dispatch(setErrorState(currentErrorState));
+};
+
+export const convertTemplateToHtml = (element) => {
+	// Create a temporary div
+	const tempDiv = document.createElement("div");
+
+	// Render React element to HTML string
+	const htmlString = ReactDOM.renderToString(element);
+
+	// Set the HTML string to the div
+	tempDiv.innerHTML = htmlString;
+
+	// Return the HTML string
+	return tempDiv.innerHTML;
+};
+
+export function encodeHtml(text) {
+	text = text?.toString();
+	text = text?.replace(/&nbsp;/g, " ");
+	text = text?.replace(/&amp;/g, "&");
+	text = text?.replace(/&lt;/g, "<");
+	text = text?.replace(/&gt;/g, ">");
+	text = text?.replace(/&quot;/g, '"');
+	text = text?.replace(/&apos;/g, "'");
+	return text;
 }
 
+export const formatToDDMMYY = (dateStr) => {
+	const date = new Date(dateStr);
+	if (isNaN(date)) return '';
+  
+	const dd = String(date.getDate()).padStart(2, '0');
+	const mm = String(date.getMonth() + 1).padStart(2, '0'); // Month is 0-based
+	const yy = String(date.getFullYear()).slice(-2);
+  
+	return `${dd}/${mm}/${yy}`;
+  };
+
+  export const delayedSearchCallback = async (value, type) => {
+	let userId = store?.getState()?.global?.profile?.data?.id;
+
+    if (type === 'getSuggestedContactList') {
+        // store.dispatch(getSuggestedContactList(value?.value));
+    } else {
+        // store.dispatch(getContactList(value?.value));
+        let params = {
+            source: value?.connectionSource,
+			userId : userId,			
+        }
+        let payload = {
+            "dataType": "listPeople",
+            "fieldId": "to",
+            "connectionId": value?.connectionId,
+            "params": {
+                "q": value?.value
+            },
+            "meta": {
+                "page": 0
+            }
+        }
+        const response = await store.dispatch(getSuggestedContactListNew({params, payload}))
+        return response?.payload?.choices;
+    }
+}
 export const checkHistoryAccessed = (questions) => {
     return Object.values(questions ||{}).every(q => q?.historicalData)
 }
