@@ -161,7 +161,7 @@ const BotConversation = (args) => {
             console.log("state data: ", state)        
         }
         /*need to add a loading state for the current question */
-        addLoadingStateToCurrentQuestion(data?.cId, data?.messageId)
+        addLoadingStateToCurrentQuestion(data?.cId, data?.messageId, data?.input)
         if(state?.enableDebugging){
             console.log("params data: ", data)
         }
@@ -169,7 +169,7 @@ const BotConversation = (args) => {
         constructQuestionPostCall(res, data?.cId)
     }
 
-    const addLoadingStateToCurrentQuestion = (quesReqId, messageId) => {
+    const addLoadingStateToCurrentQuestion = (quesReqId, messageId, input) => {
         let reqId = quesReqId
         let questions = cloneDeep(state?.questions)
         const isHistoryAccessed = checkHistoryAccessed(questions)
@@ -183,6 +183,7 @@ const BotConversation = (args) => {
                 let currentBotQuestion = botConversation?.[messageId]
                 if (currentBotQuestion) {                    
                     currentBotQuestion.loading = true
+                    currentBotQuestion.answer = input
                     if(state?.enableDebugging){
                         console.log("added loading state: ", currentBotQuestion)
                     }
