@@ -65,7 +65,14 @@ const HistoryInterface = (props) => {
             limit: arg?.limit || 10
         }
         const res = await store.dispatch(getBookMarkedChatThreads(params))
-        store.dispatch(setBookMarkedChatThreads(res?.payload))
+        let bookmarkedThreads = {
+            ...res?.payload,
+            boards: res?.payload?.boards?.map(boardItem => {
+                boardItem = {...boardItem, bookMarked: true}
+                return boardItem
+            })
+        }
+        store.dispatch(setBookMarkedChatThreads(bookmarkedThreads))
     }
 
     const loadMoreBookMarkedChatThreads = async (arg) => {
@@ -98,13 +105,18 @@ const HistoryInterface = (props) => {
         const res = await store.dispatch(bookMarkChatThread({params, payload}))
         if(res?.payload?.[0] === "SUCCESS") {
             let _history = cloneDeep(state?.AllHistory)
+            let _bookMarkedThreads = cloneDeep(state?.bookMarkedChatThreads)
             _history.data = _history?.data?.map(historyItem => {
                 if(historyItem?.id === item?.id) {
                     historyItem = {...historyItem, bookMarked: !historyItem?.bookMarked}
                 }
                 return historyItem
             })
+            if(item?.bookMarked) {
+                _bookMarkedThreads.boards = _bookMarkedThreads?.boards?.filter(boardItem => boardItem?.id !== item?.id)
+            }
             store.dispatch(setAllHistory(_history))
+            store.dispatch(setBookMarkedChatThreads(_bookMarkedThreads))
         }
     }
 
