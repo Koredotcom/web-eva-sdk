@@ -170,6 +170,13 @@ const ChatInterface = (props) => {
       store.dispatch(setCustomData(payload))
     }
 
+    const getCustomData = () => {
+      if(state?.enableDebugging){
+        console.log("custom data", state.customData)
+      }      
+      return state.customData;
+    }
+
     const contentStreaming = (detail) => {
       // if contentStreaming set to false by client than it will not stream the content
       if(state.chatInterfaceOptions?.contentStreaming === false) return;
@@ -349,6 +356,7 @@ const ChatInterface = (props) => {
         askQuickActions,
         enableCustomTemplate,
         storeCustomData,
+        getCustomData,
         contentStreaming,
         agentThoughts,
         options,
