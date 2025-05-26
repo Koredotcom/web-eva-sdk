@@ -47,7 +47,7 @@ const multiIntentExecutionFunc = (item) => {
 
     const addNewTask = (index, task) => {
         const _questions = cloneDeep(state?.questions);
-        const currentExecutionPipeline = cloneDeep(_questions[item?.id]?.executionPipeline);
+        let currentExecutionPipeline = cloneDeep(_questions[item?.id]?.executionPipeline);
         
 
         if(isEmpty(_questions[item?.id]?.savedExecutionPipeline)){
