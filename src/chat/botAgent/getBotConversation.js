@@ -66,8 +66,7 @@ const BotConversation = (args) => {
                 }
                 question.botConversation[detail?.messageId] = detail?.message
                 if (detail?.message?.templateType === "bot_template" || detail?.message?.templateType === "hold_conversation"){
-                    if (state.enableKoreBotSDK){
-                        detail.message.content.payload.inline = true
+                    if (state.enableKoreBotSDK){                        
                         const templatePayload = {
                             "type": "bot_response",
                             "from": "bot",
