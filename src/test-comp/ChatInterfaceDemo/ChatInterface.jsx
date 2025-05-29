@@ -4,6 +4,8 @@ import { ChatInterface } from "../../chat";
 import Composebar from "./Composebar";
 
 import "./ChatInterface.scss"
+import History from "../history";
+import Agents from "../agents";
 
 const ChatInterfaceDemo = () => {
   const [messages, setMessages] = useState(null);
@@ -39,38 +41,44 @@ const ChatInterfaceDemo = () => {
   }, []);
 
   return (
-    <div>
-      <div>
-        {messages &&
-          Object.values(messages).map((item) => {
-            if (item?.isTask) return;
-            const assistantIconTemplate = () => {
-              return <img src="/public/eva-black-svg.svg" alt="AiForWork" />;
-            };
-
-            
-            let html = TemplateRenderer.generateHTMLTemplate(item, {
-              assistantIconTemplate,
-              loadingText: "Analyzing",
-            });
-
-            return (
-              <div
-                dangerouslySetInnerHTML={{
-                  __html: html.innerHTML,
-                }}
-              />
-            );
-
-          })}
+    <div className="chatInterfaceDemo">
+      <div className="historySec">
+        <History />
+        <Agents />
       </div>
-      <Composebar 
-        quickActions={quickActions} 
-        chatInterface={chatInterface} 
-        input={input} 
-        setInput={setInput} 
-        messages={messages} 
-      />
+      <div className="chatInterfaceSec">
+        <div className="chatSec">
+          {messages &&
+            Object.values(messages).map((item) => {
+              if (item?.isTask) return;
+              const assistantIconTemplate = () => {
+                return <img src="/public/eva-black-svg.svg" alt="AiForWork" />;
+              };
+
+              
+              let html = TemplateRenderer.generateHTMLTemplate(item, {
+                assistantIconTemplate,
+                loadingText: "Analyzing",
+              });
+
+              return (
+                <div
+                  dangerouslySetInnerHTML={{
+                    __html: html.innerHTML,
+                  }}
+                />
+              );
+
+            })}
+        </div>
+        <Composebar 
+          quickActions={quickActions} 
+          chatInterface={chatInterface} 
+          input={input} 
+          setInput={setInput} 
+          messages={messages} 
+        />
+      </div>
     </div>
   );
 };
