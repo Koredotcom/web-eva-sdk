@@ -1,4 +1,5 @@
 import React from "react";
+import { NewChat } from "../../chat";
 
 const Composebar = ({quickActions, chatInterface, input, setInput, messages}) => {
 
