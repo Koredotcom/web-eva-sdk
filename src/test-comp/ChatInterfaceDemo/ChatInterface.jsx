@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { TemplateRenderer } from "../../templateRenderer";
-import { ChatInterface } from "../../chat";
+import { BotConversation, ChatInterface } from "../../chat";
 import Composebar from "./Composebar";
 
 import "./ChatInterface.scss"
@@ -17,6 +17,16 @@ const ChatInterfaceDemo = () => {
   useEffect(() => {
     chatInterface.current = ChatInterface();
     chatInterface.current.options({ contentStreaming: true });
+    let botInstance = BotConversation()
+        botInstance.initializeBotSDK({
+            "name": "ProcureBot",
+            "streamId": "st-b6012ef2-810d-5240-b33e-5404d68b680e",
+            "webhook": {
+                "clientId": "cs-79a89a6f-b0ab-5e2f-b912-8dd1e2f95da0",
+                "clientSecret": "VJNwkfbPcMZl4bOa1Qn3XtYRz6rqigwtTgOlaYX25Xs="
+            }
+        })
+    botInstance.enableEVABotSdk(true)
 
     // Subscribe to updates
     const unsubscribe = chatInterface.current.subscribe(
