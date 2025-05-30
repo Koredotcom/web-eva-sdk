@@ -149,7 +149,26 @@ function setupEventListeners(botConversation, props) {
 	});
 }
 
-function setupTemplates(botConversation) {
+const renderQuickRepliesTemplate = (payload) => {
+    const payloadText = payload?.text;
+    const templateHTML = `
+        <div class="usrsChipsList quickRepliesTemplate">
+            <div class="title">${payloadText}</div>
+            ${payload?.quick_replies
+                ?.map((data) => `<div class="userChip">${data?.title}</div>`)
+                .join("")}
+        </div>
+    `;
+
+    // Convert the string to a DOM element
+    const templateFragment = document
+        .createRange()
+        .createContextualFragment(templateHTML);
+
+    return templateFragment;
+};
+export function setupTemplates(botConversation) {
+	
 	if (!isEmpty(botConversation)) {
 		const templateConversations = Object.values(botConversation)?.filter(
 			(conversation) => conversation?.hasOwnProperty("template_html")
@@ -157,6 +176,10 @@ function setupTemplates(botConversation) {
 
 		if (templateConversations?.length) {
 			templateConversations.forEach((conversation) => {
+				if(conversation?.templateType === "bot_template" && conversation?.content?.payload?.template_type === "quick_replies"){
+					if (!conversation.template_html?.querySelector(".quickRepliesTemplate"))
+					  conversation.template_html?.appendChild(renderQuickRepliesTemplate(conversation?.content?.payload))
+				}
 				const templateDiv = document.querySelector(
 					`.botTemplate-${conversation?.messageId}`
 				);
@@ -180,7 +203,16 @@ function renderBotConversation(
 		return "";
 	}
 
-	const conversationsHTML = Object.values(botConversation)
+	let conversationsHTML = "";
+
+	if(props?.status === 'completed' && props?.viewType === 'threadView') {
+		conversationsHTML = customMarkdownRenderer(`
+			<div class="botTemplate-${props?.messageId}">
+				${props?.answer}
+			</div>
+		`);
+	}else{
+		conversationsHTML = Object.values(botConversation)
 		.map((conversation) =>
 			createConversationHTML(
 				conversation,
@@ -192,6 +224,7 @@ function renderBotConversation(
 		)
 		.join("");
 
+	}
 	return `
         <div class="bot-conversation-wrapper">
             ${conversationsHTML}
@@ -219,4 +252,4 @@ export function render(
 	}, 1000);
 	return html;
 }
-export default { render };
+export default { render , setupTemplates };
