@@ -16,11 +16,13 @@ const Composebar = ({quickActions, chatInterface, input, setInput, messages}) =>
 
 
   return (
-    <div>
-      <div>
-        {quickActions?.map((item) => {
+    <div className="composebar-parent">
+      <div className="composebar-area">
+        <div className="guick-reply-container">
+            {quickActions?.map((item) => {
           return (
             <div
+            className="quick-reply-chip"
               key={item?.id}
               onClick={() => {
                 chatInterface.current.askQuickActions(item);
@@ -30,6 +32,7 @@ const Composebar = ({quickActions, chatInterface, input, setInput, messages}) =>
             </div>
           );
         })}
+        </div>
         <textarea
           id="composeBar"
           onKeyDown={onChange}
@@ -38,17 +41,19 @@ const Composebar = ({quickActions, chatInterface, input, setInput, messages}) =>
           placeholder="Ask question..."
         />
       </div>
-      <button
-        onClick={() =>
-          chatInterface.current.sendMessage(input, messages?.[messages?.length - 1])
-        }
-      >
-        Send
-      </button>
-      <button onClick={() => NewChat()}>+New</button>
-      <button onClick={() => chatInterface.current.cancelMessageReqAction()}>
-        Stop
-      </button>
+      <div className="composebar-buttons">
+            <button
+            onClick={() =>
+            chatInterface.current.sendMessage(input, messages?.[messages?.length - 1])
+            }
+        >
+            Send
+        </button>
+        <button onClick={() => NewChat()}>+New</button>
+        <button onClick={() => chatInterface.current.cancelMessageReqAction()}>
+            Stop
+        </button>
+      </div>
     </div>
   );
 };

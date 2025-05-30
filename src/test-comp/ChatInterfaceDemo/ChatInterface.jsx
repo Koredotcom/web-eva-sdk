@@ -52,7 +52,7 @@ const ChatInterfaceDemo = () => {
             Object.values(messages).map((item) => {
               if (item?.isTask) return;
               const assistantIconTemplate = () => {
-                return <img src="/public/eva-black-svg.svg" alt="AiForWork" />;
+                return <div className="logo-icon"><img src="/public/eva-black-svg.svg" alt="AiForWork" /></div>;
               };
 
               

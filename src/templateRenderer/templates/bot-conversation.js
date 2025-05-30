@@ -29,7 +29,7 @@ function renderUserQuestion(question, userIconTemplate) {
 
 function renderAssistantQuestion(question, assistantIconTemplate) {
 	if (question) {
-		return `<div>
+		return `<div class="bot-flex-wrapper">
 					${assistantIconTemplate}
 					${customMarkdownRenderer(escapeHTML(question))}
 				</div>`;
@@ -88,7 +88,7 @@ function createConversationHTML(
             `;
 		} else if (conversation?.templateType === "bot_template") {
 			return `
-				<div>
+				<div class="bot-flex-wrapper-group">
 					${renderAssistantQuestion(conversation?.template_html, assistantIconTemplate)}
 					<br/>
 					${renderUserQuestion(conversation?.answer, userIconTemplate)}
