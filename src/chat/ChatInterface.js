@@ -77,7 +77,10 @@ const ChatInterface = (props) => {
           let isAgent = isAgentSetAsSource ? "agent" : null
           if(isAgent) {
             // when setted context is an agent
-            payload.context = {"sources": [selectedContext?.data?.context || selectedContext?.data?.sources?.[0]]}
+            payload.context = {
+              agentType: isAgentSetAsSource?.type,
+              title: isAgentSetAsSource?.name,
+              "sources": [selectedContext?.data?.context || selectedContext?.data?.sources?.[0]]}
             if(selectedContext?.data?.messageId) {
               payload.contextParams = {messageId: selectedContext?.data?.messageId}
             }
