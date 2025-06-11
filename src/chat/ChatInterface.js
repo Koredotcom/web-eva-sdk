@@ -67,7 +67,10 @@ const ChatInterface = (props) => {
           payload.boardId = state.activeBoardId
         }
         if(!isEmpty(state.customData)){
+          
           payload.customData = state.customData
+          console.log("custom data in chat interface", state.customData)
+          console.log("custom  data payload in chat interface", payload.customData)
         }
         const qId = constructQuestionInitial({ ...params, ...payload })
 
@@ -95,8 +98,9 @@ const ChatInterface = (props) => {
             }
           }
         }
-
+        console.log("payload in chat interface", payload)
         const Res = await store.dispatch(advanceSearch({ params, payload, userId: state.profile.data.id }))
+        console.log("payload in chat interface", payload)
         constructQuestionPostCall(Res, qId)
         resIndexRef = 0
       }
@@ -152,7 +156,10 @@ const ChatInterface = (props) => {
       }
 
       if(!isEmpty(state.customData)){
+        console.log("custom data in chat interface line no 156", state.customData)
+        console.log("custom data payload in chat interface line no 157", payload.customData)
         payload.customData = state.customData
+        console.log("custom data payload in chat interface line no 157", payload.customData)
       }
 
 		let qId = null;
@@ -199,8 +206,11 @@ const ChatInterface = (props) => {
 			}
 		}
 
+    console.log("custom data payload in chat interface line no 206", payload.customData)
 
 		const Res = await store.dispatch(advanceSearch({ params, payload, userId: state?.profile?.data?.id, multiIntentExecution: arg?.multiIntentExecution }))
+
+    console.log("payload in chat interface line no 210", payload)
 		/*
 	  below condition triggers when templatetype is gpt_form_template and user doesnt have any input fields to enter, so application needs to make advancesearch api call with {} formData, as per EVA
 	  */
@@ -257,8 +267,9 @@ const ChatInterface = (props) => {
     }
 
     const getCustomData = () => {
+      console.log("custom data in chat interface line 267", state.customData)
       if(state?.enableDebugging){
-        console.log("custom data", state.customData)
+        console.log("custom data in chat interface line 268", state.customData)
       }      
       return state.customData;
     }
