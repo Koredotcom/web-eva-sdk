@@ -264,6 +264,7 @@ const ChatInterface = (props) => {
     }
 
     const getCustomData = () => {
+      console.log("custom data in chat interface line 267", state.customData)
       if(state?.enableDebugging){
         console.log("custom data in chat interface line 268", state.customData)
       }      
