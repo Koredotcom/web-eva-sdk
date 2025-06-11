@@ -159,16 +159,20 @@ const BotConversation = (args) => {
         }
         if (!isEmpty(state.customData)) {
             payload.customData = state.customData
+            console.log("custom data in getBotConversation line 165 : ", payload.customData)
         }
         if(state?.enableDebugging){
             console.log("state data: ", state)        
         }
         /*need to add a loading state for the current question */
+        console.log("custom data in getBotConversation line 167 : ", payload.customData)
         addLoadingStateToCurrentQuestion(data?.cId, data?.messageId, data?.input)
         if(state?.enableDebugging){
             console.log("params data: ", data)
         }
+        console.log("custom data in getBotConversation line 171 : ", payload?.customData)
         const res = await store.dispatch(advanceSearch({ params, payload, userId: state?.profile?.data?.id || data?.userId}))
+        console.log("custom data in getBotConversation line 173 : ", payload?.customData)
         constructQuestionPostCall(res, data?.cId)
     }
 
