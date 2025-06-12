@@ -183,6 +183,8 @@ const ChatInterface = (props) => {
 				if (isAgent) {
 					// when setted context is an agent
 					payload.context = {
+            agentType: isAgentSetAsSource?.type,
+            title: isAgentSetAsSource?.name,
 						sources: [
 							selectedContext?.data?.context ||
 							selectedContext?.data?.sources?.[0],
