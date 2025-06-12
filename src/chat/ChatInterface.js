@@ -59,6 +59,7 @@ const ChatInterface = (props) => {
     }
 
     const sendMessageAction = async (value) => {
+      const state = store.getState().global
       if (value) {
         const { allAgents, selectedContext} = state
         let params = { reqId: generateShortUUID() }
@@ -182,6 +183,8 @@ const ChatInterface = (props) => {
 				if (isAgent) {
 					// when setted context is an agent
 					payload.context = {
+            agentType: isAgentSetAsSource?.type,
+            title: isAgentSetAsSource?.name,
 						sources: [
 							selectedContext?.data?.context ||
 							selectedContext?.data?.sources?.[0],
