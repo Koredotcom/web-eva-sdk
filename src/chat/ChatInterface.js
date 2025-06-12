@@ -59,6 +59,7 @@ const ChatInterface = (props) => {
     }
 
     const sendMessageAction = async (value) => {
+      const state = store.getState().global
       if (value) {
         const { allAgents, selectedContext} = state
         let params = { reqId: generateShortUUID() }
