@@ -12,9 +12,11 @@ const GptFileUpload = (event, id) => {
         /*
             Adding event.detail.files as Morgan stanley drag and drop functionality stores the drag and dropped files in event.detail
         */
-        const files = event?.target?.files || event?.detail?.files; 
+        const files = Array.from(event?.target?.files || event?.detail?.files) || []; 
         if (files?.length > 0) {
-            uploadFileInitial(files?.[0], id, resolve, reject)
+            files?.map((file) => {
+                uploadFileInitial(file, id, resolve, reject)
+            })
         }
     })
     

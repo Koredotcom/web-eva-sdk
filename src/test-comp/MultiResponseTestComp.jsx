@@ -29,9 +29,9 @@ const MultiResponseTestComp = ({ item, files }) => {
 
                             {(contextField?.value?.type === "file" || contextField?.value?.canUploadFile) && (
                                 <>
-                                    <input type="file" id={`fileUpload-${contextField?.key}-${item?.messageId}`} onChange={
-                                        async (e) => {   
-                                            try{
+                                    <input type="file" id={`fileUpload-${contextField?.key}-${item?.messageId}`} multiple onChange={
+                                        async (e) => {
+                                            try {
                                                 await GptFileUpload(e, `${contextField?.key}-${item?.messageId}`)
                                             }    catch(err){
                                                 console.log("error", err)
@@ -106,7 +106,7 @@ const MultiResponseTestComp = ({ item, files }) => {
                                         )}
                                         {(subItem?.value?.canUploadFile || subItem?.value?.type === 'file') && (
                                             <>  
-                                                <input type="file" id={`fileUpload-${subItem?.key}-${item?.messageId}-${subIndex}`} onChange={
+                                                <input type="file" id={`fileUpload-${subItem?.key}-${item?.messageId}-${subIndex}`} multiple onChange={
                                                     async(e) => {
                                                         try{
                                                             await GptFileUpload(e, `${subItem?.key}-${item?.messageId}-${subIndex}`)
