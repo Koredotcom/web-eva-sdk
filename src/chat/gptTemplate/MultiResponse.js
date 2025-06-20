@@ -29,7 +29,7 @@ const MultiResponse = () => {
             }else if(responseFields?.value?.default){
                 responseFields = responseFields;  
             }
-            parameterFields = [...responseFields, ...parameterFields];
+            parameterFields = [responseFields, ...parameterFields];
         }
 
         // The context Data is saved in the ContextFields and rest of the data is saved in the fieldValues
