@@ -33,7 +33,9 @@ const MultiResponse = () => {
         }
 
         // The context Data is saved in the ContextFields and rest of the data is saved in the fieldValues
-        fieldValues.push(parameterFields)
+        if(parameterFields?.length !== 0) {
+            fieldValues.push(parameterFields)
+        }        
         forms.fieldValues = fieldValues
         return forms
     }
@@ -244,7 +246,15 @@ const MultiResponse = () => {
                         reqdValue = reqdValues; 
                     } else {
                         reqdValue = reqdInputElement?.value || reqdInputElement?.textContent || ""; 
-                        reqdValue = /^Output\s\d+$/.test(reqdValue) ? reqdValue?.split(" ")?.[1] : reqdValue //this check is for multi output, where we need to pass the id of the output for the context
+                        //this check is for multi output, where we need to pass the id of the output for the context
+                         reqdValue = /^Output\s\d+$/.test(reqdValue)
+                                                    ? reqdValue.split(" ")[1]
+                                                    : reqdValue?.includes("Original Content")
+                                                    ? "0"
+                                                    : reqdValue || "";
+
+
+                        
                     }
 
                     //for the filed 'prompts' sdk should pass the id of the selected option
@@ -316,6 +326,20 @@ const MultiResponse = () => {
             return { "fields" : totalMockParameters };
         })
     
+        if(allResponseFields?.length === 0) {
+            // If there are no response fields, then we need to send the contextFields as the requestParams
+            requestParams = [{
+                "fields": {
+                    [contextFields?.key]: {
+                        type: "dropdown",
+                        value: "0",
+                        required: false,
+                        id: contextFields?.id,
+                        label: contextFields?.label
+                    }
+                }
+            }]
+        }
         
         payload.formData.requestParams = requestParams
 
