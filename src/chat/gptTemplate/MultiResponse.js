@@ -246,7 +246,15 @@ const MultiResponse = () => {
                         reqdValue = reqdValues; 
                     } else {
                         reqdValue = reqdInputElement?.value || reqdInputElement?.textContent || ""; 
-                        reqdValue = /^Output\s\d+$/.test(reqdValue) ? reqdValue?.split(" ")?.[1] : reqdValue //this check is for multi output, where we need to pass the id of the output for the context
+                        //this check is for multi output, where we need to pass the id of the output for the context
+                         reqdValue = /^Output\s\d+$/.test(reqdValue)
+                                                    ? reqdValue.split(" ")[1]
+                                                    : reqdValue?.includes("Original Content")
+                                                    ? "0"
+                                                    : reqdValue || "";
+
+
+                        
                     }
 
                     //for the filed 'prompts' sdk should pass the id of the selected option
