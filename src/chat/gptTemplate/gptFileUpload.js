@@ -7,23 +7,39 @@ import { cloneDeep, isEmpty } from "lodash";
 
 let gptFileData = null;
 
-const GptFileUpload = (event, id) => {
-    return new Promise((resolve, reject) => {
-        /*
-            Adding event.detail.files as Morgan stanley drag and drop functionality stores the drag and dropped files in event.detail
-        */
-        const fileList = event?.target?.files ?? event?.detail?.files ?? [];
-        const files = Array.from(fileList);
-        if (!files.length) return Promise.resolve([]);
-        // const files = Array.from(event?.target?.files || event?.detail?.files) || []; 
-        if (files?.length > 0) {
-            files?.map((file) => {
-                uploadFileInitial(file, id, resolve, reject)
-            })
-        }
-    })
+// const GptFileUpload = (event, id) => {
+//     return new Promise((resolve, reject) => {
+//         /*
+//             Adding event.detail.files as Morgan stanley drag and drop functionality stores the drag and dropped files in event.detail
+//         */
+//         const fileList = event?.target?.files ?? event?.detail?.files ?? [];
+//         const files = Array.from(fileList);
+//         if (!files.length) return Promise.resolve([]);
+//         // const files = Array.from(event?.target?.files || event?.detail?.files) || []; 
+//         if (files?.length > 0) {
+//             files?.map((file) => {
+//                 uploadFileInitial(file, id, resolve, reject)
+//             })
+//         }
+//     })
     
-}
+// }
+const GptFileUpload = (event, id) => {
+    const fileList = event?.target?.files ?? event?.detail?.files ?? [];
+    const files = Array.from(fileList);
+
+    if (!files.length) return Promise.resolve([]);
+
+    // Create an array of upload promises
+    const uploadPromises = files.map(file => {
+        return new Promise((resolve, reject) => {
+            uploadFileInitial(file, id, resolve, reject);
+        });
+    });
+
+    // Wait for all uploads to finish
+    return Promise.all(uploadPromises).then(() => gptFileData);
+};
 
 export default GptFileUpload;
 
@@ -79,7 +95,8 @@ const uploadFileInitial = (file, id, resolve, reject) => {
                 type: "file",
                 value: file?.fileUrl?.fileId,
                 title: file?.title || file?.fileName,
-                fileId:file?.fileUrl?.fileId                
+                fileId:file?.fileUrl?.fileId,
+                loading: false                
             });            
 
             gptFileData = currentFileData;
