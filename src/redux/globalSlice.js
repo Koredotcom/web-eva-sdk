@@ -51,7 +51,8 @@ const initialState = {
   notifications : {},
   bookMarkedChatThreads: [],
   enableDebugging: false,
-  quickActions: []
+  quickActions: [],
+  customizeTemplateText: {}
 };
 
 const globalSlice = createSlice({
@@ -124,6 +125,9 @@ const globalSlice = createSlice({
       setQuickActions: (state, action) => {
         state.quickActions = action.payload;
       },
+      setCustomizeTemplateText: (state, action) => {
+        state.customizeTemplateText = action.payload;
+      }
     },
     extraReducers: (builder) => {
       handleAsyncActions(builder, fetchConfigData, 'config', (state, action) => {
@@ -239,7 +243,8 @@ export const {
   setNotifications,
   setBookMarkedChatThreads,
   setEnabledDebugging,
-	setQuickActions
+	setQuickActions,
+	setCustomizeTemplateText
 } = globalSlice.actions;
 
 export default globalSlice;

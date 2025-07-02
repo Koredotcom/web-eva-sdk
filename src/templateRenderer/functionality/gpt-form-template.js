@@ -63,7 +63,7 @@ const gptFormFunctionality = (formData, item) => {
 			if(removeButton && !removeButton.eventListenerAdded){
 				removeButton.eventListenerAdded = true;
 				removeButton.addEventListener("click", (event) => {
-					removeUploadedFile(event, `${contextField?.key}-${item?.messageId}`, item?.id, index);
+					removeUploadedFile(event, `${contextField?.key}-${item?.messageId}`, item?.reqId, index);
 				});
 			}
 
@@ -78,7 +78,7 @@ const gptFormFunctionality = (formData, item) => {
 		inputField.addEventListener("change", (event) => {
 			if (!inputField.eventListenerAdded) {
 				inputField.eventListenerAdded = true;
-					GptFileUpload(event, `${contextField?.key}-${item?.messageId}`, item?.id);
+					GptFileUpload(event, `${contextField?.key}-${item?.messageId}`, item?.reqId);
 				}
 			});
 		}
@@ -100,7 +100,7 @@ const gptFormFunctionality = (formData, item) => {
 				inputField.addEventListener("change", (event) => {
 					if (!inputField.eventListenerAdded) {
 						inputField.eventListenerAdded = true;
-						GptFileUpload(event, `${field?.key}-${item?.messageId}-${index}`, item?.id);
+						GptFileUpload(event, `${field?.key}-${item?.messageId}-${index}`, item?.reqId);
 						}
 					});
 				}
@@ -112,7 +112,7 @@ const gptFormFunctionality = (formData, item) => {
 					if(removeButton && !removeButton.eventListenerAdded){
 						removeButton.eventListenerAdded = true;
 					removeButton.addEventListener("click", (event) => {
-						removeUploadedFile(event, `${field?.key}-${item?.messageId}-${index}`, item?.id, index);
+						removeUploadedFile(event, `${field?.key}-${item?.messageId}-${index}`, item?.reqId, index);
 						});
 					}
 				}

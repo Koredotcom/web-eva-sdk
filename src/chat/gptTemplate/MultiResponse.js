@@ -63,7 +63,7 @@ const MultiResponse = () => {
     const addAdditionalResponse = (item, defaultTemplate = false) => {
         // The Additional responses will be added here
 
-        let reqId = item?.id ? item?.id : item?.cId;
+        let reqId = item?.reqId;
         let currentQuestion = cloneDeep(_questions[reqId]);
         let _formData = cloneDeep(currentQuestion?.gpt_forms);
         let newResponseFormFields = getInitialFormData(item);
@@ -91,7 +91,7 @@ const MultiResponse = () => {
 
     const deleteAdditionalResponse = (item, subIndex, defaultTemplate = false) => {
         // The Additional responses will be deleted here
-        let reqId = item?.id ? item?.id : item?.cId;
+        let reqId = item?.reqId;
         let currentQuestion = cloneDeep(_questions[reqId]);
         let newFieldValues = cloneDeep(currentQuestion?.gpt_forms?.fieldValues);
         let contextField = currentQuestion?.gpt_forms?.contextFields?.[0]
@@ -417,7 +417,7 @@ const MultiResponse = () => {
             promptField.value.nested.id = requiredPrompt.id
         }
 
-        let reqId = item?.id ? item?.id : item?.cId;
+        let reqId = item?.reqId;
         let currentQuestion = cloneDeep(_questions[reqId]);
         // Updating the GPT Forms Data
         // if(defaultTemplate){
@@ -450,7 +450,7 @@ const MultiResponse = () => {
         const gptFormConstructedData = constructGptForm(formData, question, promptId, updatedRespIndex)
         question.template_html = gptFormConstructedData.outerHTML
         question.gpt_forms = formData;
-        let reqId = question?.id ? question?.id : question?.cId;
+        let reqId = question?.reqId;
         _questions[reqId] = question;
         store.dispatch(updateChatData(_questions));
         setTimeout(() => {

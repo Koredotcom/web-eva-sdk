@@ -1,5 +1,5 @@
 import { advanceSearch, cancelAdvancedSearch, stopResponseGeneration } from "../redux/actions/global.action";
-import { setChatInterfaceOptions, setCurrentQuestion, setCustomData, setEnableContextByFollowupContext, setEnabledCustomTemplates, setErrorState } from "../redux/globalSlice"
+import { setChatInterfaceOptions, setCurrentQuestion, setCustomData, setCustomizeTemplateText, setEnableContextByFollowupContext, setEnabledCustomTemplates, setErrorState } from "../redux/globalSlice"
 import { updateChatData } from "../redux/globalSlice";
 import store from "../redux/store";
 import { v4 as uuid } from 'uuid';
@@ -463,6 +463,10 @@ const ChatInterface = (props) => {
       })
     }
 
+    const customizeTemplateText = (payload) => {
+      store.dispatch(setCustomizeTemplateText(payload))
+    }
+
     return {
         subscribe,
         sendMessageAction,
@@ -480,7 +484,8 @@ const ChatInterface = (props) => {
         clearErrorState,
         sendMessage,
         setAgentContext,
-        stopBotAnswer
+        stopBotAnswer,
+        customizeTemplateText
     }
 }
 

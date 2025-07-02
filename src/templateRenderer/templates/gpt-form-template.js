@@ -17,6 +17,12 @@ export function render(item) {
 	}
 
 	let uploadedFileState = cloneDeep(store.getState().global.GptUploadedFiles);
+	let userCustomizedText = {};
+	let customizeTemplateText = cloneDeep(store.getState().global.customizeTemplateText);
+
+	if(customizeTemplateText?.gpt_form_template){
+		userCustomizedText = customizeTemplateText?.gpt_form_template;
+	}
 
 	if (!isEmpty(formData?.fieldValues)) {
 		fieldValues = formData?.fieldValues;
@@ -89,7 +95,7 @@ export function render(item) {
 			const loadingFileDiv = document.createElement("div");
 			loadingFileDiv.className = "loadingFileDetails";
 			loadingFileDiv.id = `loadingFile-${contextField?.key}-${item?.messageId}`;
-			loadingFileDiv.textContent = "Loading...";
+			loadingFileDiv.textContent = userCustomizedText?.loadingText || "Loading...";
 			grpInputDiv.appendChild(loadingFileDiv);
 		}
 
@@ -101,7 +107,7 @@ export function render(item) {
 				uploadedFileDiv.textContent = file?.title;
 
 				const removeButton = document.createElement("button");
-				removeButton.textContent = "Remove";
+				removeButton.textContent = userCustomizedText?.remove || "Remove";
 				removeButton.id = `removeButton-${contextField?.key}-${item?.messageId}-${index}`;
 				uploadedFileDiv.appendChild(removeButton);
 
@@ -135,7 +141,7 @@ export function render(item) {
 				const formFieldLongTextElement = document.createElement("div");
 				formFieldLongTextElement.className = "formField LongText";
 				const fileUploadLabel = document.createElement("label");
-				fileUploadLabel.textContent = "Upload";
+				fileUploadLabel.textContent = userCustomizedText?.upload || "Upload";
 				fileUploadLabel.className = "fileUploadLabel";
 				formFieldLongTextElement.appendChild(fileUploadLabel);
 
@@ -168,7 +174,7 @@ export function render(item) {
 			grpInputDiv.appendChild(inputField);
 
 			const removeButton = document.createElement("button");
-			removeButton.textContent = "Remove";
+			removeButton.textContent = userCustomizedText?.remove || "Remove";
 			removeButton.id = `removeButton-${contextField?.key}-${item?.messageId}`;
 			removeButton.style.display = "none";
 			grpInputDiv.appendChild(removeButton);
@@ -196,7 +202,7 @@ export function render(item) {
 
 		if (index > 0) {
 			const deleteResponse = document.createElement("button");
-			deleteResponse.textContent = "Delete";
+			deleteResponse.textContent = userCustomizedText?.delete || "Delete";
 			deleteResponse.id = `deleteResponse-${item?.messageId}-${index}`;
 			singleResponseWrapper.appendChild(deleteResponse);
 		}
@@ -234,7 +240,7 @@ export function render(item) {
 					const loadingFileDiv = document.createElement("div");
 					loadingFileDiv.className = "loadingFileDetails";
 					loadingFileDiv.id = `loadingFile-${field?.key}-${item?.messageId}-${index}`;
-					loadingFileDiv.textContent = "Loading...";
+					loadingFileDiv.textContent = userCustomizedText?.loadingText || "Loading...";
 					grpInputDiv.appendChild(loadingFileDiv);
 				} else {
 					fileDetails?.forEach((file, fileIndex) => {
@@ -244,7 +250,7 @@ export function render(item) {
 						uploadedFileDiv.textContent = file?.title;
 
 						const removeButton = document.createElement("button");
-						removeButton.textContent = "Remove";
+						removeButton.textContent = userCustomizedText?.remove || "Remove";
 						removeButton.id = `removeButton-${field?.key}-${item?.messageId}-${index}`;
 						uploadedFileDiv.appendChild(removeButton);
 
@@ -278,7 +284,7 @@ export function render(item) {
 					document.createElement("div");
 					formFieldLongTextElement.className = "formField LongText";
 					const fileUploadLabel = document.createElement("label");
-					fileUploadLabel.textContent = "Upload";
+					fileUploadLabel.textContent = userCustomizedText?.upload || "Upload";
 					fileUploadLabel.className = "fileUploadLabel";
 					formFieldLongTextElement.appendChild(fileUploadLabel);
 
@@ -288,7 +294,7 @@ export function render(item) {
 					fileUploadLabel.appendChild(inputField);
 
 					const removeButton = document.createElement("button");
-					removeButton.textContent = "Remove";
+					removeButton.textContent = userCustomizedText?.remove || "Remove";
 					removeButton.id = `removeButton-${field?.key}-${item?.messageId}-${index}`;
 					removeButton.style.display = "none";
 					formFieldLongTextElement.appendChild(removeButton);
@@ -547,21 +553,21 @@ export function render(item) {
 
 	const cancelButton = document.createElement("button");
 	cancelButton.type = "button";
-	cancelButton.textContent = "Cancel";
+	cancelButton.textContent = userCustomizedText?.cancel || "Cancel";
 	cancelButton.id = `discardAnswer-${item?.messageId}`;
 	buttonWrapper.appendChild(cancelButton);
 
 	const submitButton = document.createElement("button");
 	submitButton.type = "button";
 	submitButton.id = `submitGptForm-${item?.messageId}`;
-	submitButton.textContent = item?.content?.formFields?.submitAction?.title;
+	submitButton.textContent = userCustomizedText?.submit || item?.content?.formFields?.submitAction?.title;
 	buttonWrapper.appendChild(submitButton);
 
 	if (item?.content?.allowMultiResponse) {
 		const addResponseButton = document.createElement("button");
 		addResponseButton.type = "button";
 		addResponseButton.id = `addAdditionalResponse-${item?.messageId}`;
-		addResponseButton.textContent = "+ Add Response";
+		addResponseButton.textContent = userCustomizedText?.addResponse || "+ Add Response";
 		buttonWrapper.appendChild(addResponseButton);
 	}
 
