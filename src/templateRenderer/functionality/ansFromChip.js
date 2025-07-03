@@ -5,6 +5,8 @@ import { sessionItemHandler } from "../../Attachments/createContext";
 import { getRelevantQuestions } from "../../redux/actions/global.action";
 import { highlightQuotedText } from "../utils/helper";
 import { InitiateChatConversationAction } from "../../chat";
+import { submitUserFeedback } from "../../Feedback";
+import customMarkdownRenderer from "../utils/customMarkdownRenderer";
 
 const AnsFromChipFunctionality = ({ item }) => {
 	const getRelevantQuestionsData = async () => {
@@ -152,6 +154,123 @@ const AnsFromChipFunctionality = ({ item }) => {
 		window.open(data?.redirectUrl?.dweb, "_blank");
 	};
 
+	const copyAnswerToClipboard = async () => {
+		try {
+			if (item?.answer) {
+				await navigator.clipboard.writeText(item.answer);
+				// Optional: Show success feedback
+				console.log("Answer copied to clipboard");
+			}
+		} catch (err) {
+			console.error("Failed to copy answer to clipboard:", err);
+			// Fallback for older browsers
+			const textArea = document.createElement("textarea");
+			textArea.value = item?.answer || "";
+			document.body.appendChild(textArea);
+			textArea.select();
+			document.execCommand("copy");
+			document.body.removeChild(textArea);
+		}
+	};
+
+	const exportAnswerToWord = () => {
+		try {
+			if (!item?.answer) {
+				console.warn("No answer to export");
+				return;
+			}
+
+			// Convert markdown to HTML using the custom renderer
+			const renderedAnswer = customMarkdownRenderer(item.answer);
+
+			// Create HTML content for the Word document
+			const htmlContent = `
+				<!DOCTYPE html>
+				<html>
+				<head>
+					<meta charset="utf-8">
+					<title>Answer Export</title>
+					<style>
+						body { 
+							font-family: Arial, sans-serif; 
+							margin: 20px; 
+							line-height: 1.6; 
+						}
+						h1, h2, h3, h4, h5, h6 { 
+							color: #333; 
+							margin-top: 20px; 
+							margin-bottom: 10px; 
+						}
+						p { margin-bottom: 10px; }
+						ul, ol { margin-bottom: 10px; }
+						li { margin-bottom: 5px; }
+						blockquote { 
+							border-left: 4px solid #ddd; 
+							padding-left: 15px; 
+							margin: 10px 0; 
+							color: #666; 
+						}
+						code { 
+							background-color: #f5f5f5; 
+							padding: 2px 4px; 
+							border-radius: 3px; 
+							font-family: monospace; 
+						}
+						pre { 
+							background-color: #f5f5f5; 
+							padding: 10px; 
+							border-radius: 5px; 
+							overflow-x: auto; 
+						}
+						table { 
+							border-collapse: collapse; 
+							width: 100%; 
+							margin: 10px 0; 
+						}
+						th, td { 
+							border: 1px solid #ddd; 
+							padding: 8px; 
+							text-align: left; 
+						}
+						th { background-color: #f2f2f2; }
+						.answer-content { margin-top: 20px; }
+					</style>
+				</head>
+				<body>					
+					<div class="answer-content">
+						${renderedAnswer}
+					</div>
+					<hr>
+					<p><small>Exported on: ${new Date().toLocaleString()}</small></p>
+				</body>
+				</html>
+			`;
+
+			// Create blob with HTML content
+			const blob = new Blob([htmlContent], {
+				type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+			});
+
+			// Create download link
+			const url = URL.createObjectURL(blob);
+			const a = document.createElement('a');
+			a.href = url;
+			a.download = `${item?.messageId}-${new Date().toISOString().slice(0, 10)}.doc`;
+			
+			// Trigger download
+			document.body.appendChild(a);
+			a.click();
+			document.body.removeChild(a);
+			
+			// Clean up
+			URL.revokeObjectURL(url);
+			
+			console.log("Answer exported to Word document");
+		} catch (err) {
+			console.error("Failed to export answer to Word:", err);
+		}
+	};
+
 	const onSetAsSource = (e, data) => {
 		e.stopPropagation();
 		if (data?.ext === "gsheet") {
@@ -273,6 +392,72 @@ const AnsFromChipFunctionality = ({ item }) => {
 				});
 				closeBtn.eventListenerAdded = true;
 			}
+		}
+
+		// Add copy answer button event listener
+		if (item?.answer) {
+			let copyAnswerButton = document.getElementById(
+				`copyAnswerButton-${item?.id}`
+			);
+			if (copyAnswerButton && !copyAnswerButton.eventListenerAdded) {
+				copyAnswerButton.addEventListener("click", (e) => {
+					e?.preventDefault();
+					e?.stopPropagation();
+					copyAnswerToClipboard();
+				});
+				copyAnswerButton.eventListenerAdded = true;
+			}
+
+			let exportWordButton = document.getElementById(
+				`exportWordButton-${item?.messageId}`
+			);
+			if (exportWordButton && !exportWordButton.eventListenerAdded) {
+				exportWordButton.addEventListener("click", (e) => {
+					e?.preventDefault();
+					e?.stopPropagation();
+					exportAnswerToWord();
+				});
+				exportWordButton.eventListenerAdded = true;
+			}
+		}
+		
+		if(!item?.disableFeedback) {
+			let feedbackLikeButton = document.getElementById(
+				`feedbackLikeButton-${item?.id}`
+			);
+			if (feedbackLikeButton && !feedbackLikeButton.eventListenerAdded) {
+				feedbackLikeButton.addEventListener("click", (e) => {
+					e?.preventDefault();
+					e?.stopPropagation();
+					console.log("feedbackLikeButton clicked");
+					submitUserFeedback({
+						type: "like",
+						cId: item?.cId || item?.reqId,
+						payload: {
+							feedback: "like",
+						},
+					});
+				});
+			}
+			let feedbackDislikeButton = document.getElementById(
+				`feedbackDislikeButton-${item?.id}`
+			);
+			if (feedbackDislikeButton && !feedbackDislikeButton.eventListenerAdded) {
+				feedbackDislikeButton.addEventListener("click", (e) => {
+					e?.preventDefault();
+					e?.stopPropagation();
+					console.log("feedbackDislikeButton clicked");
+					submitUserFeedback({
+						type: "dislike",
+						cId: item?.cId || item?.reqId,
+						payload: {
+							feedback: "dislike",
+						},
+					});
+				});
+			}
+			feedbackLikeButton.eventListenerAdded = true;
+			feedbackDislikeButton.eventListenerAdded = true;
 		}
 	};
 

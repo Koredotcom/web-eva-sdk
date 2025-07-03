@@ -388,6 +388,32 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 
 		return html;
 	};
+	
+	const copyAnswerChip = () => {
+		return `
+			<div class="copyAnswerChip">
+				<button class="copyAnswerButton" id="copyAnswerButton-${item?.id}">Copy Answer</button>
+			</div>
+		`;
+	}
+
+	const feedbackChip = () => {
+		return `
+			<div class="feedbackChip">
+				<button class="feedbackLikeButton" id="feedbackLikeButton-${item?.messageId}">Like</button>
+				<button class="feedbackDislikeButton" id="feedbackDislikeButton-${item?.messageId}">Dislike</button>
+			</div>
+		`;
+	}
+
+	const exportWordChip = () => {
+		return `
+			<div class="exportWordChip">
+				<button class="exportWordButton" id="exportWordButton-${item?.messageId}">Export as Word</button>
+			</div>
+		`;
+	}
+	
 
 	const renderChip = () => {
 		let chipHTML = "";
@@ -420,6 +446,20 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 				document.body.appendChild(dialog);
 				dialog.showModal();
 			}
+		}
+
+		// Add copy answer chip if answer exists
+		if (item?.answer) {
+			chipHTML += copyAnswerChip();
+		}
+
+		// Add export to Word chip if answer exists
+		if (item?.answer) {
+			chipHTML += exportWordChip();
+		}
+
+		if(!item?.disableFeedback) {
+			chipHTML += feedbackChip();
 		}
 
 		return `<div class="answerFromChipDiv">${chipHTML}</div>`;
