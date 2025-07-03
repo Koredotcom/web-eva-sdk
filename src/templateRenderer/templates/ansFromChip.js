@@ -2,6 +2,7 @@ import { htmlDecode, renderIcons } from "../../utils/helpers";
 import AnsFromChipFunctionality from "../functionality/ansFromChip";
 import { getTimeline, highlightQuotedText } from "../utils/helper";
 import htmlTableRenderer from "./htmlTableRenderer";
+import { createCopyIcon, createExport, createThumbsDown, createThumbsUp } from "../icons-library";
 
 const AnsFromChip = ({ item, regeneratingAnswer }) => {
 	const regeneratingChipRenderer = () => {
@@ -391,26 +392,22 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 	
 	const copyAnswerChip = () => {
 		return `
-			<div class="copyAnswerChip">
-				<button class="copyAnswerButton" id="copyAnswerButton-${item?.id}">Copy Answer</button>
-			</div>
+			<div class="copyAnswerButton" id="copyAnswerButton-${item?.id}">${createCopyIcon({ size: 16, color: "#667085" }).outerHTML}</div>
 		`;
 	}
 
 	const feedbackChip = () => {
 		return `
 			<div class="feedbackChip">
-				<button class="feedbackLikeButton" id="feedbackLikeButton-${item?.messageId}">Like</button>
-				<button class="feedbackDislikeButton" id="feedbackDislikeButton-${item?.messageId}">Dislike</button>
+				<div class="feedbackLikeButton" id="feedbackLikeButton-${item?.messageId}">${createThumbsUp({ size: 16, color: "#667085" }).outerHTML}</div>
+				<div class="feedbackDislikeButton" id="feedbackDislikeButton-${item?.messageId}">${createThumbsDown({ size: 16, color: "#667085" }).outerHTML}</div>
 			</div>
 		`;
 	}
 
 	const exportWordChip = () => {
 		return `
-			<div class="exportWordChip">
-				<button class="exportWordButton" id="exportWordButton-${item?.messageId}">Export as Word</button>
-			</div>
+			<div class="exportWordButton" id="exportWordButton-${item?.messageId}">${createExport({ size: 16, color: "#667085" }).outerHTML}</div>
 		`;
 	}
 	
@@ -447,19 +444,33 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 				dialog.showModal();
 			}
 		}
-
+		let actionChipsHTML = `<div class="answerActionChips">`;
 		// Add copy answer chip if answer exists
 		if (item?.answer) {
-			chipHTML += copyAnswerChip();
+			actionChipsHTML += copyAnswerChip();
 		}
 
 		// Add export to Word chip if answer exists
 		if (item?.answer) {
-			chipHTML += exportWordChip();
+			actionChipsHTML += exportWordChip();
 		}
 
 		if(!item?.disableFeedback) {
-			chipHTML += feedbackChip();
+			actionChipsHTML += feedbackChip();
+		}
+		actionChipsHTML += `</div>`;
+
+		// Insert action chips inside .ansFromChip if present
+		if (chipHTML.includes('class="ansFromChip"')) {
+			const tempDiv = document.createElement('div');
+			tempDiv.innerHTML = chipHTML;
+			const ansFromChipDiv = tempDiv.querySelector('.ansFromChip');
+			if (ansFromChipDiv) {
+				ansFromChipDiv.insertAdjacentHTML('beforeend', actionChipsHTML);
+				chipHTML = tempDiv.innerHTML;
+			}
+		} else {
+			chipHTML += actionChipsHTML;
 		}
 
 		return `<div class="answerFromChipDiv">${chipHTML}</div>`;
