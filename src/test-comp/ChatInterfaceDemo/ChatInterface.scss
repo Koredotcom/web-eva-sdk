@@ -1319,15 +1319,98 @@ html, body {
     .answerFromChipDiv {
         .ansFromChip {
             display: flex;
-            align-items: flex-start;
+            align-items: center;
             gap: 8px;
             flex-wrap: wrap;
+            width: 100%;
 
             .leftWrapperBlock {
                 .koraSpecDr {
+                    display: inline-flex;
+                    align-items: center;
+                    padding: 4px 12px 4px 8px;
+                    gap: 4px;
+                    border-radius: 100px;
+                    border: 1px solid #e5e5e5;
+                    cursor: pointer;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    white-space: nowrap;
+                    &:hover {
+                        background-color: #fafafa;
+                    }
+                    .contextIcon {
+                        display: flex;
+                        align-items: center;
+                        .srcimg {
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            width: 24px;
+                            height: 24px;
+                            position: relative;
+                        }
+                        svg, img {
+                            width: 18px;
+                            height: 18px;
+                            position: relative;
+                            top: -1px;
+                        }
+                        &.attachment {
+                            .srcimg {
+                                .subIcon {
+                                    width: 22px;
+                                    max-height: 22px;
+                                    height: auto;
+                                    top: -1px;
+                                    bottom: 0;
+                                    left: 0;
+                                    right: 0;
+                                    margin: auto;
+                                    border-radius: 4px;
+                                    border: 1px solid #fff;
+                                }
+                            }
+                        }
+                    }
+                    .krSpecName {
+                        font-family: Inter;
+                        font-size: 14px;
+                        font-style: normal;
+                        font-weight: 500;
+                        line-height: 20px;
+                        color: #424242;
+                        max-width: 200px;
+                        overflow: hidden;
+                        text-overflow: ellipsis;
+                        white-space: nowrap;
+                        display: list-item;
+                        list-style-type: none;
+                    }
+                }
+            }
+            .answerActionChips {
+                display: flex;
+                align-items: center;
+                gap: 4px;
+                justify-content: flex-end;
+                flex: 1;
+                .copyAnswerButton, .feedbackLikeButton, .feedbackDislikeButton, .exportWordButton {
+                    width: 32px;
+                    height: 32px;
+                    border-radius: 100px;
                     display: flex;
                     align-items: center;
-                    gap: 6px;
+                    justify-content: center;
+                    cursor: pointer;
+                    &:hover {
+                        background: #f5f5f5;
+                    }
+                }
+                .feedbackChip {
+                    display: flex;
+                    align-items: center;
+                    gap: 4px;
                 }
             }
         }
