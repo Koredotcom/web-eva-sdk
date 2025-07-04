@@ -2,7 +2,7 @@ import { htmlDecode, renderIcons } from "../../utils/helpers";
 import AnsFromChipFunctionality from "../functionality/ansFromChip";
 import { getTimeline, highlightQuotedText } from "../utils/helper";
 import htmlTableRenderer from "./htmlTableRenderer";
-import { createCopyIcon, createExport, createThumbsDown, createThumbsUp } from "../icons-library";
+import { createCopyIcon, createExport, createThumbsDown, createThumbsDownFilled, createThumbsUp, createThumbsUpFilled } from "../icons-library";
 
 const AnsFromChip = ({ item, regeneratingAnswer }) => {
 	const regeneratingChipRenderer = () => {
@@ -392,22 +392,30 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 	
 	const copyAnswerChip = () => {
 		return `
-			<div class="copyAnswerButton" id="copyAnswerButton-${item?.id}">${createCopyIcon({ size: 16, color: "#667085" }).outerHTML}</div>
+			<div class="copyAnswerButton" id="copyAnswerButton-${item?.id}">${createCopyIcon({ size: 16, color: "#667085" })}</div>
 		`;
 	}
 
 	const feedbackChip = () => {
 		return `
 			<div class="feedbackChip">
-				<div class="feedbackLikeButton${item?.feedback === "like" ? " active" : ""}" id="feedbackLikeButton-${item?.messageId}">${createThumbsUp({ size: 16, color: "#667085" }).outerHTML}</div>
-				<div class="feedbackDislikeButton${item?.feedback === "dislike" ? " active" : ""}" id="feedbackDislikeButton-${item?.messageId}">${createThumbsDown({ size: 16, color: "#667085" }).outerHTML}</div>
+			    ${item?.feedback === "like" ? 
+					`<div class="feedbackLikeButton ${item?.feedback === "like" ? "active" : ""}" id="feedbackLikeButton-${item?.messageId}">${createThumbsUpFilled({ size: 16, color: "#12B76A" })}</div>` 
+					:
+					`<div class="feedbackLikeButton" id="feedbackLikeButton-${item?.messageId}">${createThumbsUp({ size: 16, color: "#667085" })}</div>`
+				}
+				${item?.feedback === "dislike" ? 
+					`<div class="feedbackDislikeButton ${item?.feedback === "dislike" ? "active" : ""}" id="feedbackDislikeButton-${item?.messageId}">${createThumbsDownFilled({ size: 16, color: "#F04438" })}</div>` 
+					: 
+					`<div class="feedbackDislikeButton" id="feedbackDislikeButton-${item?.messageId}">${createThumbsDown({ size: 16, color: "#667085" })}</div>`
+				}
 			</div>
 		`;
 	}
 
 	const exportWordChip = () => {
 		return `
-			<div class="exportWordButton" id="exportWordButton-${item?.messageId}">${createExport({ size: 16, color: "#667085" }).outerHTML}</div>
+			<div class="exportWordButton" id="exportWordButton-${item?.messageId}">${createExport({ size: 16, color: "#667085" })}</div>
 		`;
 	}
 	

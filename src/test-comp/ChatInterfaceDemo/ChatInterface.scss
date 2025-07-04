@@ -1407,6 +1407,16 @@ html, body {
                         background: #f5f5f5;
                     }
                 }
+                .feedbackDislikeButton {
+                    &.active {
+                        background: #f5f5f5;
+                    }
+                }
+                .feedbackLikeButton {
+                    &.active {
+                        background: #ecfdf3;
+                    }
+                }
                 .feedbackChip {
                     display: flex;
                     align-items: center;
