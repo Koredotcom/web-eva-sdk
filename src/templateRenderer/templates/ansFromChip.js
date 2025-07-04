@@ -399,8 +399,8 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 	const feedbackChip = () => {
 		return `
 			<div class="feedbackChip">
-				<div class="feedbackLikeButton" id="feedbackLikeButton-${item?.messageId}">${createThumbsUp({ size: 16, color: "#667085" }).outerHTML}</div>
-				<div class="feedbackDislikeButton" id="feedbackDislikeButton-${item?.messageId}">${createThumbsDown({ size: 16, color: "#667085" }).outerHTML}</div>
+				<div class="feedbackLikeButton${item?.feedback === "like" ? " active" : ""}" id="feedbackLikeButton-${item?.messageId}">${createThumbsUp({ size: 16, color: "#667085" }).outerHTML}</div>
+				<div class="feedbackDislikeButton${item?.feedback === "dislike" ? " active" : ""}" id="feedbackDislikeButton-${item?.messageId}">${createThumbsDown({ size: 16, color: "#667085" }).outerHTML}</div>
 			</div>
 		`;
 	}
