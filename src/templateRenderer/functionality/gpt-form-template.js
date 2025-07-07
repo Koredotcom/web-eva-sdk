@@ -21,9 +21,9 @@ const gptFormFunctionality = (formData, item) => {
 		cancelAdvanceSearch(item?.reqId);
 	};
 
-	const removeUploadedFile = (event, id, questionId, index) => {
+	const removeUploadedFile = (event, id, questionId, fileMediaName) => {
 		event.preventDefault();
-		RemoveUploadedGPTFile(event, id, null, questionId, index);
+		RemoveUploadedGPTFile(event, id, questionId, fileMediaName);
 	};
 
 	const addResponse = (event) => {
@@ -63,7 +63,7 @@ const gptFormFunctionality = (formData, item) => {
 			if(removeButton && !removeButton.eventListenerAdded){
 				removeButton.eventListenerAdded = true;
 				removeButton.addEventListener("click", (event) => {
-					removeUploadedFile(event, `${contextField?.key}-${item?.messageId}`, item?.reqId, index);
+					removeUploadedFile(event, `${contextField?.key}-${item?.messageId}`, item?.reqId, file?.mediaName);
 				});
 			}
 
@@ -88,33 +88,35 @@ const gptFormFunctionality = (formData, item) => {
 	formData?.fieldValues?.forEach((parameters, index) => {
 		parameters?.forEach((field, i) => {
 			//Checking if the field has uploaded files
-			let parameterFileKey = `${field?.key}-${item?.messageId}-${index}`;
+			let parameterFileKey = `${field?.key}-${item?.messageId}-${field?.uniqueFieldId}`;
 			let fileDetails = uploadedFilesState?.[parameterFileKey];
 			let hasUploadedFiles = fileDetails && fileDetails?.length > 0;
 
 			if (field?.value?.canUploadFile) {
 				const inputField = document.getElementById(
-					`fileUpload-${field?.key}-${item?.messageId}-${index}`
+					`fileUpload-${field?.key}-${item?.messageId}-${field?.uniqueFieldId}`
 				);
 				if(inputField){
 				inputField.addEventListener("change", (event) => {
 					if (!inputField.eventListenerAdded) {
 						inputField.eventListenerAdded = true;
-						GptFileUpload(event, `${field?.key}-${item?.messageId}-${index}`, item?.reqId);
+						GptFileUpload(event, `${field?.key}-${item?.messageId}-${field?.uniqueFieldId}`, item?.reqId);
 						}
 					});
 				}
 
 				if(hasUploadedFiles){
-					const removeButton = document.getElementById(
-						`removeButton-${field?.key}-${item?.messageId}-${index}`
-					);
-					if(removeButton && !removeButton.eventListenerAdded){
-						removeButton.eventListenerAdded = true;
-					removeButton.addEventListener("click", (event) => {
-						removeUploadedFile(event, `${field?.key}-${item?.messageId}-${index}`, item?.reqId, index);
-						});
-					}
+					fileDetails?.forEach((file, fileIndex) => {
+						const removeButton = document.getElementById(
+							`removeButton-${field?.key}-${item?.messageId}-${field?.uniqueFieldId}-${fileIndex}`
+						);
+						if(removeButton && !removeButton.eventListenerAdded){
+							removeButton.eventListenerAdded = true;
+							removeButton.addEventListener("click", (event) => {
+								removeUploadedFile(event, `${field?.key}-${item?.messageId}-${field?.uniqueFieldId}`, item?.reqId, file?.mediaName);
+							});
+						}
+					});
 				}
 			}
 
