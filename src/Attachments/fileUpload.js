@@ -270,7 +270,13 @@ const FileUpload = (props) => {
             if (sourceType === 'agent' || selectedContext?.data?.sources?.[0]?.isAgent) {
                 obj.discardPrevSession = true
             }
+
+            /*In morgan they are using customQnAAPI, and when the source of the selectedContext is customQnAAPI, need to discardPrevSession */
+            if(selectedContext?.data?.sources?.[0]?.source === "customQnAAPI"){
+                obj.discardPrevSession = true
+            }
             sessionItemHandler(obj)
+
         }
     }
 
