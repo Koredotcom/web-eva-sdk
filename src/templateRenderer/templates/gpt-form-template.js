@@ -5,6 +5,7 @@ import Choices from "choices.js";
 import MultiResponse from "../../chat/gptTemplate/MultiResponse";
 import gptFormFunctionality from "../functionality/gpt-form-template";
 import store from "../../redux/store";
+import { createDeleteIcon } from "../icons-library";
 
 export function render(item) {
 	// const { formData } = item;
@@ -52,10 +53,10 @@ export function render(item) {
 	ltTitleDiv.className = "ltTitle";
 	ltTitleDiv.textContent = item?.content?.formFields?.title;
 
-	const delIconDiv = document.createElement("button");
+	const delIconDiv = document.createElement("div");
 	delIconDiv.id = `deleteAnswer-${item?.messageId}`;
+	delIconDiv.innerHTML = createDeleteIcon({ size: 16, color: "#667085" });
 	delIconDiv.className = "delIcon";
-	delIconDiv.textContent = "Delete";
 	leftNameDiv.appendChild(imgBlockDiv);
 	leftNameDiv.appendChild(ltTitleDiv);
 	leftNameDiv.appendChild(delIconDiv);
@@ -150,7 +151,7 @@ export function render(item) {
 				// removeButton.style.display = "none";
 				// formFieldLongTextElement.appendChild(removeButton);
 
-				grpInputDiv.appendChild(formFieldLongTextElement);
+				grpWrapDiv.appendChild(formFieldLongTextElement);
 			}
 
 			const textareaElement = document.createElement("textarea");
@@ -186,20 +187,25 @@ export function render(item) {
 		const singleResponseWrapper = document.createElement("div");
 		singleResponseWrapper.className = `response-${index}`;
 
+		const responseHeaderWrapper = document.createElement("div");
+		responseHeaderWrapper.className = "responseHeaderWrapper";
+
 		const responseHeader = document.createElement("div");
 		responseHeader.className = "responseHeader";
 		responseHeader.textContent =
 			formData?.fieldValues?.length > 1
 				? `Response ${index + 1}`
 				: "Response";
-		singleResponseWrapper.appendChild(responseHeader);
+		responseHeaderWrapper.appendChild(responseHeader);
 
 		if (index > 0) {
-			const deleteResponse = document.createElement("button");
-			deleteResponse.textContent = "Delete";
+			const deleteResponse = document.createElement("div");
+			deleteResponse.className = "deleteIcon";
+			deleteResponse.innerHTML = createDeleteIcon({ size: 16, color: '#667085'});
 			deleteResponse.id = `deleteResponse-${item?.messageId}-${index}`;
-			singleResponseWrapper.appendChild(deleteResponse);
+			responseHeaderWrapper.appendChild(deleteResponse);
 		}
+		singleResponseWrapper.appendChild(responseHeaderWrapper);
 		parameters?.forEach((field, i) => {
 
 			let parameterFileKey = `${field?.key}-${item?.messageId}-${index}`;
@@ -545,20 +551,29 @@ export function render(item) {
 	const buttonWrapper = document.createElement("div");
 	buttonWrapper.className = "buttonsGrp";
 
-	const cancelButton = document.createElement("button");
+	const actionButtonsDiv = document.createElement("div");
+	actionButtonsDiv.className = "action-buttons";
+
+	const cancelButton = document.createElement("sl-button");
+	cancelButton.className = "secondary-button";
 	cancelButton.type = "button";
 	cancelButton.textContent = "Cancel";
 	cancelButton.id = `discardAnswer-${item?.messageId}`;
-	buttonWrapper.appendChild(cancelButton);
+	actionButtonsDiv.appendChild(cancelButton);
 
-	const submitButton = document.createElement("button");
+	const submitButton = document.createElement("sl-button");
+	submitButton.className = "primary-button-black";
 	submitButton.type = "button";
-	submitButton.id = `submitGptForm-${item?.messageId}`;
 	submitButton.textContent = item?.content?.formFields?.submitAction?.title;
-	buttonWrapper.appendChild(submitButton);
+	submitButton.setAttribute("variant", "primary");
+	submitButton.id = `submitGptForm-${item?.messageId}`;
+	actionButtonsDiv.appendChild(submitButton);
+
+	buttonWrapper.appendChild(actionButtonsDiv);
 
 	if (item?.content?.allowMultiResponse) {
-		const addResponseButton = document.createElement("button");
+		const addResponseButton = document.createElement("sl-button");
+		addResponseButton.className = "secondary-button";
 		addResponseButton.type = "button";
 		addResponseButton.id = `addAdditionalResponse-${item?.messageId}`;
 		addResponseButton.textContent = "+ Add Response";

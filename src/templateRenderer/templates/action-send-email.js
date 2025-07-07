@@ -85,7 +85,7 @@ export function render(data) {
     let html = `
         <div class="email-template">
             <div class='email-selection-field'>
-                <div class="email-field">
+                <div class="email-field email-header-block">
                     <sl-select id="email-connection-${data?.reqId}" value="${defaultConnectionId || ''}">
                         ${emailList?.map((email, index) =>
                         `
@@ -98,9 +98,8 @@ export function render(data) {
                     <div class="email-field">
                         ${getEmailValue(data, 'to')}
                         <sl-input
-                        label="To:"
+                        label="To"
                         type="text"
-                        placeholder="Enter email address"
                         id="email-to-${data?.reqId}"
                         value="${data?.toChoices?.input || ''}"
                         ></sl-input>
@@ -115,9 +114,8 @@ export function render(data) {
                     <div class="email-field">
                         ${getEmailValue(data, 'cc')}
                         <sl-input
-                        label="CC:"
+                        label="Cc"
                         type="text"
-                        placeholder="Enter email address"
                         id="email-cc-${data?.reqId}"
                         value="${data?.ccChoices?.input || ''}"
                         ></sl-input>
@@ -132,9 +130,8 @@ export function render(data) {
                     <div class="email-field">
                         ${getEmailValue(data, 'bcc')}
                         <sl-input
-                        label="BCC:"
+                        label="Bcc"
                         type="text"
-                        placeholder="Enter email address"
                         id="email-bcc-${data?.reqId}"
                         value="${data?.bccChoices?.input || ''}"
                         ></sl-input>
@@ -146,10 +143,9 @@ export function render(data) {
                         ).join('') || ''}
                         </div>
                     </div>
-                    <div class="email-field">
+                    <div class="email-field email-subject">
                         <sl-input
                         label="Subject"
-                        placeholder="Enter subject"
                         id="email-subject-${data?.reqId}"
                         value="${data?.content?.subject || ''}"
                         ></sl-input>
@@ -165,7 +161,7 @@ export function render(data) {
                     </div>
                 </div>
                 <div class="email-footer">
-                    <div class="email-field">
+                    <div class="email-field email-attachments">
                         <sl-input
                         type="file"
                         id="email-attachments-${data?.reqId}"
@@ -175,8 +171,8 @@ export function render(data) {
                     <div class="email-field">
                         ${getSmartComposeData(data)}
                     </div>
-                    <div class="email-field">
-                        <sl-button id="email-send-${data?.reqId}" variant="primary">Send</sl-button>
+                    <div class="email-field send-btn">
+                        <sl-button class="primary-button-black" id="email-send-${data?.reqId}" variant="primary">Send</sl-button>
                     </div>
                 </div>
             </div>
