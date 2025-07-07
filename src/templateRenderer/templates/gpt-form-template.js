@@ -1,7 +1,6 @@
 import { cloneDeep, isEmpty } from "lodash";
 import { getCurrentQuestion } from "../../utils/helpers";
 import UpdateGPTPromptValue from "../../chat/gptTemplate/updateGPTPromptValue";
-import Choices from "choices.js";
 import MultiResponse from "../../chat/gptTemplate/MultiResponse";
 import gptFormFunctionality from "../functionality/gpt-form-template";
 import store from "../../redux/store";
@@ -154,11 +153,11 @@ export function render(item) {
 				grpWrapDiv.appendChild(formFieldLongTextElement);
 			}
 
-			const textareaElement = document.createElement("textarea");
+			const textareaElement = document.createElement("sl-textarea");
 			textareaElement.id = `inputValue-${contextField?.key}-${item?.messageId}`;
 			textareaElement.placeholder =
 				contextField?.value?.placeholder || "Enter Text...";
-			textareaElement.textContent = contextField?.value?.default || "";
+			textareaElement.value = contextField?.value?.default || "";
 			grpInputDiv.appendChild(textareaElement);
 		}
 
@@ -302,11 +301,11 @@ export function render(item) {
 					grpInputDiv.appendChild(formFieldLongTextElement);
 				}
 
-				const textareaElement = document.createElement("textarea");
+				const textareaElement = document.createElement("sl-textarea");
 				textareaElement.id = `inputValue-${field?.key}-${item?.messageId}-${index}`;
 				textareaElement.placeholder =
 					field?.value?.placeholder || "Enter Text...";
-				textareaElement.textContent = field?.value?.default || "";
+				textareaElement.value = field?.value?.default || "";
 				grpInputDiv.appendChild(textareaElement);
 			}
 
@@ -330,11 +329,11 @@ export function render(item) {
 				grpWrapDiv.appendChild(grpNameDiv);
 				grpInputDiv.appendChild(grpWrapDiv);
 
-				const textareaElement = document.createElement("textarea");
+				const textareaElement = document.createElement("sl-textarea");
 				textareaElement.id = `inputValue-${field?.key}-${item?.messageId}-${index}`;
 				textareaElement.placeholder =
 					field?.value?.placeholder || "Enter Text...";
-				textareaElement.textContent = field?.value?.default || "";
+				textareaElement.value = field?.value?.default || "";
 				grpInputDiv.appendChild(textareaElement);
 			}
 
@@ -353,20 +352,39 @@ export function render(item) {
 				grpNameDiv.appendChild(nameTitleDiv);
 				grpWrapDiv.appendChild(grpNameDiv);
 
-				const selectElement = document.createElement("select");
+				const selectElement = document.createElement("sl-select");
 				selectElement.id = `dropdownValue-${field?.key}-${item?.messageId}-${index}`;
+				selectElement.placeholder = "Select an option";
+				selectElement.clearable = true;
+				if (field?.required || field?.value?.required) {
+					selectElement.required = true;
+				}
 
-				// Initialize Choices.js when the dropdown is available
-				let obj = {
-					selector: `#dropdownValue-${field?.key}-${item?.messageId}-${index}`,
-					isMulti: false,
-					field,
-					index,
-					item,
-					callback: initializeChoicesForElement,
-				};
+				// Add options for single dropdown
+				const dropDownChoices = field?.value?.choices || [];
+				dropDownChoices.forEach((choice, choiceIndex) => {
+					const optionElement = document.createElement("sl-option");
+					// Ensure each option has a unique, non-empty value
+					const optionValue = choice.id || choice.value || `option-${choiceIndex}`;
+					optionElement.value = optionValue;
+					optionElement.textContent = choice.label || choice.text || `Option ${choiceIndex + 1}`;
+					
+					// Set selected option for prompts field
+					if (field?.key === "prompts" && (
+						choice?.id === field?.value?.nested?.id || choiceIndex === 0
+					)) {
+						selectElement.value = optionValue;
+					}
+					
+					selectElement.appendChild(optionElement);
+				});
 
-				observeDOMChanges(obj);
+				// Add event listener for prompts field
+				if (field?.key === "prompts") {
+					selectElement.addEventListener("sl-change", (event) => {
+						updateChoice(event, item, index);
+					});
+				}
 
 				grpWrapDiv.appendChild(selectElement);
 				grpInputDiv.appendChild(grpWrapDiv);
@@ -387,21 +405,25 @@ export function render(item) {
 				grpNameDiv.appendChild(nameTitleDiv);
 				grpWrapDiv.appendChild(grpNameDiv);
 
-				const dropdownElement = document.createElement("select");
+				const dropdownElement = document.createElement("sl-select");
 				dropdownElement.id = `dropdownValue-${field?.key}-${item?.messageId}-${index}`;
-				dropdownElement.setAttribute("multiple", true);
+				dropdownElement.multiple = true;
+				dropdownElement.placeholder = "Select Multiple Options";
+				dropdownElement.clearable = true;
+				if (field?.required || field?.value?.required) {
+					dropdownElement.required = true;
+				}
 
-				// Initialize Choices.js when the dropdown is available
-
-				let obj = {
-					selector: `#dropdownValue-${field?.key}-${item?.messageId}-${index}`,
-					isMulti: true,
-					field,
-					index,
-					callback: initializeChoicesForElement,
-				};
-
-				observeDOMChanges(obj);
+				// Add options for multi dropdown
+				const dropDownChoices = field?.value?.choices || [];
+				dropDownChoices.forEach((choice, choiceIndex) => {
+					const optionElement = document.createElement("sl-option");
+					// Ensure each option has a unique, non-empty value
+					const optionValue = choice.id || choice.value || `option-${choiceIndex}`;
+					optionElement.value = optionValue;
+					optionElement.textContent = choice.label || choice.text || `Option ${choiceIndex + 1}`;
+					dropdownElement.appendChild(optionElement);
+				});
 
 				grpWrapDiv.appendChild(dropdownElement);
 				grpInputDiv.appendChild(grpWrapDiv);
@@ -422,7 +444,7 @@ export function render(item) {
 				grpNameDiv.appendChild(nameTitleDiv);
 				grpWrapDiv.appendChild(grpNameDiv);
 
-				const textareaElement = document.createElement("textarea");
+				const textareaElement = document.createElement("sl-textarea");
 				textareaElement.className = "promptId";
 				textareaElement.id = `inputValue-${field?.key}-${item?.messageId}-${index}`;
 				textareaElement.rows = 10;
@@ -451,7 +473,7 @@ export function render(item) {
 				grpNameDiv.appendChild(nameTitleDiv);
 				grpWrapDiv.appendChild(grpNameDiv);
 
-				const textareaElement = document.createElement("textarea");
+				const textareaElement = document.createElement("sl-textarea");
 				textareaElement.className = "promptId";
 				textareaElement.id = `inputValue-${field?.key}-${item?.messageId}-${index}`;
 				textareaElement.rows = 10;
@@ -478,11 +500,11 @@ export function render(item) {
 				}`;
 				grpInputDiv.appendChild(nameTitleDiv);
 
-				const textareaElement = document.createElement("textarea");
+				const textareaElement = document.createElement("sl-textarea");
 				textareaElement.id = `inputValue-${field?.key}-${item?.messageId}-${index}`;
 				textareaElement.placeholder =
 					field?.value?.placeholder || "Enter text...";
-				textareaElement.textContent = field?.value?.default || "";
+				textareaElement.value = field?.value?.default || "";
 				grpInputDiv.appendChild(textareaElement);
 			}
 
@@ -511,11 +533,11 @@ export function render(item) {
 				}`;
 				grpInputDiv.appendChild(nameTitleDiv);
 
-				const textareaElement = document.createElement("textarea");
+				const textareaElement = document.createElement("sl-textarea");
 				textareaElement.id = `inputValue-${field?.key}-${item?.messageId}-${index}`;
 				textareaElement.placeholder =
 					field?.value?.placeholder || "Enter Content...";
-				textareaElement.textContent = field?.value?.default || "";
+				textareaElement.value = field?.value?.default || "";
 				grpInputDiv.appendChild(textareaElement);
 			}
 
@@ -593,61 +615,12 @@ export function render(item) {
 	return gptAgentDiv.outerHTML;
 }
 
-const initializeChoicesForElement = (el, isMulti, field, item, i) => {
-	if (typeof window !== "undefined" && typeof document !== "undefined") {
-		if (el) {
-			let obj = {};
-			if (isMulti) {
-				obj = {
-					silent: false,
-					placeholder: true,
-					addChoices: false,
-					placeholderValue: "Select Multiple Options",
-					searchEnabled: false,
-					removeItemButton: true,
-					maxItemCount: -1,
-					duplicateItemsAllowed: false,
-					removeItems: true,
-					itemSelectText: "",
-					noChoicesText: "",
-				};
-			} else {
-				obj = {
-					silent: false,
-					placeholder: true,
-					addChoices: false,
-					placeholderValue: "Select an option",
-					searchEnabled: false,
-					containerOuter: `choices-${field?.key}`,
-				};
-			}
-			const choices = new Choices(el, obj);
 
-			let dropDownChoices = field?.value?.choices;
-			if (field?.key === "prompts" && !isMulti) {
-				el.addEventListener("change", (event) =>
-					updateChoice(event, item, i)
-				);
-
-				dropDownChoices = field?.value?.choices.map(
-					(choice, index) => ({
-						...choice,
-						selected:
-							choice?.id === field?.value?.nested?.id ||
-							index === 0,
-					})
-				);
-			}
-
-			choices.setChoices(dropDownChoices, "id", "label", true);
-		}
-	}
-};
 
 const updateChoice = (event, item, index) => {
 	const currentQsn = getCurrentQuestion(item);
 	event.preventDefault();
-	const updatedPromptValue = event?.detail?.value;
+	const updatedPromptValue = event?.target?.value;
 	UpdateGPTPromptValue(currentQsn, index, updatedPromptValue, true);
 };
 
@@ -663,5 +636,6 @@ const observeDOMChanges = (obj) => {
 
 	observer.observe(document.body, { childList: true, subtree: true });
 };
+
 
 export default { render };

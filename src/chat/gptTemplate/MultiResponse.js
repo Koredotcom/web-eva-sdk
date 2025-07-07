@@ -262,8 +262,8 @@ const MultiResponse = () => {
                     reqdInputElement = document.getElementById(`dropdownValue-${field?.key}-${item?.messageId}-${index}`);
                 
                     if (field?.value?.multi) {
-                        const reqdValues = Array.from(reqdInputElement.selectedOptions).map(option => option.value);
-                        reqdValue = reqdValues; 
+                        // For shoelace multi-select, value is already an array
+                        reqdValue = reqdInputElement?.value || [];
                     } else {
                         reqdValue = reqdInputElement?.value || reqdInputElement?.textContent || ""; 
                         //this check is for multi output, where we need to pass the id of the output for the context
@@ -272,15 +272,12 @@ const MultiResponse = () => {
                                                     : reqdValue?.includes("Original Content")
                                                     ? "0"
                                                     : reqdValue || "";
-
-
-                        
                     }
 
                     //for the filed 'prompts' sdk should pass the id of the selected option
                     if(field?.key === 'prompts'){
-                        const promptId = field?.value?.choices?.find(choice => choice.label === reqdValue)?.id;
-                        reqdValue = promptId;
+                        const promptId = field?.value?.choices?.find(choice => choice.id === reqdValue)?.id;
+                        reqdValue = promptId || reqdValue;
                     }
                     if(state?.enableDebugging){
                         console.log(`Form field is ${`(dropdownValue-${field?.key})`} and value is {${reqdValue}}`)
