@@ -275,6 +275,7 @@ const FileUpload = (props) => {
                 obj.discardPrevSession = true
             }
             sessionItemHandler(obj)
+
         }
     }
 

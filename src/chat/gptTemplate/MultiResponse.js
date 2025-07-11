@@ -4,6 +4,7 @@ import { setGptUploadedFiles, updateChatData } from "../../redux/globalSlice";
 import InitiateChatConversationAction from "../InitiateChatConversationAction";
 import constructGptForm from "./gptTemplateBody";
 import gptFormFunctionality from "../../templateRenderer/functionality/gpt-form-template";
+import { getUID } from "../../utils/helpers";
 
 const MultiResponse = () => {
     let state = store.getState().global;
@@ -20,7 +21,12 @@ const MultiResponse = () => {
             forms.contextFields = item?.content?.formFields?.contextFields
         }
         if (!isEmpty(item?.content?.formFields?.paramFields)) {
-            parameterFields = item?.content?.formFields?.paramFields
+            const uniqueFieldId = getUID(6);
+            parameterFields = item?.content?.formFields?.paramFields?.map(field => ({
+                ...field,
+                uniqueFieldId: uniqueFieldId
+            }))
+
         }
         if (!isEmpty(item?.content?.formFields?.responseFields)) {
             responseFields = cloneDeep(item?.content?.formFields?.responseFields?.[0])
@@ -77,6 +83,16 @@ const MultiResponse = () => {
             cloneParamFields.unshift(choicesDropdown);
         }
         _formData.fieldValues.push(cloneParamFields);
+
+        /*adding a unique id at each field level of fieldValues */
+        _formData.fieldValues.forEach((fieldValues, index) => {
+            const uniqueFieldId = getUID(6);
+            fieldValues.forEach((field) => {
+                if(!field?.uniqueFieldId){
+                    field.uniqueFieldId = uniqueFieldId;
+                }
+            });
+        });
 
         // The updated gpt_forms data will be saved here
         // if(defaultTemplate){
@@ -440,7 +456,10 @@ const MultiResponse = () => {
         }
 
         let currentQuestion = cloneDeep(_questions[questionId]);
-        currentQuestion.filesUploaded = currentQuestion?.filesUploaded - 1 || 0;
+        if(!currentQuestion?.filesUploaded){
+            currentQuestion.filesUploaded = uploadedFiles[index]?.length || 0;
+        }
+        currentQuestion.filesUploaded = uploadedFiles[index]?.length || 0;
         _questions[questionId] = currentQuestion;
         store.dispatch(updateChatData(_questions));
         store.dispatch(setGptUploadedFiles(uploadedFiles));
