@@ -287,9 +287,16 @@ const MultiResponse = () => {
                     }
                 } else { 
                     reqdInputElement = document.getElementById(`inputValue-${field?.key}-${item?.messageId}-${index}`)
-                    reqdValue = reqdInputElement?.value || reqdInputElement?.textContent || ""
+                    
+                    // Check if it's a Quill editor or regular element (specifically for prompt fields)
+                    if ((field?.key === 'prompt' || field?.value?.nested?.key === 'prompt') && reqdInputElement && reqdInputElement.quillEditor) {
+                        reqdValue = reqdInputElement.quillEditor.getText();
+                    } else {
+                        reqdValue = reqdInputElement?.value || reqdInputElement?.textContent || "";
+                    }
+                    
                     if(state?.enableDebugging){
-                        console.log(`Form field is ${`(inputValue-${field?.key})`} and value is {${reqdInputElement?.value}}`)
+                        console.log(`Form field is ${`(inputValue-${field?.key})`} and value is {${reqdValue}}`)
                     }
                 }
     
@@ -305,7 +312,16 @@ const MultiResponse = () => {
                 if(field?.value?.nested?.key === "prompt" || field?.key === 'prompt'){
                     // Need to send the Prompt Field Value as the prompt can be changed manually by the user if editable
                     let promptField = document.getElementById(`inputValue-${field?.key}-${item?.messageId}-${index}`); 
-                    acc["prompt"] = promptField?.value || promptField?.textContent || "";
+                    
+                    // Check if it's a Quill editor or regular element
+                    let promptValue = "";
+                    if (promptField && promptField.quillEditor) {
+                        promptValue = promptField.quillEditor.getText();
+                    } else {
+                        promptValue = promptField?.value || promptField?.textContent || "";
+                    }
+                    
+                    acc["prompt"] = promptValue;
                 }
     
                 // Checking if the Field has a file and getting the file from the uploadedFiles

@@ -293,6 +293,14 @@ const ChatInterface = (props) => {
       }
       let question = cloneDeep(questions[reqId])
 
+      /*if api returns a non 200 response, an error, straming should be stopped */
+      if(question?.status === "error"){
+        question.streamingStatus = "aborted"
+        questions[reqId] = question
+        store.dispatch(updateChatData(questions))
+        return;
+      }
+
       if (question?.apiSuccess && question?.viewType !== "threadView") return; // Means adv search call success now no need to take socket updates, added condition for threadView
 
       if (detail?.data?.status === 'in-progress') {
@@ -319,14 +327,15 @@ const ChatInterface = (props) => {
 
         } else {
           /*adding streaming for autonomous agent */
-          if(question?.viewType === "threadView"){
+          if(question?.viewType === "threadView" || question?.hasOwnProperty('botConversation')){
             /*while autonomous agent is streaming, need to add the chunked data to the outputId present in botConversation */
             if(!question?.botConversation) {
               question.botConversation = {}
             }
             if(detail?.data?.outputMessageId) {
               if(Object.values(question.botConversation)?.find(conv => conv?.outputMessageId === detail?.data?.outputMessageId)){
-                delete question?.botConversation?.[detail?.data?.outputMessageId]                                
+                delete question?.botConversation?.[detail?.data?.outputMessageId]  
+                                              
               }else{
                 question.botConversation[detail?.data?.outputMessageId] = {                    
                         question: (question?.botConversation?.[detail?.data?.outputMessageId]?.question || "").concat(detail?.data?.chunk),
@@ -340,8 +349,9 @@ const ChatInterface = (props) => {
               return;               
             }
             
-          }
-          question.answer = question?.answer?.concat(detail?.data?.chunk)
+          }else{
+            question.answer = question?.answer?.concat(detail?.data?.chunk)
+          }          
         }
 
         question.templateType = detail?.data?.templateType || "search_answer"
@@ -397,6 +407,7 @@ const ChatInterface = (props) => {
             "templateType": detail?.data?.templateType || "search_answer",
         }
       }      
+      
       _questions[reqId] = currentQuestion      
       store.dispatch(updateChatData(_questions))      
       console.log("agentThoughts", detail)
@@ -436,7 +447,7 @@ const ChatInterface = (props) => {
         const payload = {
           "cId": question?.cId || question?.reqId, // Use conversation ID or request ID
           "input": input, // User's input message
-          "context": question?.context, // Conversation context
+          // "context": question?.context, // Conversation context
           "messageId": conversation?.messageId, // Message identifier
         }
         // Submit the response to the bot conversation system

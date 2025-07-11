@@ -119,19 +119,35 @@ const gptFormFunctionality = (formData, item) => {
 			}
 
 			if (field?.key === "prompt") {
-				const textareaElement = document.getElementById(
+				const quillContainer = document.getElementById(
 					`inputValue-${field?.key}-${item?.messageId}-${index}`
 				);
-				textareaElement.value = field?.value?.default || "";
+				
+				// Wait for Quill editor to be initialized
+				setTimeout(() => {
+					if (quillContainer && quillContainer.quillEditor) {
+						const defaultValue = field?.value?.default || "";
+						if (defaultValue) {
+							quillContainer.quillEditor.setContent(defaultValue, 'text');
+						}
+					}
+				}, 200);
 			}
 
 			if (field?.value?.nested?.key === "prompt") {
-				const textareaElement = document.getElementById(
+				const quillContainer = document.getElementById(
 					`inputValue-${field?.key}-${item?.messageId}-${index}`
 				);
 
-				const initialPromptValue = field?.value?.nested?.value;
-				textareaElement.value = initialPromptValue || "";
+				// Wait for Quill editor to be initialized
+				setTimeout(() => {
+					if (quillContainer && quillContainer.quillEditor) {
+						const initialPromptValue = field?.value?.nested?.value || "";
+						if (initialPromptValue) {
+							quillContainer.quillEditor.setContent(initialPromptValue, 'text');
+						}
+					}
+				}, 200);
 			}
 		});
 		if (index > 0) {

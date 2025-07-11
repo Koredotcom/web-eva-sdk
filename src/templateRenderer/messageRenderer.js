@@ -194,6 +194,9 @@ export function renderTemplateContent(
 			case "items_ambiguity_template":
 				htmlTemplate = itemsAmbiguityTemplate.render(data);
 				break;
+			case "error_template":
+				htmlTemplate = errorMessage.render(data, assistantIconTemplate);
+				break;
 
 			default:
 				// Handle thread view or conversation
