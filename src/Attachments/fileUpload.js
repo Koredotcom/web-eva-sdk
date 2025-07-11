@@ -1,6 +1,6 @@
 
 import store from "../redux/store";
-import FileUploader from "../utils/fileUploader";
+import FileUploader from "../utils/FileUploader";
 import axios, { all } from "axios";
 import { searchSession } from "../redux/actions/global.action";
 import { generateComponentId, generateShortUUID, getFileExtension, getUID } from "../utils/helpers";
@@ -268,6 +268,10 @@ const FileUpload = (props) => {
             }
 
             if (sourceType === 'agent' || selectedContext?.data?.sources?.[0]?.isAgent) {
+                obj.discardPrevSession = true
+            }
+            /*In morgan they are using customQnAAPI, and when the source of the selectedContext is customQnAAPI, need to discardPrevSession */
+            if(args?.sources?.[0]?.source === "customQnAAPI" || selectedContext?.data?.sources?.[0]?.source === "customQnAAPI"){
                 obj.discardPrevSession = true
             }
             sessionItemHandler(obj)
