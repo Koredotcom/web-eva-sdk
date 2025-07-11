@@ -37,24 +37,6 @@ const ChatInterfaceDemo = () => {
   useEffect(() => {
     chatInterface.current = ChatInterface();
     chatInterface.current.options({ contentStreaming: true });
-    // initializing customizable text feature for end user by updating store value through method exposed in chat interface.
-    // this method can be used for any template type,they have to store their values by using the below function in form of an object.
-    chatInterface.current.customizeTemplateText({
-      "gpt_form_template": {
-        "submit": "Continue",
-        "cancel": "Discard",
-        "loadingText": "Uploading...",
-        "remove": "Remove",
-        "addResponse": "Need More",
-        "placeholderText": {
-          "longText": "Enter your response here",
-          "shortText": "Enter your response here",
-          "singleSelect": "Select an option",
-          "multiSelect": "Select options",
-          "file": "Upload a file"
-        }
-      }
-    })
     let botInstance = BotConversation()
         botInstance.initializeBotSDK({
             "name": "ProcureBot",
