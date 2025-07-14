@@ -7,6 +7,7 @@ import "./ChatInterface.scss"
 import History from "../history";
 import Agents from "../agents";
 import Notifications from "../Notifications";
+import AnnouncementData from "../../Announcements/AnnouncementData";
 
 // function ShoelaceWrapper({ html }) {
 //   const ref = useRef(null);
@@ -31,6 +32,7 @@ const ChatInterfaceDemo = () => {
   const [messages, setMessages] = useState(null);
   const [quickActions, setQuickActions] = useState(null);
   const [input, setInput] = useState("");
+  const [announcements, setAnnouncements] = useState(null);
 
   const chatInterface = useRef();
 
@@ -48,6 +50,8 @@ const ChatInterfaceDemo = () => {
         })
     botInstance.enableEVABotSdk(true)
 
+    fetchAnnouncementData()   
+
     // Subscribe to updates
     const unsubscribe = chatInterface.current.subscribe(
       (question, searchResponse, moreAvailable, errorStates, quickActions) => {
@@ -62,6 +66,13 @@ const ChatInterfaceDemo = () => {
       unsubscribe();
     };
   }, []);
+
+
+  const fetchAnnouncementData = async () => {
+      const res = await AnnouncementData()
+      setAnnouncements(res?.data)
+      console.log('announcements', res)
+  }
 
   return (
     <div className="chatInterfaceDemo">

@@ -10,7 +10,8 @@ import {
   searchSession,
   submitFeedback,
   presenceStart,
-  getNotification
+  getNotification,
+  getAllAnnouncements
 } from './actions/global.action';
 import { handleAsyncActions } from '../utils/handleAsyncActions';
 import { cloneDeep, concat, isEmpty, orderBy, uniqBy } from 'lodash';
@@ -51,7 +52,8 @@ const initialState = {
   notifications : {},
   bookMarkedChatThreads: [],
   enableDebugging: false,
-  quickActions: []
+  quickActions: [],
+  announcements: {}
 };
 
 const globalSlice = createSlice({
@@ -220,6 +222,11 @@ const globalSlice = createSlice({
         state.questions = questions
       });
       handleAsyncActions(builder, presenceStart, 'presenceStart');
+      handleAsyncActions(builder, getAllAnnouncements, 'announcements', (state, action)=> {
+        state.announcements.data = action.payload
+        state.announcements.status = action.payload.status
+        state.announcements.error = action.payload.error        
+      });
     }
 });
 
