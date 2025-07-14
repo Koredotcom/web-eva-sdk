@@ -119,111 +119,130 @@ const initializeQuillForContainer = (container, field, item, promptDropdownWords
 			console.log('createWordDropdown called with:', x, y, 'for container:', editorContainer, "promptDropdownWords:", promptDropdownWords); // Debug log
 			
 			// Remove any existing dropdown
-			const existingDropdown = document.querySelector('.variable-dropdown');
-			if (existingDropdown) {
-				existingDropdown.remove();
-				console.log('Removed existing dropdown'); // Debug log
+			const existingAnchor = document.querySelector('.variable-dropdown-anchor');
+			const existingPopup = document.querySelector('.variable-dropdown');
+			if (existingAnchor) {
+				existingAnchor.remove();
+				console.log('Removed existing dropdown anchor'); // Debug log
+			}
+			if (existingPopup) {
+				existingPopup.remove();
+				console.log('Removed existing dropdown popup'); // Debug log
 			}
 
-			// Make sure editor container has relative positioning
-			const containerStyle = window.getComputedStyle(editorContainer);
-			if (containerStyle.position === 'static') {
-				editorContainer.style.position = 'relative';
-			}
-
-			// Sample words for the dropdown - you can customize this list
-			const availableWords = [
-				'username', 'email', 'firstname', 'lastname', 'company', 
-				'address', 'phone', 'ordernumber', 'date', 'amount',
-				'status', 'category', 'description', 'title', 'id'
-			];
-
-			// Create dropdown container
-			const dropdown = document.createElement('div');
-			dropdown.className = 'variable-dropdown';
-			dropdown.style.cssText = `
-				position: absolute;
+			// Create anchor element for positioning
+			const anchor = document.createElement('div');
+			anchor.className = 'variable-dropdown-anchor';
+			anchor.style.cssText = `
+				position: fixed;
 				left: ${x}px;
 				top: ${y}px;
+				width: 1px;
+				height: 1px;
+				z-index: 9999;
+				pointer-events: none;
+			`;
+
+			// Create Shoelace popup (better for precise positioning)
+			const popup = document.createElement('sl-popup');
+			popup.className = 'variable-dropdown';
+			popup.setAttribute('placement', 'bottom-start');
+			popup.setAttribute('auto-size', 'vertical');
+			popup.setAttribute('flip', 'true');
+			popup.setAttribute('shift', 'true');
+			popup.style.cssText = `
+				pointer-events: auto;
+			`;
+
+			// Create menu
+			const menu = document.createElement('sl-menu');
+			menu.style.cssText = `
+				max-height: 180px;
+				overflow-y: auto;
+				min-width: 160px;
 				background: white;
 				border: 1px solid #ccc;
 				border-radius: 6px;
 				box-shadow: 0 8px 16px rgba(0,0,0,0.15);
-				z-index: 9999;
-				max-height: 180px;
-				overflow-y: auto;
-				min-width: 160px;
-				font-size: 13px;
 			`;
 
-			// Add a small header to the dropdown
-			const header = document.createElement('div');
-			header.textContent = 'Select Variable';
-			header.style.cssText = `
-				padding: 8px 12px;
-				background-color: #f8f9fa;
-				border-bottom: 1px solid #e9ecef;
-				font-weight: 600;
-				font-size: 12px;
-				color: #495057;
-				text-align: center;
-			`;
-			dropdown.appendChild(header);
+			// Add menu label
+			const menuLabel = document.createElement('sl-menu-label');
+			menuLabel.textContent = 'Select Variable';
+			menu.appendChild(menuLabel);
 
-			// Create dropdown items
+			// Add divider
+			const divider = document.createElement('sl-divider');
+			menu.appendChild(divider);
+
+			// Create menu items
 			promptDropdownWords.forEach(word => {
-				const item = document.createElement('div');
-				item.textContent = word;
-				item.className = 'dropdown-item';
-				item.style.cssText = `
-					padding: 8px 12px;
-					cursor: pointer;
-					border-bottom: 1px solid #eee;
-					transition: background-color 0.2s;
-					font-size: 13px;
-				`;
-
-				// Hover effect
-				item.addEventListener('mouseenter', () => {
-					item.style.backgroundColor = '#f0f0f0';
-				});
-
-				item.addEventListener('mouseleave', () => {
-					item.style.backgroundColor = 'white';
-				});
-
-				// Click to select
-				item.addEventListener('click', () => {
+				const menuItem = document.createElement('sl-menu-item');
+				menuItem.textContent = word;
+				menuItem.setAttribute('value', word);
+				
+				// Add click handler
+				menuItem.addEventListener('click', (e) => {
+					e.stopPropagation();
 					insertCallback(word);
-					dropdown.remove();
+					popup.active = false;
+					setTimeout(() => {
+						anchor.remove();
+					}, 100);
 				});
 
-				dropdown.appendChild(item);
+				menu.appendChild(menuItem);
 			});
 
-			// Add to editor container as overlay
-			editorContainer.appendChild(dropdown);
-			console.log('Dropdown added to editor container'); // Debug log
+			// Add menu to popup
+			popup.appendChild(menu);
 
-			// Close dropdown when clicking outside
-			const closeDropdown = (e) => {
-				if (!dropdown.contains(e.target)) {
-					dropdown.remove();
-					document.removeEventListener('click', closeDropdown);
+			// Set anchor as the popup's anchor
+			popup.anchor = anchor;
+
+			// Add both to document body
+			document.body.appendChild(anchor);
+			document.body.appendChild(popup);
+			console.log('Shoelace popup added to document body at:', x, y); // Debug log
+
+			// Open popup immediately
+			setTimeout(() => {
+				popup.active = true;
+				console.log('Shoelace popup opened'); // Debug log
+			}, 10);
+
+			// Close popup when clicking outside
+			const closePopup = (e) => {
+				if (!popup.contains(e.target) && !anchor.contains(e.target)) {
+					popup.active = false;
+					setTimeout(() => {
+						anchor.remove();
+						popup.remove();
+						document.removeEventListener('click', closePopup);
+					}, 100);
 				}
 			};
 
+			// Handle popup close event
+			popup.addEventListener('sl-hide', () => {
+				console.log('Shoelace popup hiding'); // Debug log
+				setTimeout(() => {
+					anchor.remove();
+					popup.remove();
+					document.removeEventListener('click', closePopup);
+				}, 100);
+			});
+
 			// Add close listener after a small delay to prevent immediate closing
 			setTimeout(() => {
-				document.addEventListener('click', closeDropdown);
+				document.addEventListener('click', closePopup);
 			}, 100);
 
-			return dropdown;
+			return popup;
 		};
 
 		// Handle click in editor to show dropdown - direct click event approach
-		const handleEditorClick = (event) => {
-			console.log('Editor clicked!', event); // Debug log
+		const handleEditorClick = (event) => {			
 			
 			// Get editor and cursor position
 			const editor = quillEditor.getQuill();
@@ -252,16 +271,16 @@ const initializeQuillForContainer = (container, field, item, promptDropdownWords
 						}
 					}
 					
-					// Get the editor container for relative positioning
+					// Get the editor container for positioning
 					const editorContainer = container; // The main container passed to this function
 					const editorRect = editorContainer.getBoundingClientRect();
 					const bounds = editor.getBounds(selection.index);
 					
-					// Calculate position relative to editor container
-					const x = bounds.left + 10; // Small offset from cursor
-					const y = bounds.top + bounds.height + 5; // Below the cursor line
+					// Calculate absolute position on the page
+					const x = editorRect.left + bounds.left + 10; // Small offset from cursor
+					const y = editorRect.top + bounds.top + bounds.height + 5; // Below the cursor line
 					
-					console.log('Creating dropdown at:', x, y, 'relative to editor'); // Debug log
+					console.log('Creating dropdown at absolute position:', x, y, 'editor bounds:', bounds, 'editor rect:', editorRect); // Debug log
 					
 					// Create dropdown with insert callback
 					createWordDropdown(x, y, editorContainer, (selectedWord) => {
@@ -517,6 +536,19 @@ const initializeQuillForContainer = (container, field, item, promptDropdownWords
 			// Apply delayed styling when user types
 			if (source === 'user') {
 				applyDelayedStyling();
+				
+				// Close any open popup when user starts typing
+				const openPopup = document.querySelector('.variable-dropdown');
+				const openAnchor = document.querySelector('.variable-dropdown-anchor');
+				if (openPopup && openAnchor) {
+					console.log('Closing popup because user started typing'); // Debug log
+					openPopup.active = false;
+					setTimeout(() => {
+						openAnchor.remove();
+						openPopup.remove();
+					}, 100);
+				}
+				
 				// Clear formatting for new text after a short delay
 				setTimeout(() => {
 					clearFormattingForNewText();
