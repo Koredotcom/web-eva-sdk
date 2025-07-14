@@ -424,8 +424,7 @@ export const getAllAnnouncements = createAsyncThunk(
     async (arg, { rejectWithValue }) => {
         console.log("getAllAnnouncements arg", arg);
         try {
-            const response = await axiosInstance.get(`/1.1/users/${arg?.params?.userId}/announcements`);
-            console.log("getAllAnnouncements response", response);
+            const response = await axiosInstance.get(`/1.1/users/${arg?.params?.userId}/announcements`);            
             return response.data;
         } catch (error) {
             handleErrorState(error, "Unable to get Announcements");
