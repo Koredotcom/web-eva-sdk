@@ -1,5 +1,6 @@
 // Import the CSS file
 import './styles/sdk.css';
+import './styles/tom-select.css';
 
 // Re-export all modules from nested directories
 export { initializeSDK } from './config';
