@@ -1,5 +1,5 @@
 // sdk/components/tom-autocomplete.js
-import TomSelect from 'tom-select';
+// import TomSelect from 'tom-select';
 
 export function setupTomSelect({
   selectorId,
