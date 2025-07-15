@@ -69,7 +69,7 @@ const ChatInterfaceDemo = () => {
 
 
   const fetchAnnouncementData = async () => {
-      const res = await AnnouncementData()
+      const res = await AnnouncementData()      
       setAnnouncements(res?.data)      
   }
 

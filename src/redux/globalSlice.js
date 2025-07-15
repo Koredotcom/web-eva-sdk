@@ -223,9 +223,7 @@ const globalSlice = createSlice({
       });
       handleAsyncActions(builder, presenceStart, 'presenceStart');
       handleAsyncActions(builder, getAllAnnouncements, 'announcements', (state, action)=> {
-        state.announcements.data = action.payload
-        state.announcements.status = action.payload.status
-        state.announcements.error = action.payload.error        
+        state.announcements= action.payload             
       });
     }
 });
