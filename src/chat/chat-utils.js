@@ -237,6 +237,20 @@ export const constructQuestionPostCall = (data, qId) => {
     // }
 
     if(data?.error) {
+        /*when the api request returns error, need to check whether the question is having threadedView or not and update the status accordingly */
+
+        if (question?.viewType === "threadView"){
+            /*add error status to the child question present in the botConversation */
+            question = addErrorStateToBotConversation(questions?.[qId], data)
+        }else{
+            question.status = "error"            
+            question.templateType = "error_template"
+            question.error = data?.error
+        }
+        questions[qId] = { ...question, apiSuccess: false };
+        store.dispatch(updateChatData(questions))
+        return;
+        
         // question = { ...question, error: data?.error, errInfo: data?.errInfo};
         // if(data?.errInfo?.errors[0]?.code === 'MaximumPointsExceeded'){
         //     _limitExhausted = data?.errInfo?.errors[0]
@@ -323,7 +337,10 @@ export const constructQuestionPostCall = (data, qId) => {
             ...question,
             "status": data?.payload?.history?.status,
             "answer": data?.payload?.history?.answer,
-
+        }
+        /*need to update botConversation question as well */
+        if(question?.hasOwnProperty('botConversation')){
+            question.botConversation[data?.meta?.arg?.params?.quesId].status = "terminated"
         }
     }
 
@@ -408,3 +425,19 @@ const removeOutputMessageId = (question, apiResponse) => {
         return question;
 
     }
+
+const addErrorStateToBotConversation = (question, resp) =>{
+    /*the below block is for stop response scenario */
+    if(question?.botConversation?.[resp?.meta?.arg?.params?.quesId]){ 
+        question.botConversation[resp?.meta?.arg?.params?.quesId].status = "error"
+        question.botConversation[resp?.meta?.arg?.params?.quesId].error = resp?.error
+    }else{
+        const randomMessageId = uuid()
+        question.botConversation[randomMessageId] = {
+            messageId: randomMessageId,
+            status: "error",
+            error: resp?.error
+        }
+    }
+    return question;
+}

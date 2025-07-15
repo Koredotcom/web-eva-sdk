@@ -2,6 +2,7 @@ import { htmlDecode, renderIcons } from "../../utils/helpers";
 import AnsFromChipFunctionality from "../functionality/ansFromChip";
 import { getTimeline, highlightQuotedText } from "../utils/helper";
 import htmlTableRenderer from "./htmlTableRenderer";
+import { createCopyIcon, createExport, createThumbsDown, createThumbsDownFilled, createThumbsUp, createThumbsUpFilled } from "../icons-library";
 
 const AnsFromChip = ({ item, regeneratingAnswer }) => {
 	const regeneratingChipRenderer = () => {
@@ -388,6 +389,36 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 
 		return html;
 	};
+	
+	const copyAnswerChip = () => {
+		return `
+			<div class="copyAnswerButton" id="copyAnswerButton-${item?.id}">${createCopyIcon({ size: 16, color: "#667085" })}</div>
+		`;
+	}
+
+	const feedbackChip = () => {
+		return `
+			<div class="feedbackChip">
+			    ${item?.feedback === "like" ? 
+					`<div class="feedbackLikeButton ${item?.feedback === "like" ? "active" : ""}" id="feedbackLikeButton-${item?.messageId}">${createThumbsUpFilled({ size: 16, color: "#12B76A" })}</div>` 
+					:
+					`<div class="feedbackLikeButton" id="feedbackLikeButton-${item?.messageId}">${createThumbsUp({ size: 16, color: "#667085" })}</div>`
+				}
+				${item?.feedback === "dislike" ? 
+					`<div class="feedbackDislikeButton ${item?.feedback === "dislike" ? "active" : ""}" id="feedbackDislikeButton-${item?.messageId}">${createThumbsDownFilled({ size: 16, color: "#F04438" })}</div>` 
+					: 
+					`<div class="feedbackDislikeButton" id="feedbackDislikeButton-${item?.messageId}">${createThumbsDown({ size: 16, color: "#667085" })}</div>`
+				}
+			</div>
+		`;
+	}
+
+	const exportWordChip = () => {
+		return `
+			<div class="exportWordButton" id="exportWordButton-${item?.messageId}">${createExport({ size: 16, color: "#667085" })}</div>
+		`;
+	}
+	
 
 	const renderChip = () => {
 		let chipHTML = "";
@@ -420,6 +451,34 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 				document.body.appendChild(dialog);
 				dialog.showModal();
 			}
+		}
+		let actionChipsHTML = `<div class="answerActionChips">`;
+		// Add copy answer chip if answer exists
+		if (item?.answer) {
+			actionChipsHTML += copyAnswerChip();
+		}
+
+		// Add export to Word chip if answer exists
+		if (item?.answer) {
+			actionChipsHTML += exportWordChip();
+		}
+
+		if(!item?.disableFeedback) {
+			actionChipsHTML += feedbackChip();
+		}
+		actionChipsHTML += `</div>`;
+
+		// Insert action chips inside .ansFromChip if present
+		if (chipHTML.includes('class="ansFromChip"')) {
+			const tempDiv = document.createElement('div');
+			tempDiv.innerHTML = chipHTML;
+			const ansFromChipDiv = tempDiv.querySelector('.ansFromChip');
+			if (ansFromChipDiv) {
+				ansFromChipDiv.insertAdjacentHTML('beforeend', actionChipsHTML);
+				chipHTML = tempDiv.innerHTML;
+			}
+		} else {
+			chipHTML += actionChipsHTML;
 		}
 
 		return `<div class="answerFromChipDiv">${chipHTML}</div>`;

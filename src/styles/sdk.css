@@ -2,8 +2,25 @@
 @import "./input-text.css";
 @import "./buttons.css";
 @import "./dropdown.css";
+/* @import './quill-editor.css'; */
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
+/* @import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap'); */
+
+/* @font-face {
+  font-family: 'Inter';
+  src: url('../../public/fonts/Inter-Italic.woff2') format('woff2-variations');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+} */
+
+@font-face {
+  font-family: 'Inter';
+  src: url('fonts/InterVariable.woff2') format('woff2-variations');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
 
 body {
     background-color: #fff;
