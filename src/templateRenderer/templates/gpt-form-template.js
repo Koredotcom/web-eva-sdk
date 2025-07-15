@@ -4,7 +4,7 @@ import UpdateGPTPromptValue from "../../chat/gptTemplate/updateGPTPromptValue";
 import MultiResponse from "../../chat/gptTemplate/MultiResponse";
 import gptFormFunctionality from "../functionality/gpt-form-template";
 import store from "../../redux/store";
-import { createDeleteIcon } from "../icons-library";
+import { createDeleteIcon, createCloseIcon } from "../icons-library";
 
 export function render(item) {
 	// const { formData } = item;
@@ -95,17 +95,25 @@ export function render(item) {
 
 		else if(fileDetails && fileDetails?.length > 0){
 			fileDetails?.forEach((file, index) => {
+				const fileWrapper = document.createElement("div");
+				fileWrapper.className = "uploadedFileWrapper";
+
 				const uploadedFileDiv = document.createElement("div");
 				uploadedFileDiv.className = "uploadedFileDetails";
 				uploadedFileDiv.id = `uploadedFile-${contextField?.key}-${item?.messageId}-${index}`;
-				uploadedFileDiv.textContent = file?.title;
+				const fileTitleDiv = document.createElement("div");
+				fileTitleDiv.className = "fileTitle";
+				fileTitleDiv.textContent = file?.title;
 
-				const removeButton = document.createElement("button");
-				removeButton.textContent = "Remove";
+				const removeButton = document.createElement("div");
+				removeButton.innerHTML = createCloseIcon({ size: 10, color: "#A0A0AB" });
+				removeButton.className = "closeIcon";
 				removeButton.id = `removeButton-${contextField?.key}-${item?.messageId}-${index}`;
+				uploadedFileDiv.appendChild(fileTitleDiv);
 				uploadedFileDiv.appendChild(removeButton);
 
-				grpInputDiv.appendChild(uploadedFileDiv);
+				fileWrapper.appendChild(uploadedFileDiv);
+				grpInputDiv.appendChild(fileWrapper);
 			});
 		}
 
