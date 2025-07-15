@@ -37,8 +37,11 @@ const submitUserFeedback = async ({ type, cId, messageId = null, payload }) => {
         if (currentQuestion?.hasOwnProperty("feedback") && currentQuestion.feedback === type && (feedBackPayload.comment ? (feedBackPayload.comment === currentQuestion?.comment) : true)) {
             feedBackPayload = { "action": "undo" }
         }
-    } else {
+    } else {        
         feedBackPayload = payload
+        if (currentQuestion?.feedback === payload?.feedback) {
+            feedBackPayload = { "action": "undo" }
+        }
     }
     if(state?.enableDebugging){        
         console.log(`

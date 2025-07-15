@@ -463,6 +463,7 @@ const ChatInterface = (props) => {
       })
     }
 
+
     return {
         subscribe,
         sendMessageAction,
