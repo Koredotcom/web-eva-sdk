@@ -55,6 +55,7 @@ export function render(
 		// Add question bubble if needed
 		if (
 			data.question &&
+			!data?.isTask &&
 			shouldShowQuestion(data.templateType, data.botConversation)
 		) {
 			content += TemplateComponents.renderQuestionBubble(
