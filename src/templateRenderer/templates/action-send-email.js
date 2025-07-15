@@ -76,7 +76,7 @@ export function render(data) {
                         ></sl-input>
                     </div>
                     <div class="email-field">
-                        <sl-button id="email-send-${data?.reqId}" variant="primary" disabled>Send</sl-button>
+                        <sl-button class="primary-button-black" id="email-send-${data?.reqId}" variant="primary" disabled>Send</sl-button>
                     </div>
                 </div>
             </div>
