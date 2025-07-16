@@ -1,6 +1,6 @@
 {
   "name": "eva-web-sdk",
-  "version": "1.1.37",
+  "version": "1.1.38",
   "description": "",
   "main": "dist/index.cjs.js",
   "style": "dist/sdk-styles.css",
@@ -68,6 +68,10 @@
     "./files": {
       "import": "./dist/files/index.esm.js",
       "require": "./dist/files/index.cjs.js"
+    },
+    "./Announcements": {
+      "import": "./dist/Announcements/index.esm.js",
+      "require": "./dist/Announcements/index.cjs.js"
     }
   },
   "devDependencies": {
