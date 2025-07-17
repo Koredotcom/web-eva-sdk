@@ -4,7 +4,7 @@ import "./../styles/template.scss";
 
 export function render(data) {
 
-    if(data?.status === 'completed') {
+    if (data?.status === 'completed') {
         return renderEmailSummary(data);
     }
 
@@ -17,10 +17,10 @@ export function render(data) {
                 <div class="email-field">
                     <sl-select id="email-connection-${data?.reqId}" value="${defaultConnectionId || ''}">
                         ${emailList?.map((email, index) =>
-                        `
+        `
                         <sl-option value="${email?.id}" id="email-connection-${index}">${email?.emailId}</sl-option>
                         `
-                        ).join('')}
+    ).join('')}
                     </sl-select>
                 </div>
                 <div class="email-header">

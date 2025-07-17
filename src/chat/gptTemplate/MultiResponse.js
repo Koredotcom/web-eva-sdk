@@ -278,8 +278,8 @@ const MultiResponse = () => {
                     reqdInputElement = document.getElementById(`dropdownValue-${field?.key}-${item?.messageId}-${index}`);
                 
                     if (field?.value?.multi) {
-                        const reqdValues = Array.from(reqdInputElement.selectedOptions).map(option => option.value);
-                        reqdValue = reqdValues; 
+                        // For shoelace multi-select, value is already an array
+                        reqdValue = reqdInputElement?.value || [];
                     } else {
                         reqdValue = reqdInputElement?.value || reqdInputElement?.textContent || ""; 
                         //this check is for multi output, where we need to pass the id of the output for the context
@@ -288,24 +288,28 @@ const MultiResponse = () => {
                                                     : reqdValue?.includes("Original Content")
                                                     ? "0"
                                                     : reqdValue || "";
-
-
-                        
                     }
 
                     //for the filed 'prompts' sdk should pass the id of the selected option
                     if(field?.key === 'prompts'){
-                        const promptId = field?.value?.choices?.find(choice => choice.label === reqdValue)?.id;
-                        reqdValue = promptId;
+                        const promptId = field?.value?.choices?.find(choice => choice.id === reqdValue)?.id;
+                        reqdValue = promptId || reqdValue;
                     }
                     if(state?.enableDebugging){
                         console.log(`Form field is ${`(dropdownValue-${field?.key})`} and value is {${reqdValue}}`)
                     }
                 } else { 
                     reqdInputElement = document.getElementById(`inputValue-${field?.key}-${item?.messageId}-${index}`)
-                    reqdValue = reqdInputElement?.value || reqdInputElement?.textContent || ""
+                    
+                    // Check if it's a Quill editor or regular element (specifically for prompt fields)
+                    if ((field?.key === 'prompt' || field?.value?.nested?.key === 'prompt') && reqdInputElement && reqdInputElement.quillEditor) {
+                        reqdValue = reqdInputElement.quillEditor.getText();
+                    } else {
+                        reqdValue = reqdInputElement?.value || reqdInputElement?.textContent || "";
+                    }
+                    
                     if(state?.enableDebugging){
-                        console.log(`Form field is ${`(inputValue-${field?.key})`} and value is {${reqdInputElement?.value}}`)
+                        console.log(`Form field is ${`(inputValue-${field?.key})`} and value is {${reqdValue}}`)
                     }
                 }
     
@@ -321,7 +325,16 @@ const MultiResponse = () => {
                 if(field?.value?.nested?.key === "prompt" || field?.key === 'prompt'){
                     // Need to send the Prompt Field Value as the prompt can be changed manually by the user if editable
                     let promptField = document.getElementById(`inputValue-${field?.key}-${item?.messageId}-${index}`); 
-                    acc["prompt"] = promptField?.value || promptField?.textContent || "";
+                    
+                    // Check if it's a Quill editor or regular element
+                    let promptValue = "";
+                    if (promptField && promptField.quillEditor) {
+                        promptValue = promptField.quillEditor.getText();
+                    } else {
+                        promptValue = promptField?.value || promptField?.textContent || "";
+                    }
+                    
+                    acc["prompt"] = promptValue;
                 }
     
                 // Checking if the Field has a file and getting the file from the uploadedFiles

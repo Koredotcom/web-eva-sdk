@@ -338,9 +338,11 @@ export const constructQuestionPostCall = (data, qId) => {
             "status": data?.payload?.history?.status,
             "answer": data?.payload?.history?.answer,
         }
-        /*need to update botConversation question as well */
+        /*need to update botConversation question as well, in case of termination */
         if(question?.hasOwnProperty('botConversation')){
-            question.botConversation[data?.meta?.arg?.params?.quesId].status = "terminated"
+            if(question?.botConversation?.[data?.meta?.arg?.params?.quesId]){
+                question.botConversation[data?.meta?.arg?.params?.quesId].status = "terminated"
+            }
         }
     }
 

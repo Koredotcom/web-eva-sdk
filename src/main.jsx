@@ -14,10 +14,10 @@ initializeSDK({
     initializeBotSDK:{
         "name": "ProcureBot",
         "streamId": "st-b6012ef2-810d-5240-b33e-5404d68b680e",
-        "webhook": {
+        "webhook": {            
             "clientId": "cs-79a89a6f-b0ab-5e2f-b912-8dd1e2f95da0",
             "clientSecret": "VJNwkfbPcMZl4bOa1Qn3XtYRz6rqigwtTgOlaYX25Xs="
-        }
+        },
     },
     enableDebugging: false
 });

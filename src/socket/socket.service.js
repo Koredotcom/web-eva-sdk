@@ -2,6 +2,8 @@ import io from "socket.io-client";
 import { ChatInterface } from "../chat";
 import BotConversation from "../chat/botAgent/getBotConversation";
 import Notification from "../notifications/notification";
+import { presenceStart } from "../redux/actions/global.action";
+import store from "../redux/store";
 
 class WebSocketClient {
     constructor() {
@@ -19,7 +21,7 @@ class WebSocketClient {
         this.options = {
             transports: ["websocket"],
             reconnection: true,
-            reconnectionAttempts: 5,
+            reconnectionAttempts: 10000,
             reconnectionDelay: 1000,
             ...options,
         };
@@ -42,11 +44,13 @@ class WebSocketClient {
                 console.info(`Socket connected: ${this.socket.id}`);
             });
 
-            this.socket.on("disconnect", (reason) => {
+            this.socket.on("disconnect", async(reason) => {
+                await store.dispatch(presenceStart())
                 console.warn(`Socket disconnected: ${reason}`);
             });
 
-            this.socket.on("connect_error", (error) => {
+            this.socket.on("connect_error", async(error) => {
+                await store.dispatch(presenceStart())
                 console.error(`Socket connection Error: ${error.message}`);
             });
 

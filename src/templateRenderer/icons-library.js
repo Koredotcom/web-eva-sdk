@@ -97,3 +97,10 @@ export function createThumbsUpFilled({ size = 24, color = "#000", className = ""
   `;
 }
 
+export function createCloseIcon({ size = config.size, color = config.color, className = "" } = {}) {
+  return `
+    <svg width="${size}" height="${size}" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg" class="wa-Close ${className}">
+      <path d="M9.18311 1L1.18311 9M1.18311 1L9.18311 9" stroke="${color}" stroke-width="1.33" stroke-linecap="round" stroke-linejoin="round" />
+    </svg>
+  `;
+}
