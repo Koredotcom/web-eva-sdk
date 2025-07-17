@@ -8,6 +8,7 @@ import History from "../history";
 import Agents from "../agents";
 import Notifications from "../Notifications";
 import AnnouncementData from "../../Announcements/AnnouncementData";
+import Announcements from "../Announcements/announcements";
 
 // function ShoelaceWrapper({ html }) {
 //   const ref = useRef(null);
@@ -70,10 +71,12 @@ const ChatInterfaceDemo = () => {
 
   const fetchAnnouncementData = async () => {
       const res = await AnnouncementData()      
-      setAnnouncements(res?.data)      
+      setAnnouncements(res?.data || [])      
   }
 
   return (
+    <>
+    <Announcements announcements={announcements} />
     <div className="chatInterfaceDemo">
       <div className="historySec">
         <History />
@@ -115,6 +118,7 @@ const ChatInterfaceDemo = () => {
         />
       </div>
     </div>
+    </>
   );
 };
 

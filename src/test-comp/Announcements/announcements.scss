@@ -1,0 +1,69 @@
+.announcements-container {
+    padding: 0.625rem 7.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    background: #E5E5E5;
+    position: relative;
+    .announcements-header {
+        font-weight: 400;
+        font-size: 0.75rem;
+        line-height: 1rem;
+        color: #131316;
+        text-align: center;
+        max-width: 52.5rem;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        span {
+            font-weight: 600;
+        }
+    }
+    .announcements-view-more {
+        font-weight: 600;
+        font-size: 0.75rem;
+        line-height: 1rem;
+        color: #0F0F0F;
+        text-decoration: underline;
+        cursor: pointer;
+        flex-shrink: 0;
+    }
+
+    .close-icon {
+        width: 1rem;
+        height: 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        position: absolute;
+        right: 1.5rem;
+    }
+}
+
+.announcements-dialog-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    .more-announcements-header {
+        padding: 1rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.125rem;
+        .announcements-header {
+            font-size: 1rem;
+            font-weight: 600;
+            line-height: 1.5rem;
+            color: #0F0F0F;
+        }
+        .announcements-desc {
+            font-size: 0.75rem;
+            font-weight: 400;
+            color: #737373;
+            line-height: 1.125rem;
+        }
+    }
+    .line-break {
+        border-bottom: 0.0625rem solid #E4E4E7;
+    }
+}
