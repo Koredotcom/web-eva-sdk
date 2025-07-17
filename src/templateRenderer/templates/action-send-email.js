@@ -4,7 +4,7 @@ import "./../styles/template.scss";
 
 export function render(data) {
 
-    if(data?.status === 'completed') {
+    if (data?.status === 'completed') {
         return renderEmailSummary(data);
     }
 
@@ -14,45 +14,33 @@ export function render(data) {
     let html = `
         <div class="email-template">
             <div class='email-selection-field'>
-                <div class="email-field email-header-block">
+                <div class="email-field">
                     <sl-select id="email-connection-${data?.reqId}" value="${defaultConnectionId || ''}">
                         ${emailList?.map((email, index) =>
-                        `
+        `
                         <sl-option value="${email?.id}" id="email-connection-${index}">${email?.emailId}</sl-option>
                         `
-                        ).join('')}
+    ).join('')}
                     </sl-select>
                 </div>
                 <div class="email-header">
                     <div class="email-field">
-                        <label>To</label>
+                        <label>To:</label>
                         <select id="email-to-${data.reqId}" multiple placeholder="Enter email address">
                         </select>
                     </div>
                     <div class="email-field">
-                        ${getEmailValue(data, 'cc')}
-                        <sl-input
-                        label="CC"
-                        type="text"
-                        placeholder="Enter email address"
-                        id="email-cc-${data?.reqId}"
-                        value="${data?.ccChoices?.input || ''}"
-                        ></sl-input>
-                        <div class="email-suggestions-dropdown">
-                        ${data?.ccChoices?.res?.map((email, index) =>
-                        `
-                        <sl-option id="email-cc-${data?.reqId}-${index}" value="${email?.id}">${email?.id}</sl-option>
-                        `
-                        ).join('') || ''}
-                        </div>
+                       <label>CC:</label>
+                       <select id="email-cc-${data.reqId}" multiple placeholder="Enter email address"></select>
                     </div>
                     <div class="email-field">
-                      <label>BCC</label>
+                      <label>BCC:</label>
                       <select id="email-bcc-${data.reqId}" multiple placeholder="Enter email address"></select>
                     </div>
-                    <div class="email-field email-subject">
+                    <div class="email-field">
                         <sl-input
                         label="Subject"
+                        placeholder="Enter subject"
                         id="email-subject-${data?.reqId}"
                         value="${data?.content?.subject || ''}"
                         ></sl-input>
@@ -68,7 +56,7 @@ export function render(data) {
                     </div>
                 </div>
                 <div class="email-footer">
-                    <div class="email-field email-attachments">
+                    <div class="email-field">
                         <sl-input
                         type="file"
                         id="email-attachments-${data?.reqId}"
@@ -76,7 +64,7 @@ export function render(data) {
                         ></sl-input>
                     </div>
                     <div class="email-field">
-                        <sl-button class="primary-button-black" id="email-send-${data?.reqId}" variant="primary" disabled>Send</sl-button>
+                        <sl-button id="email-send-${data?.reqId}" variant="primary" disabled>Send</sl-button>
                     </div>
                 </div>
             </div>
