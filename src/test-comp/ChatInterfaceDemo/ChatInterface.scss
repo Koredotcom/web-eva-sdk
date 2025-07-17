@@ -851,6 +851,9 @@ html, body {
             // margin-bottom: 1rem;
             // width: 100%;
             padding: .5rem .75rem;
+            &.number {
+                width: 48%;
+            }
             &.dropdown {
                 width: 48%;
                 //margin-right: 1rem;  
@@ -973,6 +976,34 @@ html, body {
                         display: flex;
                         flex-direction: column;
                         gap: 8px;
+                    }
+                }
+            }
+            &.file {
+                &.uploadGrp {
+                    .grpInput {
+                        .grpwrap {
+                            display: flex;
+                            flex-direction: column;
+                            gap: 8px;
+                            .formField {
+                                &.file {
+                                    display: flex;
+                                    justify-content: center;
+                                    gap: .5rem;
+                                    padding: .5rem .75rem;
+                                    border-radius: .5rem;
+                                    background: #fff;
+                                    border: .0625rem solid #d6d6d6;
+                                    box-shadow: 0rem .0625rem .125rem 0rem rgba(16, 24, 40, .0509803922);
+                                    cursor: pointer;
+                                    &:hover {
+                                        background: #fafafa;
+                                        box-shadow: 0rem 0rem 0rem .25rem #eff4ff;
+                                    }
+                                } 
+                            }
+                        }
                     }
                 }
             }

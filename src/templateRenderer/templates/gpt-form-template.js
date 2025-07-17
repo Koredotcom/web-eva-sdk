@@ -5,6 +5,7 @@ import MultiResponse from "../../chat/gptTemplate/MultiResponse";
 import gptFormFunctionality from "../functionality/gpt-form-template";
 import store from "../../redux/store";
 import { QuillEditor } from "../../components";
+import { createDeleteIcon } from "../icons-library";
 
 // Helper function to initialize Quill editor for a container
 const initializeQuillForContainer = (container, field, item, promptDropdownWords, index) => {
@@ -29,9 +30,7 @@ const initializeQuillForContainer = (container, field, item, promptDropdownWords
 			try {
 				const editor = quillEditor.getQuill();
 				const text = editor.getText();
-				const variableRegex = /\$\$([^$]+)\$\$/g;
-				
-				console.log('Applying immediate styling to text:', text);
+				const variableRegex = /\$\$([^$]+)\$\$/g;								
 
 				// Store current selection
 				const currentSelection = editor.getSelection();
@@ -51,26 +50,19 @@ const initializeQuillForContainer = (container, field, item, promptDropdownWords
 					});
 				}
 				
-				console.log('Found', matches.length, 'variables to process:', matches.map(m => m.wordOnly));
-				
 				// Process matches in reverse order to maintain correct indices
 				for (let i = matches.length - 1; i >= 0; i--) {
-					const { index, length, wordOnly } = matches[i];
-					
-					console.log('Processing variable:', wordOnly, 'at index:', index);
+					const { index, length, wordOnly } = matches[i];										
 					
 					// Check if this text is already styled to avoid re-processing
 					const existingFormat = editor.getFormat(index, wordOnly.length);
 					const isAlreadyStyled = existingFormat.background === '#e3f2fd' && 
 											existingFormat.color === '#1976d2' && 
 											existingFormat.bold === true;
-					
-					console.log('Variable already styled:', isAlreadyStyled);
+										
 					
 					// Only process if not already styled
 					if (!isAlreadyStyled) {
-						console.log('Styling variable:', wordOnly);
-						
 						// Replace $$word$$ with word + unformatted space
 						editor.deleteText(index, length, 'silent');
 						editor.insertText(index, wordOnly + ' ', 'silent');
@@ -115,18 +107,14 @@ const initializeQuillForContainer = (container, field, item, promptDropdownWords
 
 		// Create dropdown for word selection
 		const createWordDropdown = (x, y, editorContainer, insertCallback) => {
-			console.log('createWordDropdown called with:', x, y, 'for container:', editorContainer, "promptDropdownWords:", promptDropdownWords); // Debug log
-			
 			// Remove any existing dropdown
 			const existingAnchor = document.querySelector('.variable-dropdown-anchor');
 			const existingPopup = document.querySelector('.variable-dropdown');
 			if (existingAnchor) {
 				existingAnchor.remove();
-				console.log('Removed existing dropdown anchor'); // Debug log
 			}
 			if (existingPopup) {
 				existingPopup.remove();
-				console.log('Removed existing dropdown popup'); // Debug log
 			}
 
 			// Create anchor element for positioning
@@ -202,12 +190,10 @@ const initializeQuillForContainer = (container, field, item, promptDropdownWords
 			// Add both to document body
 			document.body.appendChild(anchor);
 			document.body.appendChild(popup);
-			console.log('Shoelace popup added to document body at:', x, y); // Debug log
 
 			// Open popup immediately
 			setTimeout(() => {
 				popup.active = true;
-				console.log('Shoelace popup opened'); // Debug log
 			}, 10);
 
 			// Close popup when clicking outside
@@ -224,7 +210,6 @@ const initializeQuillForContainer = (container, field, item, promptDropdownWords
 
 			// Handle popup close event
 			popup.addEventListener('sl-hide', () => {
-				console.log('Shoelace popup hiding'); // Debug log
 				setTimeout(() => {
 					anchor.remove();
 					popup.remove();
@@ -265,7 +250,6 @@ const initializeQuillForContainer = (container, field, item, promptDropdownWords
 													previousFormat.bold === true);
 						
 						if (isOnStyledVariable) {
-							console.log('Click on styled variable detected, not opening dropdown');
 							return; // Don't open dropdown on styled variables
 						}
 					}
@@ -278,8 +262,6 @@ const initializeQuillForContainer = (container, field, item, promptDropdownWords
 					// Calculate absolute position on the page
 					const x = editorRect.left + bounds.left + 10; // Small offset from cursor
 					const y = editorRect.top + bounds.top + bounds.height + 5; // Below the cursor line
-					
-					console.log('Creating dropdown at absolute position:', x, y, 'editor bounds:', bounds, 'editor rect:', editorRect); // Debug log
 					
 					// Create dropdown with insert callback
 					createWordDropdown(x, y, editorContainer, (selectedWord) => {
@@ -385,8 +367,6 @@ const initializeQuillForContainer = (container, field, item, promptDropdownWords
 						editor.deleteText(range.start, deleteLength, 'user');
 						editor.setSelection(range.start, 0, 'user');
 						
-						console.log('Deleted entire styled variable with space:', range.text);
-						
 						// Prevent default backspace behavior
 						event.preventDefault();
 						event.stopPropagation();
@@ -399,9 +379,7 @@ const initializeQuillForContainer = (container, field, item, promptDropdownWords
 						const deleteLength = range.end - range.start;
 						editor.deleteText(range.start, deleteLength, 'user');
 						editor.setSelection(range.start, 0, 'user');
-						
-						console.log('Deleted entire styled variable:', range.text);
-						
+
 						// Prevent default backspace behavior
 						event.preventDefault();
 						event.stopPropagation();
@@ -452,8 +430,6 @@ const initializeQuillForContainer = (container, field, item, promptDropdownWords
 												previousFormat.bold === true);
 				
 				if (isWithinStyledVariable) {
-					console.log('Text input within styled variable detected, preventing editing');
-					
 					// Simply prevent any text input within styled variables
 					// Styled variables should be immutable (only deletable with backspace)
 					event.preventDefault();
@@ -540,7 +516,6 @@ const initializeQuillForContainer = (container, field, item, promptDropdownWords
 				const openPopup = document.querySelector('.variable-dropdown');
 				const openAnchor = document.querySelector('.variable-dropdown-anchor');
 				if (openPopup && openAnchor) {
-					console.log('Closing popup because user started typing'); // Debug log
 					openPopup.active = false;
 					setTimeout(() => {
 						openAnchor.remove();
@@ -670,29 +645,29 @@ export function render(item) {
 		let contextFieldFileKey = `${contextField?.key}-${item?.messageId}`;
 		let fileDetails = uploadedFileState?.[contextFieldFileKey];
 
-		// if(item?.loadingFiles?.includes(contextFieldFileKey)){
-		// 	const loadingFileDiv = document.createElement("div");
-		// 	loadingFileDiv.className = "loadingFileDetails";
-		// 	loadingFileDiv.id = `loadingFile-${contextField?.key}-${item?.messageId}`;
-		// 	loadingFileDiv.textContent = "Loading...";
-		// 	grpInputDiv.appendChild(loadingFileDiv);
-		// }
+		if(item?.loadingFiles?.includes(contextFieldFileKey)){
+			const loadingFileDiv = document.createElement("div");
+			loadingFileDiv.className = "loadingFileDetails";
+			loadingFileDiv.id = `loadingFile-${contextField?.key}-${item?.messageId}`;
+			loadingFileDiv.textContent = "Loading...";
+			grpInputDiv.appendChild(loadingFileDiv);
+		}
 
-		// else if(fileDetails && fileDetails?.length > 0){
-		// 	fileDetails?.forEach((file, index) => {
-		// 		const uploadedFileDiv = document.createElement("div");
-		// 		uploadedFileDiv.className = "uploadedFileDetails";
-		// 		uploadedFileDiv.id = `uploadedFile-${contextField?.key}-${item?.messageId}-${index}`;
-		// 		uploadedFileDiv.textContent = file?.title;
+		else if(fileDetails && fileDetails?.length > 0){
+			fileDetails?.forEach((file, index) => {
+				const uploadedFileDiv = document.createElement("div");
+				uploadedFileDiv.className = "uploadedFileDetails";
+				uploadedFileDiv.id = `uploadedFile-${contextField?.key}-${item?.messageId}-${index}`;
+				uploadedFileDiv.textContent = file?.title;
 
-		// 		const removeButton = document.createElement("button");
-		// 		removeButton.textContent =  "Remove";
-		// 		removeButton.id = `removeButton-${contextField?.key}-${item?.messageId}-${index}`;
-		// 		uploadedFileDiv.appendChild(removeButton);
+				const removeButton = document.createElement("button");
+				removeButton.textContent =  "Remove";
+				removeButton.id = `removeButton-${contextField?.key}-${item?.messageId}-${index}`;
+				uploadedFileDiv.appendChild(removeButton);
 
-		// 		grpInputDiv.appendChild(uploadedFileDiv);
-		// 	});
-		// }
+				grpInputDiv.appendChild(uploadedFileDiv);
+			});
+		}
 
 		if (
 			contextField?.value?.type === "longText" ||
@@ -731,7 +706,7 @@ export function render(item) {
 
 				
 
-				grpInputDiv.appendChild(formFieldLongTextElement);
+				grpWrapDiv.appendChild(formFieldLongTextElement);
 			}
 
 			const textareaElement = document.createElement("sl-textarea");
@@ -801,7 +776,7 @@ export function render(item) {
 			const grpInputDiv = document.createElement("div");
 			grpInputDiv.className = "grpInput";
 
-			if ((field?.value?.canUploadFile && !hasUploadedFiles) || field?.value?.allowMultipleFiles) {
+			if (((field?.value?.canUploadFile && !hasUploadedFiles) || field?.value?.allowMultipleFiles) && field?.value?.type !== "file") {
 				const formFieldLongTextElement = document.createElement("div");
 				formFieldLongTextElement.className = "formField LongText";
 				const fileUploadLabel = document.createElement("label");
@@ -1186,29 +1161,67 @@ export function render(item) {
 				}`;
 				grpInputDiv.appendChild(nameTitleDiv);
 
-				const numberElement = document.createElement("input");
-				numberElement.type = "number";
+				const numberElement = document.createElement("sl-input");
+				numberElement.setAttribute("type", "number");
 				numberElement.id = `inputValue-${field?.key}-${item?.messageId}-${index}`;
 				numberElement.placeholder =
 					field?.value?.placeholder || "Enter Number...";
 				numberElement.value = field?.value?.default || "";
+				
+				// Add additional number-specific attributes if needed
+				if (field?.value?.min !== undefined) {
+					numberElement.setAttribute("min", 0);
+				}
+				
+				
 				grpInputDiv.appendChild(numberElement);
 			}
 			/*need to revisit, as for the type file, we need to show upload bar only */
 			if (field?.value?.type === "file") {
+				// const grpWrapDiv = document.createElement("div");
+				// grpWrapDiv.className = "grpwrap";
+				// const nameTitleDiv = document.createElement("div");
+				// nameTitleDiv.className = "nameTitle";
+				// nameTitleDiv.textContent = `${field?.label} ${
+				// 	field?.required || field?.value?.required ? "*" : ""
+				// }`;
+				// grpInputDiv.appendChild(nameTitleDiv);
+				// grpWrapDiv.appendChild(grpInputDiv);
+				// const textareaElement = document.createElement("sl-textarea");
+				// textareaElement.id = `inputValue-${field?.key}-${item?.messageId}-${index}`;
+				// textareaElement.placeholder =
+				// 	field?.value?.placeholder || "Enter Content...";
+				// textareaElement.value = field?.value?.default || "";
+				// grpInputDiv.appendChild(textareaElement);
+				const formFieldLongTextElement = document.createElement("div");
+				formFieldLongTextElement.className = "formField file";
+
+				if((field?.value?.canUploadFile && !hasUploadedFiles) || field?.value?.allowMultipleFiles) {				
+				const fileUploadLabel = document.createElement("label");
+				fileUploadLabel.textContent = "Drop files to attach or browse";
+				fileUploadLabel.className = "fileUploadLabel";
+				formFieldLongTextElement.appendChild(fileUploadLabel);
+
+				const inputField = document.createElement("input");
+				inputField.type = "file";
+				inputField.id = `fileUpload-${field?.key}-${item?.messageId}-${field?.uniqueFieldId}`;
+				fileUploadLabel.appendChild(inputField);				
+				}
+				const grpWrapDiv = document.createElement("div");
+				grpWrapDiv.className = "grpwrap";
+
+				const grpNameDiv = document.createElement("div");
+				grpNameDiv.className = "grpName";
+
 				const nameTitleDiv = document.createElement("div");
 				nameTitleDiv.className = "nameTitle";
-				nameTitleDiv.textContent = `${field?.label} ${
-					field?.required || field?.value?.required ? "*" : ""
-				}`;
-				grpInputDiv.appendChild(nameTitleDiv);
-
-				const textareaElement = document.createElement("sl-textarea");
-				textareaElement.id = `inputValue-${field?.key}-${item?.messageId}-${index}`;
-				textareaElement.placeholder =
-					field?.value?.placeholder || "Enter Content...";
-				textareaElement.value = field?.value?.default || "";
-				grpInputDiv.appendChild(textareaElement);
+				nameTitleDiv.textContent = `${field?.label} ${field?.required || field?.value?.required ? "*" : ""
+					}`;
+				grpNameDiv.appendChild(nameTitleDiv);
+				grpWrapDiv.appendChild(grpNameDiv);	
+				grpWrapDiv.appendChild(formFieldLongTextElement);			
+				grpInputDiv.appendChild(grpWrapDiv);
+				
 			}
 
 			// if (field?.value?.canUploadFile) {
