@@ -16,25 +16,29 @@ const submitUserFeedback = async ({ type, cId, messageId = null, payload }) => {
     if (!payload) {
         const feedbackComment = document.getElementById("comment-" + currentQuestion?.messageId)
         if (type === "like") {
-            feedBackPayload.feedback = "like"
+            feedBackPayload.type = "like"
+            feedBackPayload.rating = document.getElementById("rating")?.value || ''            
         }
 
         if (type === "dislike") {
+            feedBackPayload.type = "dislike"
+            feedBackPayload.rating = document.getElementById("rating")?.value || ''
             const checkedRadio = document.querySelector(
                 'ul.radio-group input[name="categories"]:checked'
             );
             feedBackPayload.category = []
             if(checkedRadio?.value){
                 feedBackPayload.category.push(checkedRadio?.value)
-            }            
-            feedBackPayload.feedback = type
+            }                        
+            feedBackPayload.reason = document.getElementById("reason")?.value || ''
         }
         //feedback comment logic
         feedBackPayload.comment = feedbackComment?.value || ""
+        feedBackPayload = {userFeedback: feedBackPayload}
         if(state?.enableDebugging){
             console.log("feedback payload: ", feedBackPayload)
         }
-        if (currentQuestion?.hasOwnProperty("feedback") && currentQuestion.feedback === type && (feedBackPayload.comment ? (feedBackPayload.comment === currentQuestion?.comment) : true)) {
+        if (currentQuestion?.hasOwnProperty("feedback") && currentQuestion.type === type && (feedBackPayload.comment ? (feedBackPayload.comment === currentQuestion?.comment) : true)) {
             feedBackPayload = { "action": "undo" }
         }
     } else {        
