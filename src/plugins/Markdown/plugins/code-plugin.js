@@ -93,6 +93,86 @@ const customBasicSetup = [
     syntaxHighlighting(defaultHighlightStyle),
 ];
 
+// Vanilla JS Copy Button
+const createCopyButton = (code, buttonId) => {
+    const button = document.createElement('button');
+    button.className = 'copy-button';
+    button.setAttribute('data-copy-id', buttonId);
+    button.setAttribute('data-code', code);
+    
+    const updateButtonContent = (copied = false) => {
+        button.innerHTML = '';
+        
+        const copyBtn = document.createElement('div');
+        copyBtn.className = copied ? 'copy-btn copied-btn' : 'copy-btn';
+        
+        const copyIcon = document.createElement('div');
+        copyIcon.className = 'copy-icon';
+        
+        const copyText = document.createElement('div');
+        copyText.className = 'copy-text';
+        
+        if (copied) {
+            // You can replace this with your actual TickMark icon
+            copyIcon.innerHTML = '✓'; // or use your TickMark component
+            copyText.textContent = 'Copied';
+        } else {
+            // You can replace this with your actual MessageCopy icon  
+            copyIcon.innerHTML = '📋'; // or use your MessageCopy component
+            copyText.textContent = 'Copy';
+        }
+        
+        copyBtn.appendChild(copyIcon);
+        copyBtn.appendChild(copyText);
+        button.appendChild(copyBtn);
+    };
+    
+    updateButtonContent();
+    return button;
+};
+
+// Function to attach event listeners after DOM rendering
+const attachCopyButtonEvents = (container) => {
+    const copyButtons = container.querySelectorAll('.copy-button[data-copy-id]');
+    
+    copyButtons.forEach(button => {
+        const code = button.getAttribute('data-code');
+        let copied = false;
+        
+        const updateButtonContent = (isCopied = false) => {
+            const copyBtn = button.querySelector('.copy-btn');
+            const copyIcon = button.querySelector('.copy-icon');
+            const copyText = button.querySelector('.copy-text');
+            
+            if (isCopied) {
+                copyBtn.className = 'copy-btn copied-btn';
+                copyIcon.innerHTML = '✓';
+                copyText.textContent = 'Copied';
+            } else {
+                copyBtn.className = 'copy-btn';
+                copyIcon.innerHTML = '📋';
+                copyText.textContent = 'Copy';
+            }
+        };
+        
+        const handleCopy = async () => {
+            try {
+                await navigator.clipboard.writeText(code);
+                copied = true;
+                updateButtonContent(true);
+                setTimeout(() => {
+                    copied = false;
+                    updateButtonContent(false);
+                }, 2000);
+            } catch (err) {
+                console.error('Failed to copy code:', err);
+            }
+        };
+        
+        button.addEventListener('click', handleCopy);
+    });
+};
+
 export const codePlugin = {
     name: 'code',
     priority: 3,
@@ -100,14 +180,22 @@ export const codePlugin = {
     render: (content) => {
 
         const parts = extractCodeParts(content);
+
+        const pContainer = document.createElement('div');
+        pContainer.className = 'p-code-renderer';
+
         const container = document.createElement('div');
         container.className = 'code-renderer';
-        container.innerHTML = '';
+        let buttonCounter = 0;
 
         for (const part of parts) {
             if (part.code) {
                 const wrapper = document.createElement('div');
                 wrapper.className = 'code-block-parent';
+                
+                // Add copy button at the top with unique ID
+                const copyButton = createCopyButton(part.code, `copy-btn-${buttonCounter++}`);
+                wrapper.appendChild(copyButton);
         
                 const codeDiv = document.createElement('div');
                 codeDiv.className = 'code-block-content';
@@ -148,6 +236,17 @@ export const codePlugin = {
                 container.appendChild(textDiv);
             }
         }
-        return container.innerHTML;
+
+        pContainer.appendChild(container);
+        
+        // Attach event listeners after DOM is ready
+        setTimeout(() => {
+            const renderedContainer = document.querySelector('.code-renderer');
+            if (renderedContainer) {
+                attachCopyButtonEvents(renderedContainer);
+            }
+        }, 1000);
+        
+        return pContainer.innerHTML;
     },
 };
