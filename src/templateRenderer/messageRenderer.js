@@ -77,13 +77,19 @@ export function render(
 					ADD_ATTR: SHOELACE_ATTRS,
 				});
 		} else {
-			content += customMarkdownRenderer(
-				renderTemplateContent(
-					data,
-					assistantIconTemplate,
-					userIconTemplate,
-					loadingText
-				)
+			// content += customMarkdownRenderer(
+			// 	renderTemplateContent(
+			// 		data,
+			// 		assistantIconTemplate,
+			// 		userIconTemplate,
+			// 		loadingText
+			// 	)
+			// );
+			content += renderTemplateContent(
+				data,
+				assistantIconTemplate,
+				userIconTemplate,
+				loadingText
 			);
 		}
 		if (!!data?.sources?.length && data?.templateType === "search_answer") {
