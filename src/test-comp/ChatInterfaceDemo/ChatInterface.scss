@@ -1558,17 +1558,58 @@ html, body {
 
                 label {
                     color: #a3a3a3;
+                    margin-bottom: 0;
                 }
 
-                input {
-                    padding: 6px;
-                    border-radius: 4px;
-                    width: 100%;
-                    border: none;
-                    box-shadow: none;
-                    &:focus {
-                        border: none;
-                        outline: none;
+                .ts-wrapper {
+                    &.email-select-field {
+                        .ts-control {
+                            border: none;
+                            box-shadow: none;
+                            padding: 0 !important;
+
+                            input {
+                                padding: 0.375rem 0.5rem !important;
+                                width: 100%;
+                                font-size: 0.875rem;
+                                font-weight: 400;
+                            }
+
+                            .item {
+                                border-radius: 6.25rem;
+                                border: 1px solid #E5E5E5;
+                                background: #fff;
+                                box-shadow: 0rem 0.0625rem 0.125rem 0rem rgba(16, 24, 40, 0.05);
+                                padding: 0 0.25rem 0 0.25rem;
+                                height: 2rem;
+                                a {
+                                    border-left: none;
+                                    margin-left: 0;
+                                    font-size: 1rem;
+                                    color: #D6D6D6;
+                                    &:hover {
+                                        color: #101828;
+                                        background: transparent;
+                                    }
+                                }
+                            }
+                        }
+                        .ts-dropdown {
+                            border: none;
+                            .ts-dropdown-content {
+                                overflow: visible;
+                                padding: 8px;
+                                .option {
+                                    padding: 0.5rem 0.9375rem 0.5rem 0.625rem;
+                                    border-radius: 0.5rem;
+                                    margin-bottom: 0.3125rem;
+                                    &.active {
+                                        background-color: #F2F4F7;
+                                        color: #202124;
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
                 sl-input {
@@ -1585,6 +1626,12 @@ html, body {
                     margin: 12px 22px 0px 24px;
                     border-top: 1px solid #e5e5e5;
                     border-bottom: 1px solid #e5e5e5;
+
+                    sl-input {
+                        &::part(base) {
+                            padding-left: 0;
+                        }
+                    }
                 }
             }
         }
@@ -1609,9 +1656,10 @@ html, body {
         .email-footer {
             display: flex;
             align-items: center;
+            justify-content: space-between;
             gap: 12px;
             border-top: 1px solid #e5e5e5;
-            padding: 22px;
+            padding: 12px;
 
             .email-field {
                 // flex: 1;
@@ -1631,27 +1679,28 @@ html, body {
                         cursor: pointer;
                     }
                 }
-                &.email-smart-compose {
-                    button {
-                        background-color: #102828;
-                        color: #fff;
-                        padding: 6px 12px;
-                        border-radius: 12px;
-                        border: 1px solid transparent;
-                        cursor: pointer;
+                .custom-file-upload {
+                    display: flex;
+                    align-items: center;
+                    gap: 0.5rem;
+                    padding: 0.625rem;
+                    margin-bottom: 0;
+                    border-radius: 0.75rem;
+                    cursor: pointer;
+
+                    &:hover {
+                        border: 1px solid #D6D6D6;
+                        box-shadow: none;
+                        background-color: #FAFAFA;
+                    }
+                    .file-upload-text {
+                        font-size: 0.875rem;
+                        font-weight: 500;
+                        color: #374151;
                     }
                 }
-                &.send-btn {
-                    display: flex;
-                    justify-content: flex-end;
-                    flex: 1;
-                    button {
-                        background-color: #102828;
-                        color: #fff;
-                        padding: 6px 12px;
-                        border-radius: 12px;
-                        cursor: pointer;
-                    }
+                input[type="file"] {
+                    display: none;
                 }
             }
         }
