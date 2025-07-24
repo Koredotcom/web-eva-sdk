@@ -137,7 +137,7 @@ const uploadFileInitial = (file, id, questionId, resolve, reject) => {
             let _questions = cloneDeep(store.getState().global.questions) || {}
             let currentQuestion = cloneDeep(_questions[questionId]);
             currentQuestion.filesUploaded = currentQuestion?.filesUploaded + 1 || 1;
-            if(currentQuestion?.loadingFiles?.includes(id)){
+            if(currentQuestion?.loadingFiles?.includes(id) && currentQuestion?.loadingFiles?.length > 0){
                 currentQuestion.loadingFiles = currentQuestion?.loadingFiles?.filter(file => file !== id);
             }
             _questions[questionId] = currentQuestion;
