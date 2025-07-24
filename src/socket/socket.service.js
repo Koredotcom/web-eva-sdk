@@ -4,6 +4,7 @@ import BotConversation from "../chat/botAgent/getBotConversation";
 import Notification from "../notifications/notification";
 import { presenceStart } from "../redux/actions/global.action";
 import store from "../redux/store";
+import { HistoryInterface } from "../history";
 
 class WebSocketClient {
     constructor() {
@@ -70,6 +71,10 @@ class WebSocketClient {
                 }
                 if(msg?.entity === "answerChunk"){
                     ChatInterface().contentStreaming(msg)
+                }
+                if (msg?.entity === "boardName"){
+                    /*update the name in the history board */
+                    HistoryInterface().updateHistoryBoardNameonSocketEvent(msg?.data)
                 }
             });
             this.socket.on("notification", (msg) => {
