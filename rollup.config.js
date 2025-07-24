@@ -11,6 +11,7 @@ import globals from 'rollup-plugin-node-globals';
 import alias from '@rollup/plugin-alias';
 import postcss from 'rollup-plugin-postcss';
 import postcssImport from 'postcss-import';
+import copy from 'rollup-plugin-copy';
 
 
 const globals_var = {
@@ -20,7 +21,7 @@ const globals_var = {
   'redux-thunk': 'ReduxThunk',
 };
 
-const createConfig = (input, dir, name) => ({
+const createConfig = (input, dir, name, isMainBuild = false) => ({
   input,
   output: [
     {
@@ -71,12 +72,20 @@ const createConfig = (input, dir, name) => ({
         { find: 'util', replacement: './util-polyfill.js' }
       ]
     }),
+    // Only copy static assets for the main build to avoid duplication
+    ...(isMainBuild ? [
+      copy({
+        targets: [
+          { src: 'public/*', dest: 'dist' }
+        ]
+      })
+    ] : []),
     terser()
   ]
 });
 
 export default [
-  createConfig('src/index.jsx', '.', 'EvaUIReact'),
+  createConfig('src/index.jsx', '.', 'EvaUIReact', true),
   createConfig('src/components/index.js', 'components', 'Components'),
   createConfig('src/history/index.js', 'history', 'History'),
   createConfig('src/widgets/index.js', 'widgets', 'Widgets'),
