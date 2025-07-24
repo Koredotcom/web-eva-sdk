@@ -11,6 +11,7 @@ import globals from 'rollup-plugin-node-globals';
 import alias from '@rollup/plugin-alias';
 import postcss from 'rollup-plugin-postcss';
 import copy from 'rollup-plugin-copy';
+import postcssImport from 'postcss-import';
 
 
 const globals_var = {
@@ -51,8 +52,11 @@ const createConfig = (input, dir, name, isMainBuild = false) => ({
       extensions: ['js', 'jsx']
     }),
     postcss({
-      extract: 'sdk-styles.css', 
+      extract: 'sdk-styles.css',
       minimize: true,
+      plugins: [
+        postcssImport()  // This will process @import statements
+      ],
     }),
     babel({
       babelHelpers: 'bundled',
