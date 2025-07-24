@@ -127,7 +127,8 @@ const uploadFileInitial = (file, id, resolve, reject) => {
             uploadedFiles[id].push(({
                 ...obj,
                 type: "file",                
-                title: file?.title || file?.name,                 
+                title: file?.title || file?.name,  
+                loading: false,               
                 error:msg               
             }))
             // delete uploadedFiles[id];

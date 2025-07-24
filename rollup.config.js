@@ -10,6 +10,7 @@ import builtins from 'rollup-plugin-node-builtins';
 import globals from 'rollup-plugin-node-globals';
 import alias from '@rollup/plugin-alias';
 import postcss from 'rollup-plugin-postcss';
+import postcssImport from 'postcss-import';
 
 
 const globals_var = {
@@ -52,6 +53,9 @@ const createConfig = (input, dir, name) => ({
     postcss({
       extract: 'sdk-styles.css', 
       minimize: true,
+      plugins: [
+        postcssImport()
+      ]
     }),
     babel({
       babelHelpers: 'bundled',
@@ -78,5 +82,6 @@ export default [
   createConfig('src/widgets/index.js', 'widgets', 'Widgets'),
   createConfig('src/chat/index.js', 'chat', 'Chat'),
   createConfig('src/agents/index.js', 'agents', 'Agents'),
-  createConfig('src/files/index.js', 'files', 'Files')
+  createConfig('src/files/index.js', 'files', 'Files'),
+  createConfig('src/Announcements/index.js', 'Announcements', 'Announcements')
 ];
