@@ -21,10 +21,9 @@ const MultiResponse = () => {
             forms.contextFields = item?.content?.formFields?.contextFields
         }
         if (!isEmpty(item?.content?.formFields?.paramFields)) {
-            const uniqueFieldId = getUID(6);
             parameterFields = item?.content?.formFields?.paramFields?.map(field => ({
                 ...field,
-                uniqueFieldId: uniqueFieldId
+                uniqueFieldId: getUID(6)
             }))
 
         }
@@ -86,10 +85,9 @@ const MultiResponse = () => {
 
         /*adding a unique id at each field level of fieldValues */
         _formData.fieldValues.forEach((fieldValues, index) => {
-            const uniqueFieldId = getUID(6);
             fieldValues.forEach((field) => {
                 if (!field?.uniqueFieldId) {
-                    field.uniqueFieldId = uniqueFieldId;
+                    field.uniqueFieldId = getUID(6);
                 }
             });
         });

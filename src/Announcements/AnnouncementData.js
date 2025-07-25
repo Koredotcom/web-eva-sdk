@@ -17,7 +17,11 @@ const AnnouncementData = (props) => {
                 });
             }
         });
-        
+
+        // Return a function to unsubscribe
+        return () => {
+            unsubscribe();
+        };
     };
 
     return {
