@@ -82,20 +82,20 @@ export const constructQuestionInitial = (args) => {
 	store.dispatch(updateChatData(questions));
 	store.dispatch(setCurrentQuestion(obj));
 
-	if (!activeBoardId) {
-		let arr = store.getState().global?.history?.data?.boards || [];
-		let threadObj = {
-			createdOn: moment().valueOf(),
-			name: "loader",
-			loading: true,
-		};
-		store.dispatch(
-			setAllHistory({
-				...store.getState().global?.AllHistory,
-				data: [threadObj, ...arr],
-			})
-		);
-	}
+	// if (!activeBoardId) {
+	// 	let arr = store.getState().global?.history?.data?.boards || [];
+	// 	let threadObj = {
+	// 		createdOn: moment().valueOf(),
+	// 		name: "loader",
+	// 		loading: true,
+	// 	};
+	// 	store.dispatch(
+	// 		setAllHistory({
+	// 			...store.getState().global?.AllHistory,
+	// 			data: [threadObj, ...arr],
+	// 		})
+	// 	);
+	// }
 
 	return uniqueMsgId;
 };
@@ -115,7 +115,7 @@ export const constructQuestionPostCall = (data, qId) => {
 
 	if (!activeBoardId) {
 		store.dispatch(
-			fetchHistory({ deleteLoader: true, params: { limit: 10 } })
+            fetchHistory({ deleteLoader: true, params: { limit: 1 } })
 		);
 	}
     if(state.enabledCustomTemplates?.[data?.payload?.templateType]) {
