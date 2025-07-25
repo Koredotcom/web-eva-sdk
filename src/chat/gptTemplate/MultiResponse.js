@@ -409,26 +409,48 @@ const MultiResponse = () => {
     }
 
     const removeFile = (e, index, mediaName=null) => {
-        let uploadedFiles = cloneDeep(state.GptUploadedFiles);
-        // Deleting that Particular File from the Uploaded Files
-        //New Update:- As we are supporting multiple files, do updating the uploadedFiles object
-        if(mediaName){
-            uploadedFiles[index] = uploadedFiles[index]?.filter(file => file.mediaName !== mediaName);
-        }else{
-            delete uploadedFiles[index];
-        }
-        store.dispatch(setGptUploadedFiles(uploadedFiles));
+        try {
+            let uploadedFiles = cloneDeep(state.GptUploadedFiles);
+            // Deleting that Particular File from the Uploaded Files
+            if(mediaName){
+                uploadedFiles[index] = uploadedFiles[index]?.filter(file => file.mediaName !== mediaName);
+            }else{
+                delete uploadedFiles[index];
+            }
+            
+            store.dispatch(setGptUploadedFiles(uploadedFiles));
+            
 
-        // Showing the Text Area and Button for the File Upload
-        const reqdTextArea = document.getElementById(`inputValue-${index}`)
-        if(reqdTextArea) {
-            reqdTextArea.style.display = 'block';
-        }
+            // Hiding the Button for the File Upload
+            const reqdButton = document.getElementById(`removeButton-${index}`)
+            if(reqdButton) {
+                reqdButton.style.display = 'none'
+            }
 
-        // Hiding the Button for the File Upload
-        const reqdButton = document.getElementById(`removeButton-${index}`)
-        if(reqdButton) {
-            reqdButton.style.display = 'none'
+            // Return success response to client app
+            return {
+                success: true,
+                message: "File removed successfully",
+                data: {
+                    index: index,
+                    mediaName: mediaName,
+                    remainingFiles: uploadedFiles[index] || []
+                }
+            };
+
+        } catch (error) {
+            console.error("Error removing file:", error);
+            
+            // Return error response to client app
+            return {
+                success: false,
+                message: "Failed to remove file. Please try again.",
+                error: error.message || "Unknown error occurred",
+                data: {
+                    index: index,
+                    mediaName: mediaName
+                }
+            };
         }
     }
 
