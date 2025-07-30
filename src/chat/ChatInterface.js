@@ -293,6 +293,10 @@ const ChatInterface = (props) => {
       }
       let question = cloneDeep(questions[reqId])
 
+      if(question?.status === "terminated"){        
+        return;
+      }
+
       if (question?.apiSuccess && question?.viewType !== "threadView") return; // Means adv search call success now no need to take socket updates, added condition for threadView
 
       if (detail?.data?.status === 'in-progress') {

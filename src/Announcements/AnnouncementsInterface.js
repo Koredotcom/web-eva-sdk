@@ -7,23 +7,14 @@ const AnnouncementsInterface = (props) => {
     const subscribe = (cb) => {
         let callback = cb;
         
-        // Call callback immediately with current data if available
-        if (state.announcements && Object.keys(state.announcements).length > 0) {
-            if (callback) {
-                callback({
-                    data: state.announcements.data || state.announcements || [],
-                    error: state.announcements.error || null,
-                    loading: state.announcements.status === 'loading'
-                });
-            }
-        }
+        
 
         const unsubscribe = store.subscribe(() => {
             state = store.getState().global;
             // If callback exists and we have announcements data, invoke it
-            if (state.announcements && callback) {
+            if (state.announcements.status !== 'loading') {
                 callback({
-                    data: state.announcements.data || state.announcements || [],
+                    data: state.announcements || [],
                     error: state.announcements.error || null,
                     loading: state.announcements.status === 'loading'
                 });
