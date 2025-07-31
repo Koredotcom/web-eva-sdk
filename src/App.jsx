@@ -24,10 +24,10 @@ const App = () => {
   
   return (
     <div>
-      <ChatInterfaceDemo />
-      {/* <ChatTestComp/> */}
+      {/* <ChatInterfaceDemo /> */}
+      <ChatTestComp/>
       {/* <TestComp /> */}
-      {/* <Agents /> */}
+      <Agents />
       {/* <File /> */}
       {/* <SelectedContext/> */}
     </div>

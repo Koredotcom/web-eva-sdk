@@ -12,6 +12,7 @@ export * from './files';
 export * from './Attachments';
 export * from './Feedback'
 export * from "./templateRenderer";
+export * from "./Announcements";
 
 // Redux store exports
 export { default as store } from './redux/store';
