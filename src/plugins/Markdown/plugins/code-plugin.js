@@ -14,6 +14,7 @@ import { EditorState } from '@codemirror/state';
 import { bracketMatching } from '@codemirror/language';
 import { highlightSelectionMatches } from '@codemirror/search';
 import { syntaxHighlighting, defaultHighlightStyle } from '@codemirror/language';
+import { createThumbsUpFilled, copyCodeIcon, tickMarkIcon } from "../../../templateRenderer/icons-library";
 
 const CODE_REGEX = /```(?!chart\b)(\w*)\s*([\s\S]*?)\s*```/g;
 
@@ -114,11 +115,11 @@ const createCopyButton = (code, buttonId) => {
         
         if (copied) {
             // You can replace this with your actual TickMark icon
-            copyIcon.innerHTML = '✓'; // or use your TickMark component
+            copyIcon.innerHTML = tickMarkIcon({ size: 14, color: "#79716B" }); // or use your TickMark component
             copyText.textContent = 'Copied';
         } else {
             // You can replace this with your actual MessageCopy icon  
-            copyIcon.innerHTML = '📋'; // or use your MessageCopy component
+            copyIcon.innerHTML = copyCodeIcon({ size: 14, color: "#79716B" }); // or use your MessageCopy component
             copyText.textContent = 'Copy';
         }
         
@@ -146,11 +147,11 @@ const attachCopyButtonEvents = (container) => {
             
             if (isCopied) {
                 copyBtn.className = 'copy-btn copied-btn';
-                copyIcon.innerHTML = '✓';
+                copyIcon.innerHTML = tickMarkIcon({ size: 14, color: "#79716B" });
                 copyText.textContent = 'Copied';
             } else {
                 copyBtn.className = 'copy-btn';
-                copyIcon.innerHTML = '📋';
+                copyIcon.innerHTML = copyCodeIcon({ size: 14, color: "#79716B" });
                 copyText.textContent = 'Copy';
             }
         };
