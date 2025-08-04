@@ -421,10 +421,9 @@ export const stopResponseGeneration = createAsyncThunk(
 
 export const getAllAnnouncements = createAsyncThunk(
     'global/getAllAnnouncements',
-    async (arg, { rejectWithValue }) => {
-        console.log("getAllAnnouncements arg", arg);
+    async (arg, { rejectWithValue }) => {        
         try {
-            const response = await axiosInstance.get(`/1.1/users/${arg?.params?.userId}/announcements`);            
+            const response = await axiosInstance.get(`/1.1/users/${arg?.params?.userId}/announcements`);
             return response.data;
         } catch (error) {
             handleErrorState(error, "Unable to get Announcements");

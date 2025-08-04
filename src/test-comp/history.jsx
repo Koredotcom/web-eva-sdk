@@ -108,7 +108,7 @@ const History = (props) => {
     return (
         <div>
             <h1>History</h1>
-            {/* <button onClick={fetchLoadMoreHistory}>Load more history</button> */}
+            <button onClick={fetchLoadMoreHistory}>Load more history</button>
             {/* <button onClick={fetchLoadMoreHistoryInitial}>Initial history data with custom param</button> */}
             <div>
                 {historyData?.data?.length > 0 && historyData?.data?.map(item => {

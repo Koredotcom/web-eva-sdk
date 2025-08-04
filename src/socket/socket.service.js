@@ -22,7 +22,7 @@ class WebSocketClient {
         this.options = {
             transports: ["websocket"],
             reconnection: true,
-            reconnectionAttempts: 10000,
+            reconnectionAttempts: 1000,
             reconnectionDelay: 1000,
             ...options,
         };
@@ -44,13 +44,13 @@ class WebSocketClient {
             this.socket.on("connect", () => {
                 console.info(`Socket connected: ${this.socket.id}`);
             });
-
-            this.socket.on("disconnect", async(reason) => {
+            
+            this.socket.on("disconnect", async (reason) => {
                 await store.dispatch(presenceStart())
                 console.warn(`Socket disconnected: ${reason}`);
             });
 
-            this.socket.on("connect_error", async(error) => {
+            this.socket.on("connect_error", async (error) => {
                 await store.dispatch(presenceStart())
                 console.error(`Socket connection Error: ${error.message}`);
             });
@@ -72,7 +72,7 @@ class WebSocketClient {
                 if(msg?.entity === "answerChunk"){
                     ChatInterface().contentStreaming(msg)
                 }
-                if (msg?.entity === "boardName"){
+                if (msg?.entity === "boardName") {
                     /*update the name in the history board */
                     HistoryInterface().updateHistoryBoardNameonSocketEvent(msg?.data)
                 }

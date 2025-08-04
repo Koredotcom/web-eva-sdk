@@ -126,14 +126,13 @@ const HistoryInterface = (props) => {
     const updateHistoryBoardNameonSocketEvent = async (arg) => {
         let _history = cloneDeep(state?.AllHistory)
         _history.data = _history?.data?.map(historyItem => {
-            if(historyItem?.id === arg?.id) {
-                historyItem = {...historyItem, name: arg?.name}
+            if (historyItem?.id === arg?.id) {
+                historyItem = { ...historyItem, name: arg?.name }
             }
             return historyItem
-        })        
+        })
         store.dispatch(setAllHistory(_history))
     }
-    
 
     return {
         subscribe,
