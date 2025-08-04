@@ -20,6 +20,7 @@ const initialState = {
   profile: {},
   config: {},
   allAgents: {},
+  commonAgents: {},
   enabledAgents: null,
   recentAgents: null,
   advanceSearchRes: {},
@@ -137,6 +138,7 @@ const globalSlice = createSlice({
         let enabledAgents = action.payload.agents.filter(a => !!a?.enabled)
         state.enabledAgents = enabledAgents
         state.recentAgents = action.payload.recents
+        state.commonAgents = action.payload.commonAgents
       });
       handleAsyncActions(builder, advanceSearch, 'advanceSearchRes', (state, action) => {
         /*

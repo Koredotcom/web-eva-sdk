@@ -970,12 +970,157 @@ html, body {
                     }
                 }
             }
-            &.richText {
-                .grpInput {
-                    .grpwrap {
-                        display: flex;
-                        flex-direction: column;
-                        gap: 8px;
+            &.longText {                
+                &.uploadGrp {
+                    .grpInput {
+                        .grpwrap {
+                            display: flex;
+                            align-items: center;
+                            justify-content: space-between;
+                            .grpName {
+                                .nameTitle {
+                                    color: #344054;
+                                    font-family: Inter;
+                                    font-size: .875rem;
+                                    font-style: normal;
+                                    font-weight: 500;
+                                    line-height: 1.25rem;
+                                    letter-spacing: 0em;
+                                }
+                            }
+                            .formField {
+                                &.LongText {
+                                    .fileUploadLabel {
+                                        display: inline-flex;
+                                        padding: .125rem .5rem;
+                                        justify-content: center;
+                                        align-items: center;
+                                        cursor: pointer;
+                                        border-radius: 1rem;
+                                        background: #F2F4F7;
+                                        font-family: Inter;
+                                        font-size: .75rem;
+                                        font-style: normal;
+                                        font-weight: 500;
+                                        line-height: 1.125rem;
+                                        letter-spacing: 0em;
+                                        color: #424242;
+                                    }
+                                }
+                            }
+                        }
+                        .uploadedFileWrapper {
+                            background: #FAFAFA;
+                            border: 1px solid #F5F5F5;
+                            padding: 8px;
+                            border-radius: 12px;
+                            display: flex;
+                            align-items: flex-start;
+                            gap: 8px;
+                            white-space: nowrap;
+                            overflow-x: auto;
+                            .uploadedFileDetails {
+                                padding: 8px;
+                                border-radius: 12px;
+                                display: flex;
+                                align-items: center;
+                                justify-content: space-between;
+                                gap: 8px;
+                                background: #FFFFFF;
+                                border: 1px solid #E5E5E5;
+                                width: 200px;
+                                position: relative;
+                                flex-shrink: 0;
+                                .fileTitle {
+                                    white-space: nowrap;
+                                    overflow: hidden;
+                                    text-overflow: ellipsis;
+                                    max-width: 180px;
+                                }
+                                .closeIcon {
+                                    display: flex;
+                                    align-items: center;
+                                    cursor: pointer;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            &.richText {                
+                &.uploadGrp {
+                    .grpInput {
+                        .grpwrap {
+                            display: flex;
+                            align-items: center;
+                            justify-content: space-between;
+                            .grpName {
+                                .nameTitle {
+                                    color: #344054;
+                                    font-family: Inter;
+                                    font-size: .875rem;
+                                    font-style: normal;
+                                    font-weight: 500;
+                                    line-height: 1.25rem;
+                                    letter-spacing: 0em;
+                                }
+                            }
+                            .formField {
+                                &.LongText {
+                                    .fileUploadLabel {
+                                        display: inline-flex;
+                                        padding: .125rem .5rem;
+                                        justify-content: center;
+                                        align-items: center;
+                                        cursor: pointer;
+                                        border-radius: 1rem;
+                                        background: #F2F4F7;
+                                        font-family: Inter;
+                                        font-size: .75rem;
+                                        font-style: normal;
+                                        font-weight: 500;
+                                        line-height: 1.125rem;
+                                        letter-spacing: 0em;
+                                        color: #424242;
+                                    }
+                                }
+                            }
+                        }
+                        .uploadedFileWrapper {
+                            background: #FAFAFA;
+                            border: 1px solid #F5F5F5;
+                            padding: 8px;
+                            border-radius: 12px;
+                            display: flex;
+                            align-items: flex-start;
+                            gap: 8px;
+                            white-space: nowrap;
+                            overflow-x: auto;
+                            .uploadedFileDetails {
+                                padding: 8px;
+                                border-radius: 12px;
+                                display: flex;
+                                align-items: center;
+                                justify-content: space-between;
+                                gap: 8px;
+                                background: #FFFFFF;
+                                border: 1px solid #E5E5E5;
+                                width: 200px;
+                                position: relative;
+                                flex-shrink: 0;
+                                .fileTitle {
+                                    white-space: nowrap;
+                                    overflow: hidden;
+                                    text-overflow: ellipsis;
+                                    max-width: 180px;
+                                }
+                                .closeIcon {
+                                    display: flex;
+                                    align-items: center;
+                                    cursor: pointer;
+                                }
+                            }
+                        }
                     }
                 }
             }

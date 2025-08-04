@@ -3,7 +3,7 @@ import { delayedSearchCallback } from "../../utils/helpers";
 import store from "../../redux/store";
 import { updateChatData } from "../../redux/globalSlice";
 import { sendEmail, smartComposeEmail } from "../../redux/actions/global.action";
-import { setupTomSelect } from '../../plugins/tom-autocomplete';
+
 
 
 const sendEmailFunctionality = (data) => {

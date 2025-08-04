@@ -1,7 +1,7 @@
 // sdk/components/tom-autocomplete.js
 // import TomSelect from 'tom-select';
 
-export function setupTomSelect({
+window.setupTomSelect = function setupTomSelect({
   selectorId,
   type,
   initialItems = [],

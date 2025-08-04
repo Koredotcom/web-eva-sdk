@@ -966,29 +966,53 @@ export function render(item) {
 
 				// Add options for single dropdown
 				const dropDownChoices = field?.value?.choices || [];
+				let defaultSelectedValue = null;
+				
 				dropDownChoices.forEach((choice, choiceIndex) => {
 					const optionElement = document.createElement("sl-option");
 					// Ensure each option has a unique, non-empty value
-					const optionValue = choice.id || choice.value || `option-${choiceIndex}`;
+					const optionValue = choice?.label || choice?.value || choice?.text || choice?.id || `option-${choiceIndex}`;
+					/*shoelace option wont take space in value, so we are replacing them with % */
+					optionElement.setAttribute('value', optionValue?.replaceAll(' ', '%'))
 					optionElement.value = optionValue;
 					optionElement.textContent = choice.label || choice.text || `Option ${choiceIndex + 1}`;
 					
-					// Set selected option for prompts field
+					// Determine default selected value for prompts field
 					if (field?.key === "prompts" && (
-						choice?.id === field?.value?.nested?.id || choiceIndex === 0
+						choice?.id === (field?.value?.nested?.id || choice?.selected) ? choice : null
 					)) {
-						selectElement.value = optionValue;
+						defaultSelectedValue = optionValue;
 					}
 					
 					selectElement.appendChild(optionElement);
 				});
-
-				// Add event listener for prompts field
-				if (field?.key === "prompts") {
-					selectElement.addEventListener("sl-change", (event) => {
-						updateChoice(event, item, index);
-					});
+				
+				// Set the default selected value after all options are added
+				if (defaultSelectedValue) {
+					selectElement.value = defaultSelectedValue;
+				}else{
+					selectElement.setAttribute('value', dropDownChoices[0]?.label?.replaceAll(' ', '%'));
 				}
+
+				// Add event listener for dropdown selection
+				selectElement.addEventListener("sl-change", (event) => {
+					// Get the selected value
+					const selectedValue = event.target.value;
+					const selectedOption = event.target.querySelector(`sl-option[value="${selectedValue}"]`);
+					const selectedText = selectedOption ? selectedOption.textContent : '';
+					
+					console.log('Selected value:', selectedValue);
+					console.log('Selected text:', selectedText);
+					
+					// Call updateChoice for prompts field or handle other fields as needed
+					if (field?.key === "prompts") {
+						updateChoice(event, item, index);
+					} else {
+						// Handle other dropdown fields here
+						// You can access the selected value via event.target.value
+						// Store or process the selection as needed for your use case
+					}
+				});
 
 				grpWrapDiv.appendChild(selectElement);
 				grpInputDiv.appendChild(grpWrapDiv);
@@ -1023,8 +1047,8 @@ export function render(item) {
 				dropDownChoices.forEach((choice, choiceIndex) => {
 					const optionElement = document.createElement("sl-option");
 					// Ensure each option has a unique, non-empty value
-					const optionValue = choice.id || choice.value || `option-${choiceIndex}`;
-					optionElement.value = optionValue;
+					const optionValue = choice?.label || choice?.text || choice?.value || choice?.id || `option-${choiceIndex}`;
+					optionElement.setAttribute('value', optionValue);
 					optionElement.textContent = choice.label || choice.text || `Option ${choiceIndex + 1}`;
 					dropdownElement.appendChild(optionElement);
 				});
@@ -1305,6 +1329,19 @@ const updateChoice = (event, item, index) => {
 	event.preventDefault();
 	const updatedPromptValue = event?.target?.value;
 	UpdateGPTPromptValue(currentQsn, index, updatedPromptValue, true);
+};
+
+// Utility function to get selected value from any dropdown
+const getDropdownSelectedValue = (dropdownId) => {
+	const selectElement = document.getElementById(dropdownId);
+	if (selectElement) {
+		return {
+			value: selectElement.value,
+			text: selectElement.selectedOptions[0]?.textContent || '',
+			element: selectElement
+		};
+	}
+	return null;
 };
 
 const observeDOMChanges = (obj) => {
