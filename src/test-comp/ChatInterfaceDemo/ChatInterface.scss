@@ -1852,3 +1852,71 @@ html, body {
         }
     }
 }
+
+.code-renderer {
+    .code-block-renderer {
+        p {
+            margin-top: 0;
+        }
+    }
+
+    .code-block-parent {
+        position: relative;
+        margin-bottom: 1.5rem;
+        padding: 1rem;
+        background-color: #FDFDFC;
+        border-radius: 1rem;
+        border: 0.0625rem solid #E7E5E4;
+        margin-top: 1rem;
+    
+        .pre-block {
+            margin: 0;
+            position: relative;
+        }
+    
+        .code-block-header {
+            text-align: right;
+            position: absolute;
+            z-index: 1;
+            right: 1rem;
+            top: 1rem;      
+        }
+    
+        .copy-button {
+            border: none;
+            background-color: transparent;
+            padding: 0;
+            cursor: default;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            float: right;
+    
+            &:focus {
+                outline: none;
+            }
+            .copy-btn {
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+                cursor: pointer;
+    
+                .copy-icon {
+                    display: flex;
+                    align-items: center;
+                }
+    
+                .copy-text {
+                    color: #737373;
+                    font-size: 0.75rem;
+                    font-weight: 400;
+                }
+            }
+        }
+    
+        .cm-activeLine, .cm-editor {
+            background-color: transparent !important;
+        }
+    }
+}
+
