@@ -61,7 +61,7 @@ const ChatInterface = (props) => {
     const sendMessageAction = async (value) => {
       const state = store.getState()?.global
       if (value) {
-        const { allAgents, selectedContext} = state
+        const { allAgents, selectedContext, commonAgents} = state
         let params = { reqId: generateShortUUID() }
         let payload = { question: value }
         if(state.activeBoardId) {
@@ -77,6 +77,7 @@ const ChatInterface = (props) => {
 
         if(!isEmpty(selectedContext?.data)) {
           let _agents = cloneDeep(allAgents?.data?.agents)
+          _agents = [..._agents, ...commonAgents]
           let isAgentSetAsSource = _agents.find(ag => ag.id === selectedContext?.data?.sources?.[0]?.source)
           let isAgent = isAgentSetAsSource ? "agent" : null
           if(isAgent) {
@@ -292,6 +293,10 @@ const ChatInterface = (props) => {
         reqId = Object.entries(questions).find(([key, value]) => value?.reqId === detail?.data?.reqId)?.[0]
       }
       let question = cloneDeep(questions[reqId])
+
+      if(question?.status === "terminated"){        
+        return;
+      }
 
       if (question?.apiSuccess && question?.viewType !== "threadView") return; // Means adv search call success now no need to take socket updates, added condition for threadView
 

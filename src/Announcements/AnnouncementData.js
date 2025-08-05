@@ -1,32 +1,24 @@
+import { getAllAnnouncements } from "../redux/actions/global.action";
 import store from "../redux/store";
 
-const AnnouncementData = (props) => {
-    let state = store.getState().global;
+const AnnouncementData = async () => {
+    try {
+        // Get userId from profile in store
+        const state = store.getState();
+        const userId = state.global.profile?.data?.id;
+        
+        if (!userId) {
+            throw new Error('User ID not found in profile. Make sure SDK is properly initialized.');
+        }
 
-    // Subscribe to store updates
-    const subscribe = (cb) => {
-        let callback = cb;
-        const unsubscribe = store.subscribe(() => {
-            state = store.getState().global;
-            const { status, error, announcements } = state.announcements;
-            if (callback) {
-                callback({
-                    status,
-                    error,
-                    data: announcements || []
-                });
-            }
-        });
-
-        // Return a function to unsubscribe
-        return () => {
-            unsubscribe();
-        };
-    };
-
-    return {
-        subscribe
-    };
+        // Dispatch the action to fetch announcements and put them in store
+        const result = await store.dispatch(getAllAnnouncements({
+            params: { userId }
+        }));
+        return result;
+    } catch (error) {
+        throw error;
+    }
 };
 
 export default AnnouncementData;

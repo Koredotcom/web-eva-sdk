@@ -290,7 +290,7 @@ const MultiResponse = () => {
 
                     //for the filed 'prompts' sdk should pass the id of the selected option
                     if (field?.key === 'prompts') {
-                        const promptId = field?.value?.choices?.find(choice => choice.id === reqdValue)?.id;
+                        const promptId = field?.value?.choices?.find(choice => choice.label === reqdValue)?.id;
                         reqdValue = promptId || reqdValue;
                     }
                     if (state?.enableDebugging) {
@@ -300,7 +300,7 @@ const MultiResponse = () => {
                     reqdInputElement = document.getElementById(`inputValue-${field?.key}-${item?.messageId}-${index}`)
 
                     // Check if it's a Quill editor or regular element (specifically for prompt fields)
-                    if ((field?.key === 'prompt' || field?.value?.nested?.key === 'prompt') && reqdInputElement && reqdInputElement.quillEditor) {
+                    if ((field?.key === 'prompt' || field?.value?.nested?.key === 'prompt') && reqdInputElement && reqdInputElement?.quillEditor) {
                         reqdValue = reqdInputElement.quillEditor.getText();
                     } else {
                         reqdValue = reqdInputElement?.value || reqdInputElement?.textContent || "";
