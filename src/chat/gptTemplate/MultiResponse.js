@@ -281,6 +281,8 @@ const MultiResponse = () => {
                     } else {
                         reqdValue = reqdInputElement?.value || reqdInputElement?.textContent || "";
                         //this check is for multi output, where we need to pass the id of the output for the context
+                        /*replace % with space, that we added while creating the dropdown element*/
+                        reqdValue = reqdValue?.replaceAll('%', ' ');
                         reqdValue = /^Output\s\d+$/.test(reqdValue)
                             ? reqdValue.split(" ")[1]
                             : reqdValue?.includes("Original Content")
@@ -290,7 +292,7 @@ const MultiResponse = () => {
 
                     //for the filed 'prompts' sdk should pass the id of the selected option
                     if (field?.key === 'prompts') {
-                        const promptId = field?.value?.choices?.find(choice => choice.id === reqdValue)?.id;
+                        const promptId = field?.value?.choices?.find(choice => choice.label === reqdValue)?.id;
                         reqdValue = promptId || reqdValue;
                     }
                     if (state?.enableDebugging) {
@@ -454,7 +456,7 @@ const MultiResponse = () => {
         // }
     }
 
-    const removeFile = (e, index, mediaName = null) => {
+    const removeFile = (e, index, mediaName = null, questionId = null) => {
         try {
             let uploadedFiles = cloneDeep(state.GptUploadedFiles);
             // Deleting that Particular File from the Uploaded Files
@@ -471,6 +473,12 @@ const MultiResponse = () => {
             const reqdButton = document.getElementById(`removeButton-${index}`)
             if (reqdButton) {
                 reqdButton.style.display = 'none'
+            }
+
+            /*to update the form template*/
+            let currentQuestion = cloneDeep(_questions[questionId]);
+            if (currentQuestion && currentQuestion.gpt_forms) {
+                handleDefaultTemplateChanges(currentQuestion.gpt_forms, currentQuestion);
             }
 
             // Return success response to client app
