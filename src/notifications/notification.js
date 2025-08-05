@@ -29,6 +29,7 @@ const Notification = () => {
 
     const notifyLatestNotification = async (notification) => {
         if(notification?.nStats?.bell === 0) return;
+        if(!notification?.channels?.includes("bell")) return;
         
         //Method to notify the latest notification
         let _notificationState = cloneDeep(state?.notifications);
