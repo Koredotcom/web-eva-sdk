@@ -24,8 +24,8 @@ const App = () => {
   
   return (
     <div>
-      {/* <ChatInterfaceDemo /> */}
-      <ChatTestComp/>
+      <ChatInterfaceDemo />
+      {/* <ChatTestComp/> */}
       {/* <TestComp /> */}
       <Agents />
       {/* <File /> */}

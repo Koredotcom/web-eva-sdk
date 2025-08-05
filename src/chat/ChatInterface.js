@@ -61,7 +61,7 @@ const ChatInterface = (props) => {
     const sendMessageAction = async (value) => {
       const state = store.getState()?.global
       if (value) {
-        const { allAgents, selectedContext} = state
+        const { allAgents, selectedContext, commonAgents} = state
         let params = { reqId: generateShortUUID() }
         let payload = { question: value }
         if(state.activeBoardId) {
@@ -77,6 +77,7 @@ const ChatInterface = (props) => {
 
         if(!isEmpty(selectedContext?.data)) {
           let _agents = cloneDeep(allAgents?.data?.agents)
+          _agents = [..._agents, ...commonAgents]
           let isAgentSetAsSource = _agents.find(ag => ag.id === selectedContext?.data?.sources?.[0]?.source)
           let isAgent = isAgentSetAsSource ? "agent" : null
           if(isAgent) {

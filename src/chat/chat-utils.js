@@ -137,7 +137,7 @@ export const constructQuestionPostCall = (data, qId) => {
 		}
 	}
 
-	if (data?.payload?.templateType === chatTemplateTypes.SEARCH_ANSWER) {
+    if (data?.payload?.templateType === chatTemplateTypes.SEARCH_ANSWER || data?.payload?.templateType === chatTemplateTypes.SEARCH_RESULTS) {
 		if (data?.payload?.sources?.length > 0 ){
 			// const ansFromChipData = AnswerFromChip({item: data?.payload });
 			// question.answerFrom_html = ansFromChipData.outerHTML;
@@ -177,6 +177,10 @@ export const constructQuestionPostCall = (data, qId) => {
 				}
 			}
 		}
+        /*Clearing the selected context when search results are received */
+        if (data?.payload?.context?.enable === false || state?.selectedContext?.type === "agent" || state?.selectedContext?.type === "commonAgent" || state?.selectedContext?.type === "searchAgent") {
+            store.dispatch(setSelectedContext(null))
+        }
 	}
 
     if(data?.payload?.queryExhaustionInfo?.queryLimitExhausted){
