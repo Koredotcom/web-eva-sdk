@@ -5,6 +5,7 @@ import Notification from "../notifications/notification";
 import { HistoryInterface } from "../history";
 import { presenceStart } from "../redux/actions/global.action";
 import store from "../redux/store";
+import { AnnouncementsInterface } from "../Announcements";
 
 class WebSocketClient {
     constructor() {
@@ -75,6 +76,9 @@ class WebSocketClient {
                 if (msg?.entity === "boardName") {
                     /*update the name in the history board */
                     HistoryInterface().updateHistoryBoardNameonSocketEvent(msg?.data)
+                }
+                if(msg?.entity === "announcements"){
+                    AnnouncementsInterface().setNewAnnouncements(msg)
                 }
             });
             this.socket.on("notification", (msg) => {
