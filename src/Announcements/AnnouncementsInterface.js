@@ -1,3 +1,4 @@
+import { setAnnouncements } from "../redux/globalSlice";
 import store from "../redux/store";
 
 const AnnouncementsInterface = (props) => {
@@ -38,9 +39,35 @@ const AnnouncementsInterface = (props) => {
         };
     };
 
+    const setNewAnnouncements = (data)=>{
+		const currentAnnouncements = store.getState().global.announcements;
+		if(data?.action === 'add'){
+			if(currentAnnouncements?.length === 0){
+				const newAnnouncement = data?.data?.announcements
+				const allNewAnnouncements = [...currentAnnouncements , ...newAnnouncement]
+				store.dispatch(setAnnouncements({announcements : allNewAnnouncements}))
+			}
+			else {
+				const newAnnouncements = currentAnnouncements?.map(el => {
+					const found = data?.data?.announcements?.find(d => d?.announcementId === el.announcementId);
+					return found ? {...el, ...found} : el;
+				});
+				store.dispatch(setAnnouncements({announcements : newAnnouncements}))
+			}
+		}
+		else{
+			if(currentAnnouncements?.length >= 1){
+				const newAnnouncements = currentAnnouncements?.filter(el => !data?.data?.announcements?.some(d => d?.announcementId === el?.announcementId))
+				store.dispatch(setAnnouncements({announcements : newAnnouncements}))
+			}
+		}
+	
+    }
+
     return {
         subscribe,
-        getData
+        getData,
+        setNewAnnouncements
     };
 };
 

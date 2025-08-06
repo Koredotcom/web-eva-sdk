@@ -127,6 +127,9 @@ const globalSlice = createSlice({
     setQuickActions: (state, action) => {
       state.quickActions = action.payload;
     },
+    setAnnouncements: (state , action) =>{
+       state.announcements = action.payload.announcements;
+    }
   },
   extraReducers: (builder) => {
     handleAsyncActions(builder, fetchConfigData, 'config', (state, action) => {
@@ -217,9 +220,9 @@ const globalSlice = createSlice({
       state.questions = questions
     });
     handleAsyncActions(builder, presenceStart, 'presenceStart');
-    handleAsyncActions(builder, getAllAnnouncements, 'announcements', (state, action) => {
-      state.announcements = action.payload
-    });
+    // handleAsyncActions(builder, getAllAnnouncements, 'announcements', (state, action) => {
+    //   state.announcements = action.payload
+    // });
   }
 });
 
@@ -246,7 +249,8 @@ export const {
   setNotifications,
   setBookMarkedChatThreads,
   setEnabledDebugging,
-  setQuickActions
+  setQuickActions,
+  setAnnouncements
 } = globalSlice.actions;
 
 export default globalSlice;
