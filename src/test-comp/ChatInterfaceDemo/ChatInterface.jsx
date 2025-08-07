@@ -3,7 +3,7 @@ import { TemplateRenderer } from "../../templateRenderer";
 import { BotConversation, ChatInterface } from "../../chat";
 import Composebar from "./Composebar";
 
-import "./ChatInterface.scss"
+import "../../styles/chat-interface.scss"
 import History from "../history";
 import Agents from "../agents";
 import Notifications from "../Notifications";

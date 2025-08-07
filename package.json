@@ -86,7 +86,8 @@
     "./Announcements": {
       "import": "./dist/Announcements/index.esm.js",
       "require": "./dist/Announcements/index.cjs.js"
-    }
+    },
+    "./styles": "./dist/sdk-styles.css"
   },
   "devDependencies": {
     "@babel/cli": "^7.24.6",
