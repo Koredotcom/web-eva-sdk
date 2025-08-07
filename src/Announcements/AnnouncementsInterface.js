@@ -41,8 +41,9 @@ const AnnouncementsInterface = (props) => {
 
     const setNewAnnouncements = (data)=>{
 		const currentAnnouncements = store.getState().global.announcements;
+        const alreadyAddedAnnouncement = currentAnnouncements.filter(el => data?.data?.announcements?.some(d => d?.announcementId === el.announcementId));
 		if(data?.action === 'add'){
-			if(currentAnnouncements?.length === 0){
+			if(alreadyAddedAnnouncement?.length === 0){
 				const newAnnouncement = data?.data?.announcements
 				const allNewAnnouncements = [...currentAnnouncements , ...newAnnouncement]
 				store.dispatch(setAnnouncements({announcements : allNewAnnouncements}))
@@ -56,7 +57,7 @@ const AnnouncementsInterface = (props) => {
 			}
 		}
 		else{
-			if(currentAnnouncements?.length >= 1){
+			if(alreadyAddedAnnouncement?.length >= 1){
 				const newAnnouncements = currentAnnouncements?.filter(el => !data?.data?.announcements?.some(d => d?.announcementId === el?.announcementId))
 				store.dispatch(setAnnouncements({announcements : newAnnouncements}))
 			}
