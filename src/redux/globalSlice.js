@@ -128,7 +128,7 @@ const globalSlice = createSlice({
       state.quickActions = action.payload;
     },
     setAnnouncements: (state , action) =>{
-       state.announcements = action.payload.announcements;
+       state.announcements = action.payload;
     }
   },
   extraReducers: (builder) => {

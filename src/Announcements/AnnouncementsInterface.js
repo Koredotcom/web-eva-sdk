@@ -13,9 +13,9 @@ const AnnouncementsInterface = (props) => {
         const unsubscribe = store.subscribe(() => {
             state = store.getState().global;
             // If callback exists and we have announcements data, invoke it
-            if (state.announcements.status !== 'loading') {
+            if (state.announcements?.status === 'success') {
                 callback({
-                    data: state.announcements || [],
+                    data: state.announcements?.data || [],
                     error: state.announcements.error || null,
                     loading: state.announcements.status === 'loading'
                 });
@@ -40,26 +40,26 @@ const AnnouncementsInterface = (props) => {
     };
 
     const setNewAnnouncements = (data)=>{
-		const currentAnnouncements = store.getState().global.announcements;
+		const currentAnnouncements = store.getState().global.announcements?.data;
         const alreadyAddedAnnouncement = currentAnnouncements.filter(el => data?.data?.announcements?.some(d => d?.announcementId === el.announcementId));
 		if(data?.action === 'add'){
 			if(alreadyAddedAnnouncement?.length === 0){
 				const newAnnouncement = data?.data?.announcements
 				const allNewAnnouncements = [...currentAnnouncements , ...newAnnouncement]
-				store.dispatch(setAnnouncements({announcements : allNewAnnouncements}))
+				store.dispatch(setAnnouncements({data : allNewAnnouncements, status : 'success', error : null}))
 			}
 			else {
 				const newAnnouncements = currentAnnouncements?.map(el => {
 					const found = data?.data?.announcements?.find(d => d?.announcementId === el.announcementId);
 					return found ? {...el, ...found} : el;
 				});
-				store.dispatch(setAnnouncements({announcements : newAnnouncements}))
+				store.dispatch(setAnnouncements({data : newAnnouncements, status : 'success', error : null}))
 			}
 		}
 		else{
 			if(alreadyAddedAnnouncement?.length >= 1){
 				const newAnnouncements = currentAnnouncements?.filter(el => !data?.data?.announcements?.some(d => d?.announcementId === el?.announcementId))
-				store.dispatch(setAnnouncements({announcements : newAnnouncements}))
+				store.dispatch(setAnnouncements({data : newAnnouncements, status : 'success', error : null}))
 			}
 		}
 	

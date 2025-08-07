@@ -7,6 +7,7 @@ import "./ChatInterface.scss"
 import History from "../history";
 import Agents from "../agents";
 import Notifications from "../Notifications";
+import { AnnouncementsInterface } from "../../Announcements";
 
 const ChatInterfaceDemo = () => {
   const [messages, setMessages] = useState(null);
@@ -14,6 +15,7 @@ const ChatInterfaceDemo = () => {
   const [input, setInput] = useState("");
 
   const chatInterface = useRef();
+  const announcementInterface = useRef();
 
   useEffect(() => {
     chatInterface.current = ChatInterface();
@@ -28,6 +30,10 @@ const ChatInterfaceDemo = () => {
             }
         })
     botInstance.enableEVABotSdk(true)
+    announcementInterface.current = AnnouncementsInterface();
+    announcementInterface.current.subscribe((announcements) => {
+      console.log("Announcements:", announcements);
+    });
 
     // Subscribe to updates
     const unsubscribe = chatInterface.current.subscribe(
