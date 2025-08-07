@@ -201,7 +201,7 @@ const MultiResponse = () => {
                 /*Handling the case, where type can be be anything i.e.., simpleText, longText, richText and canUploadFile can be true, but user may or may not 
                 upload the file. So, we need to check if the file is uploaded or not from the store and then get the value accordingly.
                 */
-                if (state.GptUploadedFiles && (Object.keys(state.GptUploadedFiles)?.includes(`${contextFields?.key}-${item?.messageId}`))) {
+                if (state.GptUploadedFiles && (Object.keys(state.GptUploadedFiles)?.includes(`${contextFields?.key}-${item?.messageId}`)) && uploadedFiles[`${contextFields?.key}`]?.length > 0) {
                     let ind = Object.keys(state.GptUploadedFiles).indexOf(`${contextFields?.key}-${item?.messageId}`);
                     // reqdValue = Object.values(state.GptUploadedFiles)[ind]?.value || '';
                     if (ind !== -1) {
