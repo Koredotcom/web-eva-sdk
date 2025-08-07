@@ -6,6 +6,7 @@
 #
 dist/
 package-lock.json
+eva-web-sdk-*
 
 # node.js
 #
