@@ -1,9 +1,12 @@
 import React, { useEffect, useRef, useState } from "react";
 import { TemplateRenderer } from "../../templateRenderer";
 import { BotConversation, ChatInterface } from "../../chat";
-import Composebar from "./Composebar";
+import { NewChat } from "../../chat";
+// Remove React Composebar - we'll use the JavaScript version
+// import Composebar from "./Composebar";
 
 import "../../styles/chat-interface.scss"
+import "../../styles/composebar.css"
 import History from "../history";
 import Agents from "../agents";
 import Notifications from "../Notifications";
@@ -35,6 +38,7 @@ const ChatInterfaceDemo = () => {
   const [announcements, setAnnouncements] = useState(null);
 
   const chatInterface = useRef();
+  const composeBarRef = useRef(); // Reference for the ComposeBar instance
 
   useEffect(() => {
     chatInterface.current = ChatInterface();
@@ -56,16 +60,68 @@ const ChatInterfaceDemo = () => {
     const unsubscribe = chatInterface.current.subscribe(
       (question, searchResponse, moreAvailable, errorStates, quickActions) => {
         // Handle the API response data
-       
         setMessages(question);
         setQuickActions(quickActions);
+        
+        // Update ComposeBar quick actions when they change
+        if (composeBarRef.current && quickActions) {
+          composeBarRef.current.setQuickActions(quickActions);
+        }
       }
     );
 
     return () => {
       unsubscribe();
+      // Cleanup ComposeBar
+      if (composeBarRef.current) {
+        composeBarRef.current.destroy();
+      }
     };
   }, []);
+
+  // Separate useEffect for ComposeBar initialization
+  useEffect(() => {
+    // Initialize ComposeBar after DOM is ready
+    const initializeComposeBar = () => {
+      const container = document.getElementById('compose-bar-container');
+      if (container && window.ComposeBar) {
+        composeBarRef.current = new window.ComposeBar('#compose-bar-container', {
+          placeholder: 'Ask question...',
+          quickActions: quickActions || [],          
+        });
+
+        // Set up event handlers
+        composeBarRef.current
+          .on('send', (message) => {
+            const messageData = Object.values(messages || {});
+            chatInterface.current.sendMessage(
+              message,
+              messageData?.[messageData?.length - 1]
+            );
+          })
+          .on('quickAction', (action) => {
+            chatInterface.current.askQuickActions(action);
+          })
+          .on('newChat', () => {
+            NewChat();
+          })
+          .on('stop', () => {
+            chatInterface.current.cancelMessageReqAction();
+          });
+      }
+    };
+
+    // Load ComposeBar script as module if not already loaded
+    if (!window.ComposeBar) {
+      const script = document.createElement('script');
+      script.type = 'module'; // Load as ES6 module
+      script.src = '/src/components/ComposeBar.js';
+      script.onload = initializeComposeBar;
+      document.head.appendChild(script);
+    } else {
+      initializeComposeBar();
+    }
+  }, [quickActions]); // Re-initialize when quickActions change
 
 
   const fetchAnnouncementData = async () => {
@@ -106,13 +162,8 @@ const ChatInterfaceDemo = () => {
 
             })}
         </div>
-        <Composebar 
-          quickActions={quickActions} 
-          chatInterface={chatInterface} 
-          input={input} 
-          setInput={setInput} 
-          messages={messages} 
-        />
+        {/* Replace the React Composebar with plain JavaScript ComposeBar container */}
+        <div id="compose-bar-container"></div>
       </div>
     </div>
   );
