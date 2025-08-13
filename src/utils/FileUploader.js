@@ -344,7 +344,8 @@ function FileUploader({
                     if (_self.onSuccess) _self.onSuccess(response);
                 }
             })
-            .catch(function() {
+            .catch(function(error) {
+                console.log("error",error);
                 if(_self?.source?.token?.reason?.message !== "Upload aborted by the user."){
                     _self.onError('FILE_UPLOAD_ERROR');
                  }
@@ -380,7 +381,8 @@ function FileUploader({
                 _self._initChunkUpload();
             }
         })
-        .catch(function() {
+        .catch(function(error) {        
+            console.log("error",error);
             if(_self?.source?.token?.reason?.message !== "Upload aborted by the user."){
                 _self.onError('FILE_UPLOAD_ERROR');
              }
@@ -423,7 +425,8 @@ function FileUploader({
             //     _self._initChunkUpload();
             // }
         })
-        .catch(function() {
+        .catch(function(err) {
+            console.log("error",err);
             if(_self?.source?.token?.reason?.message !== "Upload aborted by the user."){
                 _self.onError('FILE_UPLOAD_ERROR');
              }
