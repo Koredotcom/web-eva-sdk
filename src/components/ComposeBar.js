@@ -1,4 +1,8 @@
 import NewChat from "../chat/NewChat.js";
+import ChatInterface from "../chat/ChatInterface.js";
+import InvokeAgent from "../chat/invokeAgent.js";
+import store from "../redux/store.js";
+import { fetchAgents } from "../redux/actions/global.action.js";
 
 /**
  * ComposeBar - A standalone compose bar component in plain JavaScript
@@ -20,6 +24,8 @@ class ComposeBar {
         this.isLoading = false;
         this.isRecording = false;
         this.recognition = null;
+        this.unsubscribe = null;
+        this.chatInterface = null;
         this.callbacks = {
             onSend: null,
             onNewChat: null,
@@ -41,6 +47,28 @@ class ComposeBar {
             throw new Error('ComposeBar container not found');
         }
         
+        // Initialize chat interface
+        try {
+            this.chatInterface = ChatInterface();
+            // Default options for chat interface
+            this.chatInterface.options({ contentStreaming: true });
+
+            // Subscribe to updates to toggle loading and update quick actions
+            if (typeof this.chatInterface.subscribe === 'function') {
+                this.unsubscribe = this.chatInterface.subscribe((questions, searchResponse, moreAvailable, errorStates, quickActions) => {
+                    // Toggle loading state based on async status
+                    const isLoading = searchResponse?.status === 'loading';
+                    this.setLoading(!!isLoading);
+                    // Sync quick actions if they change
+                    if (Array.isArray(quickActions)) {
+                        this.setQuickActions(quickActions);
+                    }
+                });
+            }
+        } catch (e) {
+            console.warn('ChatInterface initialization failed:', e);
+        }
+
         this.initSpeechRecognition();
         this.render();
         this.attachEventListeners();
@@ -110,7 +138,7 @@ class ComposeBar {
             </div>`
             : '';
             
-        this.container.innerHTML = `
+	        this.container.innerHTML = `
             <div class="eva-composebar-parent">
                 <div class="eva-composebar-area">
                     ${quickActionsHtml}
@@ -150,13 +178,22 @@ class ComposeBar {
                             New
                         </button>` : ''
                     }
+	                    <button class="eva-btn eva-btn-secondary" data-eva-open-dialog>
+	                        Dialog
+	                    </button>
                     ${this.options.showStopButton ? 
                         `<button class="eva-btn eva-btn-secondary" data-eva-stop ${!this.isLoading ? 'disabled' : ''}>
                             Stop
                         </button>` : ''
                     }
                 </div>
-            </div>
+	                <sl-dialog label="Select an agent" data-eva-dialog>
+	                    <div class="eva-agents-container">
+	                        <ul class="eva-agents-list" data-eva-all-agents></ul>
+	                    </div>
+	                    <sl-button slot="footer" variant="primary" data-eva-dialog-close>Close</sl-button>
+	                </sl-dialog>
+	            </div>
         `;
     }
     
@@ -170,7 +207,9 @@ class ComposeBar {
         const stopBtn = this.container.querySelector('[data-eva-stop]');
         const attachmentBtn = this.container.querySelector('[data-eva-attachment]');
         const speechBtn = this.container.querySelector('[data-eva-speech]');
-        const quickActionChips = this.container.querySelectorAll('.eva-quick-reply-chip');
+	        const quickActionChips = this.container.querySelectorAll('.eva-quick-reply-chip');
+	        const openDialogBtn = this.container.querySelector('[data-eva-open-dialog]');
+	        const dialog = this.container.querySelector('[data-eva-dialog]');
         
         // Textarea events
         if (textarea) {
@@ -191,6 +230,17 @@ class ComposeBar {
         if (stopBtn) {
             stopBtn.addEventListener('click', () => this.handleStop());
         }
+
+	        if (openDialogBtn) {
+	            openDialogBtn.addEventListener('click', () => this.handleOpenDialog());
+	        }
+
+	        if (dialog) {
+	            const closeBtn = dialog.querySelector('[data-eva-dialog-close]');
+	            if (closeBtn) {
+	                closeBtn.addEventListener('click', () => this.handleCloseDialog());
+	            }
+	        }
         
         // Quick action chip events
         quickActionChips.forEach(chip => {
@@ -255,6 +305,19 @@ class ComposeBar {
     handleSend() {
         if (!this.input.trim() || this.isLoading) return;
         
+        // Default internal handling
+        try {
+            if (this.chatInterface && typeof this.chatInterface.sendMessage === 'function') {
+                // sendMessage without question falls back to regular chat
+                this.chatInterface.sendMessage(this.input.trim());
+            } else if (this.chatInterface && typeof this.chatInterface.sendMessageAction === 'function') {
+                this.chatInterface.sendMessageAction(this.input.trim());
+            }
+        } catch (e) {
+            console.error('Error sending message from ComposeBar:', e);
+        }
+
+        // Optional external callback
         if (this.callbacks.onSend) {
             this.callbacks.onSend(this.input.trim());
         }
@@ -273,6 +336,16 @@ class ComposeBar {
      * Handle stop action
      */
     handleStop() {
+        // Default internal handling
+        try {
+            if (this.chatInterface && typeof this.chatInterface.cancelMessageReqAction === 'function') {
+                this.chatInterface.cancelMessageReqAction();
+            }
+        } catch (e) {
+            console.error('Error stopping message from ComposeBar:', e);
+        }
+
+        // Optional external callback
         if (this.callbacks.onStop) {
             this.callbacks.onStop();
         }
@@ -285,6 +358,18 @@ class ComposeBar {
         const actionId = event.target.getAttribute('data-action-id');
         const action = this.options.quickActions.find(a => a.id === actionId);
         
+        // Default internal handling
+        if (action) {
+            try {
+                if (this.chatInterface && typeof this.chatInterface.askQuickActions === 'function') {
+                    this.chatInterface.askQuickActions(action);
+                }
+            } catch (e) {
+                console.error('Error handling quick action from ComposeBar:', e);
+            }
+        }
+
+        // Optional external callback
         if (action && this.callbacks.onQuickAction) {
             this.callbacks.onQuickAction(action);
         }
@@ -302,7 +387,7 @@ class ComposeBar {
     /**
      * Handle speech to text button click
      */
-    handleSpeechToText() {
+	    handleSpeechToText() {
         if (!this.recognition) {
             alert('Speech recognition is not supported in this browser');
             return;
@@ -328,6 +413,106 @@ class ComposeBar {
             this.callbacks.onSpeechToText(this.isRecording);
         }
     }
+
+	    /**
+	     * Open Shoelace dialog
+	     */
+	    handleOpenDialog() {
+	        const dialog = this.container.querySelector('[data-eva-dialog]');
+	        if (!dialog) return;
+	        try {
+	            if (typeof dialog.show === 'function') {
+	                dialog.show();
+	            } else {
+	                dialog.setAttribute('open', '');
+	            }
+	        } catch (e) {
+	            dialog.setAttribute('open', '');
+	        }
+	        // Load and render agents when dialog opens
+	        this.loadAndRenderAgents();
+	    }
+
+	    /**
+	     * Close Shoelace dialog
+	     */
+	    handleCloseDialog() {
+	        const dialog = this.container.querySelector('[data-eva-dialog]');
+	        if (!dialog) return;
+	        try {
+	            if (typeof dialog.hide === 'function') {
+	                dialog.hide();
+	            } else {
+	                dialog.removeAttribute('open');
+	            }
+	        } catch (e) {
+	            dialog.removeAttribute('open');
+	        }
+	    }
+
+	    /**
+	     * Fetch and render agents in the dialog
+	     */
+	    async loadAndRenderAgents() {
+	        const allListEl = this.container.querySelector('[data-eva-all-agents]');
+	        if (!allListEl) return;
+
+	        // Show loading state
+	        allListEl.innerHTML = `<li>Loading...</li>`;
+	        
+
+	        // Ensure agents fetch is triggered if not already
+	        try {
+	            const state = store.getState();
+	            const status = state?.global?.allAgents?.status;
+	            if (!status || status === 'idle') {
+	                const userId = window?.sdkConfig?.userId;
+	                if (userId) {
+	                    store.dispatch(fetchAgents({ userId }));
+	                }
+	            }
+	        } catch (e) {}
+
+	        
+	        try {
+	            const state = store.getState();
+	            const allAgents = state?.global?.allAgents?.data?.agents || [];
+	            const recents = state?.global?.allAgents?.data?.recents || [];
+	            const recentAgents = Array.isArray(recents)
+	                ? recents.map(id => allAgents.find(a => String(a.id) === String(id))).filter(Boolean)
+	                : [];
+	            this.renderAgentsList(allListEl, recentAgents, 'recent');
+	        } catch (e) {
+	            allListEl.innerHTML = `<li>Failed to load agents</li>`;
+	        }
+	    }
+
+	    /**
+	     * Render a list of agents into a target element
+	     */
+	    renderAgentsList(targetEl, agents, listType) {
+	        if (!agents || agents.length === 0) {
+	            targetEl.innerHTML = `<li>No agents found</li>`;
+	            return;
+	        }
+	        const itemsHtml = agents.map(agent => {
+	            const safeName = (agent?.name || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+	            const icon = agent?.icon ? `<img src="${agent.icon}" alt="" width="18" height="18" style="margin-right:8px;vertical-align:middle;"/>` : '';
+	            return `<li class="eva-agent-item" data-agent-id="${agent.id}" data-agent-type="${listType}">${icon}<span>${safeName}</span></li>`;
+	        }).join('');
+	        targetEl.innerHTML = itemsHtml;
+
+	        // Attach click handlers
+	        targetEl.querySelectorAll('.eva-agent-item').forEach(item => {
+	            item.addEventListener('click', () => {
+	                const agentId = item.getAttribute('data-agent-id');
+	                const agent = agents.find(a => String(a.id) === String(agentId));
+	                if (!agent) return;
+	                try { InvokeAgent(agent); } catch (e) { console.error('InvokeAgent failed', e); }
+	                this.handleCloseDialog();
+	            });
+	        });
+	    }
     
     /**
      * Update speech button appearance based on recording state
@@ -458,6 +643,10 @@ class ComposeBar {
     destroy() {
         if (this.container) {
             this.container.innerHTML = '';
+        }
+        if (typeof this.unsubscribe === 'function') {
+            try { this.unsubscribe(); } catch (e) {}
+            this.unsubscribe = null;
         }
     }
 }

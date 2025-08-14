@@ -59,14 +59,8 @@ const ChatInterfaceDemo = () => {
     // Subscribe to updates
     const unsubscribe = chatInterface.current.subscribe(
       (question, searchResponse, moreAvailable, errorStates, quickActions) => {
-        // Handle the API response data
         setMessages(question);
         setQuickActions(quickActions);
-        
-        // Update ComposeBar quick actions when they change
-        if (composeBarRef.current && quickActions) {
-          composeBarRef.current.setQuickActions(quickActions);
-        }
       }
     );
 
@@ -87,27 +81,8 @@ const ChatInterfaceDemo = () => {
       if (container && window.ComposeBar) {
         composeBarRef.current = new window.ComposeBar('#compose-bar-container', {
           placeholder: 'Ask question...',
-          quickActions: quickActions || [],          
+          quickActions: quickActions || [],
         });
-
-        // Set up event handlers
-        composeBarRef.current
-          .on('send', (message) => {
-            const messageData = Object.values(messages || {});
-            chatInterface.current.sendMessage(
-              message,
-              messageData?.[messageData?.length - 1]
-            );
-          })
-          .on('quickAction', (action) => {
-            chatInterface.current.askQuickActions(action);
-          })
-          .on('newChat', () => {
-            NewChat();
-          })
-          .on('stop', () => {
-            chatInterface.current.cancelMessageReqAction();
-          });
       }
     };
 
