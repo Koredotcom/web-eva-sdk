@@ -3,6 +3,7 @@ import ChatInterface from "../chat/ChatInterface.js";
 import InvokeAgent from "../chat/invokeAgent.js";
 import store from "../redux/store.js";
 import { fetchAgents } from "../redux/actions/global.action.js";
+import { arrowCirlceUpIcon, attachmentIcon, createThumbsUpFilled, microphoneIcon } from "../templateRenderer/icons-library.js";
 
 /**
  * ComposeBar - A standalone compose bar component in plain JavaScript
@@ -140,30 +141,34 @@ class ComposeBar {
             
 	        this.container.innerHTML = `
             <div class="eva-composebar-parent">
-                <div class="eva-composebar-area">
+                <div class="eva-quick-reply-container">
                     ${quickActionsHtml}
+                </div>
+                <div class="eva-composebar-area">                    
                     <div class="eva-input-container">
-                        <textarea 
+                        <div class="eva-compose-textarea-container">
+                            <textarea 
                             class="eva-compose-textarea" 
                             placeholder="${this.options.placeholder}"
                             rows="1"
                             data-eva-input
                         ></textarea>
-                        <div class="eva-input-actions">
-                            <button class="eva-input-action-btn" data-eva-attachment title="Attach file">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                                    <path d="M21.44 11.05L12.25 20.24C11.1242 21.3658 9.59722 22.0001 8.005 22.0001C6.41278 22.0001 4.88583 21.3658 3.76 20.24C2.63417 19.1142 1.99988 17.5872 1.99988 15.995C1.99988 14.4028 2.63417 12.8758 3.76 11.75L12.33 3.18C13.0506 2.45944 14.0251 2.05911 15.04 2.05911C16.0549 2.05911 17.0294 2.45944 17.75 3.18C18.4706 3.90056 18.8709 4.87507 18.8709 5.88C18.8709 6.88493 18.4706 7.85944 17.75 8.58L9.18 17.15C8.81944 17.5106 8.33056 17.7109 7.82 17.7109C7.30944 17.7109 6.82056 17.5106 6.46 17.15C6.09944 16.7894 5.89911 16.3006 5.89911 15.79C5.89911 15.2794 6.09944 14.7906 6.46 14.43L14.71 6.18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                </svg>
-                            </button>
-                            <button class="eva-input-action-btn" data-eva-speech title="Voice input">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                                    <path d="M12 1C10.34 1 9 2.34 9 4V12C9 13.66 10.34 15 12 15C13.66 15 15 13.66 15 12V4C15 2.34 13.66 1 12 1Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                    <path d="M19 10V12C19 16.42 15.42 20 11 20H13C17.42 20 21 16.42 21 12V10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                    <path d="M12 20V24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                    <path d="M8 24H16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                </svg>
-                            </button>
                         </div>
+                        <div class="eva-compose-textarea-actions">
+                            <div class='left-actions'></div>
+                            <div class="right-actions">
+                                <button class="eva-input-action-btn attachment-btn" data-eva-attachment title="Attach file">
+                                    ${attachmentIcon({ size: 16, color: "#667085" })}
+                                </button>
+                                <button class="eva-input-action-btn voice-btn" data-eva-speech title="Search using voice">
+                                    ${microphoneIcon({ size: 16, color: "#667085" })}
+                                </button>
+                                <button class="eva-input-action-btn send-btn" data-eva-send title="Send">
+                                    ${arrowCirlceUpIcon({ size: 16, color: "#101828" })}
+                                </button>
+                            </div>
+                        </div>
+                        
                     </div>
                 </div>
                 <div class="eva-composebar-buttons">

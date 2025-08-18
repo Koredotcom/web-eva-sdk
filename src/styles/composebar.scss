@@ -2,35 +2,6 @@
  * ComposeBar CSS Styles
  * Standalone styles for the compose bar component
  */
-
-/* Main container */
-.eva-composebar-parent {
-    margin-top: 16px;
-    width: 100%;
-    font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-}
-
-/* Compose area containing input and quick actions */
-.eva-composebar-area {
-    margin-bottom: 12px;
-}
-
-/* Input container with textarea and action buttons */
-.eva-input-container {
-    position: relative;
-    display: flex;
-    align-items: flex-end;
-    border: 1px solid #cdcdcd;
-    border-radius: 8px;
-    background: #fff;
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
-}
-
-.eva-input-container:focus-within {
-    border-color: #102828;
-    box-shadow: 0 0 0 2px rgba(16, 40, 40, 0.1);
-}
-
 /* Quick actions container */
 .eva-quick-reply-container {
     display: flex;
@@ -62,23 +33,6 @@
     background-color: #e8e8e8;
 }
 
-/* Textarea input */
-.eva-compose-textarea {
-    flex: 1;
-    min-height: 40px;
-    max-height: 150px;
-    padding: 8px 12px;
-    border: none;
-    border-radius: 0;
-    resize: none;
-    font-family: inherit;
-    font-size: 14px;
-    line-height: 1.4;
-    background: transparent;
-    box-sizing: border-box;
-    outline: none;
-}
-
 .eva-compose-textarea:disabled {
     background-color: #f5f5f5;
     cursor: not-allowed;
@@ -99,53 +53,6 @@
 }
 
 /* Individual action button */
-.eva-input-action-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 32px;
-    height: 32px;
-    border: none;
-    border-radius: 6px;
-    background: transparent;
-    color: #667085;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    padding: 0;
-}
-
-.eva-input-action-btn:hover {
-    background-color: #f3f4f6;
-    color: #374151;
-}
-
-.eva-input-action-btn:active {
-    background-color: #e5e7eb;
-    transform: scale(0.95);
-}
-
-.eva-input-action-btn:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
-
-.eva-input-action-btn svg {
-    width: 20px;
-    height: 20px;
-    flex-shrink: 0;
-}
-
-/* Recording state for speech button */
-.eva-input-action-btn.recording {
-    background-color: #ef4444;
-    color: white;
-    animation: pulse 1.5s infinite;
-}
-
-.eva-input-action-btn.recording:hover {
-    background-color: #dc2626;
-}
-
 @keyframes pulse {
     0%, 100% {
         opacity: 1;
@@ -162,6 +69,7 @@
     gap: 12px;
     padding-bottom: 16px;
     flex-wrap: wrap;
+    margin-top: 1rem;
 }
 
 /* Base button styles */
@@ -261,9 +169,6 @@
 }
 
 @media (max-width: 480px) {
-    .eva-composebar-parent {
-        margin-top: 12px;
-    }
     
     .eva-compose-textarea {
         font-size: 16px; /* Prevents zoom on iOS */
@@ -305,15 +210,6 @@
 
 /* Dark mode support */
 @media (prefers-color-scheme: dark) {
-    .eva-input-container {
-        background-color: #1a1a1a;
-        border-color: #444;
-    }
-    
-    .eva-input-container:focus-within {
-        border-color: #666;
-        box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1);
-    }
     
     .eva-compose-textarea {
         color: #fff;
@@ -356,5 +252,99 @@
     .eva-btn-secondary:hover:not(:disabled) {
         background-color: #333;
         border-color: #555;
+    }
+}
+
+#compose-bar-container {
+    //background-color: red;
+    .eva-composebar-parent {
+        width: 100%;
+        .eva-quick-reply-container {
+            margin-bottom: .75rem;
+        }
+        .eva-composebar-area {
+            border: 4px solid #f9fafb;
+            display: flex;
+            flex-direction: column;
+            border-radius: 1.5rem;
+            .eva-input-container {
+                display: flex; 
+                flex-direction: column;   
+                position: relative;
+                z-index: 1;
+                border: .0625rem solid #e5e5e5;
+                background-color: #fff;
+                padding: 1rem;
+                border-radius: 1.5rem;
+                transition-property: all;
+                transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+                transition-duration: .2s;
+                animation-duration: .2s;
+                box-shadow: 0px 20px 24px -4px rgba(16, 24, 40, .08), 0px 8px 8px -4px rgba(16, 24, 40, .03);
+
+                .eva-compose-textarea-container {
+                    textarea {
+                        width: 100%;
+                        border: none;
+                        outline: none;
+                        resize: none;
+                        font-size: 0.875rem;
+                        font-family: "Inter", sans-serif;
+                        min-height: 2.5rem;
+
+                        &:focus {
+                            box-shadow: none;
+                        }
+                    }
+                }
+
+                .eva-compose-textarea-actions {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+
+                    .right-actions {
+                        display: flex;
+                        align-items: center;
+                        gap: .5rem;
+                        flex-shrink: 0;
+                        margin-left: .4rem;
+
+                        .eva-input-action-btn {
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            width: 32px;
+                            height: 32px;
+                            border: none;
+                            border-radius: 100%;
+                            background: transparent;
+                            color: #667085;
+                            cursor: pointer;
+                            transition: all 0.2s ease;
+                            padding: 0;
+                            border: 1px solid #e5e5e5;
+
+                            &:hover {
+                                background-color: var(--Gray-iron-100, #F4F4F5);
+                            }
+                            &:disabled {
+                                opacity: 0.5;
+                                cursor: not-allowed;
+                            }
+
+                            &.send-btn {
+                                border: none;
+                                svg {
+                                    width: 100%;
+                                    height: 100%;
+                                }
+                            }
+                        }
+                    }
+                }
+
+            }
+        }
     }
 }

@@ -6,7 +6,7 @@ import { NewChat } from "../../chat";
 // import Composebar from "./Composebar";
 
 import "../../styles/chat-interface.scss"
-import "../../styles/composebar.css"
+import "../../styles/composebar.scss"
 import History from "../history";
 import Agents from "../agents";
 import Notifications from "../Notifications";

@@ -120,3 +120,27 @@ export function tickMarkIcon({ size = config.size, color = config.color, classNa
     </svg>
   `;
 }
+
+export function attachmentIcon({ size = config.size, color = config.color, className = "" } = {}) {
+  return `
+    <svg width="${size}" height="${size}" viewBox="0 0 10 16" fill="none" xmlns="http://www.w3.org/2000/svg" class="wa-Close ${className}">
+      <path d="M8.84975 3.50392V11C8.84975 13.0251 7.20813 14.6667 5.18309 14.6667C3.15804 14.6667 1.51642 13.0251 1.51642 11V3.77782C1.51642 2.42779 2.61083 1.33337 3.96086 1.33337C5.31089 1.33337 6.40531 2.42779 6.40531 3.77782V10.9639C6.40531 11.6389 5.8581 12.1861 5.18309 12.1861C4.50807 12.1861 3.96086 11.6389 3.96086 10.9639V4.43415" stroke="${color}" stroke-width="1.33" stroke-linecap="round" stroke-linejoin="round" />
+    </svg>
+  `;
+}
+
+export function microphoneIcon({ size = config.size, color = config.color, className = "" } = {}) {
+  return `
+    <svg width="${size}" height="${size}" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" class="wa-Close ${className}">
+      <path d="M13.3333 8V8.66667C13.3333 11.6122 10.9455 14 8 14C5.05449 14 2.66667 11.6122 2.66667 8.66667V8M8 11.3333C6.52725 11.3333 5.33334 10.1394 5.33334 8.66667V4.66667C5.33334 3.19391 6.52725 2 8 2C9.47276 2 10.6667 3.19391 10.6667 4.66667V8.66667C10.6667 10.1394 9.47276 11.3333 8 11.3333Z" stroke="${color}" stroke-width="1.33" stroke-linecap="round" stroke-linejoin="round" />
+    </svg>
+  `;
+}
+
+export function arrowCirlceUpIcon({ size = config.size, color = config.color, className = "" } = {}) {
+  return `
+    <svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="wa-Close ${className}">
+      <path fillRule="evenodd" clipRule="evenodd" d="M12 23C18.0751 23 23 18.0751 23 12C23 5.92487 18.0751 1 12 1C5.92487 0.999999 1 5.92487 1 12C0.999999 18.0751 5.92487 23 12 23ZM12 17C11.4477 17 11 16.5523 11 16V10.4142L8.70711 12.7071C8.31658 13.0976 7.68342 13.0976 7.29289 12.7071C6.90237 12.3166 6.90237 11.6834 7.29289 11.2929L11.2929 7.29289C11.6834 6.90237 12.3166 6.90237 12.7071 7.29289L16.7071 11.2929C17.0976 11.6834 17.0976 12.3166 16.7071 12.7071C16.3166 13.0976 15.6834 13.0976 15.2929 12.7071L13 10.4142V16C13 16.5523 12.5523 17 12 17Z" fill="${color}" />
+    </svg>
+  `;
+}
