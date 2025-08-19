@@ -1,0 +1,600 @@
+/**
+ * ComposeBar CSS Styles
+ * Standalone styles for the compose bar component
+ */
+/* Quick actions container */
+.eva-quick-reply-container {
+    display: flex;
+    align-items: center;
+    margin-bottom: 8px;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+/* Quick action chips */
+.eva-quick-reply-chip {
+    border: 1px solid #cdcdcd;
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 12px;
+    cursor: pointer;
+    background: #fff;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+    user-select: none;
+    white-space: nowrap;
+}
+
+.eva-quick-reply-chip:hover {
+    background-color: #f7f7f7;
+    border-color: #aaa;
+}
+
+.eva-quick-reply-chip:active {
+    background-color: #e8e8e8;
+}
+
+.eva-compose-textarea:disabled {
+    background-color: #f5f5f5;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.eva-compose-textarea::placeholder {
+    color: #a3a3a3;
+}
+
+/* Input action buttons container */
+.eva-input-actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 8px;
+    flex-shrink: 0;
+}
+
+/* Individual action button */
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.7;
+    }
+}
+
+/* Buttons container */
+.eva-composebar-buttons {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding-bottom: 16px;
+    flex-wrap: wrap;
+    margin-top: 1rem;
+}
+
+/* Base button styles */
+.eva-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 12px;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 1.25;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    user-select: none;
+    min-height: 36px;
+}
+
+.eva-btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+/* Primary button (Send) */
+.eva-btn-primary {
+    background-color: #102828;
+    color: #fff;
+    border-color: #102828;
+}
+
+.eva-btn-primary:hover:not(:disabled) {
+    background-color: #0f2525;
+    border-color: #0f2525;
+}
+
+.eva-btn-primary:active:not(:disabled) {
+    background-color: #0d2020;
+    border-color: #0d2020;
+}
+
+/* Secondary button (New, Stop) */
+.eva-btn-secondary {
+    background-color: #fff;
+    color: #344054;
+    border-color: #d0d5dd;
+    box-shadow: 0 1px 2px rgba(16, 24, 40, 0.05);
+}
+
+.eva-btn-secondary:hover:not(:disabled) {
+    background-color: #f9fafb;
+    border-color: #d0d5dd;
+    color: #1d2939;
+}
+
+.eva-btn-secondary:active:not(:disabled) {
+    background-color: #f2f4f7;
+    border-color: #d0d5dd;
+}
+
+/* Icon in buttons */
+.eva-btn svg {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+}
+
+/* Loading state */
+.eva-composebar-loading .eva-compose-textarea {
+    opacity: 0.7;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .eva-composebar-buttons {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+    }
+    
+    .eva-btn {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .eva-quick-reply-container {
+        gap: 6px;
+    }
+    
+    .eva-quick-reply-chip {
+        font-size: 11px;
+        padding: 4px 8px;
+    }
+}
+
+@media (max-width: 480px) {
+    
+    .eva-compose-textarea {
+        font-size: 16px; /* Prevents zoom on iOS */
+    }
+    
+    .eva-quick-reply-container {
+        gap: 4px;
+    }
+    
+    .eva-quick-reply-chip {
+        font-size: 10px;
+        padding: 3px 6px;
+    }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .eva-compose-textarea {
+        border-width: 2px;
+    }
+    
+    .eva-btn {
+        border-width: 2px;
+    }
+    
+    .eva-quick-reply-chip {
+        border-width: 2px;
+    }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+    .eva-compose-textarea,
+    .eva-btn,
+    .eva-quick-reply-chip {
+        transition: none;
+    }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+    
+    .eva-compose-textarea {
+        color: #fff;
+    }
+    
+    .eva-compose-textarea::placeholder {
+        color: #888;
+    }
+    
+    .eva-input-action-btn {
+        color: #9ca3af;
+    }
+    
+    .eva-input-action-btn:hover {
+        background-color: #374151;
+        color: #d1d5db;
+    }
+    
+    .eva-input-action-btn:active {
+        background-color: #4b5563;
+    }
+    
+    .eva-quick-reply-chip {
+        background-color: #2a2a2a;
+        border-color: #444;
+        color: #fff;
+    }
+    
+    .eva-quick-reply-chip:hover {
+        background-color: #333;
+        border-color: #555;
+    }
+    
+    .eva-btn-secondary {
+        background-color: #2a2a2a;
+        border-color: #444;
+        color: #fff;
+    }
+    
+    .eva-btn-secondary:hover:not(:disabled) {
+        background-color: #333;
+        border-color: #555;
+    }
+}
+
+#compose-bar-container {
+    //background-color: red;
+    .eva-composebar-parent {
+        width: 100%;
+        .eva-quick-reply-container {
+            margin-bottom: .75rem;
+        }
+        .eva-composebar-area {
+            border: 4px solid #f9fafb;
+            display: flex;
+            flex-direction: column;
+            border-radius: 1.5rem;
+            .eva-input-container {
+                display: flex; 
+                flex-direction: column;   
+                position: relative;
+                z-index: 1;
+                border: .0625rem solid #e5e5e5;
+                background-color: #fff;
+                padding: 1rem;
+                border-radius: 1.5rem;
+                transition-property: all;
+                transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+                transition-duration: .2s;
+                animation-duration: .2s;
+                box-shadow: 0px 20px 24px -4px rgba(16, 24, 40, .08), 0px 8px 8px -4px rgba(16, 24, 40, .03);
+
+                .eva-compose-textarea-container {
+                    textarea {
+                        width: 100%;
+                        border: none;
+                        outline: none;
+                        resize: none;
+                        font-size: 0.875rem;
+                        font-family: "Inter", sans-serif;
+                        min-height: 2.5rem;
+
+                        &:focus {
+                            box-shadow: none;
+                        }
+                    }
+                }
+
+                .eva-compose-textarea-actions {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+
+                    .left-actions {
+                        display: flex;
+                        align-items: center;
+                        gap: .5rem;
+
+                        .agents-action-item {
+                            display: flex;
+                            padding: .5rem .75rem;
+                            justify-content: center;
+                            align-items: center;
+                            gap: .5rem;
+                            height: 2rem;
+                            cursor: pointer;
+                            min-width: 2.25rem;
+                            border-radius: 6.25rem;
+                            border: .0625rem solid #e5e5e5;
+                            background: #fff;
+
+                            &:hover {
+                                background-color: #f5f5f5;
+                            }
+                        }
+                    }
+
+                    .right-actions {
+                        display: flex;
+                        align-items: center;
+                        gap: .5rem;
+                        flex-shrink: 0;
+                        margin-left: .4rem;
+
+                        .eva-input-action-btn {
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            width: 32px;
+                            height: 32px;
+                            border: none;
+                            border-radius: 100%;
+                            background: transparent;
+                            color: #667085;
+                            cursor: pointer;
+                            transition: all 0.2s ease;
+                            padding: 0;
+                            border: 1px solid #e5e5e5;
+
+                            &:hover {
+                                background-color: var(--Gray-iron-100, #F4F4F5);
+                            }
+                            &:disabled {
+                                opacity: 0.5;
+                                cursor: not-allowed;
+                            }
+
+                            &.send-btn {
+                                border: none;
+                                svg {
+                                    width: 100%;
+                                    height: 100%;
+                                }
+                            }
+                        }
+                    }
+                }
+
+            }
+        }
+    }
+}
+
+.disabled {
+    pointer-events: none;
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+sl-dialog.eva-agents-dialog {
+    --width: 47.5rem;
+    display: flex;
+
+    &::part(panel) {
+        background: #fff;
+        box-shadow: -0.4375rem .25rem 1.875rem rgba(18, 61, 101, .2), inset -0.5rem -0.375rem 5rem hsla(0, 0%, 100%, .18);
+        border-radius: .75rem;
+    }
+
+    &::part(header) {
+       display: none;
+    }
+
+    &::part(body) {
+        overflow: hidden;
+     }
+
+    .search-box {
+        position: relative;
+        .wa-searchIcon {
+            position: absolute;
+            left: 15px;
+            top: 0;
+            bottom: 0;
+            margin: auto;
+        }
+    }
+
+    .composebarFilter {
+        display: flex;
+        flex-direction: column;
+        height: 30rem;
+
+        .agentsTabWrapper {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            .lineBreak {
+                border-bottom: 0.0625rem solid transparent;
+                width: 100%;
+            }
+            .agentsHeader {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                .agentsTabHeadingWrapper {
+                    display: flex;
+                    align-items: center;
+                    padding: 0.125rem;
+                    gap: 0.25rem;
+                    border-radius: var(--full, 624.9375rem);
+                    //border: 0.0625rem solid var(--Gray-iron-300, #D1D1D6);
+                    background: #f8f7f7;
+                    .agentsTabHeading {
+                        display: flex;
+                        padding: 0.375rem 1rem;
+                        justify-content: center;
+                        align-items: center;
+                        gap: 0.5rem;
+                        border-radius: var(--full, 624.9375rem);
+                        background: #f8f7f7;
+                        font-size: 0.875rem;
+                        font-weight: 500;
+                        line-height: 1.25rem;
+                        color: var(--Gray-500, #667085);
+                        cursor: pointer;
+                        transition: all 0.1s ease-in-out;
+                        &.active {
+                            background: #fff;
+                            box-shadow: 0rem 0.0625rem 0.1875rem 0rem rgba(16, 24, 40, 0.10), 0rem 0.0625rem 0.125rem 0rem rgba(16, 24, 40, 0.06);
+                            color: #0f0f0f;
+                            &:hover {
+                                background: #fff;
+                                box-shadow: 0rem 0.0625rem 0.1875rem 0rem rgba(16, 24, 40, 0.10), 0rem 0.0625rem 0.125rem 0rem rgba(16, 24, 40, 0.06);
+                                color: #0f0f0f;
+                            }
+                        }
+                        &:hover {
+                            background: #f5f5f5;
+                            box-shadow: 0rem 0.0625rem 0.1875rem 0rem rgba(16, 24, 40, 0.10), 0rem 0.0625rem 0.125rem 0rem rgba(16, 24, 40, 0.06);
+                            color: #0f0f0f;
+                        }
+                    }            
+                }
+                .agentSearch {
+                    display: flex;
+                    align-items: center;
+                    gap: 0.5rem;
+                    .agentSearchBar {
+                        border-radius: var(--full, 624.9375rem);
+                        border: .0625rem solid #e5e5e5;
+                        background: #fafafa;
+                        height: 2.5rem;
+                        width: 12.5rem;
+                        padding-left: 2.25rem;
+                        padding-right: 2rem;
+                        &:focus {
+                            box-shadow: 0px 2px 4px -2px rgba(16, 24, 40, .06) !important;
+                            border: .0625rem solid var(--Gray-iron-300, #D1D1D6) !important;
+                            background: #fff;
+                        }
+                    }
+                    .agentSettings, .agentSearchIcon {
+                        width: 2.5rem;
+                        height: 2.5rem;
+                        border-radius: 100%;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        border: .0625rem solid #e5e5e5;
+                        background: #fff;
+                        cursor: pointer;
+                        color: #737373;
+                        &:hover {
+                            background: #f5f5f5;
+                        }                    
+                    }                    
+                }
+            }  
+        }                    
+    }
+
+    .eva-agents-container {
+        overflow: auto;
+        .eva-agents-list {
+            padding: 0;
+            margin: 0;
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+
+            .eva-agent-item {
+                list-style-type: none;
+                display: flex;
+                -webkit-box-align: center;
+                -moz-box-align: center;
+                -ms-flex-align: center;
+                align-items: center;
+                height: 3.75rem;
+                padding: .625rem 1rem .625rem .75rem;
+                gap: 1rem;
+                border: .0625rem solid rgba(0, 0, 0, 0);
+                border-radius: .75rem;
+                background: #fff;
+                cursor: pointer;
+
+                &:hover {
+                    background: var(--Gray-iron-50, #FAFAFA);
+                }
+
+                .agent-icon {
+                    flex-shrink: 0;
+                    width: 2rem;
+                    height: 2rem;
+                    border-radius: 100%;
+                    border: .0625rem solid #e5e5e5;
+                    background: #fff;
+                    display: flex;
+                    -webkit-box-align: center;
+                    -moz-box-align: center;
+                    -ms-flex-align: center;
+                    align-items: center;
+                    -webkit-box-pack: center;
+                    -moz-box-pack: center;
+                    -ms-flex-pack: center;
+                    justify-content: center;
+                }
+
+                .agent-details {
+                    display: flex;
+                    flex-direction: column;
+                    gap: .125rem;
+                    flex-grow: 1;
+                    width: calc(100% - 3.5rem);
+
+                    .agent-name {
+                        font-family: Inter;
+                        font-size: .875rem;
+                        font-style: normal;
+                        font-weight: 500;
+                        line-height: 1.25rem;
+                        letter-spacing: 0em;
+                        color: var(--Gray-iron-900, #18181B);
+                        overflow: hidden;
+                        text-overflow: ellipsis;
+                        white-space: nowrap;
+                    }
+                    .agent-desc {
+                        font-family: Inter;
+                        font-size: .75rem;
+                        font-style: normal;
+                        font-weight: 400;
+                        line-height: 1.125rem;
+                        letter-spacing: 0em;
+                        color: var(--Gray-iron-500, #70707B);
+                        overflow: hidden;
+                        text-overflow: ellipsis;
+                        white-space: nowrap;
+
+                        span {
+                            margin-left: .25rem;
+                            margin-right: .25rem;
+                            font-family: Inter;
+                            font-size: .625rem;
+                            font-style: normal;
+                            font-weight: 400;
+                            line-height: .75rem;
+                            letter-spacing: 0em;
+                            color: #d6d6d6;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
