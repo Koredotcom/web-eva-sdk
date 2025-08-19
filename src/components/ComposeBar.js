@@ -4,6 +4,7 @@ import InvokeAgent from "../chat/invokeAgent.js";
 import store from "../redux/store.js";
 import { fetchAgents } from "../redux/actions/global.action.js";
 import { ActionsFlashIcon, arrowCirlceUpIcon, attachmentIcon, CheveronDownIcon, createCloseIcon, createThumbsUpFilled, microphoneIcon, searchIcon, settingsIcon } from "../templateRenderer/icons-library.js";
+import FileUpload from "../Attachments/fileUpload.js";
 
 /**
  * ComposeBar - A standalone compose bar component in plain JavaScript
@@ -27,13 +28,16 @@ class ComposeBar {
         this.recognition = null;
         this.unsubscribe = null;
         this.chatInterface = null;
+        this.fileUploaderInterface = null;
+        this.attachments = [];
+        this.showOverRideModal = false;
+        this.pendingAgentInvocation = null;
         this.callbacks = {
             onSend: null,
             onNewChat: null,
             onStop: null,
             onQuickAction: null,
             onChange: null,
-            onAttachment: null,
             onSpeechToText: null
         };
         
@@ -70,8 +74,28 @@ class ComposeBar {
             console.warn('ChatInterface initialization failed:', e);
         }
 
+        // Initialize file uploader     
+        try {
+            this.fileUploaderInterface = FileUpload();
+            this.fileUploaderInterface.subscribe((sources, sessionId, quickactions, error, apiResp) => {
+                try {
+                    const filesOnly = Array.isArray(sources)
+                        ? sources.filter(source => !source?.hasOwnProperty('isAgent'))
+                        : [];
+                    this.attachments = filesOnly;
+                    // Always re-render to clear pills when list becomes empty
+                    this.renderAttachments();
+                } catch (err) {
+                    console.warn('Failed processing file upload subscribe payload:', err);
+                }
+            });
+        } catch (e) {
+            console.warn('FileUpload init failed:', e);
+        }
+
         this.initSpeechRecognition();
         this.render();
+        this.renderAttachments();
         this.attachEventListeners();
     }
     
@@ -145,6 +169,8 @@ class ComposeBar {
                     ${quickActionsHtml}
                 </div>
                 <div class="eva-composebar-area">                    
+                    <div class="eva-attachments-container" data-eva-attachments></div>
+                    
                     <div class="eva-input-container">
                         <div class="eva-compose-textarea-container">
                             <textarea 
@@ -174,26 +200,12 @@ class ComposeBar {
                             </div>
                         </div>
                         
+                        <!-- Hidden file input for attachment functionality -->
+                        <input type="file" style="display: none;" data-eva-file-input multiple accept="*/*" />
+                        
                     </div>
                 </div>
-                <div class="eva-composebar-buttons">
-                    <button class="eva-btn eva-btn-primary" data-eva-send ${this.isLoading ? 'disabled' : ''}>
-                        ${this.isLoading ? 'Sending...' : 'Send'}
-                    </button>
-                    ${this.options.showNewButton ? 
-                        `<button class="eva-btn eva-btn-secondary" data-eva-new>
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                                <path d="M12 5V19M5 12H19" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                            </svg>
-                            New
-                        </button>` : ''
-                    }
-                    ${this.options.showStopButton ? 
-                        `<button class="eva-btn eva-btn-secondary" data-eva-stop ${!this.isLoading ? 'disabled' : ''}>
-                            Stop
-                        </button>` : ''
-                    }
-                </div>
+                
 	                <sl-dialog data-eva-dialog class="eva-agents-dialog">
                         <div class="composebarFilter">
                             <div class="agentsTabWrapper">
@@ -218,6 +230,19 @@ class ComposeBar {
                         </div>
 	                    
 	                </sl-dialog>
+
+	                <!-- Override Confirmation Dialog -->
+	                <sl-dialog data-eva-override-dialog class="eva-override-dialog" label="Clear Attachments?">
+	                    <div style="padding: 10px 0;">
+	                        <p style="margin: 0 0 20px 0; color: #667085; font-size: 14px;">
+	                            You have attachments that will be removed when switching agents. Do you want to continue?
+	                        </p>
+	                        <div style="display: flex; gap: 12px; justify-content: flex-end;">
+	                            <sl-button variant="default" data-eva-override-cancel>Cancel</sl-button>
+	                            <sl-button variant="danger" data-eva-override-confirm>Clear & Continue</sl-button>
+	                        </div>
+	                    </div>
+	                </sl-dialog>
 	            </div>
         `;
     }
@@ -235,6 +260,7 @@ class ComposeBar {
 	        const quickActionChips = this.container.querySelectorAll('.eva-quick-reply-chip');
 	        const openDialogBtn = this.container.querySelector('[data-eva-open-dialog]');
 	        const dialog = this.container.querySelector('[data-eva-dialog]');
+        const fileInput = this.container.querySelector('[data-eva-file-input]');
         
         // Textarea events
         if (textarea) {
@@ -277,9 +303,37 @@ class ComposeBar {
             attachmentBtn.addEventListener('click', () => this.handleAttachment());
         }
         
+        if (fileInput) {            
+            fileInput.addEventListener('change', (e) => {
+                try {
+                    if (this.fileUploaderInterface && typeof this.fileUploaderInterface.uploadFile === 'function') {
+                        this.fileUploaderInterface.uploadFile(e);
+                    }
+                } finally {
+                    // reset so selecting the same file again still triggers change
+                    fileInput.value = '';
+                }
+            });
+        }
+        
         // Speech to text button event
         if (speechBtn) {
             speechBtn.addEventListener('click', () => this.handleSpeechToText());
+        }
+
+        // Override dialog button events
+        const overrideDialog = this.container.querySelector('[data-eva-override-dialog]');
+        if (overrideDialog) {
+            const cancelBtn = overrideDialog.querySelector('[data-eva-override-cancel]');
+            const confirmBtn = overrideDialog.querySelector('[data-eva-override-confirm]');
+            
+            if (cancelBtn) {
+                cancelBtn.addEventListener('click', () => this.handleOverrideCancel());
+            }
+            
+            if (confirmBtn) {
+                confirmBtn.addEventListener('click', () => this.handleOverrideConfirm());
+            }
         }
     }
     
@@ -404,9 +458,9 @@ class ComposeBar {
      * Handle attachment button click
      */
     handleAttachment() {
-        if (this.callbacks.onAttachment) {
-            this.callbacks.onAttachment();
-        }
+        // Always open hidden file input
+        const fileInput = this.container.querySelector('[data-eva-file-input]');
+        if (fileInput) fileInput.click();
     }
     
     /**
@@ -476,6 +530,71 @@ class ComposeBar {
 	    }
 
 	    /**
+	     * Show override confirmation dialog
+	     */
+	    showOverrideDialog() {
+	        const dialog = this.container.querySelector('[data-eva-override-dialog]');
+	        if (!dialog) return;
+	        try {
+	            if (typeof dialog.show === 'function') {
+	                dialog.show();
+	            } else {
+	                dialog.setAttribute('open', '');
+	            }
+	        } catch (e) {
+	            dialog.setAttribute('open', '');
+	        }
+	    }
+
+	    /**
+	     * Close override confirmation dialog
+	     */
+	    closeOverrideDialog() {
+	        const dialog = this.container.querySelector('[data-eva-override-dialog]');
+	        if (!dialog) return;
+	        try {
+	            if (typeof dialog.hide === 'function') {
+	                dialog.hide();
+	            } else {
+	                dialog.removeAttribute('open');
+	            }
+	        } catch (e) {
+	            dialog.removeAttribute('open');
+	        }
+	    }
+
+	    /**
+	     * Handle override cancel button click
+	     */
+	    handleOverrideCancel() {
+	        this.showOverRideModal = false;
+	        this.closeOverrideDialog();
+	    }
+
+	    /**
+	     * Handle override confirm button click
+	     */
+	    handleOverrideConfirm() {
+	        // Clear attachments
+	        this.attachments = [];
+	        this.renderAttachments();
+	        
+	        // Hide dialog
+	        this.showOverRideModal = false;
+	        this.closeOverrideDialog();
+	        
+	        // Continue with agent invocation
+	        if (this.pendingAgentInvocation) {
+	            try { 
+	                InvokeAgent(this.pendingAgentInvocation); 
+	            } catch (e) { 
+	                console.error(`InvokeAgent failed for ${this.pendingAgentInvocation.name}`, e); 
+	            }
+	            this.pendingAgentInvocation = null;
+	        }
+	    }
+
+	    /**
 	     * Fetch and render agents in the dialog
 	     */
 	    async loadAndRenderAgents() {
@@ -533,8 +652,16 @@ class ComposeBar {
 	                const agentId = item.getAttribute('data-agent-id');
 	                const agent = agents.find(a => String(a.id) === String(agentId));
 	                if (!agent) return;
-	                try { InvokeAgent(agent); } catch (e) { console.error('InvokeAgent failed', e); }
-	                this.handleCloseDialog();
+                    
+                    if(this.attachments.length > 0){
+                        // Store the agent for later invocation after user confirms
+                        this.pendingAgentInvocation = agent;
+                        this.showOverRideModal = true;
+                        this.showOverrideDialog();
+                    } else {
+	                    try { InvokeAgent(agent); } catch (e) { console.error('InvokeAgent failed', e); }
+                    }
+                    this.handleCloseDialog();
 	            });
 	        });
 	    }
@@ -618,9 +745,65 @@ class ComposeBar {
      */
     setQuickActions(quickActions) {
         this.options.quickActions = quickActions;
-        this.render();
+        this.render();        
         this.attachEventListeners();
+        this.renderAttachments();
         return this;
+    }
+
+    /**
+     * Render attachment pills above the compose bar
+     */
+    renderAttachments() {
+        const container = this.container.querySelector('[data-eva-attachments]');
+        if (!container) return;
+        const files = Array.isArray(this.attachments) ? this.attachments : [];
+        if (files.length === 0) {
+            container.innerHTML = '';
+            return;
+        }
+        const escapeHtml = (str) => String(str || '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+        const pills = files.map(file => {
+            const name = file?.title || file?.fileName || file?.mediaName || 'Attachment';
+            const uid = file?.uID || file?.componentId || file?.docId || name;
+            return `
+                <span class="eva-attachment-pill" data-attach-uid="${escapeHtml(uid)}" title="${escapeHtml(name)}">
+                    <span class="eva-attachment-name">${escapeHtml(name)}</span>
+                    <button type="button" class="eva-attachment-remove" data-remove-uid="${escapeHtml(uid)}" aria-label="Remove">&times;</button>
+                </span>
+            `;
+        }).join('');
+        container.innerHTML = pills;
+
+        // Attach remove handlers
+        const removeButtons = container.querySelectorAll('.eva-attachment-remove');
+        removeButtons.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const uid = btn.getAttribute('data-remove-uid');
+                this.removeAttachmentByUid(uid);
+                e.stopPropagation();
+                e.preventDefault();
+            });
+        });
+    }
+
+    /**
+     * Remove an attachment by UID using FileUpload interface
+     */
+    removeAttachmentByUid(uid) {
+        if (!uid) return;
+        const file = (this.attachments || []).find(f => String(f?.uID || f?.componentId || f?.docId) === String(uid));
+        if (!file) return;
+        try {
+            this.fileUploaderInterface.removeContext(file);
+        } catch (err) {
+            console.warn('Failed to remove attachment:', err);
+        }
     }
     
     /**
