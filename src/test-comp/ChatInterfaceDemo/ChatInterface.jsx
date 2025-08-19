@@ -106,10 +106,16 @@ const ChatInterfaceDemo = () => {
 
   return (
     <div className="chatInterfaceDemo">
-      <div className="historySec">
-        <History />
-        <Notifications />
-        <Agents />
+      <div className="sidebar">
+        <div className="historySec">
+          <div className="sidebar-header">
+            <div className="sidebar-title">AI for Work</div>
+            <div className="new-btn" title="New">+</div>
+          </div>
+          <History />
+          {/* <Notifications />
+          <Agents /> */}
+        </div>
       </div>
       <div className="chatInterfaceSec">
         <div className="chatSec">
