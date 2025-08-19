@@ -8,14 +8,14 @@ html, body {
     height: 100vh;
 
     .sidebar {
-        width: 25%; 
+        width: 260px; 
         flex-shrink: 0;
-        padding: 16px;
+        padding: 10px;
     }
     .historySec {
         padding: 16px 0 16px 16px;
         flex-shrink: 0;
-        height: calc(100% - 32px);
+        height: calc(100% - 36px);
         display: flex;
         flex-direction: column;
         border-radius: 1rem;
@@ -132,7 +132,7 @@ html, body {
         }
     }
     .chatInterfaceSec {
-        width: calc(100% - 25%);
+        width: calc(100% - 260px);
         padding: 16px 100px;
         overflow: auto;
     }
