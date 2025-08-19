@@ -168,10 +168,21 @@ class ComposeBar {
                 <div class="eva-quick-reply-container">
                     ${quickActionsHtml}
                 </div>
-                <div class="eva-composebar-area">                    
-                    <div class="eva-attachments-container" data-eva-attachments></div>
-                    
+                <!-- Override Confirmation Dialog -->
+                <div class='overridingMsgModal'>
+                    <div class='headerGroup'>
+                        <div class="_heading">Remove Attachments</div>
+                        <div class="msg">The required context conflicts with the selected agent. Do you want to remove the context and set the agent?</div>
+                    </div>
+
+                    <div class="_content">
+                        <button class="kr-primary-btn-black btn-sm" label='Remove'>Remove</button>
+                        <span class="closeBtn">${createCloseIcon({ size: 14, color: "#667085" })}</span>                        
+                    </div>
+                </div>
+                <div class="eva-composebar-area">
                     <div class="eva-input-container">
+                        <div class="eva-attachments-container" data-eva-attachments></div>
                         <div class="eva-compose-textarea-container">
                             <textarea 
                             class="eva-compose-textarea" 
@@ -229,19 +240,6 @@ class ComposeBar {
                             </div>
                         </div>
 	                    
-	                </sl-dialog>
-
-	                <!-- Override Confirmation Dialog -->
-	                <sl-dialog data-eva-override-dialog class="eva-override-dialog" label="Clear Attachments?">
-	                    <div style="padding: 10px 0;">
-	                        <p style="margin: 0 0 20px 0; color: #667085; font-size: 14px;">
-	                            You have attachments that will be removed when switching agents. Do you want to continue?
-	                        </p>
-	                        <div style="display: flex; gap: 12px; justify-content: flex-end;">
-	                            <sl-button variant="default" data-eva-override-cancel>Cancel</sl-button>
-	                            <sl-button variant="danger" data-eva-override-confirm>Clear & Continue</sl-button>
-	                        </div>
-	                    </div>
 	                </sl-dialog>
 	            </div>
         `;
@@ -772,10 +770,11 @@ class ComposeBar {
             const name = file?.title || file?.fileName || file?.mediaName || 'Attachment';
             const uid = file?.uID || file?.componentId || file?.docId || name;
             return `
-                <span class="eva-attachment-pill" data-attach-uid="${escapeHtml(uid)}" title="${escapeHtml(name)}">
-                    <span class="eva-attachment-name">${escapeHtml(name)}</span>
+                <div class="eva-attachment-pill" data-attach-uid="${escapeHtml(uid)}" title="${escapeHtml(name)}">
+                    <div class="attachment-icon"><img src="images/pdf.png" alt=''/></div>
+                    <div class="eva-attachment-name">${escapeHtml(name)}</div>
                     <button type="button" class="eva-attachment-remove" data-remove-uid="${escapeHtml(uid)}" aria-label="Remove">&times;</button>
-                </span>
+                </div>
             `;
         }).join('');
         container.innerHTML = pills;

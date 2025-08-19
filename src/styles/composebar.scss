@@ -259,6 +259,7 @@
     //background-color: red;
     .eva-composebar-parent {
         width: 100%;
+        position: relative;
         .eva-quick-reply-container {
             margin-bottom: .75rem;
         }
@@ -269,7 +270,8 @@
             border-radius: 1.5rem;
             .eva-input-container {
                 display: flex; 
-                flex-direction: column;   
+                flex-direction: column;  
+                gap: 1rem; 
                 position: relative;
                 z-index: 1;
                 border: .0625rem solid #e5e5e5;
@@ -282,6 +284,75 @@
                 animation-duration: .2s;
                 box-shadow: 0px 20px 24px -4px rgba(16, 24, 40, .08), 0px 8px 8px -4px rgba(16, 24, 40, .03);
 
+                .eva-attachments-container {
+                    display: flex;            // children side by side
+                    flex-wrap: nowrap;        // prevent wrapping to next line
+                    overflow-x: auto;         // enable horizontal scroll
+                    overflow-y: hidden;       // hide vertical scroll
+                    -webkit-overflow-scrolling: touch; // smooth scroll on iOS
+                    gap: 0.5rem;
+                    align-items: center;
+                    &:empty {
+                        display: none;
+                    }
+                    .eva-attachment-pill {
+                        -webkit-box-align: center;
+                        -moz-box-align: center;
+                        -ms-flex-align: center;
+                        align-items: center;
+                        -webkit-box-pack: center;
+                        -moz-box-pack: center;
+                        -ms-flex-pack: center;
+                        justify-content: center;
+                        display: inline-flex;
+                        padding: 0 .75rem 0 .75rem;
+                        border-radius: 6.25rem;
+                        border: .0625rem solid #e5e5e5;
+                        color: #141414;
+                        font-family: Inter;
+                        font-size: .875rem;
+                        font-style: normal;
+                        font-weight: 500;
+                        line-height: inherit;
+                        letter-spacing: 0em;
+                        height: 2.25rem;
+                        background-color: #fcfcfc;
+                        position: relative;
+                        cursor: pointer;
+                        gap: 0.5rem;
+
+                        .attachment-icon {
+                            display: flex;
+                            align-items: center;
+                            width: 1.25rem;
+                            height: 1.25rem;
+                            position: relative;
+
+                            img {
+                                width: 100%;
+                                max-height: 100%;
+                                object-fit: contain;
+                            }
+                        }
+
+                        .eva-attachment-name {
+                            max-width: 5.625rem;
+                            overflow: hidden;
+                            text-overflow: ellipsis;
+                            white-space: nowrap;
+                        }
+
+                        .eva-attachment-remove {
+                            cursor: pointer;
+                            border: none;
+                            padding: 0;
+                            background-color: transparent;
+                            font-size: 20px;
+                            color: #667085;
+                        }
+                    }
+                }
+
                 .eva-compose-textarea-container {
                     textarea {
                         width: 100%;
@@ -290,7 +361,7 @@
                         resize: none;
                         font-size: 0.875rem;
                         font-family: "Inter", sans-serif;
-                        min-height: 2.5rem;
+                        min-height: 1.5rem;
 
                         &:focus {
                             box-shadow: none;
@@ -596,5 +667,127 @@ sl-dialog.eva-agents-dialog {
                 }
             }
         }
+    }
+}
+
+.overridingMsgModal {
+    // width: calc(100% - 6.875rem);
+    //width: 100%;
+    padding: 1rem 1.5rem 1.5rem 1.5rem;
+    border-radius: 1.5rem;
+    border: 0.0625rem solid #e5e5e5;
+    background: #fff;
+    box-shadow: 0rem var(--Numbers-4, 0.25rem) var(--Background-Blur-sm, 0.5rem) 0rem rgba(16, 24, 40, 0.06);
+    position: relative;
+    left: 0;
+    right: 0;
+    margin: 0 auto;
+    bottom: calc(100% + 0.25rem);
+    z-index: 12;
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    -webkit-animation: swing-in-bottom-fwd 1s cubic-bezier(0.175, 0.885, 0.320, 1.275) both;
+	        animation: swing-in-bottom-fwd 1s cubic-bezier(0.175, 0.885, 0.320, 1.275) both;
+
+    .headerGroup {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+        flex-grow: 1;
+
+        ._heading {
+            font-family: Inter;
+            font-size: 1.125rem;
+            font-style: normal;
+            font-weight: 600;
+            line-height: 1.75rem;
+            letter-spacing: 0em;
+            color: #0f0f0f;
+        }
+
+        .msg {
+            color: #737373;
+            font-family: Inter;
+            font-size: .875rem;
+            font-style: normal;
+            font-weight: 400;
+            line-height: 1.25rem;
+            letter-spacing: 0em;
+            // max-width: 75%;
+            .msgText {
+                width: 100%;
+                display: flex;
+                align-items: center;
+                flex-wrap: wrap;
+            }
+        }        
+    }
+
+    ._content {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        .closeBtn {
+            width: 2.25rem;
+            height: 2.25rem;
+            border-radius: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            &:hover {
+                background-color: #f5f5f5;
+            }
+        }
+        .kr-primary-btn-black {
+            color: #fff;
+            background: #101828;
+            border: .0625rem solid #475467;
+            box-shadow: 0rem .0625rem .125rem rgba(16, 24, 40, .05);
+            border-radius: .75rem;
+            height: 2.25rem;
+            padding: 0 .875rem;
+            font-family: Inter;
+            font-size: .875rem;
+            font-style: normal;
+            font-weight: 500;
+            line-height: 1.25rem;
+            letter-spacing: 0em;
+            cursor: pointer;
+        }
+    }
+}
+
+@-webkit-keyframes swing-in-bottom-fwd {
+    0% {
+    -webkit-transform: rotateX(100deg);
+            transform: rotateX(100deg);
+    -webkit-transform-origin: bottom;
+            transform-origin: bottom;
+    opacity: 0;
+    }
+    100% {
+    -webkit-transform: rotateX(0);
+            transform: rotateX(0);
+    -webkit-transform-origin: bottom;
+            transform-origin: bottom;
+    opacity: 1;
+    }
+}
+@keyframes swing-in-bottom-fwd {
+    0% {
+    -webkit-transform: rotateX(100deg);
+            transform: rotateX(100deg);
+    -webkit-transform-origin: bottom;
+            transform-origin: bottom;
+    opacity: 0;
+    }
+    100% {
+    -webkit-transform: rotateX(0);
+            transform: rotateX(0);
+    -webkit-transform-origin: bottom;
+            transform-origin: bottom;
+    opacity: 1;
     }
 }
