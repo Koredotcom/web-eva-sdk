@@ -67,7 +67,7 @@ const FileUpload = (props) => {
                 _selectedContext.data.sessionId = state?.selectedContext?.data?.sessionId
                 _selectedContext.data.quickactions = state?.selectedContext?.data?.quickactions
             }
-            //Setting Sources Initially in Loading State till the call is successful
+            //Setting Sources Initially in Loading State till the call is successful            
             store.dispatch(setSelectedContext(_selectedContext))
 
             for (let i = 0; i < allFiles.length; i++) {
@@ -94,6 +94,7 @@ const FileUpload = (props) => {
     };
 
     const uploadFileInitial = (file, allSources, onComplete) => {
+        let state = store.getState().global;
         let localSize = file.file.size / Math.pow(1024, 2)
         let allowedFileSize = Math.round(state.maxAllowedFileSize / Math.pow(1024, 2));
         //If the file size is greater than Max Allowed File, then returning with a response

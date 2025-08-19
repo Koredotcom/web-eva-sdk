@@ -74,7 +74,7 @@ const submitUserFeedback = async ({ type, cId, messageId = null, payload }) => {
         }
     } else {
         feedBackPayload = payload
-        if (currentQuestion?.feedback === payload?.feedback?.type) {
+        if (currentQuestion?.hasOwnProperty("feedback") && currentQuestion?.feedback === type) {
             feedBackPayload = { "action": "undo" }
         }
     }
