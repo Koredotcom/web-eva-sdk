@@ -3,7 +3,7 @@ import ChatInterface from "../chat/ChatInterface.js";
 import InvokeAgent from "../chat/invokeAgent.js";
 import store from "../redux/store.js";
 import { fetchAgents } from "../redux/actions/global.action.js";
-import { arrowCirlceUpIcon, attachmentIcon, createThumbsUpFilled, microphoneIcon } from "../templateRenderer/icons-library.js";
+import { ActionsFlashIcon, arrowCirlceUpIcon, attachmentIcon, CheveronDownIcon, createCloseIcon, createThumbsUpFilled, microphoneIcon, searchIcon, settingsIcon } from "../templateRenderer/icons-library.js";
 
 /**
  * ComposeBar - A standalone compose bar component in plain JavaScript
@@ -155,7 +155,12 @@ class ComposeBar {
                         ></textarea>
                         </div>
                         <div class="eva-compose-textarea-actions">
-                            <div class='left-actions'></div>
+                            <div class='left-actions'>
+                                <button class="agents-action-item" data-eva-agents-action data-eva-open-dialog>
+                                    ${ActionsFlashIcon({ size: 16, color: "#667085" })}
+                                    ${CheveronDownIcon({ size: 14, color: "#667085" })}
+                                </button>
+                            </div>
                             <div class="right-actions">
                                 <button class="eva-input-action-btn attachment-btn" data-eva-attachment title="Attach file">
                                     ${attachmentIcon({ size: 16, color: "#667085" })}
@@ -183,20 +188,35 @@ class ComposeBar {
                             New
                         </button>` : ''
                     }
-	                    <button class="eva-btn eva-btn-secondary" data-eva-open-dialog>
-	                        Dialog
-	                    </button>
                     ${this.options.showStopButton ? 
                         `<button class="eva-btn eva-btn-secondary" data-eva-stop ${!this.isLoading ? 'disabled' : ''}>
                             Stop
                         </button>` : ''
                     }
                 </div>
-	                <sl-dialog label="Select an agent" data-eva-dialog>
-	                    <div class="eva-agents-container">
-	                        <ul class="eva-agents-list" data-eva-all-agents></ul>
-	                    </div>
-	                    <sl-button slot="footer" variant="primary" data-eva-dialog-close>Close</sl-button>
+	                <sl-dialog data-eva-dialog class="eva-agents-dialog">
+                        <div class="composebarFilter">
+                            <div class="agentsTabWrapper">
+                                <div class="agentsHeader">
+                                    <div class="agentsTabHeadingWrapper">
+                                        <div class="agentsTabHeading active">Agents</div>
+                                        <div class="agentsTabHeading">Flows</div>
+                                    </div>
+                                    <div class="agentSearch">
+                                        <div class="search-box">
+                                            ${searchIcon({ size: 14, color: "#667085" })}
+                                            <input placeholder="Search" class="agentSearchBar" autocomplete="off" value="" />
+                                        </div>
+                                        <button class="agentSettings">${settingsIcon({ size: 14, color: "#667085" })}</button>
+                                        <button class="agentSettings" data-eva-dialog-close>${createCloseIcon({ size: 14, color: "#667085" })}</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="eva-agents-container">
+                                <ul class="eva-agents-list" data-eva-all-agents></ul>
+                            </div>
+                        </div>
+	                    
 	                </sl-dialog>
 	            </div>
         `;
@@ -502,8 +522,8 @@ class ComposeBar {
 	        }
 	        const itemsHtml = agents.map(agent => {
 	            const safeName = (agent?.name || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-	            const icon = agent?.icon ? `<img src="${agent.icon}" alt="" width="18" height="18" style="margin-right:8px;vertical-align:middle;"/>` : '';
-	            return `<li class="eva-agent-item" data-agent-id="${agent.id}" data-agent-type="${listType}">${icon}<span>${safeName}</span></li>`;
+	            const icon = agent?.icon ? `<img src="${agent.icon}" alt="" width="18" height="18" />` : '';
+	            return `<li class="eva-agent-item" data-agent-id="${agent.id}" data-agent-type="${listType}"><div class="agent-icon">${icon}</div><div class="agent-details"><div class="agent-name">${safeName}</div><div class="agent-desc">Autonomous Agent<span>•</span>The app allows users to search and compare company reports using natural language</div></div></li>`;
 	        }).join('');
 	        targetEl.innerHTML = itemsHtml;
 
