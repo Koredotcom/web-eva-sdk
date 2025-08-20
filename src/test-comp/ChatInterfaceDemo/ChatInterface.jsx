@@ -1,8 +1,8 @@
 import React, { useEffect, useRef, useState } from "react";
 import { TemplateRenderer } from "../../templateRenderer";
 import { BotConversation, ChatInterface } from "../../chat";
-import { NewChat } from "../../chat";
-// Remove React Composebar - we'll use the JavaScript version
+import NewChat from "../../chat/NewChat";
+// Removing React Composebar - we'll use the JavaScript version
 // import Composebar from "./Composebar";
 
 import "../../styles/chat-interface.scss"
@@ -110,7 +110,9 @@ const ChatInterfaceDemo = () => {
         <div className="historySec">
           <div className="sidebar-header">
             <div className="sidebar-title">AI for Work</div>
-            <div className="new-btn" title="New">+</div>
+            <div className="new-btn" title="New" onClick={() => {
+              NewChat()
+            }}>+</div>
           </div>
           <History />
           {/* <Notifications />

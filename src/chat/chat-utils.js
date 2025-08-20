@@ -22,7 +22,7 @@ export const constructQuestionInitial = (args) => {
 
 	const activeBoardId = store.getState().global.activeBoardId;
 
-	let question = args?.question;
+	let question = args?.question || args?.action?.postback;
 
 	let obj = {};
 

@@ -3,8 +3,9 @@ import ChatInterface from "../chat/ChatInterface.js";
 import InvokeAgent from "../chat/invokeAgent.js";
 import store from "../redux/store.js";
 import { fetchAgents } from "../redux/actions/global.action.js";
-import { ActionsFlashIcon, arrowCirlceUpIcon, attachmentIcon, CheveronDownIcon, createCloseIcon, createThumbsUpFilled, microphoneIcon, searchIcon, settingsIcon } from "../templateRenderer/icons-library.js";
+import { ActionsFlashIcon, arrowCirlceUpIcon, attachmentIcon, CheveronDownIcon, createCloseIcon, createDeleteIcon, createThumbsUpFilled, microphoneIcon, searchIcon, settingsIcon, Close, StopIcon } from "../templateRenderer/icons-library.js";
 import FileUpload from "../Attachments/fileUpload.js";
+import { getFileExtension } from "../utils/helpers.js";
 
 /**
  * ComposeBar - A standalone compose bar component in plain JavaScript
@@ -17,11 +18,10 @@ class ComposeBar {
             placeholder: 'Ask question...',
             showQuickActions: true,
             showNewButton: true,
-            showStopButton: true,
-            quickActions: [],
+            showStopButton: true,            
             ...options
         };
-        
+
         this.input = '';
         this.isLoading = false;
         this.isRecording = false;
@@ -29,9 +29,12 @@ class ComposeBar {
         this.unsubscribe = null;
         this.chatInterface = null;
         this.fileUploaderInterface = null;
-        this.attachments = [];
+        this.questions = {};
+        this.commonAgents = [];
         this.showOverRideModal = false;
         this.pendingAgentInvocation = null;
+        this.attachments = [];
+        this.quickActions = [];
         this.callbacks = {
             onSend: null,
             onNewChat: null,
@@ -40,18 +43,17 @@ class ComposeBar {
             onChange: null,
             onSpeechToText: null
         };
-        
         this.init();
     }
-    
+
     /**
      * Initialize the compose bar
      */
-    init() {
+    async init() {
         if (!this.container) {
             throw new Error('ComposeBar container not found');
         }
-        
+
         // Initialize chat interface
         try {
             this.chatInterface = ChatInterface();
@@ -64,9 +66,8 @@ class ComposeBar {
                     // Toggle loading state based on async status
                     const isLoading = searchResponse?.status === 'loading';
                     this.setLoading(!!isLoading);
-                    // Sync quick actions if they change
-                    if (Array.isArray(quickActions)) {
-                        this.setQuickActions(quickActions);
+                    if (Object.keys(questions).length > 0) {
+                        this.questions = questions;
                     }
                 });
             }
@@ -77,14 +78,19 @@ class ComposeBar {
         // Initialize file uploader     
         try {
             this.fileUploaderInterface = FileUpload();
-            this.fileUploaderInterface.subscribe((sources, sessionId, quickactions, error, apiResp) => {
-                try {
+            this.fileUploaderInterface.subscribe((sources, sessionId, quickActions, error, apiResp) => {
+                try {                    
                     const filesOnly = Array.isArray(sources)
                         ? sources.filter(source => !source?.hasOwnProperty('isAgent'))
-                        : [];
+                        : [];                                                                                
                     this.attachments = filesOnly;
-                    // Always re-render to clear pills when list becomes empty
-                    this.renderAttachments();
+                    this.quickActions = quickActions || [];
+                    
+                    // Always render to handle both adding and clearing attachments
+                    setTimeout(() => {
+                        this.renderAttachments();
+                        this.renderQuickReplies();
+                    }, 0);
                 } catch (err) {
                     console.warn('Failed processing file upload subscribe payload:', err);
                 }
@@ -94,11 +100,130 @@ class ComposeBar {
         }
 
         this.initSpeechRecognition();
-        this.render();
-        this.renderAttachments();
+        await this.getAgents();
+        this.setCommonAgents();
+        this.render();        
+        this.renderCommonAgents();
+        this.renderAttachments(); // Render any initial attachments
+        this.renderQuickReplies(); // Render any initial quick replies
         this.attachEventListeners();
+        this.updateMicrophoneButton(); // Set initial button state
+    }    
+
+    setCommonAgents() {
+        /* this function will get the common agents from store */
+        try {
+            const state = store.getState();
+            const commonAgents = state?.global?.allAgents?.data?.commonAgents || [];
+            this.commonAgents = commonAgents;
+        } catch (e) {
+            console.error('Error setting common agents inside compose bar:', e);
+        }
+    }
+
+    /*need to render the common agents list, and on click of it invoke setAgentContext of ChatInterface*/
+    renderCommonAgents() {
+        const commonAgentsContainer = this.container.querySelector('[data-eva-common-agents]');
+        if (!commonAgentsContainer) return;
+
+        commonAgentsContainer.innerHTML = this.commonAgents.map(agent => {
+            return `<button class="agents-action-item" data-eva-common-agents-action data-agent-id="${agent.id}">
+                <img src="${agent.icon}" alt="" width="18" height="18" />
+                <span class='agent-name'>${agent?.name}</span>
+            </button>`;
+        }).join('');
+
+        // Add click handlers for common agents
+        commonAgentsContainer.querySelectorAll('[data-eva-common-agents-action]').forEach(item => {
+            item.addEventListener('click', () => {
+                const agentId = item.getAttribute('data-agent-id');
+                const agent = this.commonAgents.find(a => String(a.id) === String(agentId));
+                if (!agent) return;
+                console.log('Selected common agent:', agent);
+                if (this.chatInterface && this.chatInterface.setAgentContext) {
+                    this.chatInterface.setAgentContext(agent);
+                }
+            });
+        });
+    }
+
+    renderAttachments() {
+        console.log('=== RENDER ATTACHMENTS DEBUG ===');
+        const attachmentsContainer = this.container.querySelector('[data-eva-attachments]');
+        console.log('Attachments container found:', !!attachmentsContainer);
+        console.log('this.attachments:', this.attachments);
+        console.log('this.attachments.length:', this.attachments?.length);
+        
+        if (!attachmentsContainer) {
+            console.log('No attachments container found!');
+            return;
+        }
+        
+        const escapeHtml = (str) => String(str || '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+
+        const attachmentHtml = this.attachments.map(file => {
+            const name = file?.title || file?.fileName || file?.mediaName || 'Attachment';
+            const uid = file?.uID || file?.componentId || file?.docId || name;
+            const fileExtension = getFileExtension(name);
+            
+            return `<div class="eva-attachment-pill" data-attach-uid="${escapeHtml(uid)}" title="${escapeHtml(name)}">
+                <div class="attachment-icon"><img src="images/${fileExtension}.png" alt=''/></div>
+                <div class="eva-attachment-name">${escapeHtml(name)}</div>
+                ${file?.loading ? `<div class="waloader">Loading...</div>` : 
+                `<button type="button" class="eva-attachment-remove" data-remove-uid="${escapeHtml(uid)}" aria-label="Remove">&times;</button>`}
+            </div>`;
+        }).join('');
+        
+        console.log('Generated attachment HTML:', attachmentHtml);
+        attachmentsContainer.innerHTML = attachmentHtml;
+        
+        // Reattach event listeners for remove buttons
+        this.attachAttachmentEventListeners();
+        console.log('=== END RENDER ATTACHMENTS DEBUG ===');
+    }
+
+    renderQuickReplies() {
+        const quickRepliesContainer = this.container.querySelector('[data-eva-quick-replies]');                
+        if (!quickRepliesContainer) {
+            return;
+        }
+
+        const quickRepliesHtml = this.quickActions.map(action => {
+            return `<div class="eva-quick-reply-chip" data-action-id="${action.id}">${action.label}</div>`;
+        }).join('');
+        
+        quickRepliesContainer.innerHTML = quickRepliesHtml;        
+        // Attach event listeners for quick reply clicks
+        this.attachQuickReplyEventListeners();
+    }
+
+    attachQuickReplyEventListeners() {
+        const quickReplyChips = this.container.querySelectorAll('.eva-quick-reply-chip');
+        quickReplyChips.forEach(chip => {
+            chip.addEventListener('click', (e) => this.handleQuickAction(e));
+        });
     }
     
+    attachAttachmentEventListeners() {
+        // Attachment remove button events
+        const removeButtons = this.container.querySelectorAll('.eva-attachment-remove');
+        console.log('Found remove buttons:', removeButtons.length);
+        removeButtons.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const uid = btn.getAttribute('data-remove-uid');
+                console.log('Removing attachment with uid:', uid);
+                this.removeAttachmentByUid(uid);
+                e.stopPropagation();
+                e.preventDefault();
+            });
+        });
+    }
+
     /**
      * Initialize speech recognition
      */
@@ -106,25 +231,25 @@ class ComposeBar {
         if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
             const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
             this.recognition = new SpeechRecognition();
-            
+
             this.recognition.continuous = false;
             this.recognition.interimResults = true;
             this.recognition.lang = 'en-US';
-            
+
             this.recognition.onstart = () => {
                 console.log('Speech recognition started');
             };
-            
+
             this.recognition.onresult = (event) => {
                 let finalTranscript = '';
-                
+
                 for (let i = event.resultIndex; i < event.results.length; i++) {
                     const transcript = event.results[i][0].transcript;
                     if (event.results[i].isFinal) {
                         finalTranscript += transcript;
                     }
                 }
-                
+
                 // Update textarea with final transcript
                 if (finalTranscript) {
                     const currentValue = this.getValue();
@@ -132,13 +257,13 @@ class ComposeBar {
                     this.setValue(newValue);
                 }
             };
-            
+
             this.recognition.onend = () => {
                 this.isRecording = false;
                 this.updateSpeechButton();
                 console.log('Speech recognition ended');
             };
-            
+
             this.recognition.onerror = (event) => {
                 this.isRecording = false;
                 this.updateSpeechButton();
@@ -148,27 +273,23 @@ class ComposeBar {
             console.warn('Speech recognition not supported in this browser');
         }
     }
-    
+
     /**
      * Render the compose bar HTML
      */
-    render() {
-        const quickActionsHtml = this.options.showQuickActions && this.options.quickActions.length > 0 
-            ? `<div class="eva-quick-reply-container">
-                ${this.options.quickActions.map(action => 
-                    `<div class="eva-quick-reply-chip" data-action-id="${action.id}">
-                        ${action.label}
-                    </div>`
-                ).join('')}
-            </div>`
-            : '';
-            
-	        this.container.innerHTML = `
-            <div class="eva-composebar-parent">
-                <div class="eva-quick-reply-container">
-                    ${quickActionsHtml}
-                </div>
-                <!-- Override Confirmation Dialog -->
+    render() {        
+        const escapeHtml = (str) => String(str || '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+
+        
+        this.container.innerHTML = `
+            <div class="eva-composebar-parent">     
+            <div class="eva-quick-reply-container" data-eva-quick-replies></div>                           
+                ${this.showOverRideModal ? `
                 <div class='overridingMsgModal'>
                     <div class='headerGroup'>
                         <div class="_heading">Remove Attachments</div>
@@ -179,7 +300,7 @@ class ComposeBar {
                         <button class="kr-primary-btn-black btn-sm" label='Remove'>Remove</button>
                         <span class="closeBtn">${createCloseIcon({ size: 14, color: "#667085" })}</span>                        
                     </div>
-                </div>
+                </div>` : ''}
                 <div class="eva-composebar-area">
                     <div class="eva-input-container">
                         <div class="eva-attachments-container" data-eva-attachments></div>
@@ -196,7 +317,8 @@ class ComposeBar {
                                 <button class="agents-action-item" data-eva-agents-action data-eva-open-dialog>
                                     ${ActionsFlashIcon({ size: 16, color: "#667085" })}
                                     ${CheveronDownIcon({ size: 14, color: "#667085" })}
-                                </button>
+                                </button>                                
+                                <div data-eva-common-agents style="display: inline-flex; gap: 8px;"></div>
                             </div>
                             <div class="right-actions">
                                 <button class="eva-input-action-btn attachment-btn" data-eva-attachment title="Attach file">
@@ -244,7 +366,7 @@ class ComposeBar {
 	            </div>
         `;
     }
-    
+
     /**
      * Attach event listeners
      */
@@ -255,53 +377,54 @@ class ComposeBar {
         const stopBtn = this.container.querySelector('[data-eva-stop]');
         const attachmentBtn = this.container.querySelector('[data-eva-attachment]');
         const speechBtn = this.container.querySelector('[data-eva-speech]');
-	        const quickActionChips = this.container.querySelectorAll('.eva-quick-reply-chip');
-	        const openDialogBtn = this.container.querySelector('[data-eva-open-dialog]');
-	        const dialog = this.container.querySelector('[data-eva-dialog]');
+        const quickActionChips = this.container.querySelectorAll('.eva-quick-reply-chip');
+        const openDialogBtn = this.container.querySelector('[data-eva-open-dialog]');
+        const dialog = this.container.querySelector('[data-eva-dialog]');
         const fileInput = this.container.querySelector('[data-eva-file-input]');
-        
+
         // Textarea events
         if (textarea) {
             textarea.addEventListener('input', (e) => this.handleInputChange(e));
             textarea.addEventListener('keydown', (e) => this.handleKeyDown(e));
             textarea.addEventListener('paste', (e) => this.handlePaste(e));
         }
-        
+
         // Button events
         if (sendBtn) {
-            sendBtn.addEventListener('click', () => this.handleSend());
+            sendBtn.addEventListener('click', () => {
+                if (this.isLoading) {
+                    this.handleStop();
+                } else {
+                    this.handleSend();
+                }
+            });
         }
-        
+
         if (newBtn) {
             newBtn.addEventListener('click', () => this.handleNewChat());
         }
-        
+
         if (stopBtn) {
             stopBtn.addEventListener('click', () => this.handleStop());
         }
 
-	        if (openDialogBtn) {
-	            openDialogBtn.addEventListener('click', () => this.handleOpenDialog());
-	        }
+        if (openDialogBtn) {
+            openDialogBtn.addEventListener('click', () => this.handleOpenDialog());
+        }
 
-	        if (dialog) {
-	            const closeBtn = dialog.querySelector('[data-eva-dialog-close]');
-	            if (closeBtn) {
-	                closeBtn.addEventListener('click', () => this.handleCloseDialog());
-	            }
-	        }
-        
-        // Quick action chip events
-        quickActionChips.forEach(chip => {
-            chip.addEventListener('click', (e) => this.handleQuickAction(e));
-        });
-        
+        if (dialog) {
+            const closeBtn = dialog.querySelector('[data-eva-dialog-close]');
+            if (closeBtn) {
+                closeBtn.addEventListener('click', () => this.handleCloseDialog());
+            }
+        }
+
         // Attachment button event
         if (attachmentBtn) {
             attachmentBtn.addEventListener('click', () => this.handleAttachment());
         }
-        
-        if (fileInput) {            
+
+        if (fileInput) {
             fileInput.addEventListener('change', (e) => {
                 try {
                     if (this.fileUploaderInterface && typeof this.fileUploaderInterface.uploadFile === 'function') {
@@ -313,7 +436,7 @@ class ComposeBar {
                 }
             });
         }
-        
+
         // Speech to text button event
         if (speechBtn) {
             speechBtn.addEventListener('click', () => this.handleSpeechToText());
@@ -324,29 +447,70 @@ class ComposeBar {
         if (overrideDialog) {
             const cancelBtn = overrideDialog.querySelector('[data-eva-override-cancel]');
             const confirmBtn = overrideDialog.querySelector('[data-eva-override-confirm]');
-            
+
             if (cancelBtn) {
                 cancelBtn.addEventListener('click', () => this.handleOverrideCancel());
             }
-            
+
             if (confirmBtn) {
                 confirmBtn.addEventListener('click', () => this.handleOverrideConfirm());
             }
         }
+
+        // Attachment remove button events
+        const removeButtons = this.container.querySelectorAll('.eva-attachment-remove');
+        removeButtons.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const uid = btn.getAttribute('data-remove-uid');
+                this.removeAttachmentByUid(uid);
+                e.stopPropagation();
+                e.preventDefault();
+            });
+        });
     }
-    
+
     /**
      * Handle input change
      */
     handleInputChange(event) {
         this.input = event.target.value;
+        if(this.quickActions?.length > 0) {
+            this.quickActions = [];
+            setTimeout(() => {
+                this.renderQuickReplies();
+            }, 0);
+        }
         this.autoResize(event.target);
-        
+        this.updateMicrophoneButton(); // Update the microphone/close button
+
         if (this.callbacks.onChange) {
             this.callbacks.onChange(this.input, event);
         }
     }
-    
+
+    /**
+     * Update microphone button based on input length
+     */
+    updateMicrophoneButton() {
+        const micButton = this.container.querySelector('[data-eva-speech]');
+        if (!micButton) {
+            console.log('micButton not found!');
+            return;
+        }
+
+        console.log('updateMicrophoneButton called, this.input length:', this.input?.length);
+
+        if (this.input?.length > 0) {
+            micButton.innerHTML = Close({ size: 16, color: "#667085" });
+            micButton.title = "Clear input";
+            console.log('Set to close icon');
+        } else {
+            micButton.innerHTML = microphoneIcon({ size: 16, color: "#667085" });
+            micButton.title = "Search using voice";
+            console.log('Set to microphone icon');
+        }
+    }
+
     /**
      * Handle key down events
      */
@@ -357,7 +521,7 @@ class ComposeBar {
             this.handleSend();
         }
     }
-    
+
     /**
      * Handle paste events
      */
@@ -367,7 +531,7 @@ class ComposeBar {
             this.autoResize(event.target);
         }, 0);
     }
-    
+
     /**
      * Auto-resize textarea based on content
      */
@@ -375,21 +539,18 @@ class ComposeBar {
         textarea.style.height = 'auto';
         textarea.style.height = Math.min(textarea.scrollHeight, 150) + 'px';
     }
-    
+
     /**
      * Handle send action
      */
     handleSend() {
         if (!this.input.trim() || this.isLoading) return;
-        
+
         // Default internal handling
         try {
-            if (this.chatInterface && typeof this.chatInterface.sendMessage === 'function') {
-                // sendMessage without question falls back to regular chat
-                this.chatInterface.sendMessage(this.input.trim());
-            } else if (this.chatInterface && typeof this.chatInterface.sendMessageAction === 'function') {
-                this.chatInterface.sendMessageAction(this.input.trim());
-            }
+            const currentQuestion = Object.values(this.questions)?.[Object.values(this.questions)?.length - 1];
+            console.log("currentQuestion", currentQuestion);
+            this.chatInterface.sendMessage(this.input.trim(), currentQuestion);
         } catch (e) {
             console.error('Error sending message from ComposeBar:', e);
         }
@@ -398,17 +559,17 @@ class ComposeBar {
         if (this.callbacks.onSend) {
             this.callbacks.onSend(this.input.trim());
         }
-        
+
         this.clearInput();
     }
-    
+
     /**
      * Handle new chat action
      */
-    handleNewChat() {        
-        NewChat();                
+    handleNewChat() {
+        NewChat();
     }
-    
+
     /**
      * Handle stop action
      */
@@ -427,19 +588,23 @@ class ComposeBar {
             this.callbacks.onStop();
         }
     }
-    
+
     /**
      * Handle quick action click
      */
     handleQuickAction(event) {
         const actionId = event.target.getAttribute('data-action-id');
-        const action = this.options.quickActions.find(a => a.id === actionId);
-        
+        const action = this.quickActions.find(a => a.id === actionId);
+
         // Default internal handling
         if (action) {
             try {
                 if (this.chatInterface && typeof this.chatInterface.askQuickActions === 'function') {
                     this.chatInterface.askQuickActions(action);
+                    this.quickActions = [];
+                    setTimeout(() => {
+                        this.renderQuickReplies();
+                    }, 0);
                 }
             } catch (e) {
                 console.error('Error handling quick action from ComposeBar:', e);
@@ -451,7 +616,7 @@ class ComposeBar {
             this.callbacks.onQuickAction(action);
         }
     }
-    
+
     /**
      * Handle attachment button click
      */
@@ -460,16 +625,36 @@ class ComposeBar {
         const fileInput = this.container.querySelector('[data-eva-file-input]');
         if (fileInput) fileInput.click();
     }
-    
+
     /**
-     * Handle speech to text button click
+     * Handle speech to text button click or clear input
      */
-	    handleSpeechToText() {
+    handleSpeechToText() {
+        // Double-check the actual textarea value
+        const textarea = this.container.querySelector('[data-eva-input]');
+        const actualValue = textarea ? textarea.value : '';
+
+        console.log('handleSpeechToText called');
+        console.log('this.input:', `"${this.input}"`, 'length:', this.input?.length);
+        console.log('actual textarea value:', `"${actualValue}"`, 'length:', actualValue.length);
+
+        // Use the actual textarea value as source of truth
+        const hasInput = actualValue.length > 0;
+
+        if (hasInput) {
+            console.log('Clearing input because textarea has content');
+            this.clearInput();
+            return;
+        }
+
+        console.log('Proceeding with speech to text');
+
+        // Otherwise handle speech to text
         if (!this.recognition) {
             alert('Speech recognition is not supported in this browser');
             return;
         }
-        
+
         if (this.isRecording) {
             // Stop recording
             this.recognition.stop();
@@ -485,185 +670,283 @@ class ComposeBar {
                 this.updateSpeechButton();
             }
         }
-        
+
         if (this.callbacks.onSpeechToText) {
             this.callbacks.onSpeechToText(this.isRecording);
         }
     }
 
-	    /**
-	     * Open Shoelace dialog
-	     */
-	    handleOpenDialog() {
-	        const dialog = this.container.querySelector('[data-eva-dialog]');
-	        if (!dialog) return;
-	        try {
-	            if (typeof dialog.show === 'function') {
-	                dialog.show();
-	            } else {
-	                dialog.setAttribute('open', '');
-	            }
-	        } catch (e) {
-	            dialog.setAttribute('open', '');
-	        }
-	        // Load and render agents when dialog opens
-	        this.loadAndRenderAgents();
-	    }
+    /**
+     * Clear input and update UI
+     */
+    clearInput() {
+        console.log('clearInput called');
+        const textarea = this.container.querySelector('[data-eva-input]');
+        if (textarea) {
+            console.log('textarea found, clearing...');
+            textarea.value = '';
+            this.input = '';
+            this.autoResize(textarea);
+            this.updateMicrophoneButton();
+            console.log('Input cleared, this.input is now:', `"${this.input}"`);
+        } else {
+            console.log('textarea not found!');
+        }
+    }
 
-	    /**
-	     * Close Shoelace dialog
-	     */
-	    handleCloseDialog() {
-	        const dialog = this.container.querySelector('[data-eva-dialog]');
-	        if (!dialog) return;
-	        try {
-	            if (typeof dialog.hide === 'function') {
-	                dialog.hide();
-	            } else {
-	                dialog.removeAttribute('open');
-	            }
-	        } catch (e) {
-	            dialog.removeAttribute('open');
-	        }
-	    }
+    /**
+     * Open Shoelace dialog
+     */
+    handleOpenDialog() {
+        console.log("attachments, quickActions", this.attachments, this.quickActions);
+        const dialog = this.container.querySelector('[data-eva-dialog]');
+        if (!dialog) return;
+        try {
+            if (typeof dialog.show === 'function') {
+                dialog.show();
+            } else {
+                dialog.setAttribute('open', '');
+            }
+        } catch (e) {
+            dialog.setAttribute('open', '');
+        }
+        // Load and render agents when dialog opens
+        this.loadAndRenderAgents();
+    }
 
-	    /**
-	     * Show override confirmation dialog
-	     */
-	    showOverrideDialog() {
-	        const dialog = this.container.querySelector('[data-eva-override-dialog]');
-	        if (!dialog) return;
-	        try {
-	            if (typeof dialog.show === 'function') {
-	                dialog.show();
-	            } else {
-	                dialog.setAttribute('open', '');
-	            }
-	        } catch (e) {
-	            dialog.setAttribute('open', '');
-	        }
-	    }
+    /**
+     * Close Shoelace dialog
+     */
+    handleCloseDialog() {
+        const dialog = this.container.querySelector('[data-eva-dialog]');
+        if (!dialog) return;
+        try {
+            if (typeof dialog.hide === 'function') {
+                dialog.hide();
+            } else {
+                dialog.removeAttribute('open');
+            }
+        } catch (e) {
+            dialog.removeAttribute('open');
+        }
+    }
 
-	    /**
-	     * Close override confirmation dialog
-	     */
-	    closeOverrideDialog() {
-	        const dialog = this.container.querySelector('[data-eva-override-dialog]');
-	        if (!dialog) return;
-	        try {
-	            if (typeof dialog.hide === 'function') {
-	                dialog.hide();
-	            } else {
-	                dialog.removeAttribute('open');
-	            }
-	        } catch (e) {
-	            dialog.removeAttribute('open');
-	        }
-	    }
+    /**
+     * Re-render while preserving textarea content and focus state
+     */
+    renderWithStatePreservation() {
+        // Preserve textarea state
+        const textarea = this.container.querySelector('[data-eva-input]');
+        const currentValue = textarea ? textarea.value : '';
+        const wasFocused = textarea ? document.activeElement === textarea : false;
+        const cursorPosition = textarea ? textarea.selectionStart : 0;
+        const currentAttachments = [...this.attachments];
+        // Re-render
+        this.render();
+        this.renderCommonAgents();
 
-	    /**
-	     * Handle override cancel button click
-	     */
-	    handleOverrideCancel() {
-	        this.showOverRideModal = false;
-	        this.closeOverrideDialog();
-	    }
+        // Restore textarea state
+        const newTextarea = this.container.querySelector('[data-eva-input]');
+        if (newTextarea) {
+            newTextarea.value = currentValue;
+            this.input = currentValue; // Update internal state
 
-	    /**
-	     * Handle override confirm button click
-	     */
-	    handleOverrideConfirm() {
-	        // Clear attachments
-	        this.attachments = [];
-	        this.renderAttachments();
-	        
-	        // Hide dialog
-	        this.showOverRideModal = false;
-	        this.closeOverrideDialog();
-	        
-	        // Continue with agent invocation
-	        if (this.pendingAgentInvocation) {
-	            try { 
-	                InvokeAgent(this.pendingAgentInvocation); 
-	            } catch (e) { 
-	                console.error(`InvokeAgent failed for ${this.pendingAgentInvocation.name}`, e); 
-	            }
-	            this.pendingAgentInvocation = null;
-	        }
-	    }
+            if (wasFocused) {
+                newTextarea.focus();
+                newTextarea.setSelectionRange(cursorPosition, cursorPosition);
+            }
+        }
 
-	    /**
-	     * Fetch and render agents in the dialog
-	     */
-	    async loadAndRenderAgents() {
-	        const allListEl = this.container.querySelector('[data-eva-all-agents]');
-	        if (!allListEl) return;
+        // Restore attachments if they exist
+        if (currentAttachments.length > 0) {
+            this.attachments = currentAttachments;
+        }
 
-	        // Show loading state
-	        allListEl.innerHTML = `<li>Loading...</li>`;
-	        
+    }
 
-	        // Ensure agents fetch is triggered if not already
-	        try {
-	            const state = store.getState();
-	            const status = state?.global?.allAgents?.status;
-	            if (!status || status === 'idle') {
-	                const userId = window?.sdkConfig?.userId;
-	                if (userId) {
-	                    store.dispatch(fetchAgents({ userId }));
-	                }
-	            }
-	        } catch (e) {}
+    /**
+     * Set up event listeners for override modal buttons
+     */
+    setupOverrideModalEvents() {
+        const modal = this.container.querySelector('.overridingMsgModal');
+        if (!modal) return;
 
-	        
-	        try {
-	            const state = store.getState();
-	            const allAgents = state?.global?.allAgents?.data?.agents || [];
-	            const recents = state?.global?.allAgents?.data?.recents || [];
-	            const recentAgents = Array.isArray(recents)
-	                ? recents.map(id => allAgents.find(a => String(a.id) === String(id))).filter(Boolean)
-	                : [];
-	            this.renderAgentsList(allListEl, recentAgents, 'recent');
-	        } catch (e) {
-	            allListEl.innerHTML = `<li>Failed to load agents</li>`;
-	        }
-	    }
+        const removeBtn = modal.querySelector('.kr-primary-btn-black');
+        const closeBtn = modal.querySelector('.closeBtn');
 
-	    /**
-	     * Render a list of agents into a target element
-	     */
-	    renderAgentsList(targetEl, agents, listType) {
-	        if (!agents || agents.length === 0) {
-	            targetEl.innerHTML = `<li>No agents found</li>`;
-	            return;
-	        }
-	        const itemsHtml = agents.map(agent => {
-	            const safeName = (agent?.name || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-	            const icon = agent?.icon ? `<img src="${agent.icon}" alt="" width="18" height="18" />` : '';
-	            return `<li class="eva-agent-item" data-agent-id="${agent.id}" data-agent-type="${listType}"><div class="agent-icon">${icon}</div><div class="agent-details"><div class="agent-name">${safeName}</div><div class="agent-desc">Autonomous Agent<span>•</span>The app allows users to search and compare company reports using natural language</div></div></li>`;
-	        }).join('');
-	        targetEl.innerHTML = itemsHtml;
+        if (removeBtn) {
+            removeBtn.addEventListener('click', () => this.handleOverrideConfirm());
+        }
 
-	        // Attach click handlers
-	        targetEl.querySelectorAll('.eva-agent-item').forEach(item => {
-	            item.addEventListener('click', () => {
-	                const agentId = item.getAttribute('data-agent-id');
-	                const agent = agents.find(a => String(a.id) === String(agentId));
-	                if (!agent) return;
-                    
-                    if(this.attachments.length > 0){
-                        // Store the agent for later invocation after user confirms
-                        this.pendingAgentInvocation = agent;
-                        this.showOverRideModal = true;
-                        this.showOverrideDialog();
-                    } else {
-	                    try { InvokeAgent(agent); } catch (e) { console.error('InvokeAgent failed', e); }
+        if (closeBtn) {
+            closeBtn.addEventListener('click', () => this.handleOverrideCancel());
+        }
+    }
+
+    /**
+     * Show override confirmation dialog
+     */
+    showOverrideDialog() {
+        const dialog = this.container.querySelector('[data-eva-override-dialog]');
+        if (!dialog) return;
+        try {
+            if (typeof dialog.show === 'function') {
+                dialog.show();
+            } else {
+                dialog.setAttribute('open', '');
+            }
+        } catch (e) {
+            dialog.setAttribute('open', '');
+        }
+    }
+
+    /**
+     * Close override confirmation dialog
+     */
+    closeOverrideDialog() {
+        const dialog = this.container.querySelector('[data-eva-override-dialog]');
+        if (!dialog) return;
+        try {
+            if (typeof dialog.hide === 'function') {
+                dialog.hide();
+            } else {
+                dialog.removeAttribute('open');
+            }
+        } catch (e) {
+            dialog.removeAttribute('open');
+        }
+    }
+
+    /**
+     * Handle override cancel button click
+     */
+    handleOverrideCancel() {
+        this.showOverRideModal = false;
+        this.renderWithStatePreservation(); // Re-render while preserving textarea content
+    }
+
+    /**
+     * Handle override confirm button click
+     */
+    handleOverrideConfirm() {
+        // Clear attachments and hide dialog
+        this.attachments = [];
+        this.showOverRideModal = false;
+        this.renderWithStatePreservation(); // Re-render while preserving textarea content
+
+        // Continue with agent invocation
+        if (this.pendingAgentInvocation) {
+            try {
+                InvokeAgent(this.pendingAgentInvocation);
+            } catch (e) {
+                console.error(`InvokeAgent failed for ${this.pendingAgentInvocation.name}`, e);
+            }
+            this.pendingAgentInvocation = null;
+        }
+    }
+
+    /**
+     * Fetch and render agents in the dialog
+     */
+
+    async getAgents() {
+        return new Promise((resolve) => {
+            try {
+                const state = store.getState();
+                const status = state?.global?.allAgents?.status;
+
+                // If already loaded, resolve immediately
+                if (status === 'success') {
+                    resolve();
+                    return;
+                }
+
+                // If not loaded, dispatch fetch
+                if (!status || status === 'idle') {
+                    const userId = window?.sdkConfig?.userId;
+                    if (userId) {
+                        store.dispatch(fetchAgents({ userId }));
                     }
-                    this.handleCloseDialog();
-	            });
-	        });
-	    }
-    
+                }
+
+                // Wait for agents to load
+                const unsubscribe = store.subscribe(() => {
+                    const currentState = store.getState();
+                    const currentStatus = currentState?.global?.allAgents?.status;
+
+                    if (currentStatus === 'success' || currentStatus === 'failed') {
+                        unsubscribe();
+                        resolve();
+                    }
+                });
+
+            } catch (e) {
+                console.error('Error loading agents inside compose bar:', e);
+                resolve(); // Resolve anyway to not block the UI
+            }
+        });
+    }
+    async loadAndRenderAgents() {
+        const allListEl = this.container.querySelector('[data-eva-all-agents]');
+        if (!allListEl) return;
+
+        // Show loading state
+        allListEl.innerHTML = `<li>Loading...</li>`;
+
+        try {
+            const state = store.getState();
+            const allAgents = state?.global?.allAgents?.data?.agents || [];
+            const recents = state?.global?.allAgents?.data?.recents || [];
+            const recentAgents = Array.isArray(recents)
+                ? recents.map(id => allAgents.find(a => String(a.id) === String(id))).filter(Boolean)
+                : [];
+            console.log("attachments, quickActions", this.attachments, this.quickActions);
+            this.renderAgentsList(allListEl, recentAgents, 'recent');
+
+        } catch (e) {
+            allListEl.innerHTML = `<li>Failed to load agents</li>`;
+        }
+    }
+
+    /**
+     * Render a list of agents into a target element
+     */
+    renderAgentsList(targetEl, agents, listType) {
+        if (!agents || agents.length === 0) {
+            targetEl.innerHTML = `<li>No agents found</li>`;
+            return;
+        }
+        /*get attachments from DOM */
+        const attachments = this.container.querySelectorAll('[data-attach-uid]');
+        console.log("attachments", attachments);
+        const itemsHtml = agents.map(agent => {
+            const safeName = (agent?.name || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            const icon = agent?.icon ? `<img src="${agent.icon}" alt="" width="18" height="18" />` : '';
+            return `<li class="eva-agent-item" data-agent-id="${agent.id}" data-agent-type="${listType}"><div class="agent-icon">${icon}</div><div class="agent-details"><div class="agent-name">${safeName}</div><div class="agent-desc">Autonomous Agent<span>•</span>The app allows users to search and compare company reports using natural language</div></div></li>`;
+        }).join('');
+        targetEl.innerHTML = itemsHtml;
+
+        // Attach click handlers
+        targetEl.querySelectorAll('.eva-agent-item').forEach(item => {
+            item.addEventListener('click', () => {
+                const agentId = item.getAttribute('data-agent-id');
+                const agent = agents.find(a => String(a.id) === String(agentId));
+                if (!agent) return;
+
+                if (attachments?.length > 0) {
+                    // Store the agent for later invocation after user confirms
+                    this.pendingAgentInvocation = agent;
+                    this.showOverRideModal = true;
+                    this.renderWithStatePreservation(); 
+                    this.setupOverrideModalEvents(); // Set up event listeners for modal buttons
+                } else {
+                    try { InvokeAgent(agent); } catch (e) { console.error('InvokeAgent failed', e); }
+                }
+                this.handleCloseDialog();
+            });
+        });
+    }
+
     /**
      * Update speech button appearance based on recording state
      */
@@ -679,7 +962,7 @@ class ComposeBar {
             }
         }
     }
-    
+
     /**
      * Set callback functions
      */
@@ -689,7 +972,7 @@ class ComposeBar {
         }
         return this;
     }
-    
+
     /**
      * Set input value
      */
@@ -702,22 +985,14 @@ class ComposeBar {
         }
         return this;
     }
-    
+
     /**
      * Get current input value
      */
     getValue() {
         return this.input;
     }
-    
-    /**
-     * Clear input
-     */
-    clearInput() {
-        this.setValue('');
-        return this;
-    }
-    
+
     /**
      * Set loading state
      */
@@ -725,71 +1000,26 @@ class ComposeBar {
         this.isLoading = loading;
         const sendBtn = this.container.querySelector('[data-eva-send]');
         const stopBtn = this.container.querySelector('[data-eva-stop]');
-        
+
         if (sendBtn) {
-            sendBtn.disabled = loading;
-            sendBtn.textContent = loading ? 'Sending...' : 'Send';
+            // Preserve the icon instead of replacing with text
+            if (loading) {
+                sendBtn.innerHTML = StopIcon({ size: 16, color: "#F97066" });
+                sendBtn.title = 'Stop';
+            } else {
+                sendBtn.innerHTML = arrowCirlceUpIcon({ size: 16, color: "#101828" });
+                sendBtn.title = 'Send';
+            }
         }
-        
+
         if (stopBtn) {
             stopBtn.disabled = !loading;
         }
-        
+
         return this;
     }
+
     
-    /**
-     * Update quick actions
-     */
-    setQuickActions(quickActions) {
-        this.options.quickActions = quickActions;
-        this.render();        
-        this.attachEventListeners();
-        this.renderAttachments();
-        return this;
-    }
-
-    /**
-     * Render attachment pills above the compose bar
-     */
-    renderAttachments() {
-        const container = this.container.querySelector('[data-eva-attachments]');
-        if (!container) return;
-        const files = Array.isArray(this.attachments) ? this.attachments : [];
-        if (files.length === 0) {
-            container.innerHTML = '';
-            return;
-        }
-        const escapeHtml = (str) => String(str || '')
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;')
-            .replace(/'/g, '&#39;');
-        const pills = files.map(file => {
-            const name = file?.title || file?.fileName || file?.mediaName || 'Attachment';
-            const uid = file?.uID || file?.componentId || file?.docId || name;
-            return `
-                <div class="eva-attachment-pill" data-attach-uid="${escapeHtml(uid)}" title="${escapeHtml(name)}">
-                    <div class="attachment-icon"><img src="images/pdf.png" alt=''/></div>
-                    <div class="eva-attachment-name">${escapeHtml(name)}</div>
-                    <button type="button" class="eva-attachment-remove" data-remove-uid="${escapeHtml(uid)}" aria-label="Remove">&times;</button>
-                </div>
-            `;
-        }).join('');
-        container.innerHTML = pills;
-
-        // Attach remove handlers
-        const removeButtons = container.querySelectorAll('.eva-attachment-remove');
-        removeButtons.forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const uid = btn.getAttribute('data-remove-uid');
-                this.removeAttachmentByUid(uid);
-                e.stopPropagation();
-                e.preventDefault();
-            });
-        });
-    }
 
     /**
      * Remove an attachment by UID using FileUpload interface
@@ -797,14 +1027,23 @@ class ComposeBar {
     removeAttachmentByUid(uid) {
         if (!uid) return;
         const file = (this.attachments || []).find(f => String(f?.uID || f?.componentId || f?.docId) === String(uid));
-        if (!file) return;
+        if (!file) {
+            console.log('File not found for removal, uid:', uid);
+            return;
+        }
         try {
+            console.log('Removing file:', file);
             this.fileUploaderInterface.removeContext(file);
+            
+            // Also remove from local array immediately for UI responsiveness
+            this.attachments = this.attachments.filter(f => String(f?.uID || f?.componentId || f?.docId) !== String(uid));
+            this.renderAttachments();
+            
         } catch (err) {
             console.warn('Failed to remove attachment:', err);
         }
     }
-    
+
     /**
      * Show/hide the compose bar
      */
@@ -812,7 +1051,7 @@ class ComposeBar {
         this.container.style.display = visible ? 'block' : 'none';
         return this;
     }
-    
+
     /**
      * Focus on the input
      */
@@ -823,27 +1062,27 @@ class ComposeBar {
         }
         return this;
     }
-    
+
     /**
      * Disable/enable the compose bar
      */
     setDisabled(disabled) {
         const textarea = this.container.querySelector('[data-eva-input]');
         const buttons = this.container.querySelectorAll('button');
-        
+
         if (textarea) {
             textarea.disabled = disabled;
         }
-        
+
         buttons.forEach(btn => {
             if (!disabled || !btn.hasAttribute('data-eva-stop')) {
                 btn.disabled = disabled;
             }
         });
-        
+
         return this;
     }
-    
+
     /**
      * Destroy the compose bar
      */
@@ -852,7 +1091,7 @@ class ComposeBar {
             this.container.innerHTML = '';
         }
         if (typeof this.unsubscribe === 'function') {
-            try { this.unsubscribe(); } catch (e) {}
+            try { this.unsubscribe(); } catch (e) { }
             this.unsubscribe = null;
         }
     }
@@ -862,7 +1101,7 @@ class ComposeBar {
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = ComposeBar;
 } else if (typeof define === 'function' && define.amd) {
-    define([], function() { return ComposeBar; });
+    define([], function () { return ComposeBar; });
 } else {
     window.ComposeBar = ComposeBar;
 }

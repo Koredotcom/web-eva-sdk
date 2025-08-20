@@ -8,7 +8,7 @@ import { encodeHtml } from "../utils/helper";
  * @returns {string} HTML string
  */
 export function renderQuestionBubble(data, userIconTemplate = false) {
-	const { question, timestamp, icon } = data;
+	const { question, timestamp, icon} = data;
 	return `
         <div class="message-bubble question">
             <div class="message-content">
