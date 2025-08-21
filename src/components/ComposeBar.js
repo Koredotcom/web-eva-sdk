@@ -35,6 +35,7 @@ class ComposeBar {
         this.pendingAgentInvocation = null;
         this.attachments = [];
         this.quickActions = [];
+        this.selectedCommonAgent = null;
         this.callbacks = {
             onSend: null,
             onNewChat: null,
@@ -126,8 +127,8 @@ class ComposeBar {
         const commonAgentsContainer = this.container.querySelector('[data-eva-common-agents]');
         if (!commonAgentsContainer) return;
 
-        commonAgentsContainer.innerHTML = this.commonAgents.map(agent => {
-            return `<button class="agents-action-item" data-eva-common-agents-action data-agent-id="${agent.id}">
+        commonAgentsContainer.innerHTML = this.commonAgents.map(agent => {            
+            return `<button class="agents-action-item ${this.selectedCommonAgent?.id === agent.id ? 'active' : ''}" data-eva-common-agents-action data-agent-id="${agent.id}">
                 <img src="${agent.icon}" alt="" width="18" height="18" />
                 <span class='agent-name'>${agent?.name}</span>
             </button>`;
@@ -138,24 +139,27 @@ class ComposeBar {
             item.addEventListener('click', () => {
                 const agentId = item.getAttribute('data-agent-id');
                 const agent = this.commonAgents.find(a => String(a.id) === String(agentId));
-                if (!agent) return;
-                console.log('Selected common agent:', agent);
-                if (this.chatInterface && this.chatInterface.setAgentContext) {
-                    this.chatInterface.setAgentContext(agent);
+                if(!agent) return;
+                if(this.selectedCommonAgent?.id === agentId) {
+                    this.selectedCommonAgent = null;
+                    if (this.chatInterface && this.chatInterface.setAgentContext) {
+                        this.chatInterface.setAgentContext(null);
+                    }                    
+                }else{
+                    this.selectedCommonAgent = agent;   
+                    if (this.chatInterface && this.chatInterface.setAgentContext) {
+                        this.chatInterface.setAgentContext(agent);
+                    }
                 }
+                this.renderCommonAgents();
             });
         });
     }
 
     renderAttachments() {
-        console.log('=== RENDER ATTACHMENTS DEBUG ===');
         const attachmentsContainer = this.container.querySelector('[data-eva-attachments]');
-        console.log('Attachments container found:', !!attachmentsContainer);
-        console.log('this.attachments:', this.attachments);
-        console.log('this.attachments.length:', this.attachments?.length);
         
         if (!attachmentsContainer) {
-            console.log('No attachments container found!');
             return;
         }
         
@@ -179,12 +183,10 @@ class ComposeBar {
             </div>`;
         }).join('');
         
-        console.log('Generated attachment HTML:', attachmentHtml);
         attachmentsContainer.innerHTML = attachmentHtml;
         
         // Reattach event listeners for remove buttons
         this.attachAttachmentEventListeners();
-        console.log('=== END RENDER ATTACHMENTS DEBUG ===');
     }
 
     renderQuickReplies() {
@@ -212,11 +214,9 @@ class ComposeBar {
     attachAttachmentEventListeners() {
         // Attachment remove button events
         const removeButtons = this.container.querySelectorAll('.eva-attachment-remove');
-        console.log('Found remove buttons:', removeButtons.length);
         removeButtons.forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const uid = btn.getAttribute('data-remove-uid');
-                console.log('Removing attachment with uid:', uid);
                 this.removeAttachmentByUid(uid);
                 e.stopPropagation();
                 e.preventDefault();
@@ -350,9 +350,15 @@ class ComposeBar {
                                     <div class="agentSearch">
                                         <div class="search-box">
                                             ${searchIcon({ size: 14, color: "#667085" })}
-                                            <input placeholder="Search" class="agentSearchBar" autocomplete="off" value="" />
+                                            <input 
+                                            placeholder="Search" 
+                                            class="agentSearchBar" 
+                                            autocomplete="off" 
+                                            value="" 
+                                            data-eva-agent-search-input-box                                            
+                                            />
                                         </div>
-                                        <button class="agentSettings">${settingsIcon({ size: 14, color: "#667085" })}</button>
+                                        <button class="agentSettings" style="display: none;">${settingsIcon({ size: 14, color: "#667085" })}</button>
                                         <button class="agentSettings" data-eva-dialog-close>${createCloseIcon({ size: 14, color: "#667085" })}</button>
                                     </div>
                                 </div>
@@ -381,12 +387,16 @@ class ComposeBar {
         const openDialogBtn = this.container.querySelector('[data-eva-open-dialog]');
         const dialog = this.container.querySelector('[data-eva-dialog]');
         const fileInput = this.container.querySelector('[data-eva-file-input]');
+        const agentSearchInputBox = this.container.querySelector('[data-eva-agent-search-input-box]');
 
         // Textarea events
         if (textarea) {
             textarea.addEventListener('input', (e) => this.handleInputChange(e));
             textarea.addEventListener('keydown', (e) => this.handleKeyDown(e));
             textarea.addEventListener('paste', (e) => this.handlePaste(e));
+        }
+        if (agentSearchInputBox) {
+            agentSearchInputBox.addEventListener('input', (e) => this.handleAgentSearch(e));
         }
 
         // Button events
@@ -711,7 +721,7 @@ class ComposeBar {
             dialog.setAttribute('open', '');
         }
         // Load and render agents when dialog opens
-        this.loadAndRenderAgents();
+        this.loadAndRenderAgents('');
     }
 
     /**
@@ -845,6 +855,13 @@ class ComposeBar {
         }
     }
 
+    handleAgentSearch(event) {
+        const searchValue = event.target.value;
+        this.loadAndRenderAgents(searchValue);
+        /*filter the agents list by their name and render the filtered list */
+
+    }
+
     /**
      * Fetch and render agents in the dialog
      */
@@ -886,7 +903,7 @@ class ComposeBar {
             }
         });
     }
-    async loadAndRenderAgents() {
+    async loadAndRenderAgents(searchTerm = '') {
         const allListEl = this.container.querySelector('[data-eva-all-agents]');
         if (!allListEl) return;
 
@@ -897,10 +914,12 @@ class ComposeBar {
             const state = store.getState();
             const allAgents = state?.global?.allAgents?.data?.agents || [];
             const recents = state?.global?.allAgents?.data?.recents || [];
-            const recentAgents = Array.isArray(recents)
+            let recentAgents = Array.isArray(recents)
                 ? recents.map(id => allAgents.find(a => String(a.id) === String(id))).filter(Boolean)
-                : [];
-            console.log("attachments, quickActions", this.attachments, this.quickActions);
+                : [];   
+            if(searchTerm?.length > 0) {
+                recentAgents = recentAgents.filter(agent => agent?.name?.toLowerCase().includes(searchTerm.toLowerCase()));
+            }
             this.renderAgentsList(allListEl, recentAgents, 'recent');
 
         } catch (e) {
@@ -1105,3 +1124,6 @@ if (typeof module !== 'undefined' && module.exports) {
 } else {
     window.ComposeBar = ComposeBar;
 }
+
+// export default ComposeBar;
+//create another component renderComposeBar
