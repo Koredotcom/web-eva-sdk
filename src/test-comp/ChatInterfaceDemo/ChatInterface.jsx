@@ -121,6 +121,7 @@ const ChatInterfaceDemo = () => {
       </div>
       <div className="chatInterfaceSec">
         <div className="chatSec">
+          <div className="chatSec-inner">
           {messages &&
             Object.values(messages).map((item, index) => {
               if (item?.isTask) return;
@@ -144,6 +145,7 @@ const ChatInterfaceDemo = () => {
               );
 
             })}
+          </div>
         </div>
         {/* Replace the React Composebar with plain JavaScript ComposeBar container */}
         <div id="compose-bar-container"></div>

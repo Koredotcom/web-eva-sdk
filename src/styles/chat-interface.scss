@@ -133,21 +133,22 @@ html, body {
     }
     .chatInterfaceSec {
         width: calc(100% - 260px);
-        padding: 16px 100px;
-        overflow: auto;
+        padding: 16px 0;        
+        display: flex;
+        flex-direction: column;
+
+        .chatSec {
+            flex-grow: 1;
+            overflow: auto;
+        }
+        #compose-bar-container {
+            flex-shrink: 0;
+            width: 48rem;
+            margin: 0 auto;
+        }
     }
 }
-
-.chatSec > div {
-    display: flex;
-    flex-direction: column;
-    gap: 28px;
-}
-.message-bubble.answer .answerCntr > div{
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-}
+    
 .message-bubble {
     &.question {
         text-align: right;
@@ -164,6 +165,18 @@ html, body {
         .answerCntr {
             padding-top: 2px;
             width: 100%;
+
+            .search-answer-container {
+                display: flex;
+                flex-direction: column;
+                gap: 12px;
+
+                .message-renderer {
+                    & > p {
+                        margin-top: 0.15rem;
+                    }
+                }
+            }
 
             .emailSmallCard {                
                 display: -webkit-box;
@@ -1876,6 +1889,16 @@ html, body {
 }
 
 .chatSec {
+    .chatSec-inner {
+        width: 47rem;
+        margin: 0 auto;
+        
+        & > div {
+            display: flex;
+            flex-direction: column;
+            gap: 28px;
+        }
+    }
     .answerFromChipDiv {
         .ansFromChip {
             display: flex;

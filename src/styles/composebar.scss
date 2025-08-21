@@ -292,6 +292,10 @@
                     -webkit-overflow-scrolling: touch; // smooth scroll on iOS
                     gap: 0.5rem;
                     align-items: center;
+
+                    &:empty {
+                        display: none;
+                    }
                     
                     .eva-attachment-pill {
                         -webkit-box-align: center;
