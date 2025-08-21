@@ -11,6 +11,8 @@ import History from "../history";
 import Agents from "../agents";
 import Notifications from "../Notifications";
 import AnnouncementData from "../../Announcements/AnnouncementData";
+import { RenderComposeBar } from "../../composebar";
+
 
 // function ShoelaceWrapper({ html }) {
 //   const ref = useRef(null);
@@ -75,28 +77,9 @@ const ChatInterfaceDemo = () => {
 
   // Separate useEffect for ComposeBar initialization
   useEffect(() => {
-    // Initialize ComposeBar after DOM is ready
-    const initializeComposeBar = () => {
-      const container = document.getElementById('compose-bar-container');
-      if (container && window.ComposeBar) {
-        composeBarRef.current = new window.ComposeBar('#compose-bar-container', {
-          placeholder: 'Ask question...',
-          quickActions: quickActions || [],
-        });
-      }
-    };
-
-    // Load ComposeBar script as module if not already loaded
-    if (!window.ComposeBar) {
-      const script = document.createElement('script');
-      script.type = 'module'; // Load as ES6 module
-      script.src = '/src/components/ComposeBar.js';
-      script.onload = initializeComposeBar;
-      document.head.appendChild(script);
-    } else {
-      initializeComposeBar();
-    }
-  }, [quickActions]); // Re-initialize when quickActions change
+    // Initialize ComposeBar by passing the div id
+    RenderComposeBar('#compose-bar-container');
+  }, [quickActions]); 
 
 
   const fetchAnnouncementData = async () => {
@@ -148,7 +131,7 @@ const ChatInterfaceDemo = () => {
           </div>
         </div>
         {/* Replace the React Composebar with plain JavaScript ComposeBar container */}
-        <div id="compose-bar-container"></div>
+        <div id="ComposeBarContainer"></div>
       </div>
     </div>
   );

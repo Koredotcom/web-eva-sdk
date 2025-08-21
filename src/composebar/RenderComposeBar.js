@@ -1,4 +1,4 @@
-import ComposeBar from './ComposeBar.js';
+import { ComposeBar } from '../composebar';
 
 function RenderComposeBar(targetDiv, options = {}) {
     // Default options

@@ -261,7 +261,6 @@ class ComposeBar {
             this.recognition.onend = () => {
                 this.isRecording = false;
                 this.updateSpeechButton();
-                console.log('Speech recognition ended');
             };
 
             this.recognition.onerror = (event) => {
@@ -512,8 +511,7 @@ class ComposeBar {
 
         if (this.input?.length > 0) {
             micButton.innerHTML = Close({ size: 16, color: "#667085" });
-            micButton.title = "Clear input";
-            console.log('Set to close icon');
+            micButton.title = "Clear input";            
         } else {
             micButton.innerHTML = microphoneIcon({ size: 16, color: "#667085" });
             micButton.title = "Search using voice";
@@ -558,8 +556,7 @@ class ComposeBar {
 
         // Default internal handling
         try {
-            const currentQuestion = Object.values(this.questions)?.[Object.values(this.questions)?.length - 1];
-            console.log("currentQuestion", currentQuestion);
+            const currentQuestion = Object.values(this.questions)?.[Object.values(this.questions)?.length - 1];            
             this.chatInterface.sendMessage(this.input.trim(), currentQuestion);
         } catch (e) {
             console.error('Error sending message from ComposeBar:', e);
@@ -644,20 +641,13 @@ class ComposeBar {
         const textarea = this.container.querySelector('[data-eva-input]');
         const actualValue = textarea ? textarea.value : '';
 
-        console.log('handleSpeechToText called');
-        console.log('this.input:', `"${this.input}"`, 'length:', this.input?.length);
-        console.log('actual textarea value:', `"${actualValue}"`, 'length:', actualValue.length);
-
         // Use the actual textarea value as source of truth
         const hasInput = actualValue.length > 0;
 
         if (hasInput) {
-            console.log('Clearing input because textarea has content');
             this.clearInput();
             return;
         }
-
-        console.log('Proceeding with speech to text');
 
         // Otherwise handle speech to text
         if (!this.recognition) {
@@ -690,10 +680,8 @@ class ComposeBar {
      * Clear input and update UI
      */
     clearInput() {
-        console.log('clearInput called');
         const textarea = this.container.querySelector('[data-eva-input]');
-        if (textarea) {
-            console.log('textarea found, clearing...');
+        if (textarea) {            
             textarea.value = '';
             this.input = '';
             this.autoResize(textarea);
@@ -707,8 +695,7 @@ class ComposeBar {
     /**
      * Open Shoelace dialog
      */
-    handleOpenDialog() {
-        console.log("attachments, quickActions", this.attachments, this.quickActions);
+    handleOpenDialog() {        
         const dialog = this.container.querySelector('[data-eva-dialog]');
         if (!dialog) return;
         try {
@@ -937,7 +924,6 @@ class ComposeBar {
         }
         /*get attachments from DOM */
         const attachments = this.container.querySelectorAll('[data-attach-uid]');
-        console.log("attachments", attachments);
         const itemsHtml = agents.map(agent => {
             const safeName = (agent?.name || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
             const icon = agent?.icon ? `<img src="${agent.icon}" alt="" width="18" height="18" />` : '';
@@ -1119,13 +1105,13 @@ class ComposeBar {
 }
 
 // Export for different module systems
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = ComposeBar;
-} else if (typeof define === 'function' && define.amd) {
-    define([], function () { return ComposeBar; });
-} else {
-    window.ComposeBar = ComposeBar;
-}
+// if (typeof module !== 'undefined' && module.exports) {
+//     module.exports = ComposeBar;
+// } else if (typeof define === 'function' && define.amd) {
+//     define([], function () { return ComposeBar; });
+// } else {
+//     window.ComposeBar = ComposeBar;
+// }
 
-// export default ComposeBar;
+export default ComposeBar;
 //create another component renderComposeBar

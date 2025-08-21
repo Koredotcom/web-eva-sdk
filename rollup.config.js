@@ -92,6 +92,7 @@ const createConfig = (input, dir, name, isMainBuild = false) => ({
 export default [
   createConfig('src/index.jsx', '.', 'EvaUIReact', true), // Main build - copy static assets (includes unified CSS)
   createConfig('src/components/index.js', 'components', 'Components'),
+  createConfig('src/composebar/index.js', 'composebar', 'ComposeBar'),
   createConfig('src/history/index.js', 'history', 'History'),
   createConfig('src/widgets/index.js', 'widgets', 'Widgets'),
   createConfig('src/chat/index.js', 'chat', 'Chat'),
