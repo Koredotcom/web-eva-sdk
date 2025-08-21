@@ -1025,9 +1025,11 @@ class ComposeBar {
             if (loading) {
                 sendBtn.innerHTML = StopIcon({ size: 16, color: "#F97066" });
                 sendBtn.title = 'Stop';
+                sendBtn.classList.add('stop-btn');
             } else {
                 sendBtn.innerHTML = arrowCirlceUpIcon({ size: 16, color: "#101828" });
                 sendBtn.title = 'Send';
+                sendBtn.classList.remove('stop-btn');
             }
         }
 
