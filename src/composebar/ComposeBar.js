@@ -84,19 +84,12 @@ class ComposeBar {
                 try {                    
                     const filesOnly = Array.isArray(sources)
                         ? sources.filter(source => !source?.hasOwnProperty('isAgent'))
-                        : [];       
-                    const selectedAgent = Array.isArray(sources)?sources.find(source => source?.isAgent) : null;
-                    if(selectedAgent) {
-                        this.selectedAgent = selectedAgent;
-                        this.setCommonAgents(); 
-                        this.renderCommonAgents(); 
-                    }
+                        : [];                          
                     this.attachments = filesOnly;
                     this.quickActions = quickActions || [];
                     
                     // Always render to handle both adding and clearing attachments
-                    setTimeout(() => {
-                        console.log("setTimeout callback executing - selectedAgent:", this.selectedAgent);
+                    setTimeout(() => {                        
                         this.renderAttachments();
                         this.renderQuickReplies();
                     }, 0);
@@ -120,25 +113,31 @@ class ComposeBar {
         this.updateMicrophoneButton(); // Set initial button state
     }    
 
-    setCommonAgents() {
-        /* this function will get the common agents from store */
-        console.log("=== setCommonAgents called ===");
-        console.log("Current selectedAgent:", this.selectedAgent);
+    setCommonAgents() {                
         console.log("Call stack:", new Error().stack);
-        
-        try {
-            const state = store.getState();
-            const commonAgents = state?.global?.allAgents?.data?.commonAgents || [];
-            
-            // Hide common agents if an agent is selected
-            if (this.selectedAgent) {
-                this.commonAgents = [];
-            } else {
-                this.commonAgents = commonAgents;
+
+        /*get selectedContext from store*/
+        const selectedContext = store.getState()?.global?.selectedContext;                
+
+        if(Object.keys(selectedContext).length > 0) {            
+            this.commonAgents = [];            
+        } else {
+            try {
+                const state = store.getState();
+                const commonAgents = state?.global?.allAgents?.data?.commonAgents || [];
+
+                // Hide common agents if an agent is selected
+                if (this.selectedAgent) {
+                    this.commonAgents = [];
+                } else {
+                    this.commonAgents = commonAgents;
+                }
+            } catch (e) {
+                console.error('Error setting common agents inside compose bar:', e);
             }
-        } catch (e) {
-            console.error('Error setting common agents inside compose bar:', e);
         }
+        return;
+        
     }
 
     /*need to render the common agents list, and on click of it invoke setAgentContext of ChatInterface*/
@@ -1123,15 +1122,6 @@ class ComposeBar {
         }
     }
 }
-
-// Export for different module systems
-// if (typeof module !== 'undefined' && module.exports) {
-//     module.exports = ComposeBar;
-// } else if (typeof define === 'function' && define.amd) {
-//     define([], function () { return ComposeBar; });
-// } else {
-//     window.ComposeBar = ComposeBar;
-// }
 
 export default ComposeBar;
 //create another component renderComposeBar
