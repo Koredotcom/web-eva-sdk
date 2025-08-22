@@ -178,7 +178,7 @@ class ComposeBar {
             return `<div class="eva-attachment-pill" data-attach-uid="${escapeHtml(uid)}" title="${escapeHtml(name)}">
                 <div class="attachment-icon"><img src="images/${fileExtension}.png" alt=''/></div>
                 <div class="eva-attachment-name">${escapeHtml(name)}</div>
-                ${file?.loading ? `<div class="waloader">Loading...</div>` : 
+                ${file?.loading ? `<div class="waloader"></div>` : 
                 `<button type="button" class="eva-attachment-remove" data-remove-uid="${escapeHtml(uid)}" aria-label="Remove">&times;</button>`}
             </div>`;
         }).join('');
@@ -301,7 +301,7 @@ class ComposeBar {
                             <span class="closeBtn">${createCloseIcon({ size: 14, color: "#667085" })}</span>                        
                         </div>
                     </div>` : ''}
-                    
+
                     <div class="eva-composebar-area">
                         <div class="eva-input-container">
                             <div class="eva-attachments-container" data-eva-attachments></div>
