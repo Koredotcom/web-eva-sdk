@@ -33,6 +33,7 @@ class ComposeBar {
         this.commonAgents = [];
         this.showOverRideModal = false;
         this.pendingAgentInvocation = null;
+        this.selectedAgent = null;
         this.attachments = [];
         this.quickActions = [];
         this.selectedCommonAgent = null;
@@ -83,18 +84,19 @@ class ComposeBar {
                 try {                    
                     const filesOnly = Array.isArray(sources)
                         ? sources.filter(source => !source?.hasOwnProperty('isAgent'))
-                        : [];                                                                                
+                        : [];                          
                     this.attachments = filesOnly;
                     this.quickActions = quickActions || [];
                     
                     // Always render to handle both adding and clearing attachments
-                    setTimeout(() => {
+                    setTimeout(() => {                        
                         this.renderAttachments();
                         this.renderQuickReplies();
                     }, 0);
                 } catch (err) {
                     console.warn('Failed processing file upload subscribe payload:', err);
                 }
+
             });
         } catch (e) {
             console.warn('FileUpload init failed:', e);
@@ -111,15 +113,31 @@ class ComposeBar {
         this.updateMicrophoneButton(); // Set initial button state
     }    
 
-    setCommonAgents() {
-        /* this function will get the common agents from store */
-        try {
-            const state = store.getState();
-            const commonAgents = state?.global?.allAgents?.data?.commonAgents || [];
-            this.commonAgents = commonAgents;
-        } catch (e) {
-            console.error('Error setting common agents inside compose bar:', e);
+    setCommonAgents() {                
+        console.log("Call stack:", new Error().stack);
+
+        /*get selectedContext from store*/
+        const selectedContext = store.getState()?.global?.selectedContext;                
+
+        if(Object.keys(selectedContext).length > 0) {            
+            this.commonAgents = [];            
+        } else {
+            try {
+                const state = store.getState();
+                const commonAgents = state?.global?.allAgents?.data?.commonAgents || [];
+
+                // Hide common agents if an agent is selected
+                if (this.selectedAgent) {
+                    this.commonAgents = [];
+                } else {
+                    this.commonAgents = commonAgents;
+                }
+            } catch (e) {
+                console.error('Error setting common agents inside compose bar:', e);
+            }
         }
+        return;
+        
     }
 
     /*need to render the common agents list, and on click of it invoke setAgentContext of ChatInterface*/
@@ -149,7 +167,7 @@ class ComposeBar {
                     this.selectedCommonAgent = agent;   
                     if (this.chatInterface && this.chatInterface.setAgentContext) {
                         this.chatInterface.setAgentContext(agent);
-                    }
+                    }                                        
                 }
                 this.renderCommonAgents();
             });
@@ -509,7 +527,7 @@ class ComposeBar {
             return;
         }
 
-        console.log('updateMicrophoneButton called, this.input length:', this.input?.length);
+        
 
         if (this.input?.length > 0) {
             micButton.innerHTML = Close({ size: 16, color: "#667085" });
@@ -517,7 +535,6 @@ class ComposeBar {
         } else {
             micButton.innerHTML = microphoneIcon({ size: 16, color: "#667085" });
             micButton.title = "Search using voice";
-            console.log('Set to microphone icon');
         }
     }
 
@@ -688,7 +705,6 @@ class ComposeBar {
             this.input = '';
             this.autoResize(textarea);
             this.updateMicrophoneButton();
-            console.log('Input cleared, this.input is now:', `"${this.input}"`);
         } else {
             console.log('textarea not found!');
         }
@@ -834,13 +850,13 @@ class ComposeBar {
         this.renderWithStatePreservation(); // Re-render while preserving textarea content
 
         // Continue with agent invocation
-        if (this.pendingAgentInvocation) {
+        if (this.selectedAgent) {
             try {
-                InvokeAgent(this.pendingAgentInvocation);
+                InvokeAgent(this.selectedAgent);
             } catch (e) {
-                console.error(`InvokeAgent failed for ${this.pendingAgentInvocation.name}`, e);
+                console.error(`InvokeAgent failed for ${this.selectedAgent.name}`, e);
             }
-            this.pendingAgentInvocation = null;
+            this.selectedAgent = null;
         }
     }
 
@@ -939,14 +955,15 @@ class ComposeBar {
                 const agentId = item.getAttribute('data-agent-id');
                 const agent = agents.find(a => String(a.id) === String(agentId));
                 if (!agent) return;
-
+                this.selectedAgent = agent;
                 if (attachments?.length > 0) {
                     // Store the agent for later invocation after user confirms
-                    this.pendingAgentInvocation = agent;
+                    // this.pendingAgentInvocation = agent;
                     this.showOverRideModal = true;
                     this.renderWithStatePreservation(); 
                     this.setupOverrideModalEvents(); // Set up event listeners for modal buttons
                 } else {
+                    this.commonAgents = [];
                     try { InvokeAgent(agent); } catch (e) { console.error('InvokeAgent failed', e); }
                 }
                 this.handleCloseDialog();
@@ -1105,15 +1122,6 @@ class ComposeBar {
         }
     }
 }
-
-// Export for different module systems
-// if (typeof module !== 'undefined' && module.exports) {
-//     module.exports = ComposeBar;
-// } else if (typeof define === 'function' && define.amd) {
-//     define([], function () { return ComposeBar; });
-// } else {
-//     window.ComposeBar = ComposeBar;
-// }
 
 export default ComposeBar;
 //create another component renderComposeBar
