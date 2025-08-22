@@ -78,7 +78,7 @@ const ChatInterfaceDemo = () => {
   // Separate useEffect for ComposeBar initialization
   useEffect(() => {
     // Initialize ComposeBar by passing the div id
-    RenderComposeBar('#compose-bar-container');
+    RenderComposeBar('#eva-composebar');
   }, [quickActions]); 
 
 
@@ -131,7 +131,7 @@ const ChatInterfaceDemo = () => {
           </div>
         </div>
         {/* Replace the React Composebar with plain JavaScript ComposeBar container */}
-        <div id="ComposeBarContainer"></div>
+        <div id="eva-composebar"></div>
       </div>
     </div>
   );

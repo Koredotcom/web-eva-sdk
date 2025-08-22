@@ -286,59 +286,61 @@ class ComposeBar {
 
         
         this.container.innerHTML = `
-            <div class="eva-composebar-parent">     
-            <div class="eva-quick-reply-container" data-eva-quick-replies></div>                           
-                ${this.showOverRideModal ? `
-                <div class='overridingMsgModal'>
-                    <div class='headerGroup'>
-                        <div class="_heading">Remove Attachments</div>
-                        <div class="msg">The required context conflicts with the selected agent. Do you want to remove the context and set the agent?</div>
-                    </div>
+            <div class="ComposeBarContainer">
+                <div class="eva-composebar-parent">     
+                    <div class="eva-quick-reply-container" data-eva-quick-replies></div>                           
+                    ${this.showOverRideModal ? `
+                    <div class='overridingMsgModal'>
+                        <div class='headerGroup'>
+                            <div class="_heading">Remove Attachments</div>
+                            <div class="msg">The required context conflicts with the selected agent. Do you want to remove the context and set the agent?</div>
+                        </div>
 
-                    <div class="_content">
-                        <button class="kr-primary-btn-black btn-sm" label='Remove'>Remove</button>
-                        <span class="closeBtn">${createCloseIcon({ size: 14, color: "#667085" })}</span>                        
-                    </div>
-                </div>` : ''}
-                <div class="eva-composebar-area">
-                    <div class="eva-input-container">
-                        <div class="eva-attachments-container" data-eva-attachments></div>
-                        <div class="eva-compose-textarea-container">
-                            <textarea 
-                            class="eva-compose-textarea" 
-                            placeholder="${this.options.placeholder}"
-                            rows="1"
-                            data-eva-input
-                        ></textarea>
+                        <div class="_content">
+                            <button class="kr-primary-btn-black btn-sm" label='Remove'>Remove</button>
+                            <span class="closeBtn">${createCloseIcon({ size: 14, color: "#667085" })}</span>                        
                         </div>
-                        <div class="eva-compose-textarea-actions">
-                            <div class='left-actions'>
-                                <button class="agents-action-item" data-eva-agents-action data-eva-open-dialog>
-                                    ${ActionsFlashIcon({ size: 16, color: "#667085" })}
-                                    ${CheveronDownIcon({ size: 14, color: "#667085" })}
-                                </button>                                
-                                <div data-eva-common-agents style="display: inline-flex; gap: 8px;"></div>
+                    </div>` : ''}
+                    
+                    <div class="eva-composebar-area">
+                        <div class="eva-input-container">
+                            <div class="eva-attachments-container" data-eva-attachments></div>
+                            <div class="eva-compose-textarea-container">
+                                <textarea 
+                                class="eva-compose-textarea" 
+                                placeholder="${this.options.placeholder}"
+                                rows="1"
+                                data-eva-input
+                                ></textarea>
                             </div>
-                            <div class="right-actions">
-                                <button class="eva-input-action-btn attachment-btn" data-eva-attachment title="Attach file">
-                                    ${attachmentIcon({ size: 16, color: "#667085" })}
-                                </button>
-                                <button class="eva-input-action-btn voice-btn" data-eva-speech title="Search using voice">
-                                    ${microphoneIcon({ size: 16, color: "#667085" })}
-                                </button>
-                                <button class="eva-input-action-btn send-btn" data-eva-send title="Send">
-                                    ${arrowCirlceUpIcon({ size: 16, color: "#101828" })}
-                                </button>
+                            <div class="eva-compose-textarea-actions">
+                                <div class='left-actions'>
+                                    <button class="agents-action-item" data-eva-agents-action data-eva-open-dialog>
+                                        ${ActionsFlashIcon({ size: 16, color: "#667085" })}
+                                        ${CheveronDownIcon({ size: 14, color: "#667085" })}
+                                    </button>                                
+                                    <div data-eva-common-agents style="display: inline-flex; gap: 8px;"></div>
+                                </div>
+                                <div class="right-actions">
+                                    <button class="eva-input-action-btn attachment-btn" data-eva-attachment title="Attach file">
+                                        ${attachmentIcon({ size: 16, color: "#667085" })}
+                                    </button>
+                                    <button class="eva-input-action-btn voice-btn" data-eva-speech title="Search using voice">
+                                        ${microphoneIcon({ size: 16, color: "#667085" })}
+                                    </button>
+                                    <button class="eva-input-action-btn send-btn" data-eva-send title="Send">
+                                        ${arrowCirlceUpIcon({ size: 16, color: "#101828" })}
+                                    </button>
+                                </div>
                             </div>
+                            
+                            <!-- Hidden file input for attachment functionality -->
+                            <input type="file" style="display: none;" data-eva-file-input multiple accept="*/*" />
+                            
                         </div>
-                        
-                        <!-- Hidden file input for attachment functionality -->
-                        <input type="file" style="display: none;" data-eva-file-input multiple accept="*/*" />
-                        
                     </div>
-                </div>
-                
-	                <sl-dialog data-eva-dialog class="eva-agents-dialog">
+                                    
+                    <sl-dialog data-eva-dialog class="eva-agents-dialog">
                         <div class="composebarFilter">
                             <div class="agentsTabWrapper">
                                 <div class="agentsHeader">
@@ -365,10 +367,10 @@ class ComposeBar {
                             <div class="eva-agents-container">
                                 <ul class="eva-agents-list" data-eva-all-agents></ul>
                             </div>
-                        </div>
-	                    
-	                </sl-dialog>
-	            </div>
+                        </div>                        
+                    </sl-dialog>
+                </div>
+            </div>
         `;
     }
 
