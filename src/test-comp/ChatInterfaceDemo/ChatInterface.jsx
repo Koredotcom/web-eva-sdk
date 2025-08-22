@@ -12,6 +12,7 @@ import Agents from "../agents";
 import Notifications from "../Notifications";
 import AnnouncementData from "../../Announcements/AnnouncementData";
 import { RenderComposeBar } from "../../composebar";
+import { renderRecentAgents } from "../../LandingPageRecentAgents";
 
 
 // function ShoelaceWrapper({ html }) {
@@ -79,7 +80,8 @@ const ChatInterfaceDemo = () => {
   useEffect(() => {
     // Initialize ComposeBar by passing the div id
     RenderComposeBar('#eva-composebar');
-  }, [quickActions]); 
+    renderRecentAgents('recent-agents');
+  }, []); 
 
 
   const fetchAnnouncementData = async () => {
@@ -101,6 +103,9 @@ const ChatInterfaceDemo = () => {
           {/* <Notifications />
           <Agents /> */}
         </div>
+      </div>
+      <div id="recent-agents">
+        
       </div>
       <div className="chatInterfaceSec">
         <div className="chatSec">

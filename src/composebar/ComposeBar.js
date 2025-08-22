@@ -18,7 +18,9 @@ class ComposeBar {
             placeholder: 'Ask question...',
             showQuickActions: true,
             showNewButton: true,
-            showStopButton: true,            
+            showStopButton: true, 
+            showCommonAgents: true,
+            showAgentsDialog: true,
             ...options
         };
 
@@ -626,9 +628,9 @@ class ComposeBar {
         if (action) {
             try {
                 if (this.chatInterface && typeof this.chatInterface.askQuickActions === 'function') {
-                    this.chatInterface.askQuickActions(action);
-                    this.quickActions = [];
+                    this.chatInterface.askQuickActions(action);                    
                     setTimeout(() => {
+                        this.quickActions = [];
                         this.renderQuickReplies();
                     }, 0);
                 }
