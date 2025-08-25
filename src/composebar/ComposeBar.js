@@ -384,8 +384,11 @@ class ComposeBar {
                                     </div>
                                 </div>
                             </div>
-                            <div class="eva-agents-container">
+                            <div class="eva-agents-container" data-eva-agents-content>
                                 <ul class="eva-agents-list" data-eva-all-agents></ul>
+                            </div>
+                            <div class="eva-flows-container" data-eva-flows-content style="display: none;">
+                                <ul class="eva-flows-list" data-eva-all-flows></ul>
                             </div>
                         </div>                        
                     </sl-dialog>
@@ -409,6 +412,7 @@ class ComposeBar {
         const dialog = this.container.querySelector('[data-eva-dialog]');
         const fileInput = this.container.querySelector('[data-eva-file-input]');
         const agentSearchInputBox = this.container.querySelector('[data-eva-agent-search-input-box]');
+        const tabHeadings = this.container.querySelectorAll('.agentsTabHeading');
 
         // Textarea events
         if (textarea) {
@@ -498,6 +502,13 @@ class ComposeBar {
                 e.preventDefault();
             });
         });
+
+        // Tab switching events
+        if (tabHeadings) {
+            tabHeadings.forEach(tab => {
+                tab.addEventListener('click', (e) => this.handleTabSwitch(e));
+            });
+        }
     }
 
     /**
@@ -516,6 +527,108 @@ class ComposeBar {
 
         if (this.callbacks.onChange) {
             this.callbacks.onChange(this.input, event);
+        }
+    }
+
+    /**
+     * Handle tab switching between Agents and Flows
+     */
+    handleTabSwitch(event) {
+        const clickedTab = event.target;
+        const tabText = clickedTab.textContent.trim();
+        
+        // Get all tab headings
+        const allTabs = this.container.querySelectorAll('.agentsTabHeading');
+        
+        // Remove active class from all tabs
+        allTabs.forEach(tab => tab.classList.remove('active'));
+        
+        // Add active class to clicked tab
+        clickedTab.classList.add('active');
+        
+        // Get content containers
+        const agentsContainer = this.container.querySelector('[data-eva-agents-content]');
+        const flowsContainer = this.container.querySelector('[data-eva-flows-content]');
+        
+        // Show/hide content based on selected tab
+        if (tabText === 'Agents') {
+            if (agentsContainer) agentsContainer.style.display = 'block';
+            if (flowsContainer) flowsContainer.style.display = 'none';
+        } else if (tabText === 'Flows') {
+            if (agentsContainer) agentsContainer.style.display = 'none';
+            if (flowsContainer) flowsContainer.style.display = 'block';
+            
+            // Render agenticFlows when Flows tab is selected
+            this.renderFlows();
+        }
+    }
+
+    /**
+     * Render agenticFlows in the flows container
+     */
+    renderFlows() {
+        const flowsListEl = this.container.querySelector('[data-eva-all-flows]');
+        if (!flowsListEl) return;
+
+        // Show loading state
+        flowsListEl.innerHTML = `<li>Loading flows...</li>`;
+
+        try {
+            // Use the stored agenticFlows or get them from store if not available
+            let agenticFlows = this.agenticFlows;
+            
+            if (!agenticFlows) {
+                const state = store.getState();
+                const allAgents = state?.global?.allAgents?.data?.agents || [];
+                agenticFlows = allAgents.filter(agent => agent?.type === "agenticApp");
+                this.agenticFlows = agenticFlows;
+            }
+
+            // Render agenticFlows using the same method as agents
+            this.renderAgentsList(flowsListEl, agenticFlows, 'flows');
+
+        } catch (e) {
+            console.error('Error rendering flows:', e);
+            flowsListEl.innerHTML = `<li>Failed to load flows</li>`;
+        }
+    }
+
+    /**
+     * Search and render filtered agenticFlows
+     */
+    searchAndRenderFlows(searchTerm = '') {
+        const flowsListEl = this.container.querySelector('[data-eva-all-flows]');
+        if (!flowsListEl) return;
+
+        // Show loading state
+        flowsListEl.innerHTML = `<li>Searching flows...</li>`;
+
+        try {
+            // Use the stored agenticFlows or get them from store if not available
+            let agenticFlows = this.agenticFlows;
+            
+            if (!agenticFlows) {
+                const state = store.getState();
+                const allAgents = state?.global?.allAgents?.data?.agents || [];
+                agenticFlows = allAgents.filter(agent => agent?.type === "agenticApp");
+                this.agenticFlows = agenticFlows;
+            }
+
+            // Filter flows by search term if provided
+            let filteredFlows = agenticFlows;
+            if (searchTerm?.length > 0) {
+                filteredFlows = agenticFlows.filter(flow => 
+                    flow?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    flow?.description?.toLowerCase().includes(searchTerm.toLowerCase())
+                );
+            }
+
+            // Render filtered agenticFlows using the same method as agents
+            this.renderAgentsList(flowsListEl, filteredFlows, 'flows');
+
+        } catch (e) {
+            console.error('Error searching flows:', e);
+            flowsListEl.innerHTML = `<li>Failed to search flows</li>`;
         }
     }
 
@@ -864,7 +977,16 @@ class ComposeBar {
 
     handleAgentSearch(event) {
         const searchValue = event.target.value;
-        this.loadAndRenderAgents(searchValue);
+        
+        // Check which tab is currently active
+        const activeTab = this.container.querySelector('.agentsTabHeading.active');
+        const activeTabText = activeTab ? activeTab.textContent.trim() : 'Agents';
+        
+        if (activeTabText === 'Flows') {
+            this.searchAndRenderFlows(searchValue);
+        } else {
+            this.loadAndRenderAgents(searchValue);
+        }
         /*filter the agents list by their name and render the filtered list */
 
     }
@@ -921,13 +1043,20 @@ class ComposeBar {
             const state = store.getState();
             const allAgents = state?.global?.allAgents?.data?.agents || [];
             const recents = state?.global?.allAgents?.data?.recents || [];
+            const agenticFlows = allAgents.filter(agent => agent?.type === "agenticApp") ;
+            
+            // Store agenticFlows as a class property for tab switching
+            this.agenticFlows = agenticFlows;
+            
             let recentAgents = Array.isArray(recents)
                 ? recents.map(id => allAgents.find(a => String(a.id) === String(id))).filter(Boolean)
                 : [];   
+            recentAgents = recentAgents.filter(agent => agent?.type !== "agenticApp");
             if(searchTerm?.length > 0) {
                 recentAgents = recentAgents.filter(agent => agent?.name?.toLowerCase().includes(searchTerm.toLowerCase()));
             }
             this.renderAgentsList(allListEl, recentAgents, 'recent');
+            
 
         } catch (e) {
             allListEl.innerHTML = `<li>Failed to load agents</li>`;

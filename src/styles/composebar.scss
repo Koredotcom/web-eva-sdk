@@ -591,16 +591,19 @@ sl-dialog.eva-agents-dialog {
         }                    
     }
 
-    .eva-agents-container {
+    .eva-agents-container,
+    .eva-flows-container {
         overflow: auto;
-        .eva-agents-list {
+        .eva-agents-list,
+        .eva-flows-list {
             padding: 0;
             margin: 0;
             list-style: none;
             display: flex;
             flex-direction: column;
 
-            .eva-agent-item {
+            .eva-agent-item,
+            .eva-flow-item {
                 list-style-type: none;
                 display: flex;
                 -webkit-box-align: center;
@@ -637,14 +640,16 @@ sl-dialog.eva-agents-dialog {
                     justify-content: center;
                 }
 
-                .agent-details {
+                .agent-details,
+                .eva-flow-content {
                     display: flex;
                     flex-direction: column;
                     gap: .125rem;
                     flex-grow: 1;
                     width: calc(100% - 3.5rem);
 
-                    .agent-name {
+                    .agent-name,
+                    .eva-flow-name {
                         font-family: Inter;
                         font-size: .875rem;
                         font-style: normal;
@@ -656,7 +661,8 @@ sl-dialog.eva-agents-dialog {
                         text-overflow: ellipsis;
                         white-space: nowrap;
                     }
-                    .agent-desc {
+                    .agent-desc,
+                    .eva-flow-description {
                         font-family: Inter;
                         font-size: .75rem;
                         font-style: normal;
