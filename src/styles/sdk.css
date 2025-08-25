@@ -24,14 +24,8 @@
   font-display: swap;
 }
 
-body {
-    background-color: #fff;
-    font-family: "Inter", sans-serif;
-    font-optical-sizing: auto;
-    font-weight: 400;
-    font-style: normal;
+html {
     font-size: 16px;
-    overflow: hidden;
 
     @media (min-width: 1020px) {
         font-size: 12px;
@@ -60,4 +54,13 @@ body {
     @media (min-width: 7680px) {
         font-size: 22px;
     }
+}
+
+body {
+    background-color: #fff;
+    font-family: "Inter", sans-serif;
+    font-optical-sizing: auto;
+    font-weight: 400;
+    font-style: normal;
+    overflow: hidden;
 }
