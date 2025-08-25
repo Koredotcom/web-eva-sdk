@@ -158,6 +158,14 @@ html, body {
     &.question {
         text-align: right;
         margin-top: 20px;
+
+        .message-text {
+            padding: 0.625rem 1.25rem;
+            border-radius: 1.5rem;
+            background: #EEEDED;
+            color: #0F0F0F;
+            display: inline-flex;
+        }
     }
     &.answer {
         display: flex;
