@@ -2015,6 +2015,10 @@ html, body {
                     &:hover {
                         background-color: #fafafa;
                     }
+                    &.fromWarning {
+                        cursor: default;
+                        pointer-events: none;
+                    }
                     .contextIcon {
                         display: flex;
                         align-items: center;
