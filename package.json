@@ -63,6 +63,10 @@
       "import": "./dist/components/index.esm.js",
       "require": "./dist/components/index.cjs.js"
     },
+    "./composebar": {
+      "import": "./dist/composebar/index.esm.js",
+      "require": "./dist/composebar/index.cjs.js"
+    },
     "./history": {
       "import": "./dist/history/index.esm.js",
       "require": "./dist/history/index.cjs.js"
@@ -86,7 +90,8 @@
     "./Announcements": {
       "import": "./dist/Announcements/index.esm.js",
       "require": "./dist/Announcements/index.cjs.js"
-    }
+    },
+    "./styles": "./dist/sdk-styles.css"
   },
   "devDependencies": {
     "@babel/cli": "^7.24.6",

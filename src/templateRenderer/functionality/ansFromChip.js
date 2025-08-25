@@ -423,7 +423,7 @@ const AnsFromChipFunctionality = ({ item }) => {
 		
 		if(!item?.disableFeedback) {
 			let feedbackLikeButton = document.getElementById(
-				`feedbackLikeButton-${item?.id}`
+				`feedbackLikeButton-${item?.messageId}`
 			);
 			if (feedbackLikeButton && !feedbackLikeButton.eventListenerAdded) {
 				feedbackLikeButton.addEventListener("click", (e) => {
@@ -440,7 +440,7 @@ const AnsFromChipFunctionality = ({ item }) => {
 				});
 			}
 			let feedbackDislikeButton = document.getElementById(
-				`feedbackDislikeButton-${item?.id}`
+				`feedbackDislikeButton-${item?.messageId}`
 			);
 			if (feedbackDislikeButton && !feedbackDislikeButton.eventListenerAdded) {
 				feedbackDislikeButton.addEventListener("click", (e) => {

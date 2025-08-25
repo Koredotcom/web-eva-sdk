@@ -22,7 +22,7 @@ export const constructQuestionInitial = (args) => {
 
 	const activeBoardId = store.getState().global.activeBoardId;
 
-	let question = args?.question;
+	let question = args?.question || args?.action?.postback;
 
 	let obj = {};
 
@@ -104,6 +104,9 @@ export const constructQuestionPostCall = (data, qId) => {
 
     // data.payload = contains api response
     // data.meta.arg = contains passed params and payload
+
+    /*advance Search cancelled, data is coming into the block, so ignoring this by putting return in case of payload is undefined */
+    if(!data?.payload) return;
 
     const state = store.getState().global
     const questions = cloneDeep(state.questions)

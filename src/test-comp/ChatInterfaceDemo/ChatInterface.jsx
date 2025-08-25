@@ -1,13 +1,19 @@
 import React, { useEffect, useRef, useState } from "react";
 import { TemplateRenderer } from "../../templateRenderer";
 import { BotConversation, ChatInterface } from "../../chat";
-import Composebar from "./Composebar";
+import NewChat from "../../chat/NewChat";
+// Removing React Composebar - we'll use the JavaScript version
+// import Composebar from "./Composebar";
 
-import "./ChatInterface.scss"
+import "../../styles/chat-interface.scss"
+import "../../styles/composebar.scss"
 import History from "../history";
 import Agents from "../agents";
 import Notifications from "../Notifications";
 import AnnouncementData from "../../Announcements/AnnouncementData";
+import { RenderComposeBar } from "../../composebar";
+import { renderRecentAgents } from "../../LandingPageRecentAgents";
+
 
 // function ShoelaceWrapper({ html }) {
 //   const ref = useRef(null);
@@ -35,6 +41,7 @@ const ChatInterfaceDemo = () => {
   const [announcements, setAnnouncements] = useState(null);
 
   const chatInterface = useRef();
+  const composeBarRef = useRef(); // Reference for the ComposeBar instance
 
   useEffect(() => {
     chatInterface.current = ChatInterface();
@@ -55,8 +62,6 @@ const ChatInterfaceDemo = () => {
     // Subscribe to updates
     const unsubscribe = chatInterface.current.subscribe(
       (question, searchResponse, moreAvailable, errorStates, quickActions) => {
-        // Handle the API response data
-       
         setMessages(question);
         setQuickActions(quickActions);
       }
@@ -64,8 +69,19 @@ const ChatInterfaceDemo = () => {
 
     return () => {
       unsubscribe();
+      // Cleanup ComposeBar
+      if (composeBarRef.current) {
+        composeBarRef.current.destroy();
+      }
     };
   }, []);
+
+  // Separate useEffect for ComposeBar initialization
+  useEffect(() => {
+    // Initialize ComposeBar by passing the div id
+    RenderComposeBar('#eva-composebar');
+    renderRecentAgents('#recent-agents');
+  }, []); 
 
 
   const fetchAnnouncementData = async () => {
@@ -75,18 +91,28 @@ const ChatInterfaceDemo = () => {
 
   return (
     <div className="chatInterfaceDemo">
-      <div className="historySec">
-        <History />
-        <Notifications />
-        <Agents />
+      <div className="sidebar">
+        <div className="historySec">
+          <div className="sidebar-header">
+            <div className="sidebar-title">AI for Work</div>
+            <div className="new-btn" title="New" onClick={() => {
+              NewChat()
+            }}>+</div>
+          </div>
+          <History />
+          {/* <Notifications />
+          <Agents /> */}
+        </div>
       </div>
+      
       <div className="chatInterfaceSec">
         <div className="chatSec">
+          <div className="chatSec-inner">
           {messages &&
             Object.values(messages).map((item, index) => {
               if (item?.isTask) return;
               const assistantIconTemplate = () => {
-                return <div className="logo-icon"><img src="/public/eva-black-svg.svg" alt="AiForWork" /></div>;
+                return <div className="logo-icon"><img src="/eva-black-svg.svg" alt="AiForWork" /></div>;
               };
 
               
@@ -105,14 +131,13 @@ const ChatInterfaceDemo = () => {
               );
 
             })}
+          </div>
         </div>
-        <Composebar 
-          quickActions={quickActions} 
-          chatInterface={chatInterface} 
-          input={input} 
-          setInput={setInput} 
-          messages={messages} 
-        />
+        {/* Replace the React Composebar with plain JavaScript ComposeBar container */}
+        <div className="compose-section">          
+          <div id="eva-composebar"></div>
+          <div id="recent-agents"></div>
+        </div>
       </div>
     </div>
   );

@@ -2,6 +2,8 @@
 @import "./input-text.css";
 @import "./buttons.css";
 @import "./dropdown.css";
+@import "./chat-interface.scss";
+@import "./composebar.scss";
 /* @import './quill-editor.css'; */
 
 /* @import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap'); */
@@ -29,4 +31,5 @@ body {
     font-weight: 400;
     font-style: normal;
     font-size: 14px;
+    overflow: hidden;
 }

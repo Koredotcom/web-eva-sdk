@@ -29,7 +29,8 @@ const Notification = () => {
 
     const notifyLatestNotification = async (notification) => {
         if(notification?.nStats?.bell === 0) return;
-        
+        /*we should not honor the alerts that are coming for badge count, to do so added the below condition */
+        if(notification?.channels?.includes("bell")) return;
         //Method to notify the latest notification
         let _notificationState = cloneDeep(state?.notifications);
         _notificationState.bell = { 'bell': notification?.nStats?.bell };

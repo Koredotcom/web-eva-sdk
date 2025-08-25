@@ -111,8 +111,9 @@ export const renderIcons = (provider, extIcon, providerIcon) => { //providerIcon
     const img = document.createElement('img');
     img.src = icon;
     img.className = 'backgroundIcon';
-
-    Icondiv.appendChild(img);
+    if(icon){
+        Icondiv.appendChild(img);
+    }
 
     if (extIcon) {
         const subImg = document.createElement('img');

@@ -1,0 +1,1129 @@
+import NewChat from "../chat/NewChat.js";
+import ChatInterface from "../chat/ChatInterface.js";
+import InvokeAgent from "../chat/invokeAgent.js";
+import store from "../redux/store.js";
+import { fetchAgents } from "../redux/actions/global.action.js";
+import { ActionsFlashIcon, arrowCirlceUpIcon, attachmentIcon, CheveronDownIcon, createCloseIcon, createDeleteIcon, createThumbsUpFilled, microphoneIcon, searchIcon, settingsIcon, Close, StopIcon } from "../templateRenderer/icons-library.js";
+import FileUpload from "../Attachments/fileUpload.js";
+import { getFileExtension } from "../utils/helpers.js";
+
+/**
+ * ComposeBar - A standalone compose bar component in plain JavaScript
+ * Can be embedded in any HTML page as a reusable component
+ */
+class ComposeBar {
+    constructor(container, options = {}) {
+        this.container = typeof container === 'string' ? document.querySelector(container) : container;
+        this.options = {
+            placeholder: 'Ask question...',
+            showQuickActions: true,
+            showNewButton: true,
+            showStopButton: true, 
+            showCommonAgents: true,
+            showAgentsDialog: true,
+            ...options
+        };
+
+        this.input = '';
+        this.isLoading = false;
+        this.isRecording = false;
+        this.recognition = null;
+        this.unsubscribe = null;
+        this.chatInterface = null;
+        this.fileUploaderInterface = null;
+        this.questions = {};
+        this.commonAgents = [];
+        this.showOverRideModal = false;
+        this.pendingAgentInvocation = null;
+        this.selectedAgent = null;
+        this.attachments = [];
+        this.quickActions = [];
+        this.selectedCommonAgent = null;
+        this.callbacks = {
+            onSend: null,
+            onNewChat: null,
+            onStop: null,
+            onQuickAction: null,
+            onChange: null,
+            onSpeechToText: null
+        };
+        this.init();
+    }
+
+    /**
+     * Initialize the compose bar
+     */
+    async init() {
+        if (!this.container) {
+            throw new Error('ComposeBar container not found');
+        }
+
+        // Initialize chat interface
+        try {
+            this.chatInterface = ChatInterface();
+            // Default options for chat interface
+            this.chatInterface.options({ contentStreaming: true });
+
+            // Subscribe to updates to toggle loading and update quick actions
+            if (typeof this.chatInterface.subscribe === 'function') {
+                this.unsubscribe = this.chatInterface.subscribe((questions, searchResponse, moreAvailable, errorStates, quickActions) => {
+                    // Toggle loading state based on async status
+                    const isLoading = searchResponse?.status === 'loading';
+                    this.setLoading(!!isLoading);
+                    if (Object.keys(questions).length > 0) {
+                        this.questions = questions;
+                    }
+                });
+            }
+        } catch (e) {
+            console.warn('ChatInterface initialization failed:', e);
+        }
+
+        // Initialize file uploader     
+        try {
+            this.fileUploaderInterface = FileUpload();
+            this.fileUploaderInterface.subscribe((sources, sessionId, quickActions, error, apiResp) => {
+                try {                    
+                    const filesOnly = Array.isArray(sources)
+                        ? sources.filter(source => !source?.hasOwnProperty('isAgent'))
+                        : [];                          
+                    this.attachments = filesOnly;
+                    this.quickActions = quickActions || [];
+                    
+                    // Always render to handle both adding and clearing attachments
+                    setTimeout(() => {                        
+                        this.renderAttachments();
+                        this.renderQuickReplies();
+                    }, 0);
+                } catch (err) {
+                    console.warn('Failed processing file upload subscribe payload:', err);
+                }
+
+            });
+        } catch (e) {
+            console.warn('FileUpload init failed:', e);
+        }
+
+        this.initSpeechRecognition();
+        await this.getAgents();
+        this.setCommonAgents();
+        this.render();        
+        this.renderCommonAgents();
+        this.renderAttachments(); // Render any initial attachments
+        this.renderQuickReplies(); // Render any initial quick replies
+        this.attachEventListeners();
+        this.updateMicrophoneButton(); // Set initial button state
+    }    
+
+    setCommonAgents() {                
+        console.log("Call stack:", new Error().stack);
+
+        /*get selectedContext from store*/
+        const selectedContext = store.getState()?.global?.selectedContext;                
+
+        if(Object.keys(selectedContext).length > 0) {            
+            this.commonAgents = [];            
+        } else {
+            try {
+                const state = store.getState();
+                const commonAgents = state?.global?.allAgents?.data?.commonAgents || [];
+
+                // Hide common agents if an agent is selected
+                if (this.selectedAgent) {
+                    this.commonAgents = [];
+                } else {
+                    this.commonAgents = commonAgents;
+                }
+            } catch (e) {
+                console.error('Error setting common agents inside compose bar:', e);
+            }
+        }
+        return;
+        
+    }
+
+    /*need to render the common agents list, and on click of it invoke setAgentContext of ChatInterface*/
+    renderCommonAgents() {
+        const commonAgentsContainer = this.container.querySelector('[data-eva-common-agents]');
+        if (!commonAgentsContainer) return;
+
+        commonAgentsContainer.innerHTML = this.commonAgents.map(agent => {            
+            return `<button class="agents-action-item ${this.selectedCommonAgent?.id === agent.id ? 'active' : ''}" data-eva-common-agents-action data-agent-id="${agent.id}">
+                <img src="${agent.icon}" alt="" width="18" height="18" />
+                <span class='agent-name'>${agent?.name}</span>
+            </button>`;
+        }).join('');
+
+        // Add click handlers for common agents
+        commonAgentsContainer.querySelectorAll('[data-eva-common-agents-action]').forEach(item => {
+            item.addEventListener('click', () => {
+                const agentId = item.getAttribute('data-agent-id');
+                const agent = this.commonAgents.find(a => String(a.id) === String(agentId));
+                if(!agent) return;
+                if(this.selectedCommonAgent?.id === agentId) {
+                    this.selectedCommonAgent = null;
+                    if (this.chatInterface && this.chatInterface.setAgentContext) {
+                        this.chatInterface.setAgentContext(null);
+                    }                    
+                }else{
+                    this.selectedCommonAgent = agent;   
+                    if (this.chatInterface && this.chatInterface.setAgentContext) {
+                        this.chatInterface.setAgentContext(agent);
+                    }                                        
+                }
+                this.renderCommonAgents();
+            });
+        });
+    }
+
+    renderAttachments() {
+        const attachmentsContainer = this.container.querySelector('[data-eva-attachments]');
+        
+        if (!attachmentsContainer) {
+            return;
+        }
+        
+        const escapeHtml = (str) => String(str || '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+
+        const attachmentHtml = this.attachments.map(file => {
+            const name = file?.title || file?.fileName || file?.mediaName || 'Attachment';
+            const uid = file?.uID || file?.componentId || file?.docId || name;
+            const fileExtension = getFileExtension(name);
+            
+            return `<div class="eva-attachment-pill" data-attach-uid="${escapeHtml(uid)}" title="${escapeHtml(name)}">
+                <div class="attachment-icon"><img src="images/${fileExtension}.png" alt=''/></div>
+                <div class="eva-attachment-name">${escapeHtml(name)}</div>
+                ${file?.loading ? `<div class="waloader"></div>` : 
+                `<button type="button" class="eva-attachment-remove" data-remove-uid="${escapeHtml(uid)}" aria-label="Remove">&times;</button>`}
+            </div>`;
+        }).join('');
+        
+        attachmentsContainer.innerHTML = attachmentHtml;
+        
+        // Reattach event listeners for remove buttons
+        this.attachAttachmentEventListeners();
+    }
+
+    renderQuickReplies() {
+        const quickRepliesContainer = this.container.querySelector('[data-eva-quick-replies]');                
+        if (!quickRepliesContainer) {
+            return;
+        }
+
+        const quickRepliesHtml = this.quickActions.map(action => {
+            return `<div class="eva-quick-reply-chip" data-action-id="${action.id}">${action.label}</div>`;
+        }).join('');
+        
+        quickRepliesContainer.innerHTML = quickRepliesHtml;        
+        // Attach event listeners for quick reply clicks
+        this.attachQuickReplyEventListeners();
+    }
+
+    attachQuickReplyEventListeners() {
+        const quickReplyChips = this.container.querySelectorAll('.eva-quick-reply-chip');
+        quickReplyChips.forEach(chip => {
+            chip.addEventListener('click', (e) => this.handleQuickAction(e));
+        });
+    }
+    
+    attachAttachmentEventListeners() {
+        // Attachment remove button events
+        const removeButtons = this.container.querySelectorAll('.eva-attachment-remove');
+        removeButtons.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const uid = btn.getAttribute('data-remove-uid');
+                this.removeAttachmentByUid(uid);
+                e.stopPropagation();
+                e.preventDefault();
+            });
+        });
+    }
+
+    /**
+     * Initialize speech recognition
+     */
+    initSpeechRecognition() {
+        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            this.recognition = new SpeechRecognition();
+
+            this.recognition.continuous = false;
+            this.recognition.interimResults = true;
+            this.recognition.lang = 'en-US';
+
+            this.recognition.onstart = () => {
+                console.log('Speech recognition started');
+            };
+
+            this.recognition.onresult = (event) => {
+                let finalTranscript = '';
+
+                for (let i = event.resultIndex; i < event.results.length; i++) {
+                    const transcript = event.results[i][0].transcript;
+                    if (event.results[i].isFinal) {
+                        finalTranscript += transcript;
+                    }
+                }
+
+                // Update textarea with final transcript
+                if (finalTranscript) {
+                    const currentValue = this.getValue();
+                    const newValue = currentValue + (currentValue ? ' ' : '') + finalTranscript;
+                    this.setValue(newValue);
+                }
+            };
+
+            this.recognition.onend = () => {
+                this.isRecording = false;
+                this.updateSpeechButton();
+            };
+
+            this.recognition.onerror = (event) => {
+                this.isRecording = false;
+                this.updateSpeechButton();
+                console.error('Speech recognition error:', event.error);
+            };
+        } else {
+            console.warn('Speech recognition not supported in this browser');
+        }
+    }
+
+    /**
+     * Render the compose bar HTML
+     */
+    render() {        
+        const escapeHtml = (str) => String(str || '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+
+        
+        this.container.innerHTML = `
+            <div class="ComposeBarContainer">
+                <div class="eva-composebar-parent">     
+                    <div class="eva-quick-reply-container" data-eva-quick-replies></div>                           
+                    ${this.showOverRideModal ? `
+                    <div class='overridingMsgModal'>
+                        <div class='headerGroup'>
+                            <div class="_heading">Remove Attachments</div>
+                            <div class="msg">The required context conflicts with the selected agent. Do you want to remove the context and set the agent?</div>
+                        </div>
+
+                        <div class="_content">
+                            <button class="kr-primary-btn-black btn-sm" label='Remove'>Remove</button>
+                            <span class="closeBtn">${createCloseIcon({ size: 14, color: "#667085" })}</span>                        
+                        </div>
+                    </div>` : ''}
+
+                    <div class="eva-composebar-area">
+                        <div class="eva-input-container">
+                            <div class="eva-attachments-container" data-eva-attachments></div>
+                            <div class="eva-compose-textarea-container">
+                                <textarea 
+                                class="eva-compose-textarea" 
+                                placeholder="${this.options.placeholder}"
+                                rows="1"
+                                data-eva-input
+                                ></textarea>
+                            </div>
+                            <div class="eva-compose-textarea-actions">
+                                <div class='left-actions'>
+                                    <button class="agents-action-item" data-eva-agents-action data-eva-open-dialog>
+                                        ${ActionsFlashIcon({ size: 16, color: "#667085" })}
+                                        ${CheveronDownIcon({ size: 14, color: "#667085" })}
+                                    </button>                                
+                                    <div data-eva-common-agents style="display: inline-flex; gap: 8px;"></div>
+                                </div>
+                                <div class="right-actions">
+                                    <button class="eva-input-action-btn attachment-btn" data-eva-attachment title="Attach file">
+                                        ${attachmentIcon({ size: 16, color: "#667085" })}
+                                    </button>
+                                    <button class="eva-input-action-btn voice-btn" data-eva-speech title="Search using voice">
+                                        ${microphoneIcon({ size: 16, color: "#667085" })}
+                                    </button>
+                                    <button class="eva-input-action-btn send-btn" data-eva-send title="Send">
+                                        ${arrowCirlceUpIcon({ size: 16, color: "#101828" })}
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <!-- Hidden file input for attachment functionality -->
+                            <input type="file" style="display: none;" data-eva-file-input multiple accept="*/*" />
+                            
+                        </div>
+                    </div>
+                                    
+                    <sl-dialog data-eva-dialog class="eva-agents-dialog">
+                        <div class="composebarFilter">
+                            <div class="agentsTabWrapper">
+                                <div class="agentsHeader">
+                                    <div class="agentsTabHeadingWrapper">
+                                        <div class="agentsTabHeading active">Agents</div>
+                                        <div class="agentsTabHeading">Flows</div>
+                                    </div>
+                                    <div class="agentSearch">
+                                        <div class="search-box">
+                                            ${searchIcon({ size: 14, color: "#667085" })}
+                                            <input 
+                                            placeholder="Search" 
+                                            class="agentSearchBar" 
+                                            autocomplete="off" 
+                                            value="" 
+                                            data-eva-agent-search-input-box                                            
+                                            />
+                                        </div>
+                                        <button class="agentSettings" style="display: none;">${settingsIcon({ size: 14, color: "#667085" })}</button>
+                                        <button class="agentSettings" data-eva-dialog-close>${createCloseIcon({ size: 14, color: "#667085" })}</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="eva-agents-container">
+                                <ul class="eva-agents-list" data-eva-all-agents></ul>
+                            </div>
+                        </div>                        
+                    </sl-dialog>
+                </div>
+            </div>
+        `;
+    }
+
+    /**
+     * Attach event listeners
+     */
+    attachEventListeners() {
+        const textarea = this.container.querySelector('[data-eva-input]');
+        const sendBtn = this.container.querySelector('[data-eva-send]');
+        const newBtn = this.container.querySelector('[data-eva-new]');
+        const stopBtn = this.container.querySelector('[data-eva-stop]');
+        const attachmentBtn = this.container.querySelector('[data-eva-attachment]');
+        const speechBtn = this.container.querySelector('[data-eva-speech]');
+        const quickActionChips = this.container.querySelectorAll('.eva-quick-reply-chip');
+        const openDialogBtn = this.container.querySelector('[data-eva-open-dialog]');
+        const dialog = this.container.querySelector('[data-eva-dialog]');
+        const fileInput = this.container.querySelector('[data-eva-file-input]');
+        const agentSearchInputBox = this.container.querySelector('[data-eva-agent-search-input-box]');
+
+        // Textarea events
+        if (textarea) {
+            textarea.addEventListener('input', (e) => this.handleInputChange(e));
+            textarea.addEventListener('keydown', (e) => this.handleKeyDown(e));
+            textarea.addEventListener('paste', (e) => this.handlePaste(e));
+        }
+        if (agentSearchInputBox) {
+            agentSearchInputBox.addEventListener('input', (e) => this.handleAgentSearch(e));
+        }
+
+        // Button events
+        if (sendBtn) {
+            sendBtn.addEventListener('click', () => {
+                if (this.isLoading) {
+                    this.handleStop();
+                } else {
+                    this.handleSend();
+                }
+            });
+        }
+
+        if (newBtn) {
+            newBtn.addEventListener('click', () => this.handleNewChat());
+        }
+
+        if (stopBtn) {
+            stopBtn.addEventListener('click', () => this.handleStop());
+        }
+
+        if (openDialogBtn) {
+            openDialogBtn.addEventListener('click', () => this.handleOpenDialog());
+        }
+
+        if (dialog) {
+            const closeBtn = dialog.querySelector('[data-eva-dialog-close]');
+            if (closeBtn) {
+                closeBtn.addEventListener('click', () => this.handleCloseDialog());
+            }
+        }
+
+        // Attachment button event
+        if (attachmentBtn) {
+            attachmentBtn.addEventListener('click', () => this.handleAttachment());
+        }
+
+        if (fileInput) {
+            fileInput.addEventListener('change', (e) => {
+                try {
+                    if (this.fileUploaderInterface && typeof this.fileUploaderInterface.uploadFile === 'function') {
+                        this.fileUploaderInterface.uploadFile(e);
+                    }
+                } finally {
+                    // reset so selecting the same file again still triggers change
+                    fileInput.value = '';
+                }
+            });
+        }
+
+        // Speech to text button event
+        if (speechBtn) {
+            speechBtn.addEventListener('click', () => this.handleSpeechToText());
+        }
+
+        // Override dialog button events
+        const overrideDialog = this.container.querySelector('[data-eva-override-dialog]');
+        if (overrideDialog) {
+            const cancelBtn = overrideDialog.querySelector('[data-eva-override-cancel]');
+            const confirmBtn = overrideDialog.querySelector('[data-eva-override-confirm]');
+
+            if (cancelBtn) {
+                cancelBtn.addEventListener('click', () => this.handleOverrideCancel());
+            }
+
+            if (confirmBtn) {
+                confirmBtn.addEventListener('click', () => this.handleOverrideConfirm());
+            }
+        }
+
+        // Attachment remove button events
+        const removeButtons = this.container.querySelectorAll('.eva-attachment-remove');
+        removeButtons.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const uid = btn.getAttribute('data-remove-uid');
+                this.removeAttachmentByUid(uid);
+                e.stopPropagation();
+                e.preventDefault();
+            });
+        });
+    }
+
+    /**
+     * Handle input change
+     */
+    handleInputChange(event) {
+        this.input = event.target.value;
+        if(this.quickActions?.length > 0) {
+            this.quickActions = [];
+            setTimeout(() => {
+                this.renderQuickReplies();
+            }, 0);
+        }
+        this.autoResize(event.target);
+        this.updateMicrophoneButton(); // Update the microphone/close button
+
+        if (this.callbacks.onChange) {
+            this.callbacks.onChange(this.input, event);
+        }
+    }
+
+    /**
+     * Update microphone button based on input length
+     */
+    updateMicrophoneButton() {
+        const micButton = this.container.querySelector('[data-eva-speech]');
+        if (!micButton) {
+            console.log('micButton not found!');
+            return;
+        }
+
+        
+
+        if (this.input?.length > 0) {
+            micButton.innerHTML = Close({ size: 16, color: "#667085" });
+            micButton.title = "Clear input";            
+        } else {
+            micButton.innerHTML = microphoneIcon({ size: 16, color: "#667085" });
+            micButton.title = "Search using voice";
+        }
+    }
+
+    /**
+     * Handle key down events
+     */
+    handleKeyDown(event) {
+        // Send on Enter (without Shift)
+        if (event.key === 'Enter' && !event.shiftKey) {
+            event.preventDefault();
+            this.handleSend();
+        }
+    }
+
+    /**
+     * Handle paste events
+     */
+    handlePaste(event) {
+        // Handle file paste if needed in the future
+        setTimeout(() => {
+            this.autoResize(event.target);
+        }, 0);
+    }
+
+    /**
+     * Auto-resize textarea based on content
+     */
+    autoResize(textarea) {
+        textarea.style.height = 'auto';
+        textarea.style.height = Math.min(textarea.scrollHeight, 150) + 'px';
+    }
+
+    /**
+     * Handle send action
+     */
+    handleSend() {
+        if (!this.input.trim() || this.isLoading) return;
+
+        // Default internal handling
+        try {
+            const currentQuestion = Object.values(this.questions)?.[Object.values(this.questions)?.length - 1];            
+            this.chatInterface.sendMessage(this.input.trim(), currentQuestion);
+        } catch (e) {
+            console.error('Error sending message from ComposeBar:', e);
+        }
+
+        // Optional external callback
+        if (this.callbacks.onSend) {
+            this.callbacks.onSend(this.input.trim());
+        }
+
+        this.clearInput();
+    }
+
+    /**
+     * Handle new chat action
+     */
+    handleNewChat() {
+        NewChat();
+    }
+
+    /**
+     * Handle stop action
+     */
+    handleStop() {
+        // Default internal handling
+        try {
+            if (this.chatInterface && typeof this.chatInterface.cancelMessageReqAction === 'function') {
+                this.chatInterface.cancelMessageReqAction();
+            }
+        } catch (e) {
+            console.error('Error stopping message from ComposeBar:', e);
+        }
+
+        // Optional external callback
+        if (this.callbacks.onStop) {
+            this.callbacks.onStop();
+        }
+    }
+
+    /**
+     * Handle quick action click
+     */
+    handleQuickAction(event) {
+        const actionId = event.target.getAttribute('data-action-id');
+        const action = this.quickActions.find(a => a.id === actionId);
+
+        // Default internal handling
+        if (action) {
+            try {
+                if (this.chatInterface && typeof this.chatInterface.askQuickActions === 'function') {
+                    this.chatInterface.askQuickActions(action);                    
+                    setTimeout(() => {
+                        this.quickActions = [];
+                        this.renderQuickReplies();
+                    }, 0);
+                }
+            } catch (e) {
+                console.error('Error handling quick action from ComposeBar:', e);
+            }
+        }
+
+        // Optional external callback
+        if (action && this.callbacks.onQuickAction) {
+            this.callbacks.onQuickAction(action);
+        }
+    }
+
+    /**
+     * Handle attachment button click
+     */
+    handleAttachment() {
+        // Always open hidden file input
+        const fileInput = this.container.querySelector('[data-eva-file-input]');
+        if (fileInput) fileInput.click();
+    }
+
+    /**
+     * Handle speech to text button click or clear input
+     */
+    handleSpeechToText() {
+        // Double-check the actual textarea value
+        const textarea = this.container.querySelector('[data-eva-input]');
+        const actualValue = textarea ? textarea.value : '';
+
+        // Use the actual textarea value as source of truth
+        const hasInput = actualValue.length > 0;
+
+        if (hasInput) {
+            this.clearInput();
+            return;
+        }
+
+        // Otherwise handle speech to text
+        if (!this.recognition) {
+            alert('Speech recognition is not supported in this browser');
+            return;
+        }
+
+        if (this.isRecording) {
+            // Stop recording
+            this.recognition.stop();
+        } else {
+            // Start recording
+            this.isRecording = true;
+            this.updateSpeechButton();
+            try {
+                this.recognition.start();
+            } catch (error) {
+                console.error('Error starting speech recognition:', error);
+                this.isRecording = false;
+                this.updateSpeechButton();
+            }
+        }
+
+        if (this.callbacks.onSpeechToText) {
+            this.callbacks.onSpeechToText(this.isRecording);
+        }
+    }
+
+    /**
+     * Clear input and update UI
+     */
+    clearInput() {
+        const textarea = this.container.querySelector('[data-eva-input]');
+        if (textarea) {            
+            textarea.value = '';
+            this.input = '';
+            this.autoResize(textarea);
+            this.updateMicrophoneButton();
+        } else {
+            console.log('textarea not found!');
+        }
+    }
+
+    /**
+     * Open Shoelace dialog
+     */
+    handleOpenDialog() {        
+        const dialog = this.container.querySelector('[data-eva-dialog]');
+        if (!dialog) return;
+        try {
+            if (typeof dialog.show === 'function') {
+                dialog.show();
+            } else {
+                dialog.setAttribute('open', '');
+            }
+        } catch (e) {
+            dialog.setAttribute('open', '');
+        }
+        // Load and render agents when dialog opens
+        this.loadAndRenderAgents('');
+    }
+
+    /**
+     * Close Shoelace dialog
+     */
+    handleCloseDialog() {
+        const dialog = this.container.querySelector('[data-eva-dialog]');
+        if (!dialog) return;
+        try {
+            if (typeof dialog.hide === 'function') {
+                dialog.hide();
+            } else {
+                dialog.removeAttribute('open');
+            }
+        } catch (e) {
+            dialog.removeAttribute('open');
+        }
+    }
+
+    /**
+     * Re-render while preserving textarea content and focus state
+     */
+    renderWithStatePreservation() {
+        // Preserve textarea state
+        const textarea = this.container.querySelector('[data-eva-input]');
+        const currentValue = textarea ? textarea.value : '';
+        const wasFocused = textarea ? document.activeElement === textarea : false;
+        const cursorPosition = textarea ? textarea.selectionStart : 0;
+        const currentAttachments = [...this.attachments];
+        // Re-render
+        this.render();
+        this.renderCommonAgents();
+
+        // Restore textarea state
+        const newTextarea = this.container.querySelector('[data-eva-input]');
+        if (newTextarea) {
+            newTextarea.value = currentValue;
+            this.input = currentValue; // Update internal state
+
+            if (wasFocused) {
+                newTextarea.focus();
+                newTextarea.setSelectionRange(cursorPosition, cursorPosition);
+            }
+        }
+
+        // Restore attachments if they exist
+        if (currentAttachments.length > 0) {
+            this.attachments = currentAttachments;
+        }
+
+    }
+
+    /**
+     * Set up event listeners for override modal buttons
+     */
+    setupOverrideModalEvents() {
+        const modal = this.container.querySelector('.overridingMsgModal');
+        if (!modal) return;
+
+        const removeBtn = modal.querySelector('.kr-primary-btn-black');
+        const closeBtn = modal.querySelector('.closeBtn');
+
+        if (removeBtn) {
+            removeBtn.addEventListener('click', () => this.handleOverrideConfirm());
+        }
+
+        if (closeBtn) {
+            closeBtn.addEventListener('click', () => this.handleOverrideCancel());
+        }
+    }
+
+    /**
+     * Show override confirmation dialog
+     */
+    showOverrideDialog() {
+        const dialog = this.container.querySelector('[data-eva-override-dialog]');
+        if (!dialog) return;
+        try {
+            if (typeof dialog.show === 'function') {
+                dialog.show();
+            } else {
+                dialog.setAttribute('open', '');
+            }
+        } catch (e) {
+            dialog.setAttribute('open', '');
+        }
+    }
+
+    /**
+     * Close override confirmation dialog
+     */
+    closeOverrideDialog() {
+        const dialog = this.container.querySelector('[data-eva-override-dialog]');
+        if (!dialog) return;
+        try {
+            if (typeof dialog.hide === 'function') {
+                dialog.hide();
+            } else {
+                dialog.removeAttribute('open');
+            }
+        } catch (e) {
+            dialog.removeAttribute('open');
+        }
+    }
+
+    /**
+     * Handle override cancel button click
+     */
+    handleOverrideCancel() {
+        this.showOverRideModal = false;
+        this.renderWithStatePreservation(); // Re-render while preserving textarea content
+    }
+
+    /**
+     * Handle override confirm button click
+     */
+    handleOverrideConfirm() {
+        // Clear attachments and hide dialog
+        this.attachments = [];
+        this.showOverRideModal = false;
+        this.renderWithStatePreservation(); // Re-render while preserving textarea content
+
+        // Continue with agent invocation
+        if (this.selectedAgent) {
+            try {
+                InvokeAgent(this.selectedAgent);
+            } catch (e) {
+                console.error(`InvokeAgent failed for ${this.selectedAgent.name}`, e);
+            }
+            this.selectedAgent = null;
+        }
+    }
+
+    handleAgentSearch(event) {
+        const searchValue = event.target.value;
+        this.loadAndRenderAgents(searchValue);
+        /*filter the agents list by their name and render the filtered list */
+
+    }
+
+    /**
+     * Fetch and render agents in the dialog
+     */
+
+    async getAgents() {
+        return new Promise((resolve) => {
+            try {
+                const state = store.getState();
+                const status = state?.global?.allAgents?.status;
+
+                // If already loaded, resolve immediately
+                if (status === 'success') {
+                    resolve();
+                    return;
+                }
+
+                // If not loaded, dispatch fetch
+                if (!status || status === 'idle') {
+                    const userId = window?.sdkConfig?.userId;
+                    if (userId) {
+                        store.dispatch(fetchAgents({ userId }));
+                    }
+                }
+
+                // Wait for agents to load
+                const unsubscribe = store.subscribe(() => {
+                    const currentState = store.getState();
+                    const currentStatus = currentState?.global?.allAgents?.status;
+
+                    if (currentStatus === 'success' || currentStatus === 'failed') {
+                        unsubscribe();
+                        resolve();
+                    }
+                });
+
+            } catch (e) {
+                console.error('Error loading agents inside compose bar:', e);
+                resolve(); // Resolve anyway to not block the UI
+            }
+        });
+    }
+    async loadAndRenderAgents(searchTerm = '') {
+        const allListEl = this.container.querySelector('[data-eva-all-agents]');
+        if (!allListEl) return;
+
+        // Show loading state
+        allListEl.innerHTML = `<li>Loading...</li>`;
+
+        try {
+            const state = store.getState();
+            const allAgents = state?.global?.allAgents?.data?.agents || [];
+            const recents = state?.global?.allAgents?.data?.recents || [];
+            let recentAgents = Array.isArray(recents)
+                ? recents.map(id => allAgents.find(a => String(a.id) === String(id))).filter(Boolean)
+                : [];   
+            if(searchTerm?.length > 0) {
+                recentAgents = recentAgents.filter(agent => agent?.name?.toLowerCase().includes(searchTerm.toLowerCase()));
+            }
+            this.renderAgentsList(allListEl, recentAgents, 'recent');
+
+        } catch (e) {
+            allListEl.innerHTML = `<li>Failed to load agents</li>`;
+        }
+    }
+
+    /**
+     * Render a list of agents into a target element
+     */
+    renderAgentsList(targetEl, agents, listType) {
+        if (!agents || agents.length === 0) {
+            targetEl.innerHTML = `<li>No agents found</li>`;
+            return;
+        }
+        /*get attachments from DOM */
+        const attachments = this.container.querySelectorAll('[data-attach-uid]');
+        const itemsHtml = agents.map(agent => {
+            const safeName = (agent?.name || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            const icon = agent?.icon ? `<img src="${agent.icon}" alt="" width="18" height="18" />` : '';
+            return `<li class="eva-agent-item" data-agent-id="${agent.id}" data-agent-type="${listType}"><div class="agent-icon">${icon}</div><div class="agent-details"><div class="agent-name">${safeName}</div><div class="agent-desc">Autonomous Agent<span>•</span>The app allows users to search and compare company reports using natural language</div></div></li>`;
+        }).join('');
+        targetEl.innerHTML = itemsHtml;
+
+        // Attach click handlers
+        targetEl.querySelectorAll('.eva-agent-item').forEach(item => {
+            item.addEventListener('click', () => {
+                const agentId = item.getAttribute('data-agent-id');
+                const agent = agents.find(a => String(a.id) === String(agentId));
+                if (!agent) return;
+                this.selectedAgent = agent;
+                if (attachments?.length > 0) {
+                    // Store the agent for later invocation after user confirms
+                    // this.pendingAgentInvocation = agent;
+                    this.showOverRideModal = true;
+                    this.renderWithStatePreservation(); 
+                    this.setupOverrideModalEvents(); // Set up event listeners for modal buttons
+                } else {
+                    this.commonAgents = [];
+                    try { InvokeAgent(agent); } catch (e) { console.error('InvokeAgent failed', e); }
+                }
+                this.handleCloseDialog();
+            });
+        });
+    }
+
+    /**
+     * Update speech button appearance based on recording state
+     */
+    updateSpeechButton() {
+        const speechBtn = this.container.querySelector('[data-eva-speech]');
+        if (speechBtn) {
+            if (this.isRecording) {
+                speechBtn.classList.add('recording');
+                speechBtn.setAttribute('title', 'Stop recording');
+            } else {
+                speechBtn.classList.remove('recording');
+                speechBtn.setAttribute('title', 'Voice input');
+            }
+        }
+    }
+
+    /**
+     * Set callback functions
+     */
+    on(event, callback) {
+        if (this.callbacks.hasOwnProperty('on' + event.charAt(0).toUpperCase() + event.slice(1))) {
+            this.callbacks['on' + event.charAt(0).toUpperCase() + event.slice(1)] = callback;
+        }
+        return this;
+    }
+
+    /**
+     * Set input value
+     */
+    setValue(value) {
+        this.input = value;
+        const textarea = this.container.querySelector('[data-eva-input]');
+        if (textarea) {
+            textarea.value = value;
+            this.autoResize(textarea);
+        }
+        return this;
+    }
+
+    /**
+     * Get current input value
+     */
+    getValue() {
+        return this.input;
+    }
+
+    /**
+     * Set loading state
+     */
+    setLoading(loading) {
+        this.isLoading = loading;
+        const sendBtn = this.container.querySelector('[data-eva-send]');
+        const stopBtn = this.container.querySelector('[data-eva-stop]');
+
+        if (sendBtn) {
+            // Preserve the icon instead of replacing with text
+            if (loading) {
+                sendBtn.innerHTML = StopIcon({ size: 16, color: "#F97066" });
+                sendBtn.title = 'Stop';
+                sendBtn.classList.add('stop-btn');
+            } else {
+                sendBtn.innerHTML = arrowCirlceUpIcon({ size: 16, color: "#101828" });
+                sendBtn.title = 'Send';
+                sendBtn.classList.remove('stop-btn');
+            }
+        }
+
+        if (stopBtn) {
+            stopBtn.disabled = !loading;
+        }
+
+        return this;
+    }
+
+    
+
+    /**
+     * Remove an attachment by UID using FileUpload interface
+     */
+    removeAttachmentByUid(uid) {
+        if (!uid) return;
+        const file = (this.attachments || []).find(f => String(f?.uID || f?.componentId || f?.docId) === String(uid));
+        if (!file) {
+            console.log('File not found for removal, uid:', uid);
+            return;
+        }
+        try {
+            console.log('Removing file:', file);
+            this.fileUploaderInterface.removeContext(file);
+            
+            // Also remove from local array immediately for UI responsiveness
+            this.attachments = this.attachments.filter(f => String(f?.uID || f?.componentId || f?.docId) !== String(uid));
+            this.renderAttachments();
+            
+        } catch (err) {
+            console.warn('Failed to remove attachment:', err);
+        }
+    }
+
+    /**
+     * Show/hide the compose bar
+     */
+    setVisible(visible) {
+        this.container.style.display = visible ? 'block' : 'none';
+        return this;
+    }
+
+    /**
+     * Focus on the input
+     */
+    focus() {
+        const textarea = this.container.querySelector('[data-eva-input]');
+        if (textarea) {
+            textarea.focus();
+        }
+        return this;
+    }
+
+    /**
+     * Disable/enable the compose bar
+     */
+    setDisabled(disabled) {
+        const textarea = this.container.querySelector('[data-eva-input]');
+        const buttons = this.container.querySelectorAll('button');
+
+        if (textarea) {
+            textarea.disabled = disabled;
+        }
+
+        buttons.forEach(btn => {
+            if (!disabled || !btn.hasAttribute('data-eva-stop')) {
+                btn.disabled = disabled;
+            }
+        });
+
+        return this;
+    }
+
+    /**
+     * Destroy the compose bar
+     */
+    destroy() {
+        if (this.container) {
+            this.container.innerHTML = '';
+        }
+        if (typeof this.unsubscribe === 'function') {
+            try { this.unsubscribe(); } catch (e) { }
+            this.unsubscribe = null;
+        }
+    }
+}
+
+export default ComposeBar;
+//create another component renderComposeBar
