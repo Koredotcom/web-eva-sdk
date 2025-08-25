@@ -5,7 +5,7 @@ import MultiResponse from "../../chat/gptTemplate/MultiResponse";
 import gptFormFunctionality from "../functionality/gpt-form-template";
 import store from "../../redux/store";
 import { QuillEditor } from "../../components";
-import { createDeleteIcon } from "../icons-library";
+import { createDeleteIcon, Close } from "../icons-library";
 
 // Helper function to initialize Quill editor for a container
 const initializeQuillForContainer = (container, field, item, promptDropdownWords, index) => {
@@ -614,7 +614,7 @@ export function render(item) {
 
 	const delIconDiv = document.createElement("div");
 	delIconDiv.id = `deleteAnswer-${item?.messageId}`;
-	delIconDiv.innerHTML = createDeleteIcon({ size: 16, color: "#667085" });
+	delIconDiv.innerHTML = Close({ size: 13, color: "#A3A3A3" });
 	delIconDiv.className = "delIcon";
 	leftNameDiv.appendChild(imgBlockDiv);
 	leftNameDiv.appendChild(ltTitleDiv);
@@ -756,7 +756,7 @@ export function render(item) {
 		if (index > 0) {
 			const deleteResponse = document.createElement("div");
 			deleteResponse.className = "deleteIcon";
-			deleteResponse.innerHTML = createDeleteIcon({ size: 16, color: '#667085'});
+			deleteResponse.innerHTML = Close({ size: 13, color: '##A3A3A3'});
 			deleteResponse.id = `deleteResponse-${item?.messageId}-${index}`;
 			responseHeaderWrapper.appendChild(deleteResponse);
 		}

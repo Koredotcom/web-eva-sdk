@@ -12,9 +12,9 @@ const constructRecentAgentsList = (recentAgents = []) => {
         if(recentAgents?.length > 0) {
             return `<div class="recent-agents-container">
                 ${recentAgents.slice(0, 6).map((agent, index) => {
-                    return `<div class="recent-agent" data-agent-index="${index}" style="cursor: pointer; padding: 10px; border: 1px solid #ddd; margin: 5px; border-radius: 5px; display: flex; align-items: center; gap: 10px; transition: all 0.2s;">
-                        <img src="${agent?.icon || ''}" alt="${agent?.name || 'Agent'}" style="width: 32px; height: 32px; border-radius: 50%;" />
-                        <span style="font-weight: 500;">${agent?.name || 'Unnamed Agent'}</span>
+                    return `<div class="recent-agent" data-agent-index="${index}" title="${agent?.name || 'Unnamed Agent'}">
+                        <span class="recent-agent-icon"><img src="${agent?.icon || ''}" alt="${agent?.name || 'Agent'}" /></span>
+                        <span class="recent-agent-name">${agent?.name || 'Unnamed Agent'}</span>
                     </div>`;
                 }).join('')}
             </div>`;

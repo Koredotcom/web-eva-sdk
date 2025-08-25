@@ -18,11 +18,16 @@ html, body {
         height: calc(100% - 36px);
         display: flex;
         flex-direction: column;
-        border-radius: 1rem;
-        border: .0625rem solid #e5e5e5;
-        box-shadow: 0 0 var(--Background-Blur-lg, 24px) 0 rgba(16, 24, 40, .1), 0 0 12px 0 rgba(16, 24, 40, .01);
+        border-radius: 1rem;        
         position: relative;
         z-index: 1;
+        border: 0.0625rem solid #E5E5E5;
+        background: linear-gradient(0deg, #F8F7F7 0%, #F8F7F7 100%), #F8F7F7;
+
+        &:hover {
+            box-shadow: 0 0 var(--Background-Blur-lg, 24px) 0 rgba(16, 24, 40, .1), 0 0 12px 0 rgba(16, 24, 40, .01);
+            background: #fff;
+        }
         h1 {
             margin-top: 0;
             margin-bottom: 12px;
@@ -661,7 +666,7 @@ html, body {
         gap: 0.5rem;
         border-radius: 1rem;
         border: 0.0625rem solid var(--Gray-true-200, #E5E5E5);
-        background: var(--Gray-iron-25, #FCFCFC);
+        background: #FAFAFA;
         margin-top: 0.5rem;
         margin-bottom: 0.75rem;
 
@@ -763,21 +768,18 @@ html, body {
 
 .translateForm-view {
     width: 100%;
-    border-radius: 0.75rem;
-    border: 0.0625rem solid #D1D1D6;
+    border-radius: 1.5rem;
+    border: 0.0625rem solid #E5E5E5;
     margin-bottom: 1rem;
     display: flex;
     flex-direction: column;
-    
+    margin-top: 1rem;
+    box-shadow: 0 1px var(--Background-Blur-md, 16px) 0 rgba(16, 24, 40, 0.05);    
 
-     .fileUploader {
+    .fileUploader {
         .loading-screen.small-Loader {
             background-color: #fff;
         }
-    }
-
-    @media (max-width: 64rem) {
-        width: 100%;
     }
     input[type="file"] {
         display: none;
@@ -800,15 +802,15 @@ html, body {
     .tvHeader {
         display: flex;
         /* height: 3rem;*/
-        padding: 0.5rem 1.25rem 0.5rem 1.5rem;
+        padding: 1rem 1.25rem 0.25rem 1.25rem;
         align-items: center;
         gap: 0.5rem;
         align-self: stretch;
         justify-content: space-between;
-        border-radius: 0.75rem 0.75rem 0rem 0rem;
-        border-bottom: 0.0625rem solid var(--Primary-Colors-Gray-200, #EAECF0);
-        background: var(--Gray-50, #F9FAFB);
+        border-radius: 1.5rem 1.5rem 0rem 0rem;
+        border-bottom: 0.0625rem solid transparent;
         flex-shrink: 0;
+        background: #fff;
 
         .leftName {
             display: flex;
@@ -851,6 +853,31 @@ html, body {
         display: flex;
         flex-direction: column;
         gap: 1rem;
+
+        sl-textarea::part(base) {
+            border-radius: 0.75rem;
+            border-color: #E5E5E5;
+        }
+
+        .eva-quill-editor {
+            border: none;
+            margin-top: 0.5rem;
+            .ql-editor {
+                border-radius: 0.75rem;
+                border: 0.0625rem solid #E5E5E5;
+                background: #FFFFFF;
+                box-shadow: 0rem 0.0625rem 0.125rem 0rem rgba(16, 24, 40, 0.05);
+                padding: 0.625rem 0.875rem;
+                min-height: 5.875rem;
+                font-family: Inter;
+                font-size: 0.875rem;
+                font-style: normal;
+                font-weight: 400;
+                line-height: 1.25rem;
+                letter-spacing: 0em;
+                width: 100%;
+            }
+        }
 
         .responsesFieldWrapper {
             .responseHeaderWrapper {

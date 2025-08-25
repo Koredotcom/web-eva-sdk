@@ -80,7 +80,7 @@ const ChatInterfaceDemo = () => {
   useEffect(() => {
     // Initialize ComposeBar by passing the div id
     RenderComposeBar('#eva-composebar');
-    renderRecentAgents('recent-agents');
+    renderRecentAgents('#recent-agents');
   }, []); 
 
 
@@ -104,9 +104,7 @@ const ChatInterfaceDemo = () => {
           <Agents /> */}
         </div>
       </div>
-      <div id="recent-agents">
-        
-      </div>
+      
       <div className="chatInterfaceSec">
         <div className="chatSec">
           <div className="chatSec-inner">
@@ -114,7 +112,7 @@ const ChatInterfaceDemo = () => {
             Object.values(messages).map((item, index) => {
               if (item?.isTask) return;
               const assistantIconTemplate = () => {
-                return <div className="logo-icon"><img src="/public/eva-black-svg.svg" alt="AiForWork" /></div>;
+                return <div className="logo-icon"><img src="/eva-black-svg.svg" alt="AiForWork" /></div>;
               };
 
               
@@ -136,7 +134,10 @@ const ChatInterfaceDemo = () => {
           </div>
         </div>
         {/* Replace the React Composebar with plain JavaScript ComposeBar container */}
-        <div id="eva-composebar"></div>
+        <div className="compose-section">          
+          <div id="eva-composebar"></div>
+          <div id="recent-agents"></div>
+        </div>
       </div>
     </div>
   );
