@@ -6,17 +6,17 @@
 .eva-quick-reply-container {
     display: flex;
     align-items: center;
-    margin-bottom: 8px;
-    gap: 8px;
+    margin-bottom: .5rem;
+    gap: .5rem;
     flex-wrap: wrap;
 }
 
 /* Quick action chips */
 .eva-quick-reply-chip {
-    border: 1px solid #cdcdcd;
-    padding: 6px 12px;
-    border-radius: 8px;
-    font-size: 12px;
+    border: .0625rem solid #cdcdcd;
+    padding: .375rem .75rem;
+    border-radius: .5rem;
+    font-size: .75rem;
     cursor: pointer;
     background: #fff;
     transition: background-color 0.2s ease, border-color 0.2s ease;
@@ -47,8 +47,8 @@
 .eva-input-actions {
     display: flex;
     align-items: center;
-    gap: 4px;
-    padding: 4px 8px;
+    gap: .25rem;
+    padding: .25rem .5rem;
     flex-shrink: 0;
 }
 
@@ -66,8 +66,8 @@
 .eva-composebar-buttons {
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding-bottom: 16px;
+    gap: .75rem;
+    padding-bottom: 1rem;
     flex-wrap: wrap;
     margin-top: 1rem;
 }
@@ -77,19 +77,19 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 6px;
-    padding: 6px 12px;
-    border-radius: 12px;
+    gap: .375rem;
+    padding: .375rem .75rem;
+    border-radius: .75rem;
     font-family: inherit;
-    font-size: 14px;
+    font-size: .875rem;
     font-weight: 500;
     line-height: 1.25;
     cursor: pointer;
-    border: 1px solid transparent;
+    border: .0625rem solid transparent;
     transition: all 0.2s ease;
     text-decoration: none;
     user-select: none;
-    min-height: 36px;
+    min-height: 2.25rem;
 }
 
 .eva-btn:disabled {
@@ -119,7 +119,7 @@
     background-color: #fff;
     color: #344054;
     border-color: #d0d5dd;
-    box-shadow: 0 1px 2px rgba(16, 24, 40, 0.05);
+    box-shadow: 0 .0625rem .125rem rgba(16, 24, 40, 0.05);
 }
 
 .eva-btn-secondary:hover:not(:disabled) {
@@ -135,8 +135,8 @@
 
 /* Icon in buttons */
 .eva-btn svg {
-    width: 16px;
-    height: 16px;
+    width: 1rem;
+    height: 1rem;
     flex-shrink: 0;
 }
 
@@ -146,11 +146,11 @@
 }
 
 /* Responsive design */
-@media (max-width: 768px) {
+@media (max-width: 48rem) {
     .eva-composebar-buttons {
         flex-direction: column;
         align-items: stretch;
-        gap: 8px;
+        gap: .5rem;
     }
     
     .eva-btn {
@@ -159,43 +159,43 @@
     }
     
     .eva-quick-reply-container {
-        gap: 6px;
+        gap: .375rem;
     }
     
     .eva-quick-reply-chip {
-        font-size: 11px;
-        padding: 4px 8px;
+        font-size: .6875rem;
+        padding: .25rem .5rem;
     }
 }
 
-@media (max-width: 480px) {
+@media (max-width: 30rem) {
     
     .eva-compose-textarea {
-        font-size: 16px; /* Prevents zoom on iOS */
+        font-size: 1rem; /* Prevents zoom on iOS */
     }
     
     .eva-quick-reply-container {
-        gap: 4px;
+        gap: .25rem;
     }
     
     .eva-quick-reply-chip {
-        font-size: 10px;
-        padding: 3px 6px;
+        font-size: .625rem;
+        padding: .1875rem .375rem;
     }
 }
 
 /* High contrast mode support */
 @media (prefers-contrast: high) {
     .eva-compose-textarea {
-        border-width: 2px;
+        border-width: .125rem;
     }
     
     .eva-btn {
-        border-width: 2px;
+        border-width: .125rem;
     }
     
     .eva-quick-reply-chip {
-        border-width: 2px;
+        border-width: .125rem;
     }
 }
 
@@ -263,7 +263,7 @@
             margin-bottom: .75rem;
         }
         .eva-composebar-area {
-            border: 4px solid #f9fafb;
+            border: .25rem solid #f9fafb;
             display: flex;
             flex-direction: column;
             border-radius: 1.5rem;
@@ -281,7 +281,7 @@
                 transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
                 transition-duration: .2s;
                 animation-duration: .2s;
-                box-shadow: 0px 20px 24px -4px rgba(16, 24, 40, .08), 0px 8px 8px -4px rgba(16, 24, 40, .03);
+                box-shadow: 0rem 1.25rem 1.5rem -0.25rem rgba(16, 24, 40, .08), 0rem .5rem .5rem -0.25rem rgba(16, 24, 40, .03);
 
                 .eva-attachments-container {
                     display: flex;           
@@ -348,7 +348,7 @@
                             border: none;
                             padding: 0;
                             background-color: transparent;
-                            font-size: 20px;
+                            font-size: 1.25rem;
                             color: #667085;
                         }
                     }
@@ -363,6 +363,12 @@
                         font-size: 0.875rem;
                         font-family: "Inter", sans-serif;
                         min-height: 1.5rem;
+                        font-size: 0.875rem;
+                        font-style: normal;
+                        font-weight: 400;
+                        line-height: 1.25rem;
+                        letter-spacing: 0em;
+                        color: #141414;
 
                         &:focus {
                             box-shadow: none;
@@ -410,8 +416,8 @@
                             display: flex;
                             align-items: center;
                             justify-content: center;
-                            width: 32px;
-                            height: 32px;
+                            width: 2rem;
+                            height: 2rem;
                             border: none;
                             border-radius: 100%;
                             background: transparent;
@@ -419,7 +425,7 @@
                             cursor: pointer;
                             transition: all 0.2s ease;
                             padding: 0;
-                            border: 1px solid #e5e5e5;
+                            border: .0625rem solid #e5e5e5;
 
                             &:hover {
                                 background-color: var(--Gray-iron-100, #F4F4F5);
@@ -482,7 +488,7 @@ sl-dialog.eva-agents-dialog {
         position: relative;
         .wa-searchIcon {
             position: absolute;
-            left: 15px;
+            left: .9375rem;
             top: 0;
             bottom: 0;
             margin: auto;
@@ -560,7 +566,7 @@ sl-dialog.eva-agents-dialog {
                         padding-left: 2.25rem;
                         padding-right: 2rem;
                         &:focus {
-                            box-shadow: 0px 2px 4px -2px rgba(16, 24, 40, .06) !important;
+                            box-shadow: 0rem .125rem .25rem -0.125rem rgba(16, 24, 40, .06) !important;
                             border: .0625rem solid var(--Gray-iron-300, #D1D1D6) !important;
                             background: #fff;
                         }
@@ -585,16 +591,19 @@ sl-dialog.eva-agents-dialog {
         }                    
     }
 
-    .eva-agents-container {
+    .eva-agents-container,
+    .eva-flows-container {
         overflow: auto;
-        .eva-agents-list {
+        .eva-agents-list,
+        .eva-flows-list {
             padding: 0;
             margin: 0;
             list-style: none;
             display: flex;
             flex-direction: column;
 
-            .eva-agent-item {
+            .eva-agent-item,
+            .eva-flow-item {
                 list-style-type: none;
                 display: flex;
                 -webkit-box-align: center;
@@ -631,14 +640,16 @@ sl-dialog.eva-agents-dialog {
                     justify-content: center;
                 }
 
-                .agent-details {
+                .agent-details,
+                .eva-flow-content {
                     display: flex;
                     flex-direction: column;
                     gap: .125rem;
                     flex-grow: 1;
                     width: calc(100% - 3.5rem);
 
-                    .agent-name {
+                    .agent-name,
+                    .eva-flow-name {
                         font-family: Inter;
                         font-size: .875rem;
                         font-style: normal;
@@ -650,7 +661,8 @@ sl-dialog.eva-agents-dialog {
                         text-overflow: ellipsis;
                         white-space: nowrap;
                     }
-                    .agent-desc {
+                    .agent-desc,
+                    .eva-flow-description {
                         font-family: Inter;
                         font-size: .75rem;
                         font-style: normal;
@@ -862,7 +874,7 @@ sl-dialog.eva-agents-dialog {
 
         &:hover {
             background: #F5F5F5;
-            box-shadow: 0px 2px 4px -2px rgba(16, 24, 40, 0.06) !important;
+            box-shadow: 0rem .125rem .25rem -0.125rem rgba(16, 24, 40, 0.06) !important;
             transform: none !important;
         }
 

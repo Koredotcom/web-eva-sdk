@@ -88,7 +88,7 @@ export function renderLoading(
             </div>
             <div class="message-bubble loading" >
                 ${assistantIconTemplate ? assistantIconTemplate : ""}
-                <div class="loading-text">${encodeHtml(text)}</div>   
+                <div class="loading-text"><div class="dot-flashing"></div></div>   
             </div>`;
 }
 

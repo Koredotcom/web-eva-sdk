@@ -131,15 +131,14 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
                     </div>
                     <span class="krSpecName">${htmlDecode(
 						source?.title || "No subject"
-					)}</span>
-                    ${
-						warning
-							? `<div class="warningText">${warning}</div>`
-							: ""
-					}
+					)}</span>                    
                 </span>
-            </div>
-            </div>
+				${
+					warning
+						? `<div class="warningText">${warning}</div>`
+						: ""
+				}
+            </div>            
         `;
 	};
 
