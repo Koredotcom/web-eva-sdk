@@ -201,3 +201,176 @@ export function StopIcon({ size = config.size, color = config.color, className =
             </svg>
   `;
 }
+
+export function setContextIcon({ className = '', size = config.size, color = config.color }) {
+  return `
+      <svg width="${size}" height="${size}" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" className="wa-setContextIcon ${className}">
+       <path d="M9.33333 7.3335H5.33333M6.66666 10.0002H5.33333M10.6667 4.66683H5.33333M13.3333 7.00016V4.5335C13.3333 3.41339 13.3333 2.85334 13.1153 2.42552C12.9236 2.04919 12.6176 1.74323 12.2413 1.55148C11.8135 1.3335 11.2534 1.3335 10.1333 1.3335H5.86666C4.74656 1.3335 4.18651 1.3335 3.75868 1.55148C3.38236 1.74323 3.0764 2.04919 2.88465 2.42552C2.66666 2.85334 2.66666 3.41339 2.66666 4.5335V11.4668C2.66666 12.5869 2.66666 13.147 2.88465 13.5748C3.0764 13.9511 3.38236 14.2571 3.75868 14.4488C4.18651 14.6668 4.74656 14.6668 5.86666 14.6668H7.66666M14.6667 14.6668L13.6667 13.6668M14.3333 12.0002C14.3333 13.2888 13.2887 14.3335 12 14.3335C10.7113 14.3335 9.66666 13.2888 9.66666 12.0002C9.66666 10.7115 10.7113 9.66683 12 9.66683C13.2887 9.66683 14.3333 10.7115 14.3333 12.0002Z" stroke="${color}" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+  `;
+}
+
+export function EllipsisVertical({ size = config.size, color = config.color, className = '' } = {}) {
+  return `
+    <>
+      <svg width="${size}" height="${size}" viewBox="0 0 3 14" fill="none" xmlns="http://www.w3.org/2000/svg" className="wa-EllipsisVertical ${className}">
+        <path d="M1.46667 3.26666C2.15396 3.26666 2.71112 2.7095 2.71112 2.02222C2.71112 1.33493 2.15396 0.777771 1.46667 0.777771C0.779386 0.777771 0.222229 1.33493 0.222229 2.02222C0.222229 2.7095 0.779386 3.26666 1.46667 3.26666Z" fill="${color}" />
+        <path d="M2.71112 6.99999C2.71112 7.68728 2.15396 8.24444 1.46667 8.24444C0.779386 8.24444 0.222229 7.68728 0.222229 6.99999C0.222229 6.31271 0.779386 5.75555 1.46667 5.75555C2.15396 5.75555 2.71112 6.31271 2.71112 6.99999Z" fill="${color}" />
+        <path d="M2.71112 11.9778C2.71112 12.6651 2.15396 13.2222 1.46667 13.2222C0.779386 13.2222 0.222229 12.6651 0.222229 11.9778C0.222229 11.2905 0.779386 10.7333 1.46667 10.7333C2.15396 10.7333 2.71112 11.2905 2.71112 11.9778Z" fill="${color}" />
+      </svg>
+    </>
+  `
+}
+
+export function Gmail({ size = config.size, color = config.color, className = '' }) {
+  return `
+    <>
+      <svg width="${size}" height="${size}" className="wa-Gmail ${className}" viewBox="0 0 12 9" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M9.02564 1.26172L6.03209 3.59793L2.97009 1.26172V1.26235L2.97379 1.26551V4.53683L5.99756 6.92356L9.02564 4.62902V1.26172Z" fill="#EA4335" />
+        <path d="M9.81173 0.693193L9.02557 1.26146V4.62876L11.4993 2.72948V1.58537C11.4993 1.58537 11.1991 -0.048712 9.81173 0.693193Z" fill="#FBBC05" />
+        <path d="M9.02557 4.62877V8.99622H10.9216C10.9216 8.99622 11.4611 8.94066 11.5 8.32566V2.72949L9.02557 4.62877Z" fill="#34A853" />
+        <path d="M2.97393 8.99978V4.53636L2.97009 4.5332L2.97393 8.99978Z" fill="#C5221F" />
+        <path d="M2.97007 1.26227L2.18823 0.697156C0.800897 -0.0447488 0.5 1.5887 0.5 1.5887V2.73282L2.97007 4.53359V1.26227Z" fill="#C5221F" />
+        <path d="M2.97009 1.26221V4.53353L2.97393 4.53669V1.26536L2.97009 1.26221Z" fill="#C5221F" />
+        <path d="M0.5 2.7334V8.32957C0.538229 8.94519 1.07836 9.00013 1.07836 9.00013H2.97438L2.97007 4.53354L0.5 2.7334Z" fill="#4285F4" />
+      </svg>
+    </>
+  `
+}
+
+
+export function Outlookimg({ className = '', size = config.size, color = config.color }) {
+  return `
+    <>
+      <svg width="${size}" height="${size}" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" className="wa-Outlookimg ${className}">
+        <rect x="5" y="1" width="10" height="14" rx="1" fill="#1066B5" />
+        <rect x="5" y="1" width="10" height="14" rx="1" fill="url(#paint0_linear_21_20380)" />
+        <rect x="5" y="2.5" width="5" height="5" fill="#32A9E7" />
+        <rect x="5" y="7.5" width="5" height="5" fill="#167EB4" />
+        <rect x="10" y="7.5" width="5" height="5" fill="#32A9E7" />
+        <rect x="10" y="2.5" width="5" height="5" fill="#58D9FD" />
+        {/* <mask id="mask0_21_20380" style="mask-type:alpha" maskUnits="userSpaceOnUse" x="4" y="7" width="12" height="8">
+                    <path d="M4 7H15C15.5523 7 16 7.44772 16 8V14C16 14.5523 15.5523 15 15 15H5C4.44772 15 4 14.5523 4 14V7Z" fill="url(#paint1_linear_21_20380)" />
+                </mask> */}
+        <g>
+          <path d="M16 7V9H15V7H16Z" fill="#135298" />
+          <path d="M16 15V8L3.5 15H16Z" fill="url(#paint2_linear_21_20380)" />
+          <path d="M4 15V8L16.5 15H4Z" fill="url(#paint3_linear_21_20380)" />
+        </g>
+        <path d="M4 6C4 5.17157 4.67157 4.5 5.5 4.5H8.5C9.32843 4.5 10 5.17157 10 6V12C10 12.8284 9.32843 13.5 8.5 13.5H4V6Z" fill="black" fillOpacity="0.3" />
+        <rect y="3.5" width="9" height="9" rx="1" fill="url(#paint4_linear_21_20380)" />
+        <path d="M7 8.03463V7.95152C7 6.51108 5.96361 5.5 4.50791 5.5C3.0443 5.5 2 6.51801 2 7.96537V8.04848C2 9.48892 3.03639 10.5 4.5 10.5C5.9557 10.5 7 9.48199 7 8.03463ZM5.8212 8.04848C5.8212 9.00415 5.28323 9.57895 4.50791 9.57895C3.73259 9.57895 3.18671 8.9903 3.18671 8.03463V7.95152C3.18671 6.99584 3.72468 6.42105 4.5 6.42105C5.2674 6.42105 5.8212 7.0097 5.8212 7.96537V8.04848Z" fill="white" />
+        <defs>
+          <linearGradient id="paint0_linear_21_20380" x1="5" y1="8" x2="15" y2="8" gradientUnits="userSpaceOnUse">
+            <stop stopColor="#064484" />
+            <stop offset="1" stopColor="#0F65B5" />
+          </linearGradient>
+          <linearGradient id="paint1_linear_21_20380" x1="4" y1="13.3846" x2="16" y2="13.3846" gradientUnits="userSpaceOnUse">
+            <stop stopColor="#1B366F" />
+            <stop offset="1" stopColor="#2657B0" />
+          </linearGradient>
+          <linearGradient id="paint2_linear_21_20380" x1="16" y1="11.5" x2="4" y2="11.5" gradientUnits="userSpaceOnUse">
+            <stop stopColor="#44DCFD" />
+            <stop offset="0.453125" stopColor="#259ED0" />
+          </linearGradient>
+          <linearGradient id="paint3_linear_21_20380" x1="4" y1="11.5" x2="16" y2="11.5" gradientUnits="userSpaceOnUse">
+            <stop stopColor="#259ED0" />
+            <stop offset="1" stopColor="#44DCFD" />
+          </linearGradient>
+          <linearGradient id="paint4_linear_21_20380" x1="0" y1="8" x2="9" y2="8" gradientUnits="userSpaceOnUse">
+            <stop stopColor="#064484" />
+            <stop offset="1" stopColor="#0F65B5" />
+          </linearGradient>
+        </defs>
+      </svg>
+    </>
+`
+}
+
+
+export function Slackimg({ className = '', size = config.size, color = config.color }) {
+  return `
+    <>
+      <svg width="${size}" height="${size}" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" className="wa-Slackimg ${className}">
+        <path d="M13.2501 7.49979C13.9404 7.49979 14.5 6.94019 14.5 6.24989C14.5 5.5596 13.9404 5 13.2501 5C12.5597 5 12 5.55964 12 6.25V7.49979H13.2501ZM9.75 7.49979C10.4404 7.49979 11 6.94014 11 6.24979V2.75C11 2.05964 10.4404 1.5 9.75 1.5C9.05964 1.5 8.5 2.05964 8.5 2.75V6.24979C8.5 6.94014 9.05964 7.49979 9.75 7.49979Z" fill="#2EB67D" />
+        <path d="M2.74989 8.50021C2.0596 8.50021 1.5 9.05981 1.5 9.75011C1.5 10.4404 2.05965 11 2.74995 11C3.4403 11 4 10.4404 4 9.75V8.50021H2.74989ZM6.25 8.50021C5.55964 8.50021 5 9.05986 5 9.75021V13.25C5 13.9404 5.55964 14.5 6.25 14.5C6.94036 14.5 7.5 13.9404 7.5 13.25V9.75021C7.5 9.05986 6.94036 8.50021 6.25 8.50021Z" fill="#E01E5A" />
+        <path d="M8.50021 13.2501C8.50021 13.9404 9.05981 14.5 9.75011 14.5C10.4404 14.5 11 13.9403 11 13.2501C11 12.5597 10.4404 12 9.75 12L8.50021 12L8.50021 13.2501ZM8.50021 9.75C8.50021 10.4404 9.05986 11 9.75021 11L13.25 11C13.9404 11 14.5 10.4404 14.5 9.75C14.5 9.05964 13.9404 8.5 13.25 8.5L9.75021 8.5C9.05986 8.5 8.50021 9.05964 8.50021 9.75Z" fill="#ECB22E" />
+        <path d="M7.49979 2.74989C7.49979 2.0596 6.94019 1.5 6.24989 1.5C5.5596 1.5 5 2.05965 5 2.74995C5 3.4403 5.55964 4 6.25 4L7.49979 4L7.49979 2.74989ZM7.49979 6.25C7.49979 5.55964 6.94014 5 6.24979 5L2.75 5C2.05964 5 1.5 5.55964 1.5 6.25C1.5 6.94036 2.05964 7.5 2.75 7.5L6.24979 7.5C6.94014 7.5 7.49979 6.94036 7.49979 6.25Z" fill="#36C5F0" />
+      </svg>
+    </>
+  `
+}
+
+export function Teamsimg({ className = '', size = config.size, color = config.color }) {
+  return `
+    <>
+      <svg width="${size}" height="${size}" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" className="wa-Teamsimg ${className}">
+        <path d="M9.5 6.95161C9.5 6.70219 9.70219 6.5 9.95161 6.5H15.5484C15.7978 6.5 16 6.70219 16 6.95161V10.25C16 12.0449 14.5449 13.5 12.75 13.5C10.9551 13.5 9.5 12.0449 9.5 10.25V6.95161Z" fill="url(#paint0_linear_21_20386)" />
+        <path d="M4.5 6.1129C4.5 5.77441 4.77441 5.5 5.1129 5.5H11.8871C12.2256 5.5 12.5 5.77441 12.5 6.1129V11C12.5 13.2091 10.7091 15 8.5 15C6.29086 15 4.5 13.2091 4.5 11V6.1129Z" fill="url(#paint1_linear_21_20386)" />
+        <circle cx="13.5" cy="4" r="1.5" fill="#34439E" />
+        <circle cx="13.5" cy="4" r="1.5" fill="url(#paint2_linear_21_20386)" />
+        <circle cx="9" cy="3" r="2" fill="url(#paint3_linear_21_20386)" />
+        <path d="M8.5 5C9.88074 5 11 3.88074 11 2.5C11 1.11926 9.88074 0 8.5 0C7.11926 0 6 1.11926 6 2.5C6 3.88074 7.11926 5 8.5 5Z" fill="url(#paint4_linear_21_20386)" />
+        <path d="M5.11292 5.5C4.77441 5.5 4.5 5.77441 4.5 6.11292V11C4.5 13.2092 6.29083 15 8.5 15C10.7092 15 12.5 13.2092 12.5 11V6.11292C12.5 5.77441 12.2256 5.5 11.8871 5.5H5.11292Z" fill="url(#paint5_linear_21_20386)" />
+
+        <g>
+          <path d="M3.5 6C3.5 5.17157 4.17157 4.5 5 4.5H8.5C9.32843 4.5 10 5.17157 10 6V12C10 12.8284 9.32843 13.5 8.5 13.5H3.5V6Z" fill="black" fillOpacity="0.3" />
+        </g>
+        <rect y="3.5" width="9" height="9" rx="1" fill="url(#paint6_linear_21_20386)" />
+        <path d="M6.5 5.5H2.5V6.41737H3.99747V10.5H5.00253V6.41737H6.5V5.5Z" fill="white" />
+        <defs>
+          <linearGradient id="paint0_linear_21_20386" x1="9.5" y1="6.86842" x2="16.0795" y2="11.1677" gradientUnits="userSpaceOnUse">
+            <stop stopColor="#364088" />
+            <stop offset="1" stopColor="#6E7EE1" />
+          </linearGradient>
+          <linearGradient id="paint1_linear_21_20386" x1="4.5" y1="9.70192" x2="12.5" y2="9.70192" gradientUnits="userSpaceOnUse">
+            <stop stopColor="#515FC4" />
+            <stop offset="1" stopColor="#7084EA" />
+          </linearGradient>
+          <linearGradient id="paint2_linear_21_20386" x1="12" y1="2.65789" x2="14.8982" y2="4.69734" gradientUnits="userSpaceOnUse">
+            <stop stopColor="#364088" />
+            <stop offset="1" stopColor="#6E7EE1" />
+          </linearGradient>
+          <linearGradient id="paint3_linear_21_20386" x1="7.57143" y1="1.57143" x2="10.1429" y2="4.57143" gradientUnits="userSpaceOnUse">
+            <stop stopColor="#4858AE" />
+            <stop offset="1" stopColor="#4E60CE" />
+          </linearGradient>
+          <linearGradient id="paint4_linear_21_20386" x1="6.71429" y1="0.714286" x2="9.92857" y2="4.46429" gradientUnits="userSpaceOnUse">
+            <stop stopColor="#4858AE" />
+            <stop offset="1" stopColor="#4E60CE" />
+          </linearGradient>
+          <linearGradient id="paint5_linear_21_20386" x1="6.71429" y1="0.714286" x2="9.92857" y2="4.46429" gradientUnits="userSpaceOnUse">
+            <stop stopColor="#4858AE" />
+            <stop offset="1" stopColor="#4E60CE" />
+          </linearGradient>
+          <linearGradient id="paint6_linear_21_20386" x1="-2.6077e-08" y1="8" x2="9" y2="8" gradientUnits="userSpaceOnUse">
+            <stop stopColor="#2A3887" />
+            <stop offset="1" stopColor="#4C56B9" />
+          </linearGradient>
+        </defs>
+      </svg>
+    </>
+  `
+}
+
+export function JiraCommentsIcon({ size = config.size, className = '' }) {
+  return `
+    <>
+      <svg className="wa-JiraCommentsIcon ${className}" width="${size}" height="${size}" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M14.8324 7.60824L8.60376 1.58395L8 1L3.31134 5.53485L1.16763 7.60824C0.944123 7.82468 0.944123 8.17532 1.16763 8.39176L5.45124 12.5348L8 15L12.6887 10.4652L12.7613 10.3949L14.8324 8.39176C15.0559 8.17532 15.0559 7.82468 14.8324 7.60824ZM8 10.0697L5.86011 8L8 5.93031L10.1399 8L8 10.0697Z" fill="#2684FF" />
+        <path fillRule="evenodd" clipRule="evenodd" d="M7.99997 5.93028C6.59893 4.57504 6.5921 2.37997 7.98468 1.0166L3.30176 5.54406L5.85052 8.00921L7.99997 5.93028Z" fill="url(#paint0_linear_4847_128613)" />
+        <path fillRule="evenodd" clipRule="evenodd" d="M10.1456 7.99445L8 10.0697C8.67624 10.7233 9.05618 11.6101 9.05618 12.5348C9.05618 13.4595 8.67624 14.3463 8 15L12.6944 10.4596L10.1456 7.99445Z" fill="url(#paint1_linear_4847_128613)" />
+        <defs>
+          <linearGradient id="paint0_linear_4847_128613" x1="7.61785" y1="3.83656" x2="4.04823" y2="5.39511" gradientUnits="userSpaceOnUse">
+            <stop offset="0.18" stopColor="#0052CC" />
+            <stop offset="1" stopColor="#2684FF" />
+          </linearGradient>
+          <linearGradient id="paint1_linear_4847_128613" x1="8.40887" y1="12.1394" x2="11.9721" y2="10.5919" gradientUnits="userSpaceOnUse">
+            <stop offset="0.18" stopColor="#0052CC" />
+            <stop offset="1" stopColor="#2684FF" />
+          </linearGradient>
+        </defs>
+      </svg>
+    </>
+  `
+}

@@ -2,7 +2,8 @@ import { htmlDecode, renderIcons } from "../../utils/helpers";
 import AnsFromChipFunctionality from "../functionality/ansFromChip";
 import { getTimeline, highlightQuotedText } from "../utils/helper";
 import htmlTableRenderer from "./htmlTableRenderer";
-import { createCopyIcon, createExport, createThumbsDown, createThumbsDownFilled, createThumbsUp, createThumbsUpFilled } from "../icons-library";
+import { createCopyIcon, createExport, createThumbsDown, createThumbsDownFilled, createThumbsUp, createThumbsUpFilled, setContextIcon, EllipsisVertical, Gmail, Outlookimg, Slackimg, Teamsimg, JiraCommentsIcon } from "../icons-library";
+import store from "../../redux/store";
 
 const AnsFromChip = ({ item, regeneratingAnswer }) => {
 	const regeneratingChipRenderer = () => {
@@ -17,6 +18,24 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
                 </span>
             </div>
         `;
+	};
+
+	// Get available actions based on enabled agents
+	const getAvailableActions = () => {
+		const items = [
+			{ icon: Gmail({ size: 14 }), label: 'Gmail', actionType: "send", appId: "gmail" },
+			{ icon: Outlookimg({ size: 14 }), label: 'O365 mail', actionType: "send", appId: 'outlook' },
+			{ icon: Slackimg({ size: 14 }), label: 'Slack', actionType: "send", appId: 'slack' },
+			{ icon: Teamsimg({ size: 14 }), label: 'Teams', actionType: "send", appId: 'msteams' },
+			{ icon: JiraCommentsIcon({ size: 15 }), label: 'Create Jira Issue', actionType: "create", appId: 'jira' },
+		];
+
+		const state = store.getState();
+		const allAgents = state?.global?.allAgents?.data?.agents;
+
+		const preBuitAgents = allAgents?.filter(agent => agent?.custom === false && agent?.type === 'dataAgent')?.map(item => item?.appId);
+
+		return items?.filter(item => preBuitAgents?.includes(item?.appId));
 	};
 
 	const relevantQuestionsRenderer = () => {
@@ -417,6 +436,50 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 			<div class="exportWordButton" id="exportWordButton-${item?.messageId}">${createExport({ size: 16, color: "#667085" })}</div>
 		`;
 	}
+
+	const setContextChip = () => {
+		return `
+			<div class="setContextButton" id="setContextButton-${item?.messageId}">${setContextIcon({ size: 16, color: "#667085" })}</div>
+		`;
+	}
+
+	/*need to creata a menufunction that displays a shoelace menu on clicking */
+	const threeDotMenu = () => {
+		const messageId = item?.messageId || item?.id;
+		console.log('Creating three dot menu for messageId:', messageId);
+		
+		// Get available integration actions
+		const availableActions = getAvailableActions();
+		
+		// Generate menu items for integration actions
+		const integrationMenuItems = availableActions.map(action => `
+			<div class="menu-item" data-menu-action="${action.appId}" data-action-type="integration" style="padding: 12px 16px; font-size: 14px; color: #374151; cursor: pointer; display: flex; align-items: center; border-bottom: 1px solid #f3f4f6;">
+				<div style="margin-right: 12px; display: flex; align-items: center;">
+					${action.icon}
+				</div>
+				<span>${action.label}</span>
+			</div>
+		`).join('');
+		
+		return `
+			<div class="three-dot-menu-container" style="position: relative; display: inline-block;">
+				<button class="three-dot-trigger" 
+					data-three-dot-trigger="${messageId}" 
+					style="background: none; border: none; cursor: pointer; padding: 8px; border-radius: 4px; display: flex; align-items: center; justify-content: center; min-width: 32px; min-height: 32px;"
+					onmouseover="this.style.backgroundColor='#f5f5f5'" 
+					onmouseout="this.style.backgroundColor='transparent'"
+					title="More options">
+					${EllipsisVertical({ size: 16, color: "#667085" })}
+				</button>
+				
+				<div class="three-dot-dropdown" data-three-dot-dropdown="${messageId}" style="display: none; position: absolute; min-width: 200px; background: white; border: 1px solid #e1e5e9; border-radius: 8px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); z-index: 9999;">
+					<!-- Integration Actions -->
+					${integrationMenuItems}
+
+				</div>
+			</div>
+		`;
+	}
 	
 
 	const renderChip = () => {
@@ -461,10 +524,17 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 		if (item?.answer) {
 			actionChipsHTML += exportWordChip();
 		}
+		if(item?.sources?.[0]?.canSetAsSourceContext !== false) {
+			actionChipsHTML += setContextChip();
+		}
 
 		if(!item?.disableFeedback) {
 			actionChipsHTML += feedbackChip();
 		}
+		
+		// Add three dot menu
+		actionChipsHTML += threeDotMenu();
+		
 		actionChipsHTML += `</div>`;
 
 		// Insert action chips inside .ansFromChip if present

@@ -459,6 +459,155 @@ const AnsFromChipFunctionality = ({ item }) => {
 			feedbackLikeButton.eventListenerAdded = true;
 			feedbackDislikeButton.eventListenerAdded = true;
 		}
+
+		// Add three dot menu functionality
+		const messageId = item?.messageId || item?.reqId;
+		const threeDotTrigger = document.querySelector(`[data-three-dot-trigger="${messageId}"]`);
+		const threeDotDropdown = document.querySelector(`[data-three-dot-dropdown="${messageId}"]`);
+		
+		
+		if (threeDotTrigger && !threeDotTrigger.eventListenerAdded) {
+			threeDotTrigger.addEventListener('click', (e) => {
+				e.preventDefault();
+				e.stopPropagation();
+				
+				// Toggle dropdown visibility
+				const dropdown = threeDotDropdown;
+				const isHidden = dropdown.style.display === 'none' || 
+								dropdown.style.display === '' || 
+								!dropdown.style.display;
+				
+				if (isHidden) {
+					// Close any other open dropdowns first
+					document.querySelectorAll('[data-three-dot-dropdown]').forEach(dd => {
+						dd.style.display = 'none';
+					});
+					
+					// Show this dropdown
+					dropdown.style.display = 'block';
+					dropdown.style.position = 'fixed';
+					dropdown.style.zIndex = '9999';
+					
+					// Position the dropdown relative to the trigger button
+					const rect = threeDotTrigger.getBoundingClientRect();
+					dropdown.style.top = `${rect.bottom + 5}px`;
+					dropdown.style.left = `${Math.max(10, rect.right - 180)}px`; // 180px is menu width, with 10px minimum margin
+					
+				} else {
+					dropdown.style.display = 'none';
+				}
+			});
+			threeDotTrigger.eventListenerAdded = true;
+		} else {
+			console.log('Three dot trigger not found or already has listener:', {
+				trigger: threeDotTrigger,
+				hasListener: threeDotTrigger?.eventListenerAdded
+			});
+		}
+
+		// Add menu item event listeners
+		if (threeDotDropdown && !threeDotDropdown.eventListenerAdded) {
+			const menuItems = threeDotDropdown.querySelectorAll('.menu-item');
+			console.log('Found menu items:', menuItems.length);
+			
+			menuItems.forEach(menuItem => {
+				// Add hover effects
+				menuItem.addEventListener('mouseenter', () => {
+					menuItem.style.backgroundColor = '#f9fafb';
+				});
+				menuItem.addEventListener('mouseleave', () => {
+					menuItem.style.backgroundColor = 'transparent';
+				});
+				
+				menuItem.addEventListener('click', (e) => {
+					console.log('Menu item clicked');
+					e.preventDefault();
+					e.stopPropagation();
+					
+					const action = menuItem.getAttribute('data-menu-action');
+					const actionType = menuItem.getAttribute('data-action-type');
+					threeDotDropdown.style.display = 'none'; // Close menu after selection
+					
+					console.log('Menu action:', action, 'Type:', actionType);
+					
+					// Handle integration actions
+					if (actionType === 'integration') {
+						console.log(`Executing integration action: ${action}`);
+						
+						switch(action) {
+							case 'gmail':
+								console.log("clicked on Gmail");
+								// Add Gmail integration logic here
+								break;
+							case 'outlook':
+								console.log("clicked on Outlook");
+								// Add Outlook integration logic here
+								break;
+							case 'slack':
+								console.log("clicked on Slack");
+								// Add Slack integration logic here
+								break;
+							case 'msteams':
+								console.log("clicked on Teams");
+								// Add Teams integration logic here
+								break;
+							case 'jira':
+								console.log("clicked on Jira");
+								// Add Jira integration logic here
+								break;
+							default:
+								console.log('Unknown integration action:', action);
+						}
+						return;
+					}
+					
+					// Handle default actions
+					switch(action) {
+						case 'copy':
+							// Trigger copy functionality
+							const copyButton = document.getElementById(`copyAnswerButton-${item?.id}`);
+							if (copyButton) {
+								console.log('Triggering copy button');
+								copyButton.click();
+							} else {
+								console.log('Copy button not found for id:', `copyAnswerButton-${item?.id}`);
+							}
+							break;
+						case 'regenerate':
+							// Trigger regenerate functionality
+							console.log('Regenerate response for:', messageId);
+							// Add regenerate logic here
+							break;
+						case 'feedback':
+							// Trigger feedback functionality
+							console.log('Provide feedback for:', messageId);
+							// Add feedback logic here
+							break;
+						case 'share':
+							// Trigger share functionality
+							console.log('Share response for:', messageId);
+							// Add share logic here
+							break;
+						default:
+							console.log('Unknown menu action:', action);
+					}
+				});
+			});
+			
+			threeDotDropdown.eventListenerAdded = true;
+		}
+
+		// Close dropdown when clicking outside
+		if (!document.threeDotOutsideClickAdded) {
+			document.addEventListener('click', (e) => {
+				if (!e.target.closest('.three-dot-menu-container')) {
+					document.querySelectorAll('[data-three-dot-dropdown]').forEach(dd => {
+						dd.style.display = 'none';
+					});
+				}
+			});
+			document.threeDotOutsideClickAdded = true;
+		}
 	};
 
 	const renderLogic = () => {
