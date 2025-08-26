@@ -2134,12 +2134,13 @@ html, body {
                         position: absolute;
                         display: none;
                         z-index: 9999;
+                        bottom: 0;
                     }
 
                     .three-dot-dropdown {
                         padding: 0.75rem;
                         max-height: 16.25rem;
-                        width: 15.625rem;
+                        width: 220px;
                         border-radius: 0.75rem;
                         background: #FFFFFF;
                         border: 0.0625rem solid #E5E5E5;
