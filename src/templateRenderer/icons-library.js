@@ -211,20 +211,17 @@ export function setContextIcon({ className = '', size = config.size, color = con
 }
 
 export function EllipsisVertical({ size = config.size, color = config.color, className = '' } = {}) {
-  return `
-    <>
+  return `    
       <svg width="${size}" height="${size}" viewBox="0 0 3 14" fill="none" xmlns="http://www.w3.org/2000/svg" className="wa-EllipsisVertical ${className}">
         <path d="M1.46667 3.26666C2.15396 3.26666 2.71112 2.7095 2.71112 2.02222C2.71112 1.33493 2.15396 0.777771 1.46667 0.777771C0.779386 0.777771 0.222229 1.33493 0.222229 2.02222C0.222229 2.7095 0.779386 3.26666 1.46667 3.26666Z" fill="${color}" />
         <path d="M2.71112 6.99999C2.71112 7.68728 2.15396 8.24444 1.46667 8.24444C0.779386 8.24444 0.222229 7.68728 0.222229 6.99999C0.222229 6.31271 0.779386 5.75555 1.46667 5.75555C2.15396 5.75555 2.71112 6.31271 2.71112 6.99999Z" fill="${color}" />
         <path d="M2.71112 11.9778C2.71112 12.6651 2.15396 13.2222 1.46667 13.2222C0.779386 13.2222 0.222229 12.6651 0.222229 11.9778C0.222229 11.2905 0.779386 10.7333 1.46667 10.7333C2.15396 10.7333 2.71112 11.2905 2.71112 11.9778Z" fill="${color}" />
       </svg>
-    </>
   `
 }
 
 export function Gmail({ size = config.size, color = config.color, className = '' }) {
   return `
-    <>
       <svg width="${size}" height="${size}" className="wa-Gmail ${className}" viewBox="0 0 12 9" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M9.02564 1.26172L6.03209 3.59793L2.97009 1.26172V1.26235L2.97379 1.26551V4.53683L5.99756 6.92356L9.02564 4.62902V1.26172Z" fill="#EA4335" />
         <path d="M9.81173 0.693193L9.02557 1.26146V4.62876L11.4993 2.72948V1.58537C11.4993 1.58537 11.1991 -0.048712 9.81173 0.693193Z" fill="#FBBC05" />
@@ -234,14 +231,12 @@ export function Gmail({ size = config.size, color = config.color, className = ''
         <path d="M2.97009 1.26221V4.53353L2.97393 4.53669V1.26536L2.97009 1.26221Z" fill="#C5221F" />
         <path d="M0.5 2.7334V8.32957C0.538229 8.94519 1.07836 9.00013 1.07836 9.00013H2.97438L2.97007 4.53354L0.5 2.7334Z" fill="#4285F4" />
       </svg>
-    </>
   `
 }
 
 
 export function Outlookimg({ className = '', size = config.size, color = config.color }) {
   return `
-    <>
       <svg width="${size}" height="${size}" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" className="wa-Outlookimg ${className}">
         <rect x="5" y="1" width="10" height="14" rx="1" fill="#1066B5" />
         <rect x="5" y="1" width="10" height="14" rx="1" fill="url(#paint0_linear_21_20380)" />
@@ -283,27 +278,23 @@ export function Outlookimg({ className = '', size = config.size, color = config.
           </linearGradient>
         </defs>
       </svg>
-    </>
 `
 }
 
 
 export function Slackimg({ className = '', size = config.size, color = config.color }) {
   return `
-    <>
       <svg width="${size}" height="${size}" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" className="wa-Slackimg ${className}">
         <path d="M13.2501 7.49979C13.9404 7.49979 14.5 6.94019 14.5 6.24989C14.5 5.5596 13.9404 5 13.2501 5C12.5597 5 12 5.55964 12 6.25V7.49979H13.2501ZM9.75 7.49979C10.4404 7.49979 11 6.94014 11 6.24979V2.75C11 2.05964 10.4404 1.5 9.75 1.5C9.05964 1.5 8.5 2.05964 8.5 2.75V6.24979C8.5 6.94014 9.05964 7.49979 9.75 7.49979Z" fill="#2EB67D" />
         <path d="M2.74989 8.50021C2.0596 8.50021 1.5 9.05981 1.5 9.75011C1.5 10.4404 2.05965 11 2.74995 11C3.4403 11 4 10.4404 4 9.75V8.50021H2.74989ZM6.25 8.50021C5.55964 8.50021 5 9.05986 5 9.75021V13.25C5 13.9404 5.55964 14.5 6.25 14.5C6.94036 14.5 7.5 13.9404 7.5 13.25V9.75021C7.5 9.05986 6.94036 8.50021 6.25 8.50021Z" fill="#E01E5A" />
         <path d="M8.50021 13.2501C8.50021 13.9404 9.05981 14.5 9.75011 14.5C10.4404 14.5 11 13.9403 11 13.2501C11 12.5597 10.4404 12 9.75 12L8.50021 12L8.50021 13.2501ZM8.50021 9.75C8.50021 10.4404 9.05986 11 9.75021 11L13.25 11C13.9404 11 14.5 10.4404 14.5 9.75C14.5 9.05964 13.9404 8.5 13.25 8.5L9.75021 8.5C9.05986 8.5 8.50021 9.05964 8.50021 9.75Z" fill="#ECB22E" />
         <path d="M7.49979 2.74989C7.49979 2.0596 6.94019 1.5 6.24989 1.5C5.5596 1.5 5 2.05965 5 2.74995C5 3.4403 5.55964 4 6.25 4L7.49979 4L7.49979 2.74989ZM7.49979 6.25C7.49979 5.55964 6.94014 5 6.24979 5L2.75 5C2.05964 5 1.5 5.55964 1.5 6.25C1.5 6.94036 2.05964 7.5 2.75 7.5L6.24979 7.5C6.94014 7.5 7.49979 6.94036 7.49979 6.25Z" fill="#36C5F0" />
       </svg>
-    </>
   `
 }
 
 export function Teamsimg({ className = '', size = config.size, color = config.color }) {
-  return `
-    <>
+  return `    
       <svg width="${size}" height="${size}" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" className="wa-Teamsimg ${className}">
         <path d="M9.5 6.95161C9.5 6.70219 9.70219 6.5 9.95161 6.5H15.5484C15.7978 6.5 16 6.70219 16 6.95161V10.25C16 12.0449 14.5449 13.5 12.75 13.5C10.9551 13.5 9.5 12.0449 9.5 10.25V6.95161Z" fill="url(#paint0_linear_21_20386)" />
         <path d="M4.5 6.1129C4.5 5.77441 4.77441 5.5 5.1129 5.5H11.8871C12.2256 5.5 12.5 5.77441 12.5 6.1129V11C12.5 13.2091 10.7091 15 8.5 15C6.29086 15 4.5 13.2091 4.5 11V6.1129Z" fill="url(#paint1_linear_21_20386)" />
@@ -349,13 +340,11 @@ export function Teamsimg({ className = '', size = config.size, color = config.co
           </linearGradient>
         </defs>
       </svg>
-    </>
   `
 }
 
 export function JiraCommentsIcon({ size = config.size, className = '' }) {
   return `
-    <>
       <svg className="wa-JiraCommentsIcon ${className}" width="${size}" height="${size}" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M14.8324 7.60824L8.60376 1.58395L8 1L3.31134 5.53485L1.16763 7.60824C0.944123 7.82468 0.944123 8.17532 1.16763 8.39176L5.45124 12.5348L8 15L12.6887 10.4652L12.7613 10.3949L14.8324 8.39176C15.0559 8.17532 15.0559 7.82468 14.8324 7.60824ZM8 10.0697L5.86011 8L8 5.93031L10.1399 8L8 10.0697Z" fill="#2684FF" />
         <path fillRule="evenodd" clipRule="evenodd" d="M7.99997 5.93028C6.59893 4.57504 6.5921 2.37997 7.98468 1.0166L3.30176 5.54406L5.85052 8.00921L7.99997 5.93028Z" fill="url(#paint0_linear_4847_128613)" />
@@ -371,6 +360,5 @@ export function JiraCommentsIcon({ size = config.size, className = '' }) {
           </linearGradient>
         </defs>
       </svg>
-    </>
   `
 }

@@ -1,4 +1,19 @@
-import { htmlDecode, renderIcons } from "../../utils/helpers";
+import { htmlDecode, renderIcons, getFileExtension } from "../../utils/helpers";
+
+// Placeholder functions for missing icons
+const getExtIcon = (extension) => {
+    // Return a simple file icon based on extension
+    const iconMap = {
+        'pdf': 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTYiIGhlaWdodD0iMTYiIHZpZXdCb3g9IjAgMCAxNiAxNiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEwLjY2NjcgMTIuNjY2N0g1LjMzMzMzVjMuMzMzMzNIMTAuNjY2N1YxMi42NjY3WiIgZmlsbD0iI0Y0NDQ0NCIvPgo8L3N2Zz4K',
+        'doc': 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTYiIGhlaWdodD0iMTYiIHZpZXdCb3g9IjAgMCAxNiAxNiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEwLjY2NjcgMTIuNjY2N0g1LjMzMzMzVjMuMzMzMzNIMTAuNjY2N1YxMi42NjY3WiIgZmlsbD0iIzQyODVGQSIvPgo8L3N2Zz4K',
+        'txt': 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTYiIGhlaWdodD0iMTYiIHZpZXdCb3g9IjAgMCAxNiAxNiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEwLjY2NjcgMTIuNjY2N0g1LjMzMzMzVjMuMzMzMzNIMTAuNjY2N1YxMi42NjY3WiIgZmlsbD0iIzY2NzA4NSIvPgo8L3N2Zz4K'
+    };
+    return iconMap[extension?.toLowerCase()] || iconMap['txt'];
+};
+
+const getDownloadIcon = () => {
+    return 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTYiIGhlaWdodD0iMTYiIHZpZXdCb3g9IjAgMCAxNiAxNiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTggMTJWMiBNMTIgOEg4TDEwIDZMMTIgOEg4WiIgc3Ryb2tlPSIjNjY3MDg1IiBzdHJva2Utd2lkdGg9IjEuMzMiLz4KPC9zdmc+Cg==';
+};
 import AnsFromChipFunctionality from "../functionality/ansFromChip";
 import { getTimeline, highlightQuotedText } from "../utils/helper";
 import htmlTableRenderer from "./htmlTableRenderer";
@@ -13,7 +28,7 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
                 <span class="koraSpecDr">
                     <div class="contextIcon"></div>
                     <span class="krSpecName">${htmlDecode(
-						regeneratingSelectedItem?.title || "No subject"
+						item?.title || "No subject"
 					)}</span>
                 </span>
             </div>
@@ -161,6 +176,60 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
         `;
 	};
 
+	const chatFilterGroupRenderer = () => {
+		if (!item?.showData || item?.sources?.length !== 1) {
+			return '';
+		}
+
+		let body = `<div class="chatFilterGroup">`;
+		body += `<div class="threadListGroup">`;
+		item?.data?.map((data, i) => {
+			body += `<div class="threadListItem" key="${i}">
+                                <div class='leftCol'>
+                                ${renderIcons(data?.source, null)?.outerHTML}
+                            </div>
+                            <div class="rightCol">
+                                <div class="leftDetails">
+                                    <div class="namgeGroup">
+                                        <div class="name" id = "listItem-${
+											item?.id
+										}-${data?.docId}">${data?.title}</div>
+                                    </div>
+                                    <div class='details'>
+                                        <span class='dtName'>Sent by: 
+                                            ${data?.fromEmail}, ${getTimeline(
+								data?.date,
+								"dayDateAndTime"
+							)}
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="rightDetails">
+                                    <div class="listView setContextDr">
+                                        <div class="subText">
+                                            <span class="dtText askFollowupButton"  id = "askFollowupButton-${
+												item?.id
+											}-${data?.docId}">Ask Followup
+                                            </span>
+                                        </div>
+                                    </div> 
+                                   <div class="openInNewTabIcon" id="openInNewTabIcon-${
+										item?.id
+									}-${data?.docId}">
+                                        <span>
+                                            <svg class="wa-ChangeLog" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 20 20" fill="none"><path d="M5.83333 14.1667L14.1667 5.83334M14.1667 5.83334H5.83333M14.1667 5.83334V14.1667" stroke="#667085" stroke-width="1.33" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+                                        </span>
+                                   </div>
+                                </div>
+                            </div>
+                        </div>`;
+		});
+		body += `</div>`;
+		body += `</div>`;
+
+		return body;
+	};
+
 	const knowledgeChipRenderer = () => {
 		let body = "";
 
@@ -188,53 +257,6 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 
 		if (item?.sources?.length === 1) {
 			body += singleSourceChipRenderer(item.sources[0]);
-			if (item?.showData) {
-				body += `<div class="chatFilterGroup">`;
-				body += `<div class="threadListGroup">`;
-				item?.data?.map((data, i) => {
-					body += `<div class="threadListItem" key="${i}">
-                                <div class='leftCol'>
-                                ${renderIcons(data?.source, null)?.outerHTML}
-                            </div>
-                            <div class="rightCol">
-                                <div class="leftDetails">
-                                    <div class="namgeGroup">
-                                        <div class="name" id = "listItem-${
-											item?.id
-										}-${data?.docId}">${data?.title}</div>
-                                    </div>
-                                    <div class='details'>
-                                        <span class='dtName'>Sent by: 
-                                            ${data?.fromEmail}, ${getTimeline(
-						data?.date,
-						"dayDateAndTime"
-					)}
-                                        </span>
-                                    </div>
-                                </div>
-                                <div class="rightDetails">
-                                    <div class="listView setContextDr">
-                                        <div class="subText">
-                                            <span class="dtText askFollowupButton"  id = "askFollowupButton-${
-												item?.id
-											}-${data?.docId}">Ask Followup
-                                            </span>
-                                        </div>
-                                    </div> 
-                                   <div class="openInNewTabIcon" id="openInNewTabIcon-${
-										item?.id
-									}-${data?.docId}">
-                                        <span>
-                                            <svg class="wa-ChangeLog" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 20 20" fill="none"><path d="M5.83333 14.1667L14.1667 5.83334M14.1667 5.83334H5.83333M14.1667 5.83334V14.1667" stroke="#667085" stroke-width="1.33" stroke-linecap="round" stroke-linejoin="round"></path></svg>
-                                        </span>
-                                   </div>
-                                </div>
-                            </div>
-                        </div>`;
-				});
-				body += `</div>`;
-				body += `</div>`;
-			}
 		}
 
 		return `<div class="ansFromChip">${body}</div>`;
@@ -410,7 +432,7 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 	
 	const copyAnswerChip = () => {
 		return `
-			<div class="copyAnswerButton" id="copyAnswerButton-${item?.id}">${createCopyIcon({ size: 16, color: "#667085" })}</div>
+			<div class="copyAnswerButton" id="copyAnswerButton-${item?.id}" title="Copy Response">${createCopyIcon({ size: 16, color: "#667085" })}</div>
 		`;
 	}
 
@@ -418,14 +440,14 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 		return `
 			<div class="feedbackChip">
 			    ${item?.feedback === "like" ? 
-					`<div class="feedbackLikeButton ${item?.feedback === "like" ? "active" : ""}" id="feedbackLikeButton-${item?.messageId}">${createThumbsUpFilled({ size: 16, color: "#12B76A" })}</div>` 
+					`<div class="feedbackLikeButton ${item?.feedback === "like" ? "active" : ""}" id="feedbackLikeButton-${item?.messageId}" title="Helpful">${createThumbsUpFilled({ size: 16, color: "#12B76A" })}</div>` 
 					:
-					`<div class="feedbackLikeButton" id="feedbackLikeButton-${item?.messageId}">${createThumbsUp({ size: 16, color: "#667085" })}</div>`
+					`<div class="feedbackLikeButton" id="feedbackLikeButton-${item?.messageId}" title="Helpful">${createThumbsUp({ size: 16, color: "#667085" })}</div>`
 				}
 				${item?.feedback === "dislike" ? 
-					`<div class="feedbackDislikeButton ${item?.feedback === "dislike" ? "active" : ""}" id="feedbackDislikeButton-${item?.messageId}">${createThumbsDownFilled({ size: 16, color: "#F04438" })}</div>` 
+					`<div class="feedbackDislikeButton ${item?.feedback === "dislike" ? "active" : ""}" id="feedbackDislikeButton-${item?.messageId}" title="Not Helpful">${createThumbsDownFilled({ size: 16, color: "#F04438" })}</div>` 
 					: 
-					`<div class="feedbackDislikeButton" id="feedbackDislikeButton-${item?.messageId}">${createThumbsDown({ size: 16, color: "#667085" })}</div>`
+					`<div class="feedbackDislikeButton" id="feedbackDislikeButton-${item?.messageId}" title="Not Helpful">${createThumbsDown({ size: 16, color: "#667085" })}</div>`
 				}
 			</div>
 		`;
@@ -433,13 +455,13 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 
 	const exportWordChip = () => {
 		return `
-			<div class="exportWordButton" id="exportWordButton-${item?.messageId}">${createExport({ size: 16, color: "#667085" })}</div>
+			<div class="exportWordButton" id="exportWordButton-${item?.messageId}" title="Export Response">${createExport({ size: 16, color: "#667085" })}</div>
 		`;
 	}
 
 	const setContextChip = () => {
 		return `
-			<div class="setContextButton" id="setContextButton-${item?.messageId}">${setContextIcon({ size: 16, color: "#667085" })}</div>
+			<div class="setContextButton" id="setContextButton-${item?.messageId}" title="Set as Context">${setContextIcon({ size: 16, color: "#667085" })}</div>
 		`;
 	}
 
@@ -453,30 +475,16 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 		
 		// Generate menu items for integration actions
 		const integrationMenuItems = availableActions.map(action => `
-			<div class="menu-item" data-menu-action="${action.appId}" data-action-type="integration" style="padding: 12px 16px; font-size: 14px; color: #374151; cursor: pointer; display: flex; align-items: center; border-bottom: 1px solid #f3f4f6;">
-				<div style="margin-right: 12px; display: flex; align-items: center;">
-					${action.icon}
-				</div>
-				<span>${action.label}</span>
+			<div class="menu-item" data-menu-action="${action.appId}" data-action-type="integration">
+				<div class="menu-item-icon">${action.icon}</div>
+				<div class="menu-item-label">${action.label}</div>
 			</div>
 		`).join('');
 		
 		return `
-			<div class="three-dot-menu-container" style="position: relative; display: inline-block;">
-				<button class="three-dot-trigger" 
-					data-three-dot-trigger="${messageId}" 
-					style="background: none; border: none; cursor: pointer; padding: 8px; border-radius: 4px; display: flex; align-items: center; justify-content: center; min-width: 32px; min-height: 32px;"
-					onmouseover="this.style.backgroundColor='#f5f5f5'" 
-					onmouseout="this.style.backgroundColor='transparent'"
-					title="More options">
-					${EllipsisVertical({ size: 16, color: "#667085" })}
-				</button>
-				
-				<div class="three-dot-dropdown" data-three-dot-dropdown="${messageId}" style="display: none; position: absolute; min-width: 200px; background: white; border: 1px solid #e1e5e9; border-radius: 8px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); z-index: 9999;">
-					<!-- Integration Actions -->
-					${integrationMenuItems}
-
-				</div>
+			<div class="three-dot-menu-container">
+				<button class="three-dot-trigger" data-three-dot-trigger="${messageId}" title="More options">${EllipsisVertical({ size: 16, color: "#667085" })}</button>				
+				<div class="three-dot-dropdown" data-three-dot-dropdown="${messageId}">${integrationMenuItems}</div>
 			</div>
 		`;
 	}
@@ -550,7 +558,13 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 			chipHTML += actionChipsHTML;
 		}
 
-		return `<div class="answerFromChipDiv">${chipHTML}</div>`;
+		// Generate the chat filter group content 
+		const chatFilterGroupHTML = chatFilterGroupRenderer();
+		
+		// Add chatFilterGroup inside answerFromChipDiv but outside chipHTML
+		const chatFilterGroupWrapper = chatFilterGroupHTML ? `<div>${chatFilterGroupHTML}</div>` : '';
+		
+		return `<div class="answerFromChipDiv">${chipHTML}${chatFilterGroupWrapper}</div>`;
 	};
 
 	let timeout;

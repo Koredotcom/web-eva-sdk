@@ -85,16 +85,23 @@ export function render(
 			// 		loadingText
 			// 	)
 			// );
-			content += renderTemplateContent(
+			let html = renderTemplateContent(
 				data,
 				assistantIconTemplate,
 				userIconTemplate,
 				loadingText
 			);
+			content += DOMPurify.sanitize(html, {
+				ADD_TAGS: SHOELACE_TAGS,
+				ADD_ATTR: SHOELACE_ATTRS,
+			});
 		}
 		if (!!data?.sources?.length && data?.templateType === "search_answer") {
 			let chip = AnsFromChip({ item: data });
-			content += chip;
+			content += DOMPurify.sanitize(chip, {
+				ADD_TAGS: SHOELACE_TAGS,
+				ADD_ATTR: SHOELACE_ATTRS,
+			});
 		}
 		let ele = TemplateComponents.wrapTemplate(content, {
 			type: data.templateType,

@@ -483,18 +483,28 @@ const AnsFromChipFunctionality = ({ item }) => {
 						dd.style.display = 'none';
 					});
 					
+					// Remove active class from all triggers
+					document.querySelectorAll('[data-three-dot-trigger]').forEach(trigger => {
+						trigger.classList.remove('active');
+					});
+					
 					// Show this dropdown
-					dropdown.style.display = 'block';
+					dropdown.style.display = 'flex';
 					dropdown.style.position = 'fixed';
 					dropdown.style.zIndex = '9999';
+					
+					// Add active class to this trigger
+					threeDotTrigger.classList.add('active');
 					
 					// Position the dropdown relative to the trigger button
 					const rect = threeDotTrigger.getBoundingClientRect();
 					dropdown.style.top = `${rect.bottom + 5}px`;
-					dropdown.style.left = `${Math.max(10, rect.right - 180)}px`; // 180px is menu width, with 10px minimum margin
+					dropdown.style.left = `${Math.max(10, rect.right - 220)}px`; // 220px is menu width, with 10px minimum margin
 					
 				} else {
 					dropdown.style.display = 'none';
+					// Remove active class from this trigger
+					threeDotTrigger.classList.remove('active');
 				}
 			});
 			threeDotTrigger.eventListenerAdded = true;
@@ -511,14 +521,6 @@ const AnsFromChipFunctionality = ({ item }) => {
 			console.log('Found menu items:', menuItems.length);
 			
 			menuItems.forEach(menuItem => {
-				// Add hover effects
-				menuItem.addEventListener('mouseenter', () => {
-					menuItem.style.backgroundColor = '#f9fafb';
-				});
-				menuItem.addEventListener('mouseleave', () => {
-					menuItem.style.backgroundColor = 'transparent';
-				});
-				
 				menuItem.addEventListener('click', (e) => {
 					console.log('Menu item clicked');
 					e.preventDefault();
@@ -527,6 +529,9 @@ const AnsFromChipFunctionality = ({ item }) => {
 					const action = menuItem.getAttribute('data-menu-action');
 					const actionType = menuItem.getAttribute('data-action-type');
 					threeDotDropdown.style.display = 'none'; // Close menu after selection
+					
+					// Remove active class from trigger when menu item is clicked
+					threeDotTrigger.classList.remove('active');
 					
 					console.log('Menu action:', action, 'Type:', actionType);
 					
@@ -603,6 +608,10 @@ const AnsFromChipFunctionality = ({ item }) => {
 				if (!e.target.closest('.three-dot-menu-container')) {
 					document.querySelectorAll('[data-three-dot-dropdown]').forEach(dd => {
 						dd.style.display = 'none';
+					});
+					// Remove active class from all triggers when clicking outside
+					document.querySelectorAll('[data-three-dot-trigger]').forEach(trigger => {
+						trigger.classList.remove('active');
 					});
 				}
 			});
