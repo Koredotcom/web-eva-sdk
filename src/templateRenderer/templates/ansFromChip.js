@@ -1,19 +1,4 @@
-import { htmlDecode, renderIcons, getFileExtension } from "../../utils/helpers";
-
-// Placeholder functions for missing icons
-const getExtIcon = (extension) => {
-    // Return a simple file icon based on extension
-    const iconMap = {
-        'pdf': 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTYiIGhlaWdodD0iMTYiIHZpZXdCb3g9IjAgMCAxNiAxNiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEwLjY2NjcgMTIuNjY2N0g1LjMzMzMzVjMuMzMzMzNIMTAuNjY2N1YxMi42NjY3WiIgZmlsbD0iI0Y0NDQ0NCIvPgo8L3N2Zz4K',
-        'doc': 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTYiIGhlaWdodD0iMTYiIHZpZXdCb3g9IjAgMCAxNiAxNiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEwLjY2NjcgMTIuNjY2N0g1LjMzMzMzVjMuMzMzMzNIMTAuNjY2N1YxMi42NjY3WiIgZmlsbD0iIzQyODVGQSIvPgo8L3N2Zz4K',
-        'txt': 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTYiIGhlaWdodD0iMTYiIHZpZXdCb3g9IjAgMCAxNiAxNiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEwLjY2NjcgMTIuNjY2N0g1LjMzMzMzVjMuMzMzMzNIMTAuNjY2N1YxMi42NjY3WiIgZmlsbD0iIzY2NzA4NSIvPgo8L3N2Zz4K'
-    };
-    return iconMap[extension?.toLowerCase()] || iconMap['txt'];
-};
-
-const getDownloadIcon = () => {
-    return 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTYiIGhlaWdodD0iMTYiIHZpZXdCb3g9IjAgMCAxNiAxNiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTggMTJWMiBNMTIgOEg4TDEwIDZMMTIgOEg4WiIgc3Ryb2tlPSIjNjY3MDg1IiBzdHJva2Utd2lkdGg9IjEuMzMiLz4KPC9zdmc+Cg==';
-};
+import { htmlDecode, renderIcons, getFileExtension, getExtIcon, getDownloadIcon } from "../../utils/helpers";
 import AnsFromChipFunctionality from "../functionality/ansFromChip";
 import { getTimeline, highlightQuotedText } from "../utils/helper";
 import htmlTableRenderer from "./htmlTableRenderer";

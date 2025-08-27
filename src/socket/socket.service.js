@@ -76,6 +76,9 @@ class WebSocketClient {
                     /*update the name in the history board */
                     HistoryInterface().updateHistoryBoardNameonSocketEvent(msg?.data)
                 }
+                if (msg?.entity === 'reqFlow') {
+                    ChatInterface().responseFlowGeneration(msg)
+                }
             });
             this.socket.on("notification", (msg) => {
                 Notification().notifyLatestNotification(msg)

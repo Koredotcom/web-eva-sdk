@@ -5,7 +5,7 @@ import store from "../redux/store.js";
 import { fetchAgents } from "../redux/actions/global.action.js";
 import { ActionsFlashIcon, arrowCirlceUpIcon, attachmentIcon, CheveronDownIcon, createCloseIcon, createDeleteIcon, createThumbsUpFilled, microphoneIcon, searchIcon, settingsIcon, Close, StopIcon } from "../templateRenderer/icons-library.js";
 import FileUpload from "../Attachments/fileUpload.js";
-import { getFileExtension } from "../utils/helpers.js";
+import { getAgentType, getFileExtension } from "../utils/helpers.js";
 
 /**
  * ComposeBar - A standalone compose bar component in plain JavaScript
@@ -116,7 +116,7 @@ class ComposeBar {
     }    
 
     setCommonAgents() {                
-        console.log("Call stack:", new Error().stack);
+        // console.log("Call stack:", new Error().stack);
 
         /*get selectedContext from store*/
         const selectedContext = store.getState()?.global?.selectedContext;                
@@ -126,7 +126,8 @@ class ComposeBar {
         } else {
             try {
                 const state = store.getState();
-                const commonAgents = state?.global?.allAgents?.data?.commonAgents || [];
+                /*if disabled is true then omit that agent from the list*/
+                const commonAgents = state?.global?.allAgents?.data?.commonAgents?.filter(agent => !agent.disabled) || [];
 
                 // Hide common agents if an agent is selected
                 if (this.selectedAgent) {
@@ -1076,7 +1077,17 @@ class ComposeBar {
         const itemsHtml = agents.map(agent => {
             const safeName = (agent?.name || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
             const icon = agent?.icon ? `<img src="${agent.icon}" alt="" width="18" height="18" />` : '';
-            return `<li class="eva-agent-item" data-agent-id="${agent.id}" data-agent-type="${listType}"><div class="agent-icon">${icon}</div><div class="agent-details"><div class="agent-name">${safeName}</div><div class="agent-desc">Autonomous Agent<span>•</span>The app allows users to search and compare company reports using natural language</div></div></li>`;
+            const agentType = getAgentType(agent?.type);
+            return `<li class="eva-agent-item" data-agent-id="${agent.id}" data-agent-type="${listType}">
+            <div class="agent-icon">${icon}</div>
+                <div class="agent-details">
+                <div class="agent-name">${safeName}</div>
+                <div class="agent-desc">
+                    <div style="${agent?.type === "agenticApp" ? "display:none;" : ""}">${agentType}<span>•</span></div>                    
+                    ${agent?.description}
+                </div>
+            </div>
+            </li>`;
         }).join('');
         targetEl.innerHTML = itemsHtml;
 

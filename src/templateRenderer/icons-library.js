@@ -161,6 +161,14 @@ export function CheveronDownIcon({ size = config.size, color = config.color, cla
   `;
 }
 
+export function cheveronRightIcon({ size = config.size, color = config.color, className = '' } = {}) {
+    return `
+    <svg width="${size}" height="${size}" viewBox="0 0 7 10" fill="none" xmlns="http://www.w3.org/2000/svg" class="wa-CheveronRight ${className}">
+      <path d="M1.59277 8.8623L5.59277 4.8623L1.59277 0.862305" stroke="${color}" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round" />
+    </svg>
+  `;
+}
+
 export function ActionsFlashIcon({ size = config.size, color = config.color, className = "" } = {}) {
   return `
     <svg width="${size}" height="${size}" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" class="wa-ActionsFlashIcon ${className}">
