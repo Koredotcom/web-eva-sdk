@@ -1,9 +1,9 @@
 import {pluginRegistry} from './plugin-registry';
 import {codePlugin} from './plugins/code-plugin';
 import {textPlugin} from './plugins/text-plugin';
-// import {chartPlugin} from './plugins/chart-plugin';
+import {chartPlugin} from './plugins/chart-plugin';
 
-// pluginRegistry.register(chartPlugin);
+pluginRegistry.register(chartPlugin);
 pluginRegistry.register(codePlugin);
 pluginRegistry.register(textPlugin);
 
