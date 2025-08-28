@@ -202,6 +202,9 @@ html, body {
         .answerCntr {
             padding-top: .125rem;
             width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
 
             .search-answer-container {
                 display: flex;
@@ -270,7 +273,7 @@ html, body {
 
         .query-response-flow {
             .query-response-flow-header-container {
-                margin-top: 0.5rem;
+                //margin-top: 0.5rem;
             }
         }
     }
@@ -2457,7 +2460,6 @@ html, body {
         display: flex;
         align-items: flex-start;
         gap: 0.5rem;
-        margin-bottom: 1rem;
         margin-top: 0.15rem;
         .query-response-flow-header-icon {
             width: 1rem;
