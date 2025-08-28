@@ -9,6 +9,8 @@ import { cloneDeep, isEmpty } from "lodash";
 import BotConversation from "./botAgent/getBotConversation";
 import { current } from "@reduxjs/toolkit";
 import { sessionItemHandler } from "../Attachments/createContext";
+import RecentAgentsFunc from "../LandingPageRecentAgents/RecentAgents";
+const {hideRecentAgentsDiv} = RecentAgentsFunc();
 
 const ChatInterface = (props) => {
     let state = store.getState().global, input = '', resIndexRef = 0;
@@ -59,6 +61,7 @@ const ChatInterface = (props) => {
     }
 
     const sendMessageAction = async (value) => {
+        hideRecentAgentsDiv('.recent-agents-container');
       const state = store.getState()?.global
       if (value) {
         const { allAgents, selectedContext, commonAgents} = state
@@ -133,6 +136,7 @@ const ChatInterface = (props) => {
     
 
     const initiateChatConversationAction = async (arg) => {
+      hideRecentAgentsDiv('.recent-agents-container');
       const { enabledAgents, selectedContext } = state
       state = store.getState().global
       let params = { reqId: generateShortUUID() }

@@ -12,7 +12,8 @@ import Agents from "../agents";
 import Notifications from "../Notifications";
 import AnnouncementData from "../../Announcements/AnnouncementData";
 import { RenderComposeBar } from "../../composebar";
-import { renderRecentAgents } from "../../LandingPageRecentAgents";
+import RecentAgentsFunc from "../../LandingPageRecentAgents/RecentAgents";
+const {renderRecentAgents, hideRecentAgentsDiv, unHideRecentAgentsDiv} = RecentAgentsFunc();
 
 
 // function ShoelaceWrapper({ html }) {
@@ -96,6 +97,7 @@ const ChatInterfaceDemo = () => {
           <div className="sidebar-header">
             <div className="sidebar-title">AI for Work</div>
             <div className="new-btn" title="New" onClick={() => {
+              unHideRecentAgentsDiv('.recent-agents-container');
               NewChat()
             }}>+</div>
           </div>

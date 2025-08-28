@@ -163,6 +163,10 @@ html, body {
     letter-spacing: 0em;
     color: #141414;
 
+    .logo-icon {
+        display: none !important;
+    }
+
     .intent-ambiguity-template {
         display: flex;
         flex-direction: column;
@@ -198,6 +202,7 @@ html, body {
 
         .logo-icon {
             display: flex;
+            display: none;
         }
         .answerCntr {
             padding-top: .125rem;
