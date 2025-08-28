@@ -4,18 +4,21 @@ import ResponseQueryFlowFunctionality from "../functionality/response-query-flow
 import { set } from "lodash";
 
 function render(data) { 
+    
+    const uniqueId = `query-response-flow-${data?.messageId || data?.reqId}`;
+    
     let timeout;
     clearTimeout(timeout);
     timeout = setTimeout(() => {
-        ResponseQueryFlowFunctionality({ data });
-    }, 1000);
+        ResponseQueryFlowFunctionality({ data, uniqueId });
+    }, 100); // Reduced timeout for better responsiveness
 
     return `
-            <div class='query-response-flow'>
+            <div class='query-response-flow' id='query-response-flow-${uniqueId}'>
                 <div class='query-response-flow-header-container'>
-                    <div class="query-response-flow-header">                    
+                    <div class="query-response-flow-header ans-generating">                    
                         <div class="query-response-flow-header-text">${data?.generatingAnswerMsg || data?.reqFlow?.[data?.reqFlow?.length - 1]?.content || 'Analyzing...'}</div>
-                        <span class="query-response-flow-header-icon" style="${data?.status === 'completed' || data?.status === 'terminated' ? '' : 'display: none;'}">${cheveronRightIcon({ size: 16, color: "#667085" })}</span>                
+                        <span class="query-response-flow-header-icon ${data?.status === 'completed' || data?.status === 'terminated' ? '' : 'hidden'}">${cheveronRightIcon({ size: 16, color: "#667085" })}</span>                
                     </div>                    
                 </div>
                 <div class="display-query-response-flow" style="display: none;">${renderReqFlow(data)}</div>

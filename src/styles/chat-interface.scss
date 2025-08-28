@@ -2466,9 +2466,13 @@ html, body {
             height: 1rem;
             flex-shrink: 0;
             position: relative;
-            display: flex !important;
+            display: flex;
             align-items: center;
             justify-content: center;
+            
+            &.hidden {
+                display: none !important;
+            }
 
             svg {
                 display: flex;

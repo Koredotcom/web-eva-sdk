@@ -1,12 +1,17 @@
 import { CheveronDownIcon, cheveronRightIcon } from "../icons-library";
 
-const ResponseQueryFlowFunctionality = ({ data }) => {
+const ResponseQueryFlowFunctionality = ({ data, uniqueId }) => {
     
 
     if(data?.status === 'completed' || data?.status === 'terminated'){
-        const queryResponseFlow = document.querySelector('.query-response-flow');
+        const queryResponseFlow = document.getElementById(`query-response-flow-${uniqueId}`);
         if (queryResponseFlow) {                        
             const icon = queryResponseFlow.querySelector('.query-response-flow-header-icon');
+            const queryResponseFlowMainDiv = queryResponseFlow.querySelector('.query-response-flow-header.ans-generating');
+            if(queryResponseFlowMainDiv){
+                queryResponseFlowMainDiv.classList.remove('ans-generating');
+            }
+
             if (icon) {
                 icon.style.display = 'block';
                 
@@ -17,14 +22,14 @@ const ResponseQueryFlowFunctionality = ({ data }) => {
                     headerContainer.style.cursor = 'pointer';
                     
                     
-                    // Check if listener already exists
-                    if (!headerContainer.dataset.listenerAdded) {
-                        headerContainer.addEventListener('click', function(event) {
-                            
-                            toggleResponseFlow(event, data?.reqFlow?.[data?.reqFlow?.length - 1]?.content);
-                        });
-                        headerContainer.dataset.listenerAdded = 'true';
-                    }
+                    // Remove any existing listeners and add new one
+                    const newHeaderContainer = headerContainer.cloneNode(true);
+                    headerContainer.parentNode.replaceChild(newHeaderContainer, headerContainer);
+                    
+                    newHeaderContainer.addEventListener('click', function(event) {
+                        console.log('Click handler triggered for messageId:', data.messageId || data.id);
+                        toggleResponseFlow(event, data?.reqFlow?.[data?.reqFlow?.length - 1]?.content);
+                    });
                 } else {
                     
                 }
@@ -38,15 +43,15 @@ const ResponseQueryFlowFunctionality = ({ data }) => {
 }
 
 function toggleResponseFlow(event, content) {
+    console.log('toggleResponseFlow called');
 
-    let queryResponseHeader = document.querySelector('.query-response-flow-header-text');
-    
-    
     const queryResponseFlow = event.currentTarget.closest('.query-response-flow');
     if (!queryResponseFlow) {
         console.log('Query response flow not found');
         return;
     }
+    
+    let queryResponseHeader = queryResponseFlow.querySelector('.query-response-flow-header-text');
     
     const icon = queryResponseFlow.querySelector('.query-response-flow-header-icon');
     const displayDiv = queryResponseFlow.querySelector('.display-query-response-flow');
