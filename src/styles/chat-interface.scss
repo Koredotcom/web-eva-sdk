@@ -1993,6 +1993,9 @@ html, body {
             flex-direction: column;
             gap: 1.75rem;
         }
+        & > div:last-child {
+            min-height: calc(100vh - 200px);
+        }
     }
     .answerFromChipDiv {
         .ansFromChip {
