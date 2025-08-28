@@ -39,6 +39,7 @@ class ComposeBar {
         this.attachments = [];
         this.quickActions = [];
         this.selectedCommonAgent = null;
+        this.currentAnswerResponse=null;
         this.callbacks = {
             onSend: null,
             onNewChat: null,
@@ -69,7 +70,8 @@ class ComposeBar {
                 this.unsubscribe = this.chatInterface.subscribe((questions, searchResponse, moreAvailable, errorStates, quickActions) => {
                     // Toggle loading state based on async status
                     const isLoading = searchResponse?.status === 'loading';
-                    this.setLoading(!!isLoading);
+                    this.currentAnswerResponse = searchResponse;
+                    this.setLoading(!!isLoading, searchResponse);
                     if (Object.keys(questions).length > 0) {
                         this.questions = questions;
                     }
@@ -1162,7 +1164,7 @@ class ComposeBar {
     /**
      * Set loading state
      */
-    setLoading(loading) {
+    setLoading(loading, currentQuestionResponse) {
         this.isLoading = loading;
         const sendBtn = this.container.querySelector('[data-eva-send]');
         const stopBtn = this.container.querySelector('[data-eva-stop]');
@@ -1176,7 +1178,13 @@ class ComposeBar {
             } else {
                 sendBtn.innerHTML = arrowCirlceUpIcon({ size: 16, color: "#101828" });
                 sendBtn.title = 'Send';
-                sendBtn.classList.remove('stop-btn');
+                sendBtn.classList.remove('stop-btn');    
+                if(currentQuestionResponse?.data?.status === 'completed' || currentQuestionResponse?.data?.status === 'terminated'){
+                    const commonAgentActiveDiv = this.container.querySelectorAll('.agents-action-item.active');
+                    if(commonAgentActiveDiv?.length > 0){
+                        commonAgentActiveDiv[0].classList.remove('active');
+                    }
+                }                
             }
         }
 
