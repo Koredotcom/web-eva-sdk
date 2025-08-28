@@ -2197,6 +2197,51 @@ html, body {
             padding-top: .25rem;
             margin-top: 0;
         }
+        .message-container {
+            & > p, & > h1, & > h2, & > h3, & > h4, & > h5, & > h6 {
+                padding-top: .25rem;
+                margin-top: 0;
+            }
+
+            img {
+                max-width: 100%;
+            }
+    
+            table {
+                width: 100%;
+                border: 0.0625rem solid #E5E5E5;
+                border-collapse: collapse;
+                margin: 0.75rem 0;
+    
+                td, th {
+                    padding: .375rem 0.75rem;
+                    border: 0.0625rem solid #E5E5E5;
+                    border-collapse: collapse;                        
+                }
+                
+                td {
+                    font-family: Inter;
+                    font-size: 0.875rem;
+                    font-style: normal;
+                    font-weight: 400;
+                    line-height: 1.25rem;
+                    letter-spacing: 0em;
+                    color: #0F0F0F;
+                }
+    
+                th {
+                    font-family: Inter;
+                    font-size: 0.875rem;
+                    font-style: normal;
+                    font-weight: 700;
+                    line-height: 1.25rem;
+                    letter-spacing: 0em;
+                    color: #0F0F0F;
+                    background-color: #F5F5F5;
+                }
+            }
+        }
+        
     }
     .completed {
         & > div {        

@@ -30,8 +30,8 @@ function renderUserQuestion(question, userIconTemplate) {
 function renderAssistantQuestion(question, assistantIconTemplate) {
 	if (question) {
 		return `<div class="bot-flex-wrapper">
-					${assistantIconTemplate}
-					${customMarkdownRenderer(escapeHTML(question))}
+					<div class="bot-icon-container">${assistantIconTemplate}</div>
+					<div class="message-container">${customMarkdownRenderer(escapeHTML(question))}</div>
 				</div>`;
 	}
 }

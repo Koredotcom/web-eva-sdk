@@ -915,3 +915,16 @@ sl-dialog.eva-agents-dialog {
         }
     }
   }
+
+  .recent-agents-empty, .recent-agents-loading {
+    width: 100%;
+    max-width: 45rem;
+    margin: 2.25rem auto 1.25rem auto;
+    text-align: center;
+    font-size: 0.875rem;
+    font-family: Inter;
+    font-style: normal;
+    font-weight: 500;
+    line-height: 1.25rem;
+    letter-spacing: 0em;
+  }
