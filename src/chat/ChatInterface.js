@@ -100,6 +100,12 @@ const ChatInterface = (props) => {
             }
           }
         }
+        const scrollableElement = document.querySelector('.chatSec');
+        if (scrollableElement) {
+          requestAnimationFrame(() => {
+            scrollableElement.scrollTop = scrollableElement.scrollHeight;
+          });
+        }
         console.log("payload in chat interface", payload)
         const Res = await store.dispatch(advanceSearch({ params, payload, userId: state.profile.data.id }))
         console.log("payload in chat interface", payload)
