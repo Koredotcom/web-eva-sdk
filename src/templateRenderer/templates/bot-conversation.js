@@ -4,6 +4,7 @@ import BotConversation from "../../chat/botAgent/getBotConversation";
 import TemplateComponents from "./index";
 import { encodeHtml } from "../../utils/helpers";
 import customMarkdownRenderer from "../utils/customMarkdownRenderer";
+import { MessageRenderer } from "../../plugins/Markdown/message-renderer";
 
 function escapeHTML(str) {
 	if (!str) return "";
@@ -29,9 +30,9 @@ function renderUserQuestion(question, userIconTemplate) {
 
 function renderAssistantQuestion(question, assistantIconTemplate) {
 	if (question) {
-		return `<div class="bot-flex-wrapper">
+		return `<div class="bot-flex-wrapper ss">
 					${assistantIconTemplate}
-					${customMarkdownRenderer(escapeHTML(question))}
+					${MessageRenderer(question)}
 				</div>`;
 	}
 }
