@@ -70,8 +70,12 @@ class ComposeBar {
                 this.unsubscribe = this.chatInterface.subscribe((questions, searchResponse, moreAvailable, errorStates, quickActions) => {
                     // Toggle loading state based on async status
                     const isLoading = searchResponse?.status === 'loading';
-                    this.currentAnswerResponse = searchResponse;
-                    this.setLoading(!!isLoading, searchResponse);
+                    if(Object.values(questions)?.some(question => question?.loading)){
+                        this.currentAnswerResponse = null;
+                    }else{
+                        this.currentAnswerResponse = searchResponse?.data;
+                    }
+                    this.setLoading(!!isLoading);
                     if (Object.keys(questions).length > 0) {
                         this.questions = questions;
                     }
@@ -1164,10 +1168,11 @@ class ComposeBar {
     /**
      * Set loading state
      */
-    setLoading(loading, currentQuestionResponse) {
+    setLoading(loading) {
         this.isLoading = loading;
         const sendBtn = this.container.querySelector('[data-eva-send]');
         const stopBtn = this.container.querySelector('[data-eva-stop]');
+        const activeCommonAgent = this.container.querySelector('.agents-action-item.active');
 
         if (sendBtn) {
             // Preserve the icon instead of replacing with text
@@ -1178,12 +1183,12 @@ class ComposeBar {
             } else {
                 sendBtn.innerHTML = arrowCirlceUpIcon({ size: 16, color: "#101828" });
                 sendBtn.title = 'Send';
-                sendBtn.classList.remove('stop-btn');    
-                if(currentQuestionResponse?.data?.status === 'completed' || currentQuestionResponse?.data?.status === 'terminated'){
-                    const commonAgentActiveDiv = this.container.querySelectorAll('.agents-action-item.active');
-                    if(commonAgentActiveDiv?.length > 0){
-                        commonAgentActiveDiv[0].classList.remove('active');
-                    }
+                sendBtn.classList.remove('stop-btn');                                    
+                if(this.currentAnswerResponse?.status === 'completed' || this.currentAnswerResponse?.status === 'terminated'){
+                    if(activeCommonAgent){
+                        activeCommonAgent.classList.remove('active');                        
+                    }   
+                    this.currentAnswerResponse = null;
                 }                
             }
         }
