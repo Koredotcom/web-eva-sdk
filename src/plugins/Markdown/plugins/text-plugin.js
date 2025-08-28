@@ -24,8 +24,10 @@ function formatContent(content) {
 
   let formatted = content.replace(/\\n/g, "\n");
   formatted = formatted.replace(/\\([\\"])/g, "$1");
-  formatted = formatted.replace(/(\d+\.\s+[^\n]*?)(\d+\.\s+)/g, "$1\n$2");
-  formatted = formatted.replace(/(-\s+[^\n]*?)(-\s+)/g, "$1\n$2");
+  // Only fix list items that are stuck on the same line when they appear at line starts.
+  // This avoids breaking markdown tables that may contain "-" cells inside rows.
+  formatted = formatted.replace(/(^|\n)(\d+\.\s+[^\n]*?)(?=(\n)?\d+\.\s+)/g, "$1$2\n");
+  formatted = formatted.replace(/(^|\n)(-\s+[^\n]*?)(?=(\n)?-\s+)/g, "$1$2\n");
 
   return formatted;
 }
