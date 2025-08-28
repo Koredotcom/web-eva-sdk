@@ -1,8 +1,9 @@
-import { htmlDecode, renderIcons } from "../../utils/helpers";
+import { htmlDecode, renderIcons, getFileExtension, getExtIcon, getDownloadIcon } from "../../utils/helpers";
 import AnsFromChipFunctionality from "../functionality/ansFromChip";
 import { getTimeline, highlightQuotedText } from "../utils/helper";
 import htmlTableRenderer from "./htmlTableRenderer";
-import { createCopyIcon, createExport, createThumbsDown, createThumbsDownFilled, createThumbsUp, createThumbsUpFilled } from "../icons-library";
+import { createCopyIcon, createExport, createThumbsDown, createThumbsDownFilled, createThumbsUp, createThumbsUpFilled, setContextIcon, EllipsisVertical, Gmail, Outlookimg, Slackimg, Teamsimg, JiraCommentsIcon } from "../icons-library";
+import store from "../../redux/store";
 
 const AnsFromChip = ({ item, regeneratingAnswer }) => {
 	const regeneratingChipRenderer = () => {
@@ -12,11 +13,29 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
                 <span class="koraSpecDr">
                     <div class="contextIcon"></div>
                     <span class="krSpecName">${htmlDecode(
-						regeneratingSelectedItem?.title || "No subject"
+						item?.title || "No subject"
 					)}</span>
                 </span>
             </div>
         `;
+	};
+
+	// Get available actions based on enabled agents
+	const getAvailableActions = () => {
+		const items = [
+			{ icon: Gmail({ size: 14 }), label: 'Gmail', actionType: "send", appId: "gmail" },
+			{ icon: Outlookimg({ size: 14 }), label: 'O365 mail', actionType: "send", appId: 'outlook' },
+			{ icon: Slackimg({ size: 14 }), label: 'Slack', actionType: "send", appId: 'slack' },
+			{ icon: Teamsimg({ size: 14 }), label: 'Teams', actionType: "send", appId: 'msteams' },
+			{ icon: JiraCommentsIcon({ size: 15 }), label: 'Create Jira Issue', actionType: "create", appId: 'jira' },
+		];
+
+		const state = store.getState();
+		const allAgents = state?.global?.allAgents?.data?.agents;
+
+		const preBuitAgents = allAgents?.filter(agent => agent?.custom === false && agent?.type === 'dataAgent')?.map(item => item?.appId);
+
+		return items?.filter(item => preBuitAgents?.includes(item?.appId));
 	};
 
 	const relevantQuestionsRenderer = () => {
@@ -142,6 +161,60 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
         `;
 	};
 
+	const chatFilterGroupRenderer = () => {
+		if (!item?.showData || item?.sources?.length !== 1) {
+			return '';
+		}
+
+		let body = `<div class="chatFilterGroup">`;
+		body += `<div class="threadListGroup">`;
+		item?.data?.map((data, i) => {
+			body += `<div class="threadListItem" key="${i}">
+                                <div class='leftCol'>
+                                ${renderIcons(data?.source, null)?.outerHTML}
+                            </div>
+                            <div class="rightCol">
+                                <div class="leftDetails">
+                                    <div class="namgeGroup">
+                                        <div class="name" id = "listItem-${
+											item?.id
+										}-${data?.docId}">${data?.title}</div>
+                                    </div>
+                                    <div class='details'>
+                                        <span class='dtName'>Sent by: 
+                                            ${data?.fromEmail}, ${getTimeline(
+								data?.date,
+								"dayDateAndTime"
+							)}
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="rightDetails">
+                                    <div class="listView setContextDr">
+                                        <div class="subText">
+                                            <span class="dtText askFollowupButton"  id = "askFollowupButton-${
+												item?.id
+											}-${data?.docId}">Ask Followup
+                                            </span>
+                                        </div>
+                                    </div> 
+                                   <div class="openInNewTabIcon" id="openInNewTabIcon-${
+										item?.id
+									}-${data?.docId}">
+                                        <span>
+                                            <svg class="wa-ChangeLog" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 20 20" fill="none"><path d="M5.83333 14.1667L14.1667 5.83334M14.1667 5.83334H5.83333M14.1667 5.83334V14.1667" stroke="#667085" stroke-width="1.33" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+                                        </span>
+                                   </div>
+                                </div>
+                            </div>
+                        </div>`;
+		});
+		body += `</div>`;
+		body += `</div>`;
+
+		return body;
+	};
+
 	const knowledgeChipRenderer = () => {
 		let body = "";
 
@@ -169,53 +242,6 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 
 		if (item?.sources?.length === 1) {
 			body += singleSourceChipRenderer(item.sources[0]);
-			if (item?.showData) {
-				body += `<div class="chatFilterGroup">`;
-				body += `<div class="threadListGroup">`;
-				item?.data?.map((data, i) => {
-					body += `<div class="threadListItem" key="${i}">
-                                <div class='leftCol'>
-                                ${renderIcons(data?.source, null)?.outerHTML}
-                            </div>
-                            <div class="rightCol">
-                                <div class="leftDetails">
-                                    <div class="namgeGroup">
-                                        <div class="name" id = "listItem-${
-											item?.id
-										}-${data?.docId}">${data?.title}</div>
-                                    </div>
-                                    <div class='details'>
-                                        <span class='dtName'>Sent by: 
-                                            ${data?.fromEmail}, ${getTimeline(
-						data?.date,
-						"dayDateAndTime"
-					)}
-                                        </span>
-                                    </div>
-                                </div>
-                                <div class="rightDetails">
-                                    <div class="listView setContextDr">
-                                        <div class="subText">
-                                            <span class="dtText askFollowupButton"  id = "askFollowupButton-${
-												item?.id
-											}-${data?.docId}">Ask Followup
-                                            </span>
-                                        </div>
-                                    </div> 
-                                   <div class="openInNewTabIcon" id="openInNewTabIcon-${
-										item?.id
-									}-${data?.docId}">
-                                        <span>
-                                            <svg class="wa-ChangeLog" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 20 20" fill="none"><path d="M5.83333 14.1667L14.1667 5.83334M14.1667 5.83334H5.83333M14.1667 5.83334V14.1667" stroke="#667085" stroke-width="1.33" stroke-linecap="round" stroke-linejoin="round"></path></svg>
-                                        </span>
-                                   </div>
-                                </div>
-                            </div>
-                        </div>`;
-				});
-				body += `</div>`;
-				body += `</div>`;
-			}
 		}
 
 		return `<div class="ansFromChip">${body}</div>`;
@@ -391,7 +417,7 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 	
 	const copyAnswerChip = () => {
 		return `
-			<div class="copyAnswerButton" id="copyAnswerButton-${item?.id}">${createCopyIcon({ size: 16, color: "#667085" })}</div>
+			<div class="copyAnswerButton" id="copyAnswerButton-${item?.id}" title="Copy Response">${createCopyIcon({ size: 16, color: "#667085" })}</div>
 		`;
 	}
 
@@ -399,14 +425,14 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 		return `
 			<div class="feedbackChip">
 			    ${item?.feedback === "like" ? 
-					`<div class="feedbackLikeButton ${item?.feedback === "like" ? "active" : ""}" id="feedbackLikeButton-${item?.messageId}">${createThumbsUpFilled({ size: 16, color: "#12B76A" })}</div>` 
+					`<div class="feedbackLikeButton ${item?.feedback === "like" ? "active" : ""}" id="feedbackLikeButton-${item?.messageId}" title="Helpful">${createThumbsUpFilled({ size: 16, color: "#12B76A" })}</div>` 
 					:
-					`<div class="feedbackLikeButton" id="feedbackLikeButton-${item?.messageId}">${createThumbsUp({ size: 16, color: "#667085" })}</div>`
+					`<div class="feedbackLikeButton" id="feedbackLikeButton-${item?.messageId}" title="Helpful">${createThumbsUp({ size: 16, color: "#667085" })}</div>`
 				}
 				${item?.feedback === "dislike" ? 
-					`<div class="feedbackDislikeButton ${item?.feedback === "dislike" ? "active" : ""}" id="feedbackDislikeButton-${item?.messageId}">${createThumbsDownFilled({ size: 16, color: "#F04438" })}</div>` 
+					`<div class="feedbackDislikeButton ${item?.feedback === "dislike" ? "active" : ""}" id="feedbackDislikeButton-${item?.messageId}" title="Not Helpful">${createThumbsDownFilled({ size: 16, color: "#F04438" })}</div>` 
 					: 
-					`<div class="feedbackDislikeButton" id="feedbackDislikeButton-${item?.messageId}">${createThumbsDown({ size: 16, color: "#667085" })}</div>`
+					`<div class="feedbackDislikeButton" id="feedbackDislikeButton-${item?.messageId}" title="Not Helpful">${createThumbsDown({ size: 16, color: "#667085" })}</div>`
 				}
 			</div>
 		`;
@@ -414,7 +440,37 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 
 	const exportWordChip = () => {
 		return `
-			<div class="exportWordButton" id="exportWordButton-${item?.messageId}">${createExport({ size: 16, color: "#667085" })}</div>
+			<div class="exportWordButton" id="exportWordButton-${item?.messageId}" title="Export Response">${createExport({ size: 16, color: "#667085" })}</div>
+		`;
+	}
+
+	const setContextChip = () => {
+		return `
+			<div class="setContextButton" id="setContextButton-${item?.messageId}" title="Set as Context">${setContextIcon({ size: 16, color: "#667085" })}</div>
+		`;
+	}
+
+	/*need to creata a menufunction that displays a shoelace menu on clicking */
+	const threeDotMenu = () => {
+		const messageId = item?.messageId || item?.id;
+		console.log('Creating three dot menu for messageId:', messageId);
+		
+		// Get available integration actions
+		const availableActions = getAvailableActions();
+		
+		// Generate menu items for integration actions
+		const integrationMenuItems = availableActions.map(action => `
+			<div class="menu-item" data-menu-action="${action.appId}" data-action-type="integration">
+				<div class="menu-item-icon">${action.icon}</div>
+				<div class="menu-item-label">${action.label}</div>
+			</div>
+		`).join('');
+		
+		return `
+			<div class="three-dot-menu-container">
+				<button class="three-dot-trigger" data-three-dot-trigger="${messageId}" title="More options">${EllipsisVertical({ size: 16, color: "#667085" })}</button>				
+				<div class="three-dot-dropdown" data-three-dot-dropdown="${messageId}">${integrationMenuItems}</div>
+			</div>
 		`;
 	}
 	
@@ -461,10 +517,17 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 		if (item?.answer) {
 			actionChipsHTML += exportWordChip();
 		}
+		if(item?.sources?.[0]?.canSetAsSourceContext !== false) {
+			actionChipsHTML += setContextChip();
+		}
 
 		if(!item?.disableFeedback) {
 			actionChipsHTML += feedbackChip();
 		}
+		
+		// Add three dot menu
+		actionChipsHTML += threeDotMenu();
+		
 		actionChipsHTML += `</div>`;
 
 		// Insert action chips inside .ansFromChip if present
@@ -480,7 +543,13 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 			chipHTML += actionChipsHTML;
 		}
 
-		return `<div class="answerFromChipDiv">${chipHTML}</div>`;
+		// Generate the chat filter group content 
+		const chatFilterGroupHTML = chatFilterGroupRenderer();
+		
+		// Add chatFilterGroup inside answerFromChipDiv but outside chipHTML
+		const chatFilterGroupWrapper = chatFilterGroupHTML ? `<div>${chatFilterGroupHTML}</div>` : '';
+		
+		return `<div class="answerFromChipDiv">${chipHTML}${chatFilterGroupWrapper}</div>`;
 	};
 
 	let timeout;

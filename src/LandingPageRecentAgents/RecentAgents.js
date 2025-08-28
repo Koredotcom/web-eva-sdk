@@ -40,7 +40,7 @@ const setupClickHandlers = (divId) => {
             if (agent) {
                 try {                    
                     InvokeAgent(agent);                    
-                    container.innerHTML = '';
+                    container.style.display = 'none';
                 } catch (error) {
                     console.error('Error invoking agent:', error);
                 }

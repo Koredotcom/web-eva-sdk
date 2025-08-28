@@ -1,4 +1,5 @@
 import { encodeHtml } from "../utils/helper";
+import * as responseQueryFlow from "./response-query-flow";
 
 // import { encodeHtml } from "../utils/helper";
 
@@ -88,7 +89,7 @@ export function renderLoading(
             </div>
             <div class="message-bubble loading" >
                 ${assistantIconTemplate ? assistantIconTemplate : ""}
-                <div class="loading-text"><div class="dot-flashing"></div></div>   
+                ${responseQueryFlow.render(data)}
             </div>`;
 }
 

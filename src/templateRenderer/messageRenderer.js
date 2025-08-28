@@ -18,6 +18,7 @@ import { convertTemplateToHtml } from "../utils/helpers";
 import botConversation from "./templates/bot-conversation";
 import customMarkdownRenderer from "./utils/customMarkdownRenderer";
 import * as itemsAmbiguityTemplate from "./templates/items-ambiguity-template";
+import * as responseQueryFlow from "./templates/response-query-flow";
 import AnsFromChip from "./templates/ansFromChip";
 import DOMPurify from "dompurify";
 
@@ -85,16 +86,23 @@ export function render(
 			// 		loadingText
 			// 	)
 			// );
-			content += renderTemplateContent(
+			let html = renderTemplateContent(
 				data,
 				assistantIconTemplate,
 				userIconTemplate,
 				loadingText
 			);
+			content += DOMPurify.sanitize(html, {
+				ADD_TAGS: SHOELACE_TAGS,
+				ADD_ATTR: SHOELACE_ATTRS,
+			});
 		}
 		if (!!data?.sources?.length && data?.templateType === "search_answer") {
 			let chip = AnsFromChip({ item: data });
-			content += chip;
+			content += DOMPurify.sanitize(chip, {
+				ADD_TAGS: SHOELACE_TAGS,
+				ADD_ATTR: SHOELACE_ATTRS,
+			});
 		}
 		let ele = TemplateComponents.wrapTemplate(content, {
 			type: data.templateType,
@@ -106,7 +114,7 @@ export function render(
 		console.error("Error rendering message:", error);
 		return genericErrorTemplate.render({
 			error: {
-				message: "Failed to render message",
+				message: `Failed to render message: ${error}`,
 				code: "RENDER_ERROR",
 			},
 		});
@@ -135,39 +143,40 @@ export function renderTemplateContent(
 					I see you interrupted the answer generation. Please feel free to provide more details or let me know how can I assist you further
 				</div>`;
 	} else {
+		htmlTemplate = responseQueryFlow.render(data);
 		switch (data.templateType) {
 			case "resolve_ambiguity":
-				htmlTemplate = ambiguityTemplate.render(data);
+				htmlTemplate += ambiguityTemplate.render(data);
 				break;
 
 			case "intent_ambiguity":
-				htmlTemplate = intentAmbiguityTemplate.render(data);
+				htmlTemplate += intentAmbiguityTemplate.render(data);
 				break;
 
 			case "action_send_email":
-				htmlTemplate = actionSendEmail.render(data);
+				htmlTemplate += actionSendEmail.render(data);
 				break;
 
 			case "integrations_action_form":
-				htmlTemplate = integrationActionTemplate.render(data);
+				htmlTemplate += integrationActionTemplate.render(data);
 				break;
 
 			case "interruption_template":
-				htmlTemplate = interruptionTemplate.render(data);
+				htmlTemplate += interruptionTemplate.render(data);
 				break;
 
 			case "gpt_form_template":
-				htmlTemplate = gptFormTemplate.render(data);
+				htmlTemplate += gptFormTemplate.render(data);
 				break;
 
 			case "action_send_slack_message":
-				htmlTemplate = actionSendSlackMessage.render(data);
+				htmlTemplate += actionSendSlackMessage.render(data);
 				break;
 
 			case "connection_provider":
 			case "admin_config_action":
 			case "error_message":
-				htmlTemplate = connectionProvider.render({
+				htmlTemplate += connectionProvider.render({
 					...data,
 					llm: data.templateType !== "connection_provider",
 					error: data.templateType === "error_message",
@@ -175,7 +184,7 @@ export function renderTemplateContent(
 				break;
 
 			case "agent_welcome_template":
-				htmlTemplate = agentWelcomeTemplate.render(data);
+				htmlTemplate += agentWelcomeTemplate.render(data);
 				break;
 			// case "bot_template":
 			// 	console.log("bottttt", data.template_html);
@@ -184,25 +193,25 @@ export function renderTemplateContent(
 
 			case "search_answer":
 			case "search_results":
-				htmlTemplate = searchAnswer.render(data);
+				htmlTemplate += searchAnswer.render(data);
 				break;
 
 			case "multi_intent_execution":
-				htmlTemplate = multiIntentExecution.render(data);
+				htmlTemplate += multiIntentExecution.render(data);
 				break;
 
 			case "multi_responses":
-				htmlTemplate = multiResponses.render(data);
+				htmlTemplate += multiResponses.render(data);
 				break;
 
 			case "hold_conversation":
-				htmlTemplate = holdConversation.render(data);
+					htmlTemplate += holdConversation.render(data);
 				break;
 			case "items_ambiguity_template":
-				htmlTemplate = itemsAmbiguityTemplate.render(data);
+				htmlTemplate += itemsAmbiguityTemplate.render(data);
 				break;
 			case "error_template":
-				htmlTemplate = errorMessage.render(data, assistantIconTemplate);
+				htmlTemplate += errorMessage.render(data, assistantIconTemplate);
 				break;
 
 			default:

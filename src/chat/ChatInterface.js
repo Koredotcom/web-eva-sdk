@@ -278,12 +278,48 @@ const ChatInterface = (props) => {
       return state.customData;
     }
 
+  const responseFlowGeneration = (detail) => {
+    let quesId = detail?.data?.reqId;
+    let questions = cloneDeep(store.getState().global.questions);
+    let question = questions[quesId];
+
+    if (!question) {
+      //Checking whether the question is one among the multi intent execution
+      Object.values(questions)?.forEach(ques => {
+        let reqdQues = ques?.reqId === quesId; //This it to check if the question is the main question or the multi Intent Execution
+        let retryQues = ques?.retryId === quesId; //This is to check retry Questions.
+        if (reqdQues && ques?.isTask) {
+          question = ques;
+          quesId = ques?._id; //The key of the id in multiintent execution is the _id, so we need to assign the _id to the quesId
+          question.showResponseFlow = true;
+        } else if (retryQues) {
+          question = ques;
+          quesId = ques?.id;
+        }
+      })
+      if (!question) {
+        //If the question is not found, then return
+        return;
+      }
+    }
+
+    if (question?.apiSuccess) {      
+      question.generatingAnswerMsg = detail?.data?.suggestion    
+      questions[quesId] = question
+      store.dispatch(updateChatData(questions))
+      return;
+    }
+    question.generatingAnswerMsg = detail?.data?.suggestion
+    questions[quesId] = question
+    store.dispatch(updateChatData(questions))        
+  }
+
     const contentStreaming = (detail) => {
       // if contentStreaming set to false by client than it will not stream the content
       if(state.chatInterfaceOptions?.contentStreaming === false) return;
 
       // questionsRef.current - because questions state updates not coming in eventBuzz
-      const questions = cloneDeep(state.questions);
+      const questions = cloneDeep(store.getState().global.questions);
       /*when resuming the conversation from history, the history data is structured using uuid, so using redId, we can extract the question to be resumed, so need to target the id, present in question with the help of reqId */
       /*function to check the questions are from history */
       const isHistoryAccessed = checkHistoryAccessed(questions)
@@ -493,7 +529,8 @@ const ChatInterface = (props) => {
         clearErrorState,
         sendMessage,
         setAgentContext,
-        stopBotAnswer
+        stopBotAnswer,
+      responseFlowGeneration
     }
 }
 

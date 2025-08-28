@@ -80,7 +80,7 @@ const ChatInterfaceDemo = () => {
   useEffect(() => {
     // Initialize ComposeBar by passing the div id
     RenderComposeBar('#eva-composebar');
-    renderRecentAgents('#recent-agents');
+    renderRecentAgents('recent-agents-container');
   }, []); 
 
 
@@ -136,7 +136,7 @@ const ChatInterfaceDemo = () => {
         {/* Replace the React Composebar with plain JavaScript ComposeBar container */}
         <div className="compose-section">          
           <div id="eva-composebar"></div>
-          <div id="recent-agents"></div>
+          <div id="recent-agents-container"></div>
         </div>
       </div>
     </div>

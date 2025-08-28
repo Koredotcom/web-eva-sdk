@@ -71,9 +71,11 @@ function createConversationHTML(
 			}
 		}
 		if (conversation?.loading) {
-			content += `<div class="message-bubble loading" >
-					${assistantIconTemplate ? assistantIconTemplate : ""}
-				<div class="loading-text">${encodeHtml(loadingText)}</div>   
+			content += `<div class="message-bubble loading">
+					<div class="bot-flex-wrapper">
+						<div class="bot-icon-container">${assistantIconTemplate ? assistantIconTemplate : ""}</div>
+						<div class="message-container"><div class="loading-text">${encodeHtml(loadingText)}</div></div>
+					</div>
 			</div>`;
 		}
 		return content;
