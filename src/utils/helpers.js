@@ -255,3 +255,8 @@ export const getAgentType = (type) => {
             return 'Agent';
     }
 }
+
+export const isUserNearBottom = (el, threshold = 200) => {
+    const delta = el.scrollHeight - el.scrollTop - el.clientHeight;
+    return delta <= threshold;
+};

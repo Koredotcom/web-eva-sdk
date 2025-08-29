@@ -370,3 +370,11 @@ export function JiraCommentsIcon({ size = config.size, className = '' }) {
       </svg>
   `
 }
+
+export function RightArrow({ size = config.size, color = config.color, className = '' }) {  
+  return `
+      <svg width="${size}" height="${size}" className="wa-RightArrow ${className}" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M1.33337 6.00016H10.6667M10.6667 6.00016L6.00004 1.3335M10.6667 6.00016L6.00004 10.6668" stroke="${color}" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+  `
+}

@@ -7,6 +7,8 @@ import { LoadMoreRecentFiles, RecentFiles } from "../files"
 import getBookMarkedChatThreads from "../history/getBookMarkedChatThreads"
 import bookMarkChatThread from "../history/bookMarkChatThread"
 import loadMoreBookMarkedChatThreads from "../history/loadMoreBookMarkedChatThreads"
+import RecentAgentsFunc from "../LandingPageRecentAgents/RecentAgents"
+const {hideRecentAgentsDiv} = RecentAgentsFunc();
 import store from "../redux/store"
 
 const History = (props) => {
@@ -90,6 +92,7 @@ const History = (props) => {
     }
 
     const joinChatHistory = (board) => {
+        hideRecentAgentsDiv('.recent-agents-container')
         JoinChatThread({ boardId: board?.id })
     };
 

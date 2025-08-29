@@ -928,3 +928,32 @@ sl-dialog.eva-agents-dialog {
     line-height: 1.25rem;
     letter-spacing: 0em;
   }
+  .scrollToBottmBtn {
+    position: absolute;
+    bottom: 1rem;
+    right: 50%;
+    width: 2rem;
+    height: 2rem;
+    background: #fff;
+    border-radius: 6.25rem;
+    border: 0.0625rem solid #e5e5e5;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    transition: all 0.3s ease-in-out;
+    &:hover {
+        background: #f5f5f5;
+    }
+    .wa-RightArrow {
+        transform: rotate(90deg);
+        width: 1rem;
+        height: 1rem;
+    }
+    .scrollToBottmBtn-text {
+        font-size: 0.875rem;
+        font-weight: 500;
+        line-height: 1.125rem;
+        color: #737373;
+    }
+}
