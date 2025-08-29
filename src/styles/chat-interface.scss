@@ -2043,7 +2043,7 @@ html, body {
             gap: 1.75rem;
         }
         & > div:last-child {
-            min-height: calc(100vh - 200px);
+            min-height: calc(-10rem + 100dvh);
         }
     }
     .answerFromChipDiv {
