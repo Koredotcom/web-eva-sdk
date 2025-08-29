@@ -13,6 +13,8 @@ import Notifications from "../Notifications";
 import AnnouncementData from "../../Announcements/AnnouncementData";
 import { RenderComposeBar } from "../../composebar";
 import RecentAgentsFunc from "../../LandingPageRecentAgents/RecentAgents";
+import { isUserNearBottom } from "../../utils/helpers";
+import { RightArrow } from "../../templateRenderer/icons-library";
 const {renderRecentAgents, hideRecentAgentsDiv, unHideRecentAgentsDiv} = RecentAgentsFunc();
 
 
@@ -40,9 +42,14 @@ const ChatInterfaceDemo = () => {
   const [quickActions, setQuickActions] = useState(null);
   const [input, setInput] = useState("");
   const [announcements, setAnnouncements] = useState(null);
+  const [showScrollToBottom, setShowScrollToBottom] = useState(false);
+  const [wasScrollToBottomClicked, setWasScrollToBottomClicked] = useState(false);
 
   const chatInterface = useRef();
   const composeBarRef = useRef(); // Reference for the ComposeBar instance
+  const scrollContainerRef = useRef(null);
+  const preventScrollRef = useRef(false);
+  const getBottomHeight = useRef(0);
 
   useEffect(() => {
     chatInterface.current = ChatInterface();
@@ -90,6 +97,47 @@ const ChatInterfaceDemo = () => {
       setAnnouncements(res?.data)      
   }
 
+  const handleScroll = () => {
+    const el = scrollContainerRef.current;
+    if (!el) return;
+
+    const nearBottom = isUserNearBottom(el, 50);
+    preventScrollRef.current = !nearBottom;
+    getBottomHeight.current = nearBottom;
+
+    // Hide scroll to bottom button when user manually scrolls to the very bottom
+    const isAtVeryBottom = isUserNearBottom(el, 10); // Very small threshold for exact bottom detection
+    if (isAtVeryBottom && showScrollToBottom) {
+      setShowScrollToBottom(false);
+      setWasScrollToBottomClicked(false); // Reset the clicked flag when manually scrolled to bottom
+    }
+
+    // Show scroll to bottom button when user scrolls up and content is hidden below
+    // Use a larger threshold (100px) to show button before user scrolls too far up
+    const isContentHiddenBelow = !isUserNearBottom(el, 100);
+    const hasContentToScroll = el.scrollHeight > el.clientHeight; // Check if there's scrollable content
+
+    // Reset the clicked flag when user scrolls up significantly from bottom
+    if (isContentHiddenBelow && wasScrollToBottomClicked) {
+      setWasScrollToBottomClicked(false);
+    }
+
+    if (isContentHiddenBelow && hasContentToScroll && !showScrollToBottom) {
+      setShowScrollToBottom(true);
+    }
+
+    // Optional: close overlays
+    // if (
+    //   document.getElementById('ellipisiOverlay_panel') &&
+    //   !isSourceMenuHovered.current
+    // ) {
+    //   setEllipsisDr(false);
+    // }
+    // if (document.getElementById('downVotePanel')) {
+    //   setFeedbackOverlay(false);
+    // }
+  };
+
   return (
     <div className="chatInterfaceDemo">
       <div className="sidebar">
@@ -108,7 +156,10 @@ const ChatInterfaceDemo = () => {
       </div>
       
       <div className="chatInterfaceSec">
-        <div className="chatSec">
+        <div className="chatSec" id="chatSec" onScroll={handleScroll}
+          ref={scrollContainerRef}
+        >
+
           <div className="chatSec-inner">
           {messages &&
             Object.values(messages).map((item, index) => {
@@ -134,6 +185,11 @@ const ChatInterfaceDemo = () => {
 
             })}
           </div>
+          {showScrollToBottom && <div className="scrollToBottmBtn" onClick={() => {
+            scrollContainerRef.current.scrollTop = scrollContainerRef?.current?.scrollHeight
+            setShowScrollToBottom(false)
+            setWasScrollToBottomClicked(true)
+          }}><div className="scrollToBottmBtn-icon" id="scrollToBottomBtn" dangerouslySetInnerHTML={{ __html: RightArrow({ color: "#737373" }) }} /></div>}
         </div>
         {/* Replace the React Composebar with plain JavaScript ComposeBar container */}
         <div className="compose-section">          
