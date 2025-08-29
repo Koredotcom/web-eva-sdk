@@ -145,6 +145,7 @@ html, body {
         .chatSec {
             flex-grow: 1;
             overflow: auto;
+            position: relative;
         }
         .ComposeBarContainer {
             flex-shrink: 0;

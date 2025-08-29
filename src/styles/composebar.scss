@@ -931,7 +931,7 @@ sl-dialog.eva-agents-dialog {
   .scrollToBottmBtn {
     position: absolute;
     bottom: 1rem;
-    right: 50%;
+    margin: 0 auto;
     width: 2rem;
     height: 2rem;
     background: #fff;
@@ -942,18 +942,26 @@ sl-dialog.eva-agents-dialog {
     align-items: center;
     cursor: pointer;
     transition: all 0.3s ease-in-out;
+    right: 0;
+    left: 0;
     &:hover {
         background: #f5f5f5;
-    }
-    .wa-RightArrow {
-        transform: rotate(90deg);
-        width: 1rem;
-        height: 1rem;
     }
     .scrollToBottmBtn-text {
         font-size: 0.875rem;
         font-weight: 500;
         line-height: 1.125rem;
         color: #737373;
+    }
+    .scrollToBottmBtn-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        svg {
+            transform: rotate(90deg);
+            width: 1rem;
+            height: 1rem;
+        }
     }
 }
