@@ -20,29 +20,31 @@ function render(data) {
 
             // Find the parent message-content div
             const messageContent = copyButton.closest('.message-content');
-            if(messageContent) {
-                // Ensure relative positioning for absolute positioning to work
-                if(getComputedStyle(messageContent).position === 'static') {
-                    messageContent.style.position = 'relative';
-                }
+            // if(messageContent) {
+            //     // Ensure relative positioning for absolute positioning to work
+            //     if(getComputedStyle(messageContent).position === 'static') {
+            //         messageContent.style.position = 'relative';
+            //     }
                 
-                // Show copy icon on hover
-                messageContent.addEventListener('mouseenter', () => {
-                    copyButton.style.opacity = '1';
-                });
+            //     // Show copy icon on hover
+            //     messageContent.addEventListener('mouseenter', () => {
+            //         copyButton.style.opacity = '1';
+            //     });
                 
-                // Hide copy icon when not hovering
-                messageContent.addEventListener('mouseleave', () => {
-                    copyButton.style.opacity = '0';
-                });
-            }
+            //     // Hide copy icon when not hovering
+            //     messageContent.addEventListener('mouseleave', () => {
+            //         copyButton.style.opacity = '0';
+            //     });
+            // }
         }
     }, 1000);
 
     return `
-    <div className='questcopy' id='${copyButtonId}' style='opacity: 0; transition: opacity 0.2s ease; position: absolute; right: 8px; top: 8px; cursor: pointer; z-index: 10;'>
-                ${createCopyIcon({size: 16, color: '#666', className: 'questcopy-icon'})}
-    </div>
+    <sl-tooltip content="Copy" placement="bottom">
+        <div class='questcopy' id='${copyButtonId}'>
+            ${createCopyIcon({size: 16, color: '#666', className: 'questcopy-icon'})}
+        </div>
+    </sl-tooltip>
     `
 }
 

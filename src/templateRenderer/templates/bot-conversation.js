@@ -30,7 +30,7 @@ function renderUserQuestion(question, userIconTemplate) {
 
 function renderAssistantQuestion(question, assistantIconTemplate) {
 	if (question) {
-		return `<div class="bot-flex-wrapper ss">
+		return `<div class="bot-flex-wrapper">
 					${assistantIconTemplate}
 					${MessageRenderer(question)}
 				</div>`;

@@ -15,13 +15,13 @@ export function renderQuestionBubble(data, userIconTemplate = false) {
             <div class="message-content">
                 ${copyQuestion.render(data)}
                 <div class="message-text" id="message-text-${data?.messageId || data?.reqId}">${encodeHtml(question)}</div>
-                ${userIconTemplate ? userIconTemplate : ""}
             </div>
         </div>
         `;
 }
 
 /**
+ * ${userIconTemplate ? userIconTemplate : ""}
  * Render an answer bubble
  * @param {Object} data Answer data
  * @returns {string} HTML string
