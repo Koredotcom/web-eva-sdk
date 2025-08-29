@@ -1,7 +1,6 @@
 import { encodeHtml } from "../utils/helper";
 import { CheveronDownIcon, cheveronRightIcon } from "../icons-library";
 import ResponseQueryFlowFunctionality from "../functionality/response-query-flow";
-import { set } from "lodash";
 
 function render(data) { 
     

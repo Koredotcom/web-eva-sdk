@@ -290,6 +290,55 @@ const AnsFromChipFunctionality = ({ item }) => {
 		}
 	};
 
+	/*Latest functionality for askFollowup*/
+	const setContextData = (e, item) => {
+		e.stopPropagation()
+		const msgType = item?.type
+		// const messageId = msgType === "followup" ? ellipsisDr?.parentMessageId : ellipsisDr?.messageId;
+		const messageId = item?.messageId; //Shpuld send the messageId of the question clicked for Followup
+		const _selectedContext = { ...item?.context, messageId, sources: item?.sources, viewType: item?.viewType }
+		let obj = {}
+		let enabledUserAgents = store.getState()?.global?.allAgents?.data?.agents?.filter(a => !!a?.enabled)
+		let _agents = cloneDeep(enabledUserAgents)
+		let isAgentSetAsSource = _agents.find(ag => ag.id === item?.sources?.[0]?.source)
+		let sourceType = isAgentSetAsSource ? "agent" : null
+
+		if (item?.viewType === "table" && _selectedContext?.hasOwnProperty("sessionId")) {
+			// sessionItemHandler({ appContext, dispatch, item: { ..._selectedContext, source: 'attachment' }, viewType: item?.viewType, type: sourceType })
+		} else if (item?.templateType === 'search_results') {
+			// Specific for search result 
+			obj = {			
+				item: item?.sources?.[0],
+				type: 'accountKnowledge',
+				discardPrevSession: true
+			}
+			sessionItemHandler(obj)
+		} else {
+
+			obj = {
+				boardId: item.boardId,
+				messageId,
+				appContext,
+				dispatch,
+				item: item?.sources?.[0],
+				duplicateErr: true,
+				viewType: item?.viewType,
+				type: sourceType
+			}
+			// if(selectedContext?.sources?.[0]?.isAgent) {
+			if (sourceType === 'agent' || selectedContext?.sources?.[0]?.isAgent) {
+				obj.discardPrevSession = true
+			}
+			if (selectedContext?.viewType === "table") {
+				obj.override = true
+			}
+			sessionItemHandler(obj)
+		}
+		// menuHide()
+		setEllipsisDr(false);
+	}
+	
+
 	const knowledgeChipLogic = () => {
 		if (item?.sources?.length > 1) {
 			let chip = document.getElementById(`ansFromChip-${item?.id}`);
@@ -459,6 +508,20 @@ const AnsFromChipFunctionality = ({ item }) => {
 			feedbackLikeButton.eventListenerAdded = true;
 			feedbackDislikeButton.eventListenerAdded = true;
 		}
+
+		if(item?.context?.enable){
+			let setContextButton = document.getElementById(
+				`setContextButton-${item?.messageId}`
+			);
+			if (setContextButton && !setContextButton.eventListenerAdded) {
+				setContextButton.addEventListener("click", (e) => {
+					e?.preventDefault();
+					e?.stopPropagation();
+
+				});
+		}
+	}
+
 
 		// Add three dot menu functionality
 		const messageId = item?.messageId || item?.reqId;
