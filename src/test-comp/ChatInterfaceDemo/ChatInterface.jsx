@@ -156,6 +156,7 @@ const ChatInterfaceDemo = () => {
       </div>
       
       <div className="chatInterfaceSec">
+        
         <div className="chatSec" id="chatSec" onScroll={handleScroll}
           ref={scrollContainerRef}
         >
@@ -185,14 +186,15 @@ const ChatInterfaceDemo = () => {
 
             })}
           </div>
-          {showScrollToBottom && <div className="scrollToBottmBtn" onClick={() => {
+          
+        </div>
+        {/* Replace the React Composebar with plain JavaScript ComposeBar container */}
+        <div className="compose-section">
+        {showScrollToBottom && <div className="scrollToBottmBtn" onClick={() => {
             scrollContainerRef.current.scrollTop = scrollContainerRef?.current?.scrollHeight
             setShowScrollToBottom(false)
             setWasScrollToBottomClicked(true)
-          }}><div className="scrollToBottmBtn-icon" id="scrollToBottomBtn" dangerouslySetInnerHTML={{ __html: RightArrow({ color: "#737373" }) }} /></div>}
-        </div>
-        {/* Replace the React Composebar with plain JavaScript ComposeBar container */}
-        <div className="compose-section">          
+          }}><div className="scrollToBottmBtn-icon" id="scrollToBottomBtn" dangerouslySetInnerHTML={{ __html: RightArrow({ color: "#737373" }) }} /></div>}          
           <div id="eva-composebar"></div>
           <div id="recent-agents-container"></div>
         </div>

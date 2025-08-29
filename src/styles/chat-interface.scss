@@ -141,6 +141,7 @@ html, body {
         padding: 1rem 0;        
         display: flex;
         flex-direction: column;
+        position: relative;
 
         .chatSec {
             flex-grow: 1;

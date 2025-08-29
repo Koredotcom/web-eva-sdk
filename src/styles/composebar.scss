@@ -9,6 +9,9 @@
     margin-bottom: .5rem;
     gap: .5rem;
     flex-wrap: wrap;
+    &:empty {
+        display: none;
+    }
 }
 
 /* Quick action chips */
@@ -930,7 +933,7 @@ sl-dialog.eva-agents-dialog {
   }
   .scrollToBottmBtn {
     position: absolute;
-    bottom: 1rem;
+    bottom: calc(100% + 0.75rem);
     margin: 0 auto;
     width: 2rem;
     height: 2rem;
@@ -964,4 +967,8 @@ sl-dialog.eva-agents-dialog {
             height: 1rem;
         }
     }
+}
+
+.compose-section {
+    position: relative;
 }
