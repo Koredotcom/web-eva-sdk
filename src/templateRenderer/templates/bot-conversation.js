@@ -35,10 +35,12 @@ function renderAssistantQuestion(conversation, assistantIconTemplate) {
 		question = conversation?.template_html;
 	}
 	return `<div class="bot-flex-wrapper">
-					${assistantIconTemplate}
+				${assistantIconTemplate}
+				<div class='answerCntr'>
 					${conversation?.thoughts?.length > 0 && renderThoughts(conversation)}
 					${question ? MessageRenderer(question) : ""}
-				</div>`;
+				</div>
+			</div>`;
 }
 
 function createConversationHTML(
@@ -215,14 +217,14 @@ const expandThoughts = (conversation) => {
             ${conversation?.thoughts?.map((thought, index) => {
 		return `
 		<div class='thoughtsContent' key=${index} style="animation-delay: ${ index * 0.2 } s">
-                                        <div class='thoughts-content-wrapper'> 
-                                            <div class='border-line'></div>
-                                            <div class='thought-text'>${thought?.content}</div>
-											${!conversation?.hasOwnProperty('question') ? (index === conversation?.thoughts?.length - 1 ? `<div class='thought-loader-wrapper'>
-												<div class='thought-loader'>Loading...</div>
-											</div>`:''):''}
-                                        </div>                                        
-									</div>                    
+			<div class='thoughts-content-wrapper'> 
+				<div class='border-line'></div>
+				<div class='thought-text'>${thought?.content}</div>
+				${!conversation?.hasOwnProperty('question') ? (index === conversation?.thoughts?.length - 1 ? `<div class='thought-loader-wrapper'>
+					<div class='thought-loader'>Loading...</div>
+				</div>`:''):''}
+			</div>                                        
+		</div>                    
                 `;
 	}).join('')}
         </div>
