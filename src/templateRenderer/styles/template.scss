@@ -131,6 +131,14 @@
     cursor: pointer;
     transition: all 0.3s ease;
 
+    .thought-loader-wrapper {
+        .thought-loader {
+            .dot-flashing {
+                margin-left: 1rem;
+            }
+        }
+    }
+
     .query-response-flow-items {
         display: flex;
         flex-direction: column;

@@ -683,7 +683,7 @@ class ComposeBar {
         
 
         if (this.input?.length > 0) {
-            micButton.innerHTML = Close({ size: 16, color: "#667085" });
+            micButton.innerHTML = Close({ size: 12, color: "#667085" });
             micButton.title = "Clear input";            
         } else {
             micButton.innerHTML = microphoneIcon({ size: 16, color: "#667085" });

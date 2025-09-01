@@ -219,14 +219,14 @@ const expandThoughts = (conversation) => {
 		<div class='thoughtsContent' key=${index} style="animation-delay: ${ index * 0.2 } s">
 			<div class='thoughts-content-wrapper'> 
 				<div class='border-line'></div>
-				<div class='thought-text'>${thought?.content}</div>
-				${!conversation?.hasOwnProperty('question') ? (index === conversation?.thoughts?.length - 1 ? `<div class='thought-loader-wrapper'>
-					<div class='thought-loader'>
-					  <div class="dot-flashing"></div>
-					</div>
-				</div>`:''):''}
+				<div class='thought-text'>${thought?.content}</div>				
 			</div>                                        
-		</div>                    
+		</div>  
+		${!conversation?.hasOwnProperty('question') ? (index === conversation?.thoughts?.length - 1 ? `<div class='thought-loader-wrapper'>
+			<div class='thought-loader'>
+				<div class="dot-flashing"></div>
+			</div>
+		</div>`:''):''}                  
                 `;
 	}).join('')}
         </div>

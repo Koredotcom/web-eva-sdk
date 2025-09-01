@@ -1,10 +1,11 @@
-import { createCopyIcon } from "../icons-library";
+import { CheckCircle, createCopyIcon } from "../icons-library";
 import { toast } from "../../chat";
 
 function render(data) {
 
     const messageTextId = `message-text-${data?.messageId || data?.reqId}`;
     const copyButtonId = `copy-btn-${data?.messageId || data?.reqId}`;
+    const messageDivId = `copy-message-${data?.messageId || data?.reqId}`;
 
     let timeout;
     clearTimeout(timeout);
@@ -19,9 +20,17 @@ function render(data) {
                     const composeBarInput = document.querySelector('.eva-compose-textarea');
                     if(!composeBarInput?.value?.length){
                         composeBarInput.value = messageText.textContent;
-                        toast.error('Copied to compose bar', {
-                            duration: 1000
-                        });
+                        
+                        // Show the message div
+                        const messageDiv = document.getElementById(messageDivId);
+                        if(messageDiv) {
+                            messageDiv.style.display = 'flex';
+                            
+                            // Hide the message div after 1 second
+                            setTimeout(() => {
+                                messageDiv.style.display = 'none';
+                            }, 3000);
+                        }
                         
                         // Trigger input event to update ComposeBar's internal state
                         const inputEvent = new Event('input', { bubbles: true });
@@ -58,6 +67,12 @@ function render(data) {
             ${createCopyIcon({size: 16, color: '#666', className: 'questcopy-icon'})}
         </div>
     </sl-tooltip>
+    <div id='${messageDivId}' class='copy-message wa-dropdown-enter-anim'>        
+        <div class='copy-message-icon'>
+            ${CheckCircle({size: 16, color: '#039855'})}
+        </div>
+        <div class='copy-message-text'>Copied to Clipboard</div>
+    </div>
     `
 }
 
