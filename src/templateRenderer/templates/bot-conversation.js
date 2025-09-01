@@ -37,7 +37,7 @@ function renderAssistantQuestion(conversation, assistantIconTemplate) {
 	return `<div class="bot-flex-wrapper">
 				${assistantIconTemplate}
 				<div class='answerCntr'>
-					${conversation?.thoughts?.length > 0 && renderThoughts(conversation)}
+					${conversation?.thoughts?.length > 0 ? renderThoughts(conversation) : ""}
 					${question ? MessageRenderer(question) : ""}
 				</div>
 			</div>`;
@@ -313,7 +313,7 @@ function renderBotConversation(
 
 	if(props?.status === 'completed' && props?.viewType === 'threadView') {
 		conversationsHTML = customMarkdownRenderer(`
-			<div class="botTemplate-${props?.messageId}">
+			<div class="botTemplate-${props?.messageId}-completed">
 				${props?.answer}
 			</div>
 		`);
