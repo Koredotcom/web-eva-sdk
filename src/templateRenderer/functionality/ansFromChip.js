@@ -319,24 +319,23 @@ const AnsFromChipFunctionality = ({ item }) => {
 			obj = {
 				boardId: item.boardId,
 				messageId,
-				appContext,
-				dispatch,
+			
 				item: item?.sources?.[0],
 				duplicateErr: true,
 				viewType: item?.viewType,
 				type: sourceType
 			}
 			// if(selectedContext?.sources?.[0]?.isAgent) {
-			if (sourceType === 'agent' || selectedContext?.sources?.[0]?.isAgent) {
-				obj.discardPrevSession = true
-			}
-			if (selectedContext?.viewType === "table") {
-				obj.override = true
-			}
+			// if (sourceType === 'agent' || selectedContext?.sources?.[0]?.isAgent) {
+			// 	obj.discardPrevSession = true
+			// }
+			// if (selectedContext?.viewType === "table") {
+			// 	obj.override = true
+			// }
 			sessionItemHandler(obj)
 		}
 		// menuHide()
-		setEllipsisDr(false);
+		
 	}
 
 	const IntegrationsActions = (e, source, item) => {	

@@ -53,6 +53,7 @@ function toggleResponseFlow(event, content) {
     
     const icon = queryResponseFlow.querySelector('.query-response-flow-header-icon');
     const displayDiv = queryResponseFlow.querySelector('.display-query-response-flow');
+    const queryResponseHeader = queryResponseFlow.querySelector('.query-response-flow-header-text');
     
     
     if (!icon) return;
