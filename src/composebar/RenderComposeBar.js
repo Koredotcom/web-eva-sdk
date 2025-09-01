@@ -3,7 +3,7 @@ import ComposeBar from "./ComposeBar";
 function RenderComposeBar(targetDiv, options = {}) {
     // Default options
     const defaultOptions = {
-        placeholder: 'Ask question...',
+        placeholder: 'Ask question or Search Anything...',
         showQuickActions: true,
         showNewButton: true,
         showStopButton: true,

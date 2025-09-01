@@ -15,7 +15,7 @@ class ComposeBar {
     constructor(container, options = {}) {
         this.container = typeof container === 'string' ? document.querySelector(container) : container;
         this.options = {
-            placeholder: 'Ask question...',
+            placeholder: 'Ask or Search Anything...',
             showQuickActions: true,
             showNewButton: true,
             showStopButton: true, 
@@ -82,8 +82,10 @@ class ComposeBar {
                         this.showBotComposeBarHeader = Object.values(questions)?.find(question => question?.status === 'threadRunning');
                         if(this.showBotComposeBarHeader){
                             this.container.querySelector('.composebar-bot-input-wrapper').style.display = 'block';
+                            this.placeholder = `Chat with ${this.getAgentName()}`;
                         }else{
                             this.container.querySelector('.composebar-bot-input-wrapper').style.display = 'none';
+                            this.placeholder = 'Ask or Search Anything...';
                         }
                     }
                 });

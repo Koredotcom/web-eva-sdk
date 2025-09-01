@@ -1,4 +1,5 @@
 import { createCopyIcon } from "../icons-library";
+import { toast } from "../../chat";
 
 function render(data) {
 
@@ -14,8 +15,20 @@ function render(data) {
             copyButton.addEventListener('click', () => {
                 const messageText = document.getElementById(messageTextId);
                 if(messageText) {
-                    navigator.clipboard.writeText(messageText.textContent);
+                    navigator.clipboard.writeText(messageText.textContent);                    
+                    const composeBarInput = document.querySelector('.eva-compose-textarea');
+                    if(!composeBarInput?.value?.length){
+                        composeBarInput.value = messageText.textContent;
+                        toast.error('Copied to compose bar', {
+                            duration: 1000
+                        });
+                        
+                        // Trigger input event to update ComposeBar's internal state
+                        const inputEvent = new Event('input', { bubbles: true });
+                        composeBarInput.dispatchEvent(inputEvent);
+                    }
                 }
+
             });
 
             // Find the parent message-content div
