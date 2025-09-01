@@ -343,26 +343,25 @@ class ComposeBar {
                     </div>` : ''}
 
                     <div class="eva-composebar-area">
+                        <div class="composebar-bot-input-wrapper" style= "display: none;">
+                            <div class="bot-input-header">
+                                <div class="bot-input-header-left">
+                                    <div class="bot-input-header-left-icon">
+                                        <span class="icon-text">Talking to</span>
+                                        <span class="icon-image"><img src="https://staticqa-kora.kore.ai/kora/icons/lib/knowledge/yellow.svg" alt="bot-icon" width="24px" height="24px"></span>                            
+                                    </div>  
+                                    <div class="bot-input-header-left-text">                                        
+                                        ${this.getAgentName()}
+                                    </div>
+                                </div>
+                                <div class="bot-input-header-right">
+                                    <div class="bot-input-header-right-text">
+                                        ${1 === 1 ? 'Ending Conversation' : 'End Conversation'}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                         <div class="eva-input-container">
-
-        <div class="composebar-bot-input-wrapper" style= "display: none;">
-                <div class="bot-input-header">
-                    <div class="bot-input-header-left">
-                        <div class="bot-input-header-left-icon">
-                            <span class="icon-text">Talking to</span>                            
-                        </div>  
-                        <div class="bot-input-header-left-text">                                        
-                           ${this.getAgentName()}
-                        </div>
-                    </div>
-                    <div class="bot-input-header-right">
-                        <div class="bot-input-header-right-text">
-                            ${1 === 1 ? 'Ending Conversation' : 'End Conversation'}
-                        </div>
-                    </div>
-                </div>
-            </div>
-
                             <div class="eva-attachments-container" data-eva-attachments></div>
                             <div class="eva-compose-textarea-container">
                                 <textarea 
