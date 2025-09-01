@@ -275,7 +275,7 @@ const setupThoughtsToggle = (messageId, thoughtTime,  retryCount = 0 ) => {
 			thoughtWrapper.classList.add('collapsed');
 			/* update the thoughts header text */
 			
-			thoughtsHeader.textContent = `Thoughtsfor ${thoughtTime} secs`;
+			thoughtsHeader.textContent = `Thoughts for ${thoughtTime} secs`;
 			
 			// Ensure icon rotation for collapsed state (chevron right)
 			if (iconSpan) {
