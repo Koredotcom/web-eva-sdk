@@ -354,6 +354,8 @@ export const constructQuestionPostCall = (data, qId) => {
         }
     }
 
+    store.dispatch(setCurrentQuestion(question))
+
     // if(data?.res?.viewType === "threadView"){
     //     if(!question.hasOwnProperty("botConversation")){
     //         question.parentMessage = data.res  

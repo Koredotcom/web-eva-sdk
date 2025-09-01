@@ -352,8 +352,7 @@ export function render(
 		const conversations = Object.values(props?.botConversation || {});
 		
 		conversations.forEach(conversation => {
-			if (conversation?.thoughts?.length > 0) {
-				console.log('last thought time inside setupAllThoughtToggles', conversation?.thoughts?.[conversation?.thoughts?.length - 1]?.thoughtTime);
+			if (conversation?.thoughts?.length > 0) {				
 				setupThoughtsToggle(conversation?.messageId, conversation?.thoughts?.[conversation?.thoughts?.length - 1]?.thoughtTime);
 			}
 		});

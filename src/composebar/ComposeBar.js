@@ -40,6 +40,7 @@ class ComposeBar {
         this.quickActions = [];
         this.selectedCommonAgent = null;
         this.currentAnswerResponse=null;
+        this.showBotComposeBarHeader = false;
         this.callbacks = {
             onSend: null,
             onNewChat: null,
@@ -78,6 +79,12 @@ class ComposeBar {
                     this.setLoading(!!isLoading);
                     if (Object.keys(questions).length > 0) {
                         this.questions = questions;
+                        this.showBotComposeBarHeader = Object.values(questions)?.find(question => question?.status === 'threadRunning');
+                        if(this.showBotComposeBarHeader){
+                            this.container.querySelector('.composebar-bot-input-wrapper').style.display = 'block';
+                        }else{
+                            this.container.querySelector('.composebar-bot-input-wrapper').style.display = 'none';
+                        }
                     }
                 });
             }
@@ -300,6 +307,10 @@ class ComposeBar {
         }
     }
 
+    getAgentName() {
+        return `Work in Progress.`;
+    }
+
     /**
      * Render the compose bar HTML
      */
@@ -331,6 +342,25 @@ class ComposeBar {
 
                     <div class="eva-composebar-area">
                         <div class="eva-input-container">
+
+        <div class="composebar-bot-input-wrapper" style= "display: none;">
+                <div class="bot-input-header">
+                    <div class="bot-input-header-left">
+                        <div class="bot-input-header-left-icon">
+                            <span class="icon-text">Talking to</span>                            
+                        </div>  
+                        <div class="bot-input-header-left-text">                                        
+                           ${this.getAgentName()}
+                        </div>
+                    </div>
+                    <div class="bot-input-header-right">
+                        <div class="bot-input-header-right-text">
+                            ${1 === 1 ? 'Ending Conversation' : 'End Conversation'}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
                             <div class="eva-attachments-container" data-eva-attachments></div>
                             <div class="eva-compose-textarea-container">
                                 <textarea 

@@ -119,3 +119,50 @@
 .fileUploadLabel {
     cursor: pointer;
 }
+
+// Thoughts toggle functionality
+.thought-wrapper {
+    cursor: pointer;
+    transition: all 0.3s ease;
+    
+    &:hover {
+        opacity: 0.8;
+    }
+    
+    .expand-thoughts-container {
+        overflow: hidden;
+        transition: max-height 0.3s ease, opacity 0.3s ease;
+    }
+    
+    // Collapsed state
+    &.collapsed {
+        .expand-thoughts-container {
+            max-height: 0;
+            opacity: 0;
+            display: none;
+        }
+        
+        .spanIcon,
+        .spanIcon svg,
+        .spanIcon .wa-CheveronRight {
+            transform: rotate(0deg) !important;
+            transition: transform 0.3s ease !important;
+        }
+    }
+    
+    // Expanded state  
+    &.expanded {
+        .expand-thoughts-container {
+            max-height: 1000px; // Adjust based on your content height
+            opacity: 1;
+            display: block;
+        }
+        
+        .spanIcon,
+        .spanIcon svg,
+        .spanIcon .wa-CheveronRight {
+            transform: rotate(90deg) !important;
+            transition: transform 0.3s ease !important;
+        }
+    }
+}

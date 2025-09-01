@@ -61,7 +61,7 @@ const ChatInterface = (props) => {
     }
 
     const sendMessageAction = async (value) => {
-        hideRecentAgentsDiv('.recent-agents-container');
+        hideRecentAgentsDiv('recent-agents-container');
       const state = store.getState()?.global
       if (value) {
         const { allAgents, selectedContext, commonAgents} = state
@@ -72,9 +72,7 @@ const ChatInterface = (props) => {
         }
         if(!isEmpty(state.customData)){
           
-          payload.customData = state.customData
-          console.log("custom data in chat interface", state.customData)
-          console.log("custom  data payload in chat interface", payload.customData)
+          payload.customData = state.customData          
         }
         const qId = constructQuestionInitial({ ...params, ...payload })
 
@@ -142,7 +140,7 @@ const ChatInterface = (props) => {
     
 
     const initiateChatConversationAction = async (arg) => {
-      hideRecentAgentsDiv('.recent-agents-container');
+      hideRecentAgentsDiv('recent-agents-container');
       const { enabledAgents, selectedContext } = state
       state = store.getState().global
       let params = { reqId: generateShortUUID() }
@@ -156,7 +154,7 @@ const ChatInterface = (props) => {
       if (state.activeBoardId) {
         payload.boardId = state.activeBoardId
       }
-      if(arg?.payload) {
+      if(arg?.payload) {        
         payload = {...payload, ...arg.payload}
       }
       if(arg?.createIssue){
@@ -165,7 +163,8 @@ const ChatInterface = (props) => {
           params.reqId = getCidByMessageId(state.questions, payload?.messageId)
           replaceExistingQsn = true
         }
-      }
+      }  
+            
 
       if(!isEmpty(state.customData)){
         console.log("custom data in chat interface line no 156", state.customData)
@@ -451,6 +450,7 @@ const ChatInterface = (props) => {
         currentQuestion.botConversation[detail?.data?.answerMeta?.outputMessageId] = {
             "suggestion":detail?.data?.suggestion,
             "thoughts":detail?.data?.answerMeta?.thoughts,
+            "status": "in-progress",
             "templateType": detail?.data?.templateType || "search_answer",
         }
       }      

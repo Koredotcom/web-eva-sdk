@@ -7,6 +7,7 @@ import { highlightQuotedText } from "../utils/helper";
 import { InitiateChatConversationAction } from "../../chat";
 import { submitUserFeedback } from "../../Feedback";
 import customMarkdownRenderer from "../utils/customMarkdownRenderer";
+import chatInterface from "../../chat/ChatInterface";
 
 const AnsFromChipFunctionality = ({ item }) => {
 	const getRelevantQuestionsData = async () => {
@@ -337,6 +338,79 @@ const AnsFromChipFunctionality = ({ item }) => {
 		// menuHide()
 		setEllipsisDr(false);
 	}
+
+	const IntegrationsActions = (e, source, item) => {	
+		let payload = {}
+		if(source === 'gmail') {
+			payload = {				
+				question: "Send as email",
+				contextParams: {
+					messageId: item?.messageId
+				},
+				source: 'gmail',
+				intent: 'sendEmail'
+			}
+		}
+		if (source === 'msteams') {
+			/*append the above payload */
+			payload = {				
+				question: "Send as Teams message",
+				contextParams: {
+					messageId: item?.messageId
+				},
+				source: 'msteams',
+				intent: 'sendTeamsMessage'
+			}
+		}
+
+
+		if (source === 'slack') {
+			payload = {				
+				question: "Send as Slack message",
+				contextParams: {
+					messageId: item?.messageId
+				},
+				source: 'slack',
+				intent: 'sendSlackMessage'
+			}
+		}
+		if (source === 'jira') {
+			payload = {				
+				question: "Create Jira Issue",
+				contextParams: {
+					messageId: item?.messageId
+				},
+				source: 'jira',
+				intent: 'createJiraIssue'
+			}
+		}
+		if (source === 'outlook') {
+			payload = {				
+				question: "Send as email",
+				contextParams: {
+					messageId: item?.messageId
+				},
+				source: 'outlook',
+				intent: 'sendEmail'
+			}
+		}
+		chatInterface().initiateChatConversationAction({ payload, "action": "send" })
+	}
+	/*need to make advance search api call */
+	
+
+	
+
+	const executeSlackAction = (e, item) => {
+		const payload = {
+			question: "Send as Slack message",
+			contextParams: {
+				messageId: item?.messageId
+			},
+		}
+		/*need to make advance search api call */		
+		chatInterface().initiateChatConversationAction({payload})
+	}
 	
 
 	const knowledgeChipLogic = () => {
@@ -572,15 +646,12 @@ const AnsFromChipFunctionality = ({ item }) => {
 			});
 			threeDotTrigger.eventListenerAdded = true;
 		} else {
-			console.log('Three dot trigger not found or already has listener:', {
-				trigger: threeDotTrigger,
-				hasListener: threeDotTrigger?.eventListenerAdded
-			});
+			console.log('Three dot trigger not found or already has listener:');
 		}
 
 		// Add menu item event listeners
 		if (threeDotDropdown && !threeDotDropdown.eventListenerAdded) {
-			const menuItems = threeDotDropdown.querySelectorAll('.menu-item');
+			const menuItems = threeDotDropdown.querySelectorAll('sl-menu-item');
 			console.log('Found menu items:', menuItems.length);
 			
 			menuItems.forEach(menuItem => {
@@ -604,23 +675,23 @@ const AnsFromChipFunctionality = ({ item }) => {
 						
 						switch(action) {
 							case 'gmail':
-								console.log("clicked on Gmail");
+								IntegrationsActions(e, 'gmail', item);
 								// Add Gmail integration logic here
 								break;
 							case 'outlook':
-								console.log("clicked on Outlook");
+								IntegrationsActions(e, 'outlook', item);
 								// Add Outlook integration logic here
 								break;
 							case 'slack':
-								console.log("clicked on Slack");
+								IntegrationsActions(e, 'slack', item);
 								// Add Slack integration logic here
 								break;
 							case 'msteams':
-								console.log("clicked on Teams");
+								IntegrationsActions(e, 'msteams', item);
 								// Add Teams integration logic here
 								break;
 							case 'jira':
-								console.log("clicked on Jira");
+								IntegrationsActions(e, 'jira', item);
 								// Add Jira integration logic here
 								break;
 							default:

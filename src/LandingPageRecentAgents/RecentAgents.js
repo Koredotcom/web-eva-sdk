@@ -92,16 +92,20 @@ const renderRecentAgents = (divId) => {
 };
 
 const hideRecentAgentsDiv = (divId) => {
-    const recentAgentsDiv = document.querySelector(divId);
+    const recentAgentsDiv = document.getElementById(divId);
     if(recentAgentsDiv){
         recentAgentsDiv.style.display = 'none';
+    }else{
+        console.error(`Element with ID "${divId}" not found`);
     }
 }
 
 const unHideRecentAgentsDiv = (divId) => {
-    const recentAgentsDiv = document.querySelector(divId);
+    const recentAgentsDiv = document.getElementById(divId);
     if(recentAgentsDiv){
         recentAgentsDiv.style.display = 'flex';
+    } else {
+        console.error(`Element with ID "${divId}" not found`);
     }
 }
 

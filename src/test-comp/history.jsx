@@ -92,7 +92,7 @@ const History = (props) => {
     }
 
     const joinChatHistory = (board) => {
-        hideRecentAgentsDiv('.recent-agents-container')
+        hideRecentAgentsDiv('recent-agents-container')
         JoinChatThread({ boardId: board?.id })
     };
 

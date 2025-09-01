@@ -15,7 +15,7 @@ import { RenderComposeBar } from "../../composebar";
 import RecentAgentsFunc from "../../LandingPageRecentAgents/RecentAgents";
 import { isUserNearBottom } from "../../utils/helpers";
 import { RightArrow } from "../../templateRenderer/icons-library";
-const {renderRecentAgents, hideRecentAgentsDiv, unHideRecentAgentsDiv} = RecentAgentsFunc();
+const {renderRecentAgents, unHideRecentAgentsDiv} = RecentAgentsFunc();
 
 
 // function ShoelaceWrapper({ html }) {
@@ -86,9 +86,9 @@ const ChatInterfaceDemo = () => {
 
   // Separate useEffect for ComposeBar initialization
   useEffect(() => {
-    // Initialize ComposeBar by passing the div id
-    RenderComposeBar('#eva-composebar');
-    renderRecentAgents('recent-agents-container');
+          // Initialize ComposeBar by passing the div id
+      RenderComposeBar('#eva-composebar');
+      renderRecentAgents('recent-agents-container');
   }, []); 
 
 
@@ -145,7 +145,7 @@ const ChatInterfaceDemo = () => {
           <div className="sidebar-header">
             <div className="sidebar-title">AI for Work</div>
             <div className="new-btn" title="New" onClick={() => {
-              unHideRecentAgentsDiv('.recent-agents-container');
+              unHideRecentAgentsDiv('recent-agents-container');
               NewChat()
             }}>+</div>
           </div>

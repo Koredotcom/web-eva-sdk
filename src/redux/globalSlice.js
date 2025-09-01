@@ -170,8 +170,7 @@ const globalSlice = createSlice({
            state.questions = questions           
          }
          
-       }
-        console.log("state", "action", state, action)
+       }        
       });
       handleAsyncActions(builder, fetchHistory, 'historyRes', (state, action)=> {
         if(action?.meta?.arg?.onload) {
