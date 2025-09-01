@@ -221,7 +221,9 @@ const expandThoughts = (conversation) => {
 				<div class='border-line'></div>
 				<div class='thought-text'>${thought?.content}</div>
 				${!conversation?.hasOwnProperty('question') ? (index === conversation?.thoughts?.length - 1 ? `<div class='thought-loader-wrapper'>
-					<div class='thought-loader'>Loading...</div>
+					<div class='thought-loader'>
+					  <div class="dot-flashing"></div>
+					</div>
 				</div>`:''):''}
 			</div>                                        
 		</div>                    
