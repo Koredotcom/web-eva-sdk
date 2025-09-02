@@ -9,6 +9,7 @@
     margin-bottom: .5rem;
     gap: .5rem;
     flex-wrap: wrap;
+    padding-left: 1rem;
     &:empty {
         display: none;
     }
@@ -388,6 +389,12 @@
                         display: flex;
                         align-items: center;
                         gap: .5rem;
+
+                        .common-agents-container {
+                            display: flex;
+                            align-items: center;
+                            gap: .5rem;
+                        }
 
                         .agents-action-item {
                             display: flex;

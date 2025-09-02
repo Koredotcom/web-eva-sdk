@@ -187,7 +187,7 @@ class ComposeBar {
         /*make commonagentscontainer visible */
         const commonAgentsContainerDiv = this.container.querySelector('.common-agents-container'); 
         if(commonAgentsContainerDiv){
-            commonAgentsContainerDiv.style.display = 'block';
+            commonAgentsContainerDiv.style.display = 'flex';
         }
         
         const commonAgentsContainer = this.container.querySelector('[data-eva-common-agents]');
