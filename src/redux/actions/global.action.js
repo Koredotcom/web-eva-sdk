@@ -62,7 +62,7 @@ export const fetchAgents = createAsyncThunk(
 
             const agentsWithUserData = agentsData?.agents?.map(agent => ({
                 ...agent,
-                createdByDetails: agent?.createdBy ? userDetailsMap[agent?.createdBy] : null,
+                userDetails: agent?.createdBy ? userDetailsMap[agent?.createdBy] : null,
             }));
 
             //return the agents with the user details
