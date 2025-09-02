@@ -5,7 +5,7 @@ import store from "../redux/store.js";
 import { fetchAgents } from "../redux/actions/global.action.js";
 import { ActionsFlashIcon, arrowCirlceUpIcon, attachmentIcon, CheveronDownIcon, createCloseIcon, createDeleteIcon, createThumbsUpFilled, microphoneIcon, searchIcon, settingsIcon, Close, StopIcon } from "../templateRenderer/icons-library.js";
 import FileUpload from "../Attachments/fileUpload.js";
-import { getAgentType, getFileExtension } from "../utils/helpers.js";
+import { getAgentType, getFileExtension, hideElementImmediately, showElementImmediately, showElementDelayed } from "../utils/helpers.js";
 
 /**
  * ComposeBar - A standalone compose bar component in plain JavaScript
@@ -42,7 +42,7 @@ class ComposeBar {
         this.currentAnswerResponse=null;
         this.showBotComposeBarHeader = false;
         this.botEndConversationLoader = false;
-        this.endConversationHandler = this.handleEndConversation.bind(this); // Store the bound handler
+        this.endConversationHandler = this.handleEndConversation.bind(this); // Store the bound handler        
         this.callbacks = {
             onSend: null,
             onNewChat: null,
@@ -85,26 +85,42 @@ class ComposeBar {
                         if(this.showBotComposeBarHeader){
                             console.log("showBotComposeBarHeader", this.showBotComposeBarHeader);
                             this.placeholder = `Chat with ${this.showBotComposeBarHeader?.context?.sources?.[0]?.name}`;
-                            setTimeout(() => {
-                                this.container.querySelector('.composebar-bot-input-wrapper').style.display = 'block';
-                                this.updateBotHeaderContent(); 
-                                this.updatePlaceholder(); 
-                            }, 100);
+                            
+                            // Use the new delayed show function - handles all timing and conflicts automatically
+                            const botWrapper = this.container.querySelector('.composebar-bot-input-wrapper');
+                            if (botWrapper) {
+                                showElementDelayed(botWrapper, 100, 'block', true);
+                                // Update content after the delay
+                                setTimeout(() => {
+                                    this.updateBotHeaderContent(); 
+                                    this.updatePlaceholder();
+                                }, 100);
+                            }
                             
                         }else{
-                            console.log("no threaded conversations available");                            
-                            this.container.querySelector('.composebar-bot-input-wrapper').style.display = 'none';
+                            console.log("no threaded conversations available - hide bot wrapper");                            
+                            
+                            // Use the new generic hide function
+                            const botWrapper = this.container.querySelector('.composebar-bot-input-wrapper');
+                            if (botWrapper) {
+                                hideElementImmediately(botWrapper, { enableLogging: true });
+                            }
                             this.placeholder = 'Ask or Search Anything...';
                             this.updatePlaceholder(); 
                         }
-                    }else{
+                    }else{                                                
                         /*clean up block */
                         const ifBotHeaderPresent = this.container.querySelector('.composebar-bot-input-wrapper');
                         if(ifBotHeaderPresent){
-                            ifBotHeaderPresent.style.display = 'none';
-                        }                        
-                        this.placeholder = 'Ask or Search Anything...';
-                        this.updatePlaceholder();                         
+                            hideElementImmediately(ifBotHeaderPresent, { enableLogging: true });
+                        }                                                   
+                        setTimeout(() => {
+                            if(this.selectedAgent){
+                                this.handleRemoveSelectedContext();
+                            }                                      
+                            this.placeholder = 'Ask or Search Anything...';
+                            this.updatePlaceholder();
+                        }, 0);                     
                     }
                 });
             }
@@ -182,12 +198,12 @@ class ComposeBar {
         /*make composebarcontextcontainer hidden */
         const composebarContextChipContainer = this.container.querySelector('.composebar-context-container'); 
         if(composebarContextChipContainer){
-            composebarContextChipContainer.style.display = 'none';
+            hideElementImmediately(composebarContextChipContainer);
         }
         /*make commonagentscontainer visible */
         const commonAgentsContainerDiv = this.container.querySelector('.common-agents-container'); 
         if(commonAgentsContainerDiv){
-            commonAgentsContainerDiv.style.display = 'flex';
+            showElementImmediately(commonAgentsContainerDiv, 'flex');
         }
         
         const commonAgentsContainer = this.container.querySelector('[data-eva-common-agents]');
@@ -225,11 +241,11 @@ class ComposeBar {
     renderContextChipInComposeBar() {        
         const commonAgentsContainer = this.container.querySelector('.common-agents-container'); 
         if(commonAgentsContainer){
-            commonAgentsContainer.style.display = 'none';
+            hideElementImmediately(commonAgentsContainer);
         }
         const composebarContextChipContainer = this.container.querySelector('.composebar-context-container'); 
         if (!composebarContextChipContainer) return;        
-        composebarContextChipContainer.style.display = 'flex';
+        showElementImmediately(composebarContextChipContainer, 'flex');
         /*innerHtml should display the selected agent name and close button */
         composebarContextChipContainer.innerHTML = `
             <button class="context-chip-button">
@@ -370,7 +386,6 @@ class ComposeBar {
         }
     }
 
-    
     /**
      * Update the bot header content dynamically
      */
@@ -1420,9 +1435,19 @@ class ComposeBar {
     }
 
     /**
+     * Clean up ComposeBar resources
+     */
+    cleanup() {        
+        console.log('🧹 ComposeBar cleanup completed');
+    }
+
+    /**
      * Destroy the compose bar
      */
     destroy() {
+        // Clean up timers and observers first
+        this.cleanup();
+        
         if (this.container) {
             this.container.innerHTML = '';
         }

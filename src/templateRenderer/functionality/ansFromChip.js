@@ -4,7 +4,7 @@ import store from "../../redux/store";
 import { sessionItemHandler } from "../../Attachments/createContext";
 import { getRelevantQuestions } from "../../redux/actions/global.action";
 import { highlightQuotedText } from "../utils/helper";
-import { InitiateChatConversationAction } from "../../chat";
+import { InitiateChatConversationAction, toast } from "../../chat";
 import { submitUserFeedback } from "../../Feedback";
 import customMarkdownRenderer from "../utils/customMarkdownRenderer";
 import chatInterface from "../../chat/ChatInterface";
@@ -156,11 +156,10 @@ const AnsFromChipFunctionality = ({ item }) => {
 	};
 
 	const copyAnswerToClipboard = async () => {
-		try {
+		try {			
 			if (item?.answer) {
-				await navigator.clipboard.writeText(item.answer);
-				// Optional: Show success feedback
-				console.log("Answer copied to clipboard");
+				await navigator.clipboard.writeText(item.answer);				
+				toast.success("Response copied");
 			}
 		} catch (err) {
 			console.error("Failed to copy answer to clipboard:", err);

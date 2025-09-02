@@ -97,7 +97,7 @@ export function render(
 				ADD_ATTR: SHOELACE_ATTRS,
 			});
 		}
-		if (!!data?.sources?.length && data?.templateType === "search_answer") {
+		if (!!data?.sources?.length && data?.templateType === "search_answer" && data?.status === "completed") {
 			let chip = AnsFromChip({ item: data });
 			content += DOMPurify.sanitize(chip, {
 				ADD_TAGS: SHOELACE_TAGS,

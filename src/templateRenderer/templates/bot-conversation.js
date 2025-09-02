@@ -50,18 +50,17 @@ function createConversationHTML(
 	userIconTemplate,
 	loadingText
 ) {
-	if (
-		conversation?.hasOwnProperty("template_html") ||
-		conversation?.templateType === "hold_conversation"
-	) {
-		return customMarkdownRenderer(`
-            <div class="botTemplate-${conversation?.messageId}"></div>
-        `);
-	}
 
 	if (conversation?.status === "in-progress") {
-		let content;
-
+		let content = "";
+		if (conversation?.loading) {
+			content += `<div class="message-bubble loading">
+					<div class="bot-flex-wrapper">
+						<div class="bot-icon-container">${assistantIconTemplate ? assistantIconTemplate : ""}</div>
+						<div class="message-container"><div class="loading-text">${encodeHtml(loadingText)}</div></div>
+					</div>
+			</div>`;
+		}
 		if (conversation?.templateType === "search_answer") {
 			content = renderAssistantQuestion(conversation, assistantIconTemplate);			
 			if (conversation?.answer) {
@@ -72,14 +71,13 @@ function createConversationHTML(
 				);
 				content += `<br/>`;
 			}
-		}
-		if (conversation?.loading) {
-			content += `<div class="message-bubble loading">
-					<div class="bot-flex-wrapper">
-						<div class="bot-icon-container">${assistantIconTemplate ? assistantIconTemplate : ""}</div>
-						<div class="message-container"><div class="loading-text">${encodeHtml(loadingText)}</div></div>
-					</div>
-			</div>`;
+		}	
+		if (conversation?.templateType === "bot_template") {
+			content += `
+			<div class="bot-flex-wrapper">				
+				<div class="botTemplate-${conversation?.messageId}"></div>
+			</div>
+			`;
 		}
 		return content;
 	} else {
@@ -92,18 +90,29 @@ function createConversationHTML(
 					<br/>
                 </div>
             `;
-		} else if (conversation?.templateType === "bot_template") {
+		} 
+		if (conversation?.templateType === "bot_template") {
 			return `
-				<div class="bot-flex-wrapper-group">
-					${renderAssistantQuestion(conversation, assistantIconTemplate)}
-					<br/>
-					${renderUserQuestion(conversation?.answer, userIconTemplate)}
-					<br/>
+			<div class="completed">
+				<div class="bot-flex-wrapper">					
+					<div class="botTemplate-${conversation?.messageId}" style="pointer-events: none;"></div>												
 				</div>
-			`; // add pointer events none
+				${renderUserQuestion(conversation?.answer, userIconTemplate)}	
+			</div>
+			`;
 		}
-	}
 
+		// else if (conversation?.templateType === "bot_template") {
+		// 	return `
+		// 		<div class="bot-flex-wrapper-group">
+		// 			${renderAssistantQuestion(conversation, assistantIconTemplate)}
+		// 			<br/>
+		// 			${renderUserQuestion(conversation?.answer, userIconTemplate)}
+		// 			<br/>
+		// 		</div>
+		// 	`;
+		// }
+	}	
 	return "";
 }
 
@@ -153,13 +162,37 @@ function setupEventListeners(botConversation, props) {
 			}
 		});
 	});
+
+	// Expand/Collapse button handlers
+	document.querySelectorAll(".expand-bot-conversation").forEach((button) => {
+		button.addEventListener("click", (event) => {
+			const messageId = event.target.dataset.messageId;
+			const isCollapsed = event.target.dataset.collapsed === "true";
+			const contentDiv = document.querySelector(`.bot-conversation-content[data-message-id="${messageId}"]`);
+			const summaryDiv = document.querySelector(`.bot-conversation-summary[data-message-id="${messageId}"]`);
+
+			if (isCollapsed) {
+				// Show full conversation
+				contentDiv.style.display = "block";
+				summaryDiv.style.display = "none";
+				event.target.textContent = "Collapse";
+				event.target.dataset.collapsed = "false";
+			} else {
+				// Show summary (props?.answer)
+				contentDiv.style.display = "none";
+				summaryDiv.style.display = "block";
+				event.target.textContent = "Expand";
+				event.target.dataset.collapsed = "true";
+			}
+		});
+	});
 }
 
 const renderQuickRepliesTemplate = (payload) => {
     const payloadText = payload?.text;
     const templateHTML = `
         <div class="usrsChipsList quickRepliesTemplate">
-            <div class="title">${payloadText}</div>
+            <div class="title">${payloadText ? payloadText : ''}</div>
             ${payload?.quick_replies
                 ?.map((data) => `<div class="userChip">${data?.title}</div>`)
                 .join("")}
@@ -311,14 +344,18 @@ function renderBotConversation(
 
 	let conversationsHTML = "";
 
-	if(props?.status === 'completed' && props?.viewType === 'threadView') {
-		conversationsHTML = customMarkdownRenderer(`
-			<div class="botTemplate-${props?.messageId}-completed">
-				${props?.answer}
-			</div>
-		`);
-	}else{
-		conversationsHTML = Object.values(botConversation)
+	// if(props?.status === 'completed' && props?.viewType === 'threadView') {
+	// 	conversationsHTML = customMarkdownRenderer(`
+	// 		<div class="botTemplate-${props?.messageId}">
+	// 			${props?.answer}
+	// 		</div>
+	// 	`);
+	// }else{
+		
+
+	// }
+
+	conversationsHTML = Object.values(botConversation)
 		.map((conversation) =>
 			createConversationHTML(
 				conversation,
@@ -329,13 +366,22 @@ function renderBotConversation(
 			)
 		)
 		.join("");
-
-	}
 	return `
-        <div class="bot-conversation-wrapper">
-            ${conversationsHTML}
+        <div class="bot-conversation-wrapper ${props?.status === 'completed' ? 'completed' : ''}" data-message-id="${props?.messageId}">
+		<div class="expand-bot-conversation" style="${props?.status === 'completed' ? 
+		'display: inline-block; padding: 6px 12px; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 500; color: #495057; margin-bottom: 10px; user-select: none; transition: all 0.2s ease;' : 'display: none;'}" 
+		data-message-id="${props?.messageId}" data-collapsed="false" onmouseover="this.style.background='#e9ecef'" onmouseout="this.style.background='#f8f9fa'">
+		Collapse
+		</div>
+		<div class="bot-conversation-content" data-message-id="${props?.messageId}">
+			${conversationsHTML}
+		</div>
+		<div class="bot-conversation-summary" data-message-id="${props?.messageId}" style="display: none;">
+			${props?.answer ? MessageRenderer(props.answer) : ''}
+		</div>
         </div>
     `;
+	
 }
 
 // Main function to be exported

@@ -260,3 +260,257 @@ export const isUserNearBottom = (el, threshold = 200) => {
     const delta = el.scrollHeight - el.scrollTop - el.clientHeight;
     return delta <= threshold;
 };
+
+/**
+ * DOM Manipulation Utilities - Aggressive immediate hiding/showing of elements
+ * These functions force immediate DOM updates without delays
+ */
+
+/**
+ * Force immediate DOM update by triggering multiple reflows
+ * Use this when you need immediate visual changes
+ * @param {HTMLElement} element - The element to force update
+ */
+export const forceImmediateDOMUpdate = (element) => {
+    if (!element) return;
+    
+    // Multiple aggressive techniques to force immediate DOM update
+    
+    // 1. Force layout recalculation
+    element.offsetHeight;
+    element.offsetWidth;
+    
+    // 2. Force style recalculation
+    getComputedStyle(element).display;
+    getComputedStyle(element).visibility;
+    
+    // 3. Force bounding box calculation
+    element.getBoundingClientRect();
+    
+    // 4. Force scrollHeight calculation (triggers layout)
+    element.scrollHeight;
+    
+    // 5. Use requestAnimationFrame for immediate next frame
+    requestAnimationFrame(() => {
+        // Double-check the style is applied
+        element.offsetHeight;
+    });
+};
+
+export const hideElementImmediately = (element, options = {}) => {
+    if (!element) return;
+    
+    const {
+        useObserver = true,
+        observerDuration = 10000,
+        enableLogging = false
+    } = options;
+    
+    // STEP 1: Clear any pending show timeouts for this element
+    if (element._showTimeout) {
+        clearTimeout(element._showTimeout);
+        delete element._showTimeout;
+        
+    }
+    
+    // STEP 2: Mark element as intended to be hidden
+    element._intendedState = 'hidden';
+    
+    // STEP 3: Clean up any existing observer that might interfere
+    if (element._hideObserver) {
+        element._hideObserver.disconnect();
+        delete element._hideObserver;
+    }
+    
+    // STEP 4: Direct DOM attribute manipulation (fastest)
+    element.setAttribute('hidden', 'true');
+    element.setAttribute('aria-hidden', 'true');
+    element.setAttribute('style', 'display: none !important; visibility: hidden !important; opacity: 0 !important;');
+    
+    // STEP 5: Clear any transitions that might delay the change
+    element.style.setProperty('transition', 'none', 'important');
+    element.style.setProperty('animation', 'none', 'important');
+    
+    // STEP 6: Apply multiple hide styles with !important
+    element.style.setProperty('display', 'none', 'important');
+    element.style.setProperty('visibility', 'hidden', 'important');
+    element.style.setProperty('opacity', '0', 'important');
+    element.style.setProperty('height', '0', 'important');
+    element.style.setProperty('overflow', 'hidden', 'important');
+    
+    // STEP 7: Force multiple reflows immediately
+    forceImmediateDOMUpdate(element);
+    
+    // STEP 8: Nuclear option - temporarily detach and reattach
+    const parent = element.parentNode;
+    const nextSibling = element.nextSibling;
+    if (parent) {
+        parent.removeChild(element);
+        parent.offsetHeight; // Force parent reflow
+        // Reattach element
+        if (nextSibling) {
+            parent.insertBefore(element, nextSibling);
+        } else {
+            parent.appendChild(element);
+        }
+        element.offsetHeight; // Force element reflow
+    }
+    
+    // STEP 9: Synchronous timeout for additional enforcement
+    setTimeout(() => {
+        if (element._intendedState === 'hidden') { // Only if still intended to be hidden
+            element.style.setProperty('display', 'none', 'important');
+            element.offsetHeight;            
+        }
+    }, 0);
+    
+    // STEP 10: Set up MutationObserver to maintain hiding
+    if (useObserver) {
+        maintainElementHidden(element, observerDuration, enableLogging);
+    }
+    
+    
+};
+
+
+export const showElementImmediately = (element, displayValue = 'block', enableLogging = false) => {
+    if (!element) return;
+        
+    
+    // STEP 1: Clear any pending show timeouts (if called multiple times quickly)
+    if (element._showTimeout) {
+        clearTimeout(element._showTimeout);
+        delete element._showTimeout;        
+    }
+    
+    // STEP 2: Mark element as intended to be visible
+    element._intendedState = 'visible';
+    
+    // STEP 3: Clean up any observer that's keeping it hidden
+    if (element._hideObserver) {
+        element._hideObserver.disconnect();
+        delete element._hideObserver;
+        
+    }
+    
+    // STEP 4: Remove any transitions
+    element.style.setProperty('transition', 'none', 'important');
+    element.style.setProperty('animation', 'none', 'important');
+    
+    // STEP 5: Remove hidden attributes
+    element.removeAttribute('hidden');
+    element.removeAttribute('aria-hidden');
+    
+    // STEP 6: Remove any hidden styles and apply show styles
+    element.style.removeProperty('visibility');
+    element.style.removeProperty('opacity');
+    element.style.removeProperty('height');
+    element.style.removeProperty('overflow');
+    element.style.setProperty('display', displayValue, 'important');
+    
+    // STEP 7: Force multiple reflows immediately
+    forceImmediateDOMUpdate(element);
+    
+    // STEP 8: Synchronous timeout to ensure it's applied
+    setTimeout(() => {
+        if (element._intendedState === 'visible') { // Only if still intended to be visible
+            element.style.setProperty('display', displayValue, 'important');
+            element.offsetHeight;
+        }
+    }, 0);
+    
+    
+};
+
+export const showElementDelayed = (element, delay = 100, displayValue = 'block', enableLogging = false) => {
+    if (!element) return;
+    
+    
+    
+    // Clear any existing timeout for this element
+    if (element._showTimeout) {
+        clearTimeout(element._showTimeout);
+        delete element._showTimeout;
+        
+    }
+    
+    // Mark element as intended to be visible (but delayed)
+    element._intendedState = 'visible-delayed';
+    
+    // Set up the timeout
+    element._showTimeout = setTimeout(() => {
+        if (element._intendedState === 'visible-delayed') { // Only show if not overridden
+            showElementImmediately(element, displayValue, enableLogging);
+        }
+        delete element._showTimeout; // Clean up
+    }, delay);
+    
+    
+};
+
+
+export const maintainElementHidden = (element, duration = 10000, enableLogging = false) => {
+    if (!element || !window.MutationObserver) return;
+    
+    
+    
+    // Disconnect any existing observer for this element
+    if (element._hideObserver) {
+        element._hideObserver.disconnect();
+    }
+    
+    const observer = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+            if (mutation.type === 'attributes' && 
+                (mutation.attributeName === 'style' || mutation.attributeName === 'hidden')) {
+                
+                const target = mutation.target;
+                const computedStyle = getComputedStyle(target);
+                
+                // Only enforce hiding if element is still intended to be hidden
+                if (target._intendedState === 'hidden' &&
+                    (computedStyle.display !== 'none' || 
+                     !target.hasAttribute('hidden') || 
+                     target.getAttribute('hidden') !== 'true')) {                                    
+                    hideElementImmediately(target, { useObserver: false, enableLogging });
+                }
+            }
+        });
+    });
+    
+    // Observe attribute changes
+    observer.observe(element, {
+        attributes: true,
+        attributeFilter: ['style', 'hidden', 'class']
+    });
+    
+    // Store the observer reference for cleanup
+    element._hideObserver = observer;
+    
+    // Auto-cleanup after specified duration to prevent memory leaks
+    setTimeout(() => {
+        if (element._hideObserver) {
+            element._hideObserver.disconnect();
+            delete element._hideObserver;            
+        }
+    }, duration);
+};
+
+export const quickHide = (target, options = {}) => {
+    const element = typeof target === 'string' ? document.querySelector(target) : target;
+    if (element) {
+        hideElementImmediately(element, options);
+    } else {
+        console.warn('Element not found:', target);
+    }
+};
+
+
+export const quickShow = (target, displayValue = 'block', enableLogging = false) => {
+    const element = typeof target === 'string' ? document.querySelector(target) : target;
+    if (element) {
+        showElementImmediately(element, displayValue, enableLogging);
+    } else if (enableLogging) {
+        console.warn('Element not found:', target);
+    }
+};
