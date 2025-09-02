@@ -1,6 +1,6 @@
 import { encodeHtml } from "../utils/helper";
 import * as responseQueryFlow from "./response-query-flow";
-
+import * as copyQuestion from "./copy-question";
 // import { encodeHtml } from "../utils/helper";
 
 /**
@@ -13,14 +13,15 @@ export function renderQuestionBubble(data, userIconTemplate = false) {
 	return `
         <div class="message-bubble question">
             <div class="message-content">
-                <div class="message-text">${encodeHtml(question)}</div>
-                ${userIconTemplate ? userIconTemplate : ""}
+                ${copyQuestion.render(data)}
+                <div class="message-text" id="message-text-${data?.messageId || data?.reqId}">${encodeHtml(question)}</div>
             </div>
         </div>
         `;
 }
 
 /**
+ * ${userIconTemplate ? userIconTemplate : ""}
  * Render an answer bubble
  * @param {Object} data Answer data
  * @returns {string} HTML string

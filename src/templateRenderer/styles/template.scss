@@ -119,3 +119,119 @@
 .fileUploadLabel {
     cursor: pointer;
 }
+
+// Thoughts toggle functionality
+.thought-wrapper {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    cursor: pointer;
+    padding-top: .5rem;
+    width: 100%;
+    cursor: pointer;
+    transition: all 0.3s ease;
+
+    .thought-loader-wrapper {
+        .thought-loader {
+            .dot-flashing {
+                margin-left: 1rem;
+            }
+        }
+    }
+
+    .query-response-flow-items {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    &:hover {
+        .thoughts-header {
+            color: #292929;
+        }
+    }
+    
+    .expand-thoughts-container {
+        overflow: hidden;
+        transition: max-height 0.3s ease, opacity 0.3s ease;
+    }
+    
+    // Collapsed state
+    &.collapsed {
+        .expand-thoughts-container {
+            max-height: 0;
+            opacity: 0;
+            display: none;
+        }
+        
+        .spanIcon,
+        .spanIcon svg,
+        .spanIcon .wa-CheveronRight {
+            transform: rotate(0) !important;
+            //transition: transform 0.3s ease !important;
+        }
+    }
+    
+    // Expanded state  
+    &.expanded {
+        flex-wrap: wrap;
+        .expand-thoughts-container {
+            //max-height: 1000px; // Adjust based on your content height
+            opacity: 1;
+            display: block;
+            width: 100%;
+        }
+        
+        .spanIcon,
+        .spanIcon svg,
+        .spanIcon .wa-CheveronRight {
+            transform: rotate(226deg) !important;
+            //transition: transform 0.3s ease !important;
+        }
+    }
+
+    .thoughts-header {
+        font-family: Inter;
+        font-size: .75rem;
+        font-style: normal;
+        font-weight: 500;
+        line-height: 1.25rem;
+        letter-spacing: 0em;
+        color: #737373;
+    }
+    .spanIcon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .thoughtsContent {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+
+        .thoughts-content-wrapper {
+            display: flex;
+            gap: 1rem;
+
+            .border-line {
+                width: .25rem;
+                border-radius: .75rem;
+                background: #e5e5e5;
+                flex-shrink: 0;
+            }
+
+            .thought-text {
+                font-family: Inter;
+                font-size: .75rem;
+                font-style: normal;
+                font-weight: 500;
+                line-height: 1.125rem;
+                letter-spacing: 0em;
+                color: #737373;
+                position: relative;
+                overflow: hidden;
+            }
+        }
+    }
+}

@@ -7,6 +7,7 @@ import { highlightQuotedText } from "../utils/helper";
 import { InitiateChatConversationAction } from "../../chat";
 import { submitUserFeedback } from "../../Feedback";
 import customMarkdownRenderer from "../utils/customMarkdownRenderer";
+import chatInterface from "../../chat/ChatInterface";
 
 const AnsFromChipFunctionality = ({ item }) => {
 	const getRelevantQuestionsData = async () => {
@@ -290,6 +291,127 @@ const AnsFromChipFunctionality = ({ item }) => {
 		}
 	};
 
+	/*Latest functionality for askFollowup*/
+	const setContextData = (e, item) => {
+		e.stopPropagation()
+		const msgType = item?.type
+		// const messageId = msgType === "followup" ? ellipsisDr?.parentMessageId : ellipsisDr?.messageId;
+		const messageId = item?.messageId; //Shpuld send the messageId of the question clicked for Followup
+		const _selectedContext = { ...item?.context, messageId, sources: item?.sources, viewType: item?.viewType }
+		let obj = {}
+		let enabledUserAgents = store.getState()?.global?.allAgents?.data?.agents?.filter(a => !!a?.enabled)
+		let _agents = cloneDeep(enabledUserAgents)
+		let isAgentSetAsSource = _agents.find(ag => ag.id === item?.sources?.[0]?.source)
+		let sourceType = isAgentSetAsSource ? "agent" : null
+
+		if (item?.viewType === "table" && _selectedContext?.hasOwnProperty("sessionId")) {
+			// sessionItemHandler({ appContext, dispatch, item: { ..._selectedContext, source: 'attachment' }, viewType: item?.viewType, type: sourceType })
+		} else if (item?.templateType === 'search_results') {
+			// Specific for search result 
+			obj = {			
+				item: item?.sources?.[0],
+				type: 'accountKnowledge',
+				discardPrevSession: true
+			}
+			sessionItemHandler(obj)
+		} else {
+
+			obj = {
+				boardId: item.boardId,
+				messageId,
+			
+				item: item?.sources?.[0],
+				duplicateErr: true,
+				viewType: item?.viewType,
+				type: sourceType
+			}
+			// if(selectedContext?.sources?.[0]?.isAgent) {
+			// if (sourceType === 'agent' || selectedContext?.sources?.[0]?.isAgent) {
+			// 	obj.discardPrevSession = true
+			// }
+			// if (selectedContext?.viewType === "table") {
+			// 	obj.override = true
+			// }
+			sessionItemHandler(obj)
+		}
+		// menuHide()
+		
+	}
+
+	const IntegrationsActions = (e, source, item) => {	
+		let payload = {}
+		if(source === 'gmail') {
+			payload = {				
+				question: "Send as email",
+				contextParams: {
+					messageId: item?.messageId
+				},
+				source: 'gmail',
+				intent: 'sendEmail'
+			}
+		}
+		if (source === 'msteams') {
+			/*append the above payload */
+			payload = {				
+				question: "Send as Teams message",
+				contextParams: {
+					messageId: item?.messageId
+				},
+				source: 'msteams',
+				intent: 'sendTeamsMessage'
+			}
+		}
+
+
+		if (source === 'slack') {
+			payload = {				
+				question: "Send as Slack message",
+				contextParams: {
+					messageId: item?.messageId
+				},
+				source: 'slack',
+				intent: 'sendSlackMessage'
+			}
+		}
+		if (source === 'jira') {
+			payload = {				
+				question: "Create Jira Issue",
+				contextParams: {
+					messageId: item?.messageId
+				},
+				source: 'jira',
+				intent: 'createJiraIssue'
+			}
+		}
+		if (source === 'outlook') {
+			payload = {				
+				question: "Send as email",
+				contextParams: {
+					messageId: item?.messageId
+				},
+				source: 'outlook',
+				intent: 'sendEmail'
+			}
+		}
+		chatInterface().initiateChatConversationAction({ payload, "action": "send" })
+	}
+	/*need to make advance search api call */
+	
+
+	
+
+	const executeSlackAction = (e, item) => {
+		const payload = {
+			question: "Send as Slack message",
+			contextParams: {
+				messageId: item?.messageId
+			},
+		}
+		/*need to make advance search api call */		
+		chatInterface().initiateChatConversationAction({payload})
+	}
+	
+
 	const knowledgeChipLogic = () => {
 		if (item?.sources?.length > 1) {
 			let chip = document.getElementById(`ansFromChip-${item?.id}`);
@@ -460,6 +582,20 @@ const AnsFromChipFunctionality = ({ item }) => {
 			feedbackDislikeButton.eventListenerAdded = true;
 		}
 
+		if(item?.context?.enable){
+			let setContextButton = document.getElementById(
+				`setContextButton-${item?.messageId}`
+			);
+			if (setContextButton && !setContextButton.eventListenerAdded) {
+				setContextButton.addEventListener("click", (e) => {
+					e?.preventDefault();
+					e?.stopPropagation();
+
+				});
+		}
+	}
+
+
 		// Add three dot menu functionality
 		const messageId = item?.messageId || item?.reqId;
 		const threeDotTrigger = document.querySelector(`[data-three-dot-trigger="${messageId}"]`);
@@ -509,15 +645,12 @@ const AnsFromChipFunctionality = ({ item }) => {
 			});
 			threeDotTrigger.eventListenerAdded = true;
 		} else {
-			console.log('Three dot trigger not found or already has listener:', {
-				trigger: threeDotTrigger,
-				hasListener: threeDotTrigger?.eventListenerAdded
-			});
+			console.log('Three dot trigger not found or already has listener:');
 		}
 
 		// Add menu item event listeners
 		if (threeDotDropdown && !threeDotDropdown.eventListenerAdded) {
-			const menuItems = threeDotDropdown.querySelectorAll('.menu-item');
+			const menuItems = threeDotDropdown.querySelectorAll('sl-menu-item');
 			console.log('Found menu items:', menuItems.length);
 			
 			menuItems.forEach(menuItem => {
@@ -541,23 +674,23 @@ const AnsFromChipFunctionality = ({ item }) => {
 						
 						switch(action) {
 							case 'gmail':
-								console.log("clicked on Gmail");
+								IntegrationsActions(e, 'gmail', item);
 								// Add Gmail integration logic here
 								break;
 							case 'outlook':
-								console.log("clicked on Outlook");
+								IntegrationsActions(e, 'outlook', item);
 								// Add Outlook integration logic here
 								break;
 							case 'slack':
-								console.log("clicked on Slack");
+								IntegrationsActions(e, 'slack', item);
 								// Add Slack integration logic here
 								break;
 							case 'msteams':
-								console.log("clicked on Teams");
+								IntegrationsActions(e, 'msteams', item);
 								// Add Teams integration logic here
 								break;
 							case 'jira':
-								console.log("clicked on Jira");
+								IntegrationsActions(e, 'jira', item);
 								// Add Jira integration logic here
 								break;
 							default:

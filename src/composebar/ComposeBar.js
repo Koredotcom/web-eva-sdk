@@ -15,7 +15,7 @@ class ComposeBar {
     constructor(container, options = {}) {
         this.container = typeof container === 'string' ? document.querySelector(container) : container;
         this.options = {
-            placeholder: 'Ask question...',
+            placeholder: 'Ask or Search Anything...',
             showQuickActions: true,
             showNewButton: true,
             showStopButton: true, 
@@ -40,6 +40,9 @@ class ComposeBar {
         this.quickActions = [];
         this.selectedCommonAgent = null;
         this.currentAnswerResponse=null;
+        this.showBotComposeBarHeader = false;
+        this.botEndConversationLoader = false;
+        this.endConversationHandler = this.handleEndConversation.bind(this); // Store the bound handler
         this.callbacks = {
             onSend: null,
             onNewChat: null,
@@ -70,10 +73,38 @@ class ComposeBar {
                 this.unsubscribe = this.chatInterface.subscribe((questions, searchResponse, moreAvailable, errorStates, quickActions) => {
                     // Toggle loading state based on async status
                     const isLoading = searchResponse?.status === 'loading';
-                    this.currentAnswerResponse = searchResponse;
-                    this.setLoading(!!isLoading, searchResponse);
+                    if(Object.values(questions)?.some(question => question?.loading)){
+                        this.currentAnswerResponse = null;
+                    }else{
+                        this.currentAnswerResponse = searchResponse?.data;
+                    }
+                    this.setLoading(!!isLoading);
                     if (Object.keys(questions).length > 0) {
                         this.questions = questions;
+                        this.showBotComposeBarHeader = Object.values(questions)?.find(question => question?.status === 'threadRunning');
+                        if(this.showBotComposeBarHeader){
+                            console.log("showBotComposeBarHeader", this.showBotComposeBarHeader);
+                            this.placeholder = `Chat with ${this.showBotComposeBarHeader?.context?.sources?.[0]?.name}`;
+                            setTimeout(() => {
+                                this.container.querySelector('.composebar-bot-input-wrapper').style.display = 'block';
+                                this.updateBotHeaderContent(); 
+                                this.updatePlaceholder(); 
+                            }, 100);
+                            
+                        }else{
+                            console.log("no threaded conversations available");                            
+                            this.container.querySelector('.composebar-bot-input-wrapper').style.display = 'none';
+                            this.placeholder = 'Ask or Search Anything...';
+                            this.updatePlaceholder(); 
+                        }
+                    }else{
+                        /*clean up block */
+                        const ifBotHeaderPresent = this.container.querySelector('.composebar-bot-input-wrapper');
+                        if(ifBotHeaderPresent){
+                            ifBotHeaderPresent.style.display = 'none';
+                        }                        
+                        this.placeholder = 'Ask or Search Anything...';
+                        this.updatePlaceholder();                         
                     }
                 });
             }
@@ -85,15 +116,19 @@ class ComposeBar {
         try {
             this.fileUploaderInterface = FileUpload();
             this.fileUploaderInterface.subscribe((sources, sessionId, quickActions, error, apiResp) => {
+                console.log("fileUploaderInterface subscribe", sources, sessionId, quickActions, error, apiResp);
                 try {                    
                     const filesOnly = Array.isArray(sources)
                         ? sources.filter(source => !source?.hasOwnProperty('isAgent'))
                         : [];                          
                     this.attachments = filesOnly;
-                    this.quickActions = quickActions || [];
-                    
+                    this.quickActions = quickActions || [];                                    
                     // Always render to handle both adding and clearing attachments
-                    setTimeout(() => {                        
+                    setTimeout(() => { 
+                        if (Array.isArray(sources) && sources?.some(source => source?.isAgent && source?.hasOwnProperty('agentType'))){
+                            this.selectedAgent = sources?.find(source => source?.isAgent);
+                            this.renderContextChipInComposeBar(); 
+                        }                                              
                         this.renderAttachments();
                         this.renderQuickReplies();
                     }, 0);
@@ -117,10 +152,7 @@ class ComposeBar {
         this.updateMicrophoneButton(); // Set initial button state
     }    
 
-    setCommonAgents() {                
-        // console.log("Call stack:", new Error().stack);
-
-        /*get selectedContext from store*/
+    setCommonAgents() {                        
         const selectedContext = store.getState()?.global?.selectedContext;                
 
         if(Object.keys(selectedContext).length > 0) {            
@@ -147,6 +179,17 @@ class ComposeBar {
 
     /*need to render the common agents list, and on click of it invoke setAgentContext of ChatInterface*/
     renderCommonAgents() {
+        /*make composebarcontextcontainer hidden */
+        const composebarContextChipContainer = this.container.querySelector('.composebar-context-container'); 
+        if(composebarContextChipContainer){
+            composebarContextChipContainer.style.display = 'none';
+        }
+        /*make commonagentscontainer visible */
+        const commonAgentsContainerDiv = this.container.querySelector('.common-agents-container'); 
+        if(commonAgentsContainerDiv){
+            commonAgentsContainerDiv.style.display = 'flex';
+        }
+        
         const commonAgentsContainer = this.container.querySelector('[data-eva-common-agents]');
         if (!commonAgentsContainer) return;
 
@@ -177,6 +220,30 @@ class ComposeBar {
                 this.renderCommonAgents();
             });
         });
+    }
+
+    renderContextChipInComposeBar() {        
+        const commonAgentsContainer = this.container.querySelector('.common-agents-container'); 
+        if(commonAgentsContainer){
+            commonAgentsContainer.style.display = 'none';
+        }
+        const composebarContextChipContainer = this.container.querySelector('.composebar-context-container'); 
+        if (!composebarContextChipContainer) return;        
+        composebarContextChipContainer.style.display = 'block';
+        /*innerHtml should display the selected agent name and close button */
+        composebarContextChipContainer.innerHTML = `
+            <div class="composebar-context-close-button" style="cursor: pointer;">${createCloseIcon({ size: 14, color: "#667085" })}</div>
+            <div class="composebar-context-agent-name">${this.selectedAgent?.name}</div>
+        `;
+
+        /*change the placeholder to the selected agent name */
+        this.placeholder = `Interact with ${this.selectedAgent?.name}`;
+        this.updatePlaceholder();
+        
+        const removeSelectedContextInComposeBarBtn = this.container.querySelector('.composebar-context-close-button');
+        if (removeSelectedContextInComposeBarBtn) {
+            removeSelectedContextInComposeBarBtn.addEventListener('click', (e) => this.handleRemoveSelectedContext());
+        }
     }
 
     renderAttachments() {
@@ -296,6 +363,63 @@ class ComposeBar {
         }
     }
 
+    
+    /**
+     * Update the bot header content dynamically
+     */
+    updateBotHeaderContent() {
+        const botWrapper = this.container.querySelector('.composebar-bot-input-wrapper');
+        if (!botWrapper) return;
+        
+        const iconElement = botWrapper.querySelector('.icon-image img');
+        const nameElement = botWrapper.querySelector('.bot-input-header-left-text');
+        
+        if (iconElement) {
+            const agentIcon = this.showBotComposeBarHeader?.context?.sources?.[0]?.icon;
+            if (agentIcon) {
+                iconElement.src = agentIcon;
+            }
+        }
+        
+        if (nameElement) {
+            const agentName = this.showBotComposeBarHeader?.context?.sources?.[0]?.name;
+            if (agentName) {
+                nameElement.textContent = agentName;
+            }
+        }
+        
+        const endConversationBtn = botWrapper.querySelector('.bot-input-header-right-text');
+        if (endConversationBtn) {
+            // Update button content based on loading state
+            endConversationBtn.innerHTML = this.botEndConversationLoader ? '<div class="waloader"></div>' : 'End Conversation';
+            
+            // Remove any existing event listener to prevent duplicates
+            endConversationBtn.removeEventListener('click', this.endConversationHandler);
+            
+            endConversationBtn.addEventListener('click', this.endConversationHandler);
+        }
+    }
+
+    updatePlaceholder() {
+        const textarea = this.container.querySelector('[data-eva-input]');
+        if (textarea) {
+            textarea.placeholder = this.placeholder || this.options.placeholder;
+        }
+    }
+
+    handleEndConversation() {
+        this.botEndConversationLoader = true;
+        
+        // Update the button content to show loader
+        const endConversationBtn = this.container.querySelector('.bot-input-header-right-text');
+        if (endConversationBtn) {
+            endConversationBtn.innerHTML = '<div class="waloader"></div>';
+        }
+        
+        this.chatInterface.stopBotAnswer();
+    }
+
+
     /**
      * Render the compose bar HTML
      */
@@ -326,23 +450,43 @@ class ComposeBar {
                     </div>` : ''}
 
                     <div class="eva-composebar-area">
+                        <div class="composebar-bot-input-wrapper" style= "display: none;">
+                            <div class="bot-input-header">
+                                <div class="bot-input-header-left">
+                                    <div class="bot-input-header-left-icon">
+                                        <span class="icon-text">Talking to</span>
+                                        <span class="icon-image"><img src="" alt="bot-icon" width="24px" height="24px"></span>                            
+                                    </div>  
+                                    <div class="bot-input-header-left-text">                                                                                
+                                    </div>
+                                </div>
+                                <div class="bot-input-header-right">
+                                    <div class="bot-input-header-right-text">
+                                        ${this.botEndConversationLoader ? '<div class="waloader"></div>' : 'End Conversation'}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                         <div class="eva-input-container">
                             <div class="eva-attachments-container" data-eva-attachments></div>
                             <div class="eva-compose-textarea-container">
                                 <textarea 
                                 class="eva-compose-textarea" 
-                                placeholder="${this.options.placeholder}"
+                                placeholder="${this.placeholder || this.options.placeholder}"
                                 rows="1"
                                 data-eva-input
                                 ></textarea>
                             </div>
                             <div class="eva-compose-textarea-actions">
                                 <div class='left-actions'>
+                                <div class='common-agents-container'>
                                     <button class="agents-action-item" data-eva-agents-action data-eva-open-dialog>
                                         ${ActionsFlashIcon({ size: 16, color: "#667085" })}
                                         ${CheveronDownIcon({ size: 14, color: "#667085" })}
                                     </button>                                
                                     <div data-eva-common-agents style="display: inline-flex; gap: 8px;"></div>
+                                </div>
+                                    <div class="composebar-context-container" style="display: none; gap: 8px;"></div>
                                 </div>
                                 <div class="right-actions">
                                     <button class="eva-input-action-btn attachment-btn" data-eva-attachment title="Attach file">
@@ -416,7 +560,6 @@ class ComposeBar {
         const fileInput = this.container.querySelector('[data-eva-file-input]');
         const agentSearchInputBox = this.container.querySelector('[data-eva-agent-search-input-box]');
         const tabHeadings = this.container.querySelectorAll('.agentsTabHeading');
-
         // Textarea events
         if (textarea) {
             textarea.addEventListener('input', (e) => this.handleInputChange(e));
@@ -512,6 +655,16 @@ class ComposeBar {
                 tab.addEventListener('click', (e) => this.handleTabSwitch(e));
             });
         }
+    }
+
+    handleRemoveSelectedContext() {
+        this.fileUploaderInterface.clearContext();
+        this.selectedAgent = null;
+        this.setCommonAgents();
+        this.renderCommonAgents();
+        /*update the placeholder name to default */
+        this.placeholder = this.options.placeholder;
+        this.updatePlaceholder();
     }
 
     /**
@@ -648,7 +801,7 @@ class ComposeBar {
         
 
         if (this.input?.length > 0) {
-            micButton.innerHTML = Close({ size: 16, color: "#667085" });
+            micButton.innerHTML = Close({ size: 12, color: "#667085" });
             micButton.title = "Clear input";            
         } else {
             micButton.innerHTML = microphoneIcon({ size: 16, color: "#667085" });
@@ -720,9 +873,7 @@ class ComposeBar {
     handleStop() {
         // Default internal handling
         try {
-            if (this.chatInterface && typeof this.chatInterface.cancelMessageReqAction === 'function') {
-                this.chatInterface.cancelMessageReqAction();
-            }
+            this.chatInterface.cancelMessageReqAction();    
         } catch (e) {
             console.error('Error stopping message from ComposeBar:', e);
         }
@@ -1100,6 +1251,7 @@ class ComposeBar {
                 const agent = agents.find(a => String(a.id) === String(agentId));
                 if (!agent) return;
                 this.selectedAgent = agent;
+                this.renderContextChipInComposeBar(); //setting selected agent as context chip in compose bar
                 if (attachments?.length > 0) {
                     // Store the agent for later invocation after user confirms
                     // this.pendingAgentInvocation = agent;
@@ -1164,10 +1316,11 @@ class ComposeBar {
     /**
      * Set loading state
      */
-    setLoading(loading, currentQuestionResponse) {
+    setLoading(loading) {
         this.isLoading = loading;
         const sendBtn = this.container.querySelector('[data-eva-send]');
         const stopBtn = this.container.querySelector('[data-eva-stop]');
+        const activeCommonAgent = this.container.querySelector('.agents-action-item.active');
 
         if (sendBtn) {
             // Preserve the icon instead of replacing with text
@@ -1178,12 +1331,12 @@ class ComposeBar {
             } else {
                 sendBtn.innerHTML = arrowCirlceUpIcon({ size: 16, color: "#101828" });
                 sendBtn.title = 'Send';
-                sendBtn.classList.remove('stop-btn');    
-                if(currentQuestionResponse?.data?.status === 'completed' || currentQuestionResponse?.data?.status === 'terminated'){
-                    const commonAgentActiveDiv = this.container.querySelectorAll('.agents-action-item.active');
-                    if(commonAgentActiveDiv?.length > 0){
-                        commonAgentActiveDiv[0].classList.remove('active');
-                    }
+                sendBtn.classList.remove('stop-btn');                                    
+                if(this.currentAnswerResponse?.status === 'completed' || this.currentAnswerResponse?.status === 'terminated'){
+                    if(activeCommonAgent){
+                        activeCommonAgent.classList.remove('active');                        
+                    }   
+                    this.currentAnswerResponse = null;
                 }                
             }
         }

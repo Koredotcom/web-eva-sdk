@@ -370,3 +370,26 @@ export function JiraCommentsIcon({ size = config.size, className = '' }) {
       </svg>
   `
 }
+
+export function RightArrow({ size = config.size, color = config.color, className = '' }) {  
+  return `
+      <svg width="${size}" height="${size}" className="wa-RightArrow ${className}" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M1.33337 6.00016H10.6667M10.6667 6.00016L6.00004 1.3335M10.6667 6.00016L6.00004 10.6668" stroke="${color}" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+  `
+}
+
+export function CheckCircle({ size = config.size, color = config.color, className = '' }) {  
+  return `
+      <svg width="${size}" height="${size}" className="wa-CheckCircle ${className}" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <g clipPath="url(#clip0_200_6980)">
+              <path d="M6.24935 10.0003L8.74935 12.5003L13.7493 7.50033M18.3327 10.0003C18.3327 14.6027 14.6017 18.3337 9.99935 18.3337C5.39698 18.3337 1.66602 14.6027 1.66602 10.0003C1.66602 5.39795 5.39698 1.66699 9.99935 1.66699C14.6017 1.66699 18.3327 5.39795 18.3327 10.0003Z" stroke="${color}" strokeWidth="1.66667" strokeLinecap="round" strokeLinejoin="round" />
+          </g>
+          <defs>
+              <clipPath id="clip0_200_6980">
+                  <rect width="20" height="20" fill="white" />
+              </clipPath>
+          </defs>
+      </svg>
+  `
+}

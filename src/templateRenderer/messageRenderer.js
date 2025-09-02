@@ -28,7 +28,7 @@ export function render(
 ) {
 	try {
 		// Handle loading state
-		if (data?.loading) {
+		if (data?.loading && !data?.botConversation) {
 			return TemplateComponents.wrapTemplate(
 				TemplateComponents.renderLoading(
 					data,

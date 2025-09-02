@@ -5,6 +5,7 @@ import TemplateComponents from "./index";
 import { encodeHtml } from "../../utils/helpers";
 import customMarkdownRenderer from "../utils/customMarkdownRenderer";
 import { MessageRenderer } from "../../plugins/Markdown/message-renderer";
+import { cheveronRightIcon } from "../icons-library";
 
 function escapeHTML(str) {
 	if (!str) return "";
@@ -28,13 +29,18 @@ function renderUserQuestion(question, userIconTemplate) {
 	return "";
 }
 
-function renderAssistantQuestion(question, assistantIconTemplate) {
-	if (question) {
-		return `<div class="bot-flex-wrapper ss">
-					${assistantIconTemplate}
-					${MessageRenderer(question)}
-				</div>`;
+function renderAssistantQuestion(conversation, assistantIconTemplate) {
+	let question = conversation?.question;
+	if(conversation?.template_html){
+		question = conversation?.template_html;
 	}
+	return `<div class="bot-flex-wrapper">
+				${assistantIconTemplate}
+				<div class='answerCntr'>
+					${conversation?.thoughts?.length > 0 ? renderThoughts(conversation) : ""}
+					${question ? MessageRenderer(question) : ""}
+				</div>
+			</div>`;
 }
 
 function createConversationHTML(
@@ -57,10 +63,7 @@ function createConversationHTML(
 		let content;
 
 		if (conversation?.templateType === "search_answer") {
-			content = renderAssistantQuestion(
-				conversation?.question,
-				assistantIconTemplate
-			);
+			content = renderAssistantQuestion(conversation, assistantIconTemplate);			
 			if (conversation?.answer) {
 				content += `<br/>`;
 				content += renderUserQuestion(
@@ -83,7 +86,7 @@ function createConversationHTML(
 		if (conversation?.templateType === "search_answer") {
 			return `
                 <div class="completed">
-					${renderAssistantQuestion(conversation?.question, assistantIconTemplate)}
+					${renderAssistantQuestion(conversation, assistantIconTemplate)}
 					<br/>
 					${renderUserQuestion(conversation?.answer, userIconTemplate)}
 					<br/>
@@ -92,7 +95,7 @@ function createConversationHTML(
 		} else if (conversation?.templateType === "bot_template") {
 			return `
 				<div class="bot-flex-wrapper-group">
-					${renderAssistantQuestion(conversation?.template_html, assistantIconTemplate)}
+					${renderAssistantQuestion(conversation, assistantIconTemplate)}
 					<br/>
 					${renderUserQuestion(conversation?.answer, userIconTemplate)}
 					<br/>
@@ -194,6 +197,106 @@ export function setupTemplates(botConversation) {
 	}
 }
 
+const renderThoughts = (conversation) => {
+	const uniqueId = `thought-wrapper-${conversation?.messageId}`;
+	const isCollapsed = conversation?.question?.length > 0;
+	return `
+		<div class='thought-wrapper ${isCollapsed ? 'collapsed' : 'expanded'}' id='${uniqueId}' data-toggle-thoughts>
+			<span class='thoughts-header' id='thoughts-header-${conversation?.messageId}'>Thoughts ${isCollapsed ? `for ${conversation?.thoughts?.[conversation?.thoughts?.length - 1]?.thoughtTime} secs` : ''}</span>
+			<span class='spanIcon'>${cheveronRightIcon({ size: 8, color: "#70707B" })}</span>
+			<div class="expand-thoughts-container">
+				${expandThoughts(conversation)}
+			</div>
+		</div>
+	`;	
+}
+
+const expandThoughts = (conversation) => {
+	let html = `
+        <div class='query-response-flow-items'>
+            ${conversation?.thoughts?.map((thought, index) => {
+		return `
+		<div class='thoughtsContent' key=${index} style="animation-delay: ${ index * 0.2 } s">
+			<div class='thoughts-content-wrapper'> 
+				<div class='border-line'></div>
+				<div class='thought-text'>${thought?.content}</div>				
+			</div>                                        
+		</div>  
+		${!conversation?.hasOwnProperty('question') ? (index === conversation?.thoughts?.length - 1 ? `<div class='thought-loader-wrapper'>
+			<div class='thought-loader'>
+				<div class="dot-flashing"></div>
+			</div>
+		</div>`:''):''}                  
+                `;
+	}).join('')}
+        </div>
+    `;
+	return html;
+}
+
+const setupThoughtsToggle = (messageId, thoughtTime,  retryCount = 0 ) => {	
+	const maxRetries = 10;
+	const retryDelay = 500;	
+	const thoughtWrapper = document.getElementById(`thought-wrapper-${messageId}`);
+	
+	if (!thoughtWrapper) {
+		if (retryCount < maxRetries) {
+			setTimeout(() => setupThoughtsToggle(messageId, thoughtTime, retryCount + 1), retryDelay);
+			return;
+		}
+		return;
+	}
+
+	const toggleThoughts = (event, thoughtTime) => {
+		event.preventDefault();
+		event.stopPropagation();		
+		const isCurrentlyCollapsed = thoughtWrapper.classList.contains('collapsed');
+		const iconSpan = thoughtWrapper.querySelector('.spanIcon');
+		const thoughtsHeader = document.getElementById(`thoughts-header-${messageId}`);
+		if (isCurrentlyCollapsed) {
+			try{
+				thoughtWrapper.classList.remove('collapsed');
+				thoughtWrapper.classList.add('expanded');			
+				
+				
+				// Ensure icon rotation for expanded state (chevron down)
+				if (iconSpan) {
+					iconSpan.style.transform = 'rotate(90deg)';
+					iconSpan.style.transition = 'transform 0.3s ease';
+				}
+				thoughtsHeader.textContent = `Thoughts`;
+			}
+			catch(error){
+				console.log('error', error);
+			}
+
+		} else {
+			thoughtWrapper.classList.remove('expanded');
+			thoughtWrapper.classList.add('collapsed');
+			/* update the thoughts header text */
+			
+			thoughtsHeader.textContent = `Thoughts for ${thoughtTime} secs`;
+			
+			// Ensure icon rotation for collapsed state (chevron right)
+			if (iconSpan) {
+				iconSpan.style.transform = 'rotate(0deg)';
+				iconSpan.style.transition = 'transform 0.3s ease';
+			}
+		}
+	};
+
+	// Remove any existing listener first to prevent multiple listeners
+	if (thoughtWrapper._toggleHandler) {
+		thoughtWrapper.removeEventListener('click', thoughtWrapper._toggleHandler);
+	}
+	
+	// Create and store the handler function
+	thoughtWrapper._toggleHandler = (event) => toggleThoughts(event, thoughtTime);
+	
+	// Add click event listener with thoughtTime passed correctly
+	thoughtWrapper.addEventListener('click', thoughtWrapper._toggleHandler);
+}
+
 function renderBotConversation(
 	props,
 	assistantIconTemplate,
@@ -210,7 +313,7 @@ function renderBotConversation(
 
 	if(props?.status === 'completed' && props?.viewType === 'threadView') {
 		conversationsHTML = customMarkdownRenderer(`
-			<div class="botTemplate-${props?.messageId}">
+			<div class="botTemplate-${props?.messageId}-completed">
 				${props?.answer}
 			</div>
 		`);
@@ -248,11 +351,53 @@ export function render(
 		userIconTemplate,
 		loadingText
 	);
+	// Function to setup all thought toggles
+	const setupAllThoughtToggles = () => {
+		const conversations = Object.values(props?.botConversation || {});
+		
+		conversations.forEach(conversation => {
+			if (conversation?.thoughts?.length > 0) {				
+				setupThoughtsToggle(conversation?.messageId, conversation?.thoughts?.[conversation?.thoughts?.length - 1]?.thoughtTime);
+			}
+		});
+	};
+
+	// Try immediately first
+	setupAllThoughtToggles();
+	
+	// Also try after DOM is more likely to be ready
 	let timer;
 	timer = setTimeout(() => {
 		setupEventListeners(props?.botConversation, props);
 		setupTemplates(props?.botConversation);
+		
+		// Try again in case some elements were added later
+		setupAllThoughtToggles();
 	}, 1000);
+	
+	// Also use MutationObserver to catch dynamically added elements
+	if (typeof window !== 'undefined' && window.MutationObserver) {
+		const observer = new MutationObserver((mutations) => {
+			mutations.forEach((mutation) => {
+				mutation.addedNodes.forEach((node) => {
+					if (node.nodeType === 1) { // Element node
+						// Check if added node is a thought wrapper or contains one
+						if (node.classList?.contains('thought-wrapper') || node.querySelector?.('.thought-wrapper')) {
+							setupAllThoughtToggles();
+						}
+					}
+				});
+			});
+		});
+		
+		observer.observe(document.body, {
+			childList: true,
+			subtree: true
+		});
+		
+		// Clean up observer after 10 seconds to avoid memory leaks
+		setTimeout(() => observer.disconnect(), 10000);
+	}
 	return html;
 }
-export default { render , setupTemplates };
+export default { render , setupTemplates, setupThoughtsToggle };

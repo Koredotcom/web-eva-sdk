@@ -9,6 +9,10 @@
     margin-bottom: .5rem;
     gap: .5rem;
     flex-wrap: wrap;
+    padding-left: 1rem;
+    &:empty {
+        display: none;
+    }
 }
 
 /* Quick action chips */
@@ -266,7 +270,7 @@
             border: .25rem solid #f9fafb;
             display: flex;
             flex-direction: column;
-            border-radius: 1.5rem;
+            border-radius: 1.875rem;
             .eva-input-container {
                 display: flex; 
                 flex-direction: column;  
@@ -385,6 +389,12 @@
                         display: flex;
                         align-items: center;
                         gap: .5rem;
+
+                        .common-agents-container {
+                            display: flex;
+                            align-items: center;
+                            gap: .5rem;
+                        }
 
                         .agents-action-item {
                             display: flex;
@@ -928,3 +938,137 @@ sl-dialog.eva-agents-dialog {
     line-height: 1.25rem;
     letter-spacing: 0em;
   }
+  .scrollToBottmBtn {
+    position: absolute;
+    bottom: calc(100% + 0.75rem);
+    margin: 0 auto;
+    width: 2rem;
+    height: 2rem;
+    background: #fff;
+    border-radius: 6.25rem;
+    border: 0.0625rem solid #e5e5e5;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    transition: all 0.3s ease-in-out;
+    right: 0;
+    left: 0;
+    &:hover {
+        background: #f5f5f5;
+    }
+    .scrollToBottmBtn-text {
+        font-size: 0.875rem;
+        font-weight: 500;
+        line-height: 1.125rem;
+        color: #737373;
+    }
+    .scrollToBottmBtn-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        svg {
+            transform: rotate(90deg);
+            width: 1rem;
+            height: 1rem;
+        }
+    }
+}
+
+.compose-section {
+    position: relative;
+}
+
+
+.composebar-bot-input-wrapper {
+    //width: 100%;
+    //border-radius: 1.5rem;
+    //background: linear-gradient(180deg, #F8F7F7 8.93%, #EDEDED 88.57%);
+    padding: 1rem;
+    position: relative;
+    border-radius: 1.5rem 1.5rem 0 0;
+    &:after {
+        content: '';
+        width: 100%;
+        height: 100px;
+        background: linear-gradient(180deg, #F8F7F7 8.93%, #EDEDED 88.57%);;
+        position: absolute;
+        display: block;
+        left: 0;
+        top: 0;
+        z-index: -1;
+        border-radius: 1.5rem;
+    }
+    
+    .bot-input-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+
+        .bot-input-header-left {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+
+            .bot-input-header-left-icon {
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+
+                .icon-text {
+                    font-family: Inter;
+                    font-size: .875rem;
+                    font-style: normal;
+                    font-weight: 400;
+                    line-height: 1.25rem;
+                    letter-spacing: 0em;
+                    color: #737373;
+                }
+
+                .icon-image {
+                    display: flex;
+                    align-items: center;
+                    img {
+                        width: 1rem;
+                        max-height: 1rem;
+                        object-fit: contain;
+                    }
+                }
+            }
+
+            .bot-input-header-left-text {
+                font-family: Inter;
+                font-size: .875rem;
+                font-style: normal;
+                font-weight: 500;
+                line-height: 1.25rem;
+                letter-spacing: 0em;
+                color: #0f0f0f;
+            }
+        }
+
+        .bot-input-header-right {
+            .bot-input-header-right-text {
+                cursor: pointer;
+                font-family: Inter;
+                font-size: .875rem;
+                font-style: normal;
+                font-weight: 500;
+                line-height: 1.25rem;
+                letter-spacing: 0em;
+                color: #d92d20;
+
+                .waloader {
+                    position: relative;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    border-bottom: 0.1875rem solid #141414;
+                    border-left: 0.1875rem solid #141414;
+                }
+            }
+        }
+    }
+}

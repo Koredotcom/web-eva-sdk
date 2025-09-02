@@ -4,7 +4,7 @@ import { InvokeAgent } from "../chat";
 let isRecentAgentsLoading = false;
 let currentRecentAgents = [];
 
-
+const RecentAgentsFunc = () => {
 const constructRecentAgentsList = (recentAgents = []) => {    
     if(isRecentAgentsLoading) {
         return `<div class="recent-agents-loading">Loading recent agents...</div>`;
@@ -91,4 +91,33 @@ const renderRecentAgents = (divId) => {
         });
 };
 
-export default renderRecentAgents;
+const hideRecentAgentsDiv = (divId) => {
+    const recentAgentsDiv = document.getElementById(divId);
+    if(recentAgentsDiv){
+        recentAgentsDiv.style.display = 'none';
+    }else{
+        console.error(`Element with ID "${divId}" not found`);
+    }
+}
+
+const unHideRecentAgentsDiv = (divId) => {
+    const recentAgentsDiv = document.getElementById(divId);
+    if(recentAgentsDiv){
+        recentAgentsDiv.style.display = 'flex';
+    } else {
+        console.error(`Element with ID "${divId}" not found`);
+    }
+}
+
+return {
+    hideRecentAgentsDiv,
+    unHideRecentAgentsDiv,
+    renderRecentAgents
+}
+}
+
+
+
+
+
+export default RecentAgentsFunc;

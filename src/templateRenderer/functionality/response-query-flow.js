@@ -13,7 +13,7 @@ const ResponseQueryFlowFunctionality = ({ data, uniqueId }) => {
             }
 
             if (icon) {
-                icon.style.display = 'block';
+                icon.style.display = 'flex';
                 
                 
                 // Add click functionality to toggle the flow
@@ -51,10 +51,9 @@ function toggleResponseFlow(event, content) {
         return;
     }
     
-    let queryResponseHeader = queryResponseFlow.querySelector('.query-response-flow-header-text');
-    
     const icon = queryResponseFlow.querySelector('.query-response-flow-header-icon');
     const displayDiv = queryResponseFlow.querySelector('.display-query-response-flow');
+    const queryResponseHeader = queryResponseFlow.querySelector('.query-response-flow-header-text');
     
     
     if (!icon) return;
@@ -64,14 +63,14 @@ function toggleResponseFlow(event, content) {
     
     if (isCurrentlyExpanded) {
         // Collapse: Switch to right chevron and hide display div
-        icon.innerHTML = `${cheveronRightIcon({ size: 16, color: "#667085" })}`;
+        icon.innerHTML = `${cheveronRightIcon({ size: 10, color: "#667085" })}`;
         if (displayDiv) {
             displayDiv.style.display = 'none';
             queryResponseHeader.innerText = content;
         }
     } else {
         // Expand: Switch to down chevron and show display div
-        icon.innerHTML = `${CheveronDownIcon({ size: 16, color: "#667085" })}`;
+        icon.innerHTML = `${CheveronDownIcon({ size: 10, color: "#667085" })}`;
         if (displayDiv) {
             displayDiv.style.display = 'block';
             queryResponseHeader.innerText = "Response Flow";

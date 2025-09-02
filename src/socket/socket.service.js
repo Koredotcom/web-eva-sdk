@@ -69,6 +69,9 @@ class WebSocketClient {
                     /*In answer suggestion, will receive thoughts of agents, need to append to the question*/                    
                         ChatInterface().agentThoughts(msg)                                        
                 }
+                if (msg?.entity === "thoughts") {
+                    ChatInterface().agentThoughts(msg)     
+                }
                 if(msg?.entity === "answerChunk"){
                     ChatInterface().contentStreaming(msg)
                 }
