@@ -396,6 +396,58 @@
                             gap: .5rem;
                         }
 
+                        .composebar-context-container {
+                            .context-chip-button {
+                                align-items: center;
+                                justify-content: center;
+                                display: inline-flex;
+                                padding: 0.5rem 0.75rem 0.5rem 0.75rem;
+                                border-radius: 6.25rem;
+                                border: 0.0625rem solid #E5E5E5;                                
+                                height: 2.25rem;
+                                background-color: #FCFCFC;
+                                position: relative;
+                                cursor: pointer;
+
+                                .composebar-context-agent-name-container {
+                                    display: flex;
+                                    align-items: center;
+                                    gap: 0.25rem;
+
+                                    .composebar-context-agent-icon {
+                                        display: flex;
+                                        align-items: center;
+                                    }
+
+                                    .composebar-context-agent-name {
+                                        color: #141414;
+                                        font-family: Inter;
+                                        font-size: 0.875rem;
+                                        font-style: normal;
+                                        font-weight: 500;
+                                        line-height: 1.125rem;
+                                        letter-spacing: 0em;
+                                        max-width: 5.625rem;
+                                        margin-right: 0.25rem;
+                                        overflow: hidden;
+                                        text-overflow: ellipsis;
+                                        white-space: nowrap;
+                                    }
+                                    
+                                }
+                                
+                                .composebar-context-close-button {
+                                    cursor: pointer;
+                                    width: 1.75rem;
+                                    height: 1.75rem;
+                                    display: inline-flex;
+                                    align-items: center;
+                                    justify-content: center;
+                                    border-radius: 100%;
+                                }
+                            }
+                        }
+
                         .agents-action-item {
                             display: flex;
                             padding: .5rem .75rem;

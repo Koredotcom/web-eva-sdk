@@ -229,11 +229,18 @@ class ComposeBar {
         }
         const composebarContextChipContainer = this.container.querySelector('.composebar-context-container'); 
         if (!composebarContextChipContainer) return;        
-        composebarContextChipContainer.style.display = 'block';
+        composebarContextChipContainer.style.display = 'flex';
         /*innerHtml should display the selected agent name and close button */
         composebarContextChipContainer.innerHTML = `
-            <div class="composebar-context-close-button" style="cursor: pointer;">${createCloseIcon({ size: 14, color: "#667085" })}</div>
-            <div class="composebar-context-agent-name">${this.selectedAgent?.name}</div>
+            <button class="context-chip-button">
+                <div class="composebar-context-agent-name-container">
+                    <div class="composebar-context-agent-icon">
+                        <img src="${this.selectedAgent?.icon}" alt="agent-icon" width="16" height="16">
+                    </div>
+                    <div class="composebar-context-agent-name" title="${this.selectedAgent?.name}">${this.selectedAgent?.name}</div>
+                </div>
+                <div class="composebar-context-close-button">${createCloseIcon({ size: 10, color: "#667085" })}</div>                
+            </button>
         `;
 
         /*change the placeholder to the selected agent name */
@@ -486,7 +493,7 @@ class ComposeBar {
                                     </button>                                
                                     <div data-eva-common-agents style="display: inline-flex; gap: 8px;"></div>
                                 </div>
-                                    <div class="composebar-context-container" style="display: none; gap: 8px;"></div>
+                                    <div class="composebar-context-container" style="display: none;"></div>
                                 </div>
                                 <div class="right-actions">
                                     <button class="eva-input-action-btn attachment-btn" data-eva-attachment title="Attach file">
