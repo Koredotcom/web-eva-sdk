@@ -502,7 +502,7 @@ class ComposeBar {
                                 <div class='left-actions'>
                                 <div class='common-agents-container'>
                                     <button class="agents-action-item" data-eva-agents-action data-eva-open-dialog>
-                                        ${ActionsFlashIcon({ size: 16, color: "#667085" })}
+                                        ${ActionsFlashIcon({ size: 18, color: "#667085" })}
                                         ${CheveronDownIcon({ size: 14, color: "#667085" })}
                                     </button>                                
                                     <div data-eva-common-agents style="display: inline-flex; gap: 8px;"></div>
