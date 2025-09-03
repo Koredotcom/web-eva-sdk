@@ -393,3 +393,20 @@ export function CheckCircle({ size = config.size, color = config.color, classNam
       </svg>
   `
 }
+
+export function MaximizeIcon({ size = config.size, color = config.color, className = '' }) {  
+  return `
+      <svg width="${size}" height="${size}" className="wa-MaximizeIcon ${className}" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <g id="maximize-01">
+            <path id="Icon" d="M9.33333 6.66667L14 2M14 2H10M14 2V6M6.66667 9.33333L2 14M2 14H6M2 14L2 10" stroke="${color}" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round"/>
+      </svg>
+  `
+}
+
+export function MinimizeIcon({ size = config.size, color = config.color, className = '' }) {  
+  return `
+      <svg width="${size}" height="${size}" className="wa-MinimizeIcon ${className}" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M1.66667 8.33333H5.66667M5.66667 8.33333V12.3333M5.66667 8.33333L1 13M12.3333 5.66667H8.33333M8.33333 5.66667V1.66667M8.33333 5.66667L13 1" stroke="${color}" strokeWidth="1.33" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+  `
+}

@@ -5,7 +5,7 @@ import TemplateComponents from "./index";
 import { encodeHtml } from "../../utils/helpers";
 import customMarkdownRenderer from "../utils/customMarkdownRenderer";
 import { MessageRenderer } from "../../plugins/Markdown/message-renderer";
-import { cheveronRightIcon } from "../icons-library";
+import { cheveronRightIcon, MaximizeIcon, MinimizeIcon } from "../icons-library";
 
 function escapeHTML(str) {
 	if (!str) return "";
@@ -36,9 +36,10 @@ function renderAssistantQuestion(conversation, assistantIconTemplate) {
 	}
 	return `<div class="bot-flex-wrapper">
 				${assistantIconTemplate}
-				<div class='answerCntr'>
-					${conversation?.thoughts?.length > 0 ? renderThoughts(conversation) : ""}
-					${question ? MessageRenderer(question) : ""}
+				<div class='answerCntr'>					
+					<div class="assistant-question-container ${conversation?.status === 'completed' ? 'completed-assistant-question-container' : ''}">
+						${question ? MessageRenderer(question) : ""}
+					</div>
 				</div>
 			</div>`;
 }
@@ -163,26 +164,32 @@ function setupEventListeners(botConversation, props) {
 		});
 	});
 
-	// Expand/Collapse button handlers
-	document.querySelectorAll(".expand-bot-conversation").forEach((button) => {
+	// Expand/Collapse button handlers - FIXED VERSION
+	document.querySelectorAll(".expandAreaBlock").forEach((button) => {
 		button.addEventListener("click", (event) => {
-			const messageId = event.target.dataset.messageId;
-			const isCollapsed = event.target.dataset.collapsed === "true";
+			event.preventDefault();
+			event.stopPropagation();
+			
+			const messageId = event.target.closest('.expandAreaBlock').dataset.messageId;
+			const isCollapsed = event.target.closest('.expandAreaBlock').dataset.collapsed === "true";
 			const contentDiv = document.querySelector(`.bot-conversation-content[data-message-id="${messageId}"]`);
 			const summaryDiv = document.querySelector(`.bot-conversation-summary[data-message-id="${messageId}"]`);
+			const expandBlock = event.target.closest('.expandAreaBlock');
 
 			if (isCollapsed) {
 				// Show full conversation
 				contentDiv.style.display = "block";
 				summaryDiv.style.display = "none";
-				event.target.textContent = "Collapse";
-				event.target.dataset.collapsed = "false";
+				expandBlock.dataset.collapsed = "false";
+				// Change icon to minimize
+				expandBlock.innerHTML = `${MinimizeIcon({ size: 16, color: "#667085" })}`;
 			} else {
 				// Show summary (props?.answer)
 				contentDiv.style.display = "none";
 				summaryDiv.style.display = "block";
-				event.target.textContent = "Expand";
-				event.target.dataset.collapsed = "true";
+				expandBlock.dataset.collapsed = "true";
+				// Change icon to maximize
+				expandBlock.innerHTML = `${MaximizeIcon({ size: 16, color: "#667085" })}`;
 			}
 		});
 	});
@@ -366,19 +373,33 @@ function renderBotConversation(
 			)
 		)
 		.join("");
+	// Find conversation with thoughts
+	const conversationWithThoughts = Object.values(botConversation || {}).find(conv => conv?.thoughts?.length > 0);
+	
 	return `
         <div class="bot-conversation-wrapper ${props?.status === 'completed' ? 'completed' : ''}" data-message-id="${props?.messageId}">
-		<div class="expand-bot-conversation" style="${props?.status === 'completed' ? 
-		'display: inline-block; padding: 6px 12px; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 500; color: #495057; margin-bottom: 10px; user-select: none; transition: all 0.2s ease;' : 'display: none;'}" 
-		data-message-id="${props?.messageId}" data-collapsed="false" onmouseover="this.style.background='#e9ecef'" onmouseout="this.style.background='#f8f9fa'">
-		Collapse
-		</div>
-		<div class="bot-conversation-content" data-message-id="${props?.messageId}">
-			${conversationsHTML}
-		</div>
-		<div class="bot-conversation-summary" data-message-id="${props?.messageId}" style="display: none;">
-			${props?.answer ? MessageRenderer(props.answer) : ''}
-		</div>
+		${conversationWithThoughts ? renderThoughts(conversationWithThoughts) : ""}
+			<div class="bot-conversation-content-wrapper ${props?.status === 'completed' ? ' bot-conversation-completed' : ''}">
+				<div class="expand-bot-conversation ${props?.status === 'completed' ? ' conversation-completed' : ''}">
+				<div class="top-header">
+					<div class="bot-conversation-icon-block">
+						<span class="icon-block">
+							<img src="https://staticqa-kora.kore.ai/kora/icons/lib/knowledge/yellow.svg" alt="">
+						</span>
+						<span class="bot-agent-name">MIZUHO AMERICAS SEARCH AGENT</span>
+					</div>
+					<div class="expandAreaBlock" data-message-id="${props?.messageId}" data-collapsed="false">
+						${MinimizeIcon({ size: 16, color: "#667085" })}
+					</div>
+				</div>
+				</div>
+				<div class="bot-conversation-content" data-message-id="${props?.messageId}">
+					${conversationsHTML}
+				</div>
+				<div class="bot-conversation-summary" data-message-id="${props?.messageId}" style="display: none;">
+					${props?.answer ? MessageRenderer(props.answer) : ''}
+				</div>
+			</div>		
         </div>
     `;
 	
