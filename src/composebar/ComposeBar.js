@@ -42,7 +42,7 @@ class ComposeBar {
         this.currentAnswerResponse=null;
         this.showBotComposeBarHeader = false;
         this.botEndConversationLoader = false;
-        this.endConversationHandler = this.handleEndConversation.bind(this); // Store the bound handler        
+        this.endConversationHandler = this.handleEndConversation.bind(this);       
         this.callbacks = {
             onSend: null,
             onNewChat: null,
@@ -86,7 +86,7 @@ class ComposeBar {
                             console.log("showBotComposeBarHeader", this.showBotComposeBarHeader);
                             this.placeholder = `Chat with ${this.showBotComposeBarHeader?.context?.sources?.[0]?.name}`;
                             
-                            // Use the new delayed show function - handles all timing and conflicts automatically
+                            
                             const botWrapper = this.container.querySelector('.composebar-bot-input-wrapper');
                             if (botWrapper) {
                                 showElementDelayed(botWrapper, 100, 'block', true);
@@ -100,7 +100,7 @@ class ComposeBar {
                         }else{
                             console.log("no threaded conversations available - hide bot wrapper");                            
                             
-                            // Use the new generic hide function
+                            
                             const botWrapper = this.container.querySelector('.composebar-bot-input-wrapper');
                             if (botWrapper) {
                                 hideElementImmediately(botWrapper, { enableLogging: true });
@@ -412,10 +412,10 @@ class ComposeBar {
         
         const endConversationBtn = botWrapper.querySelector('.bot-input-header-right-text');
         if (endConversationBtn) {
-            // Update button content based on loading state
+            
             endConversationBtn.innerHTML = this.botEndConversationLoader ? '<div class="waloader"></div>' : 'End Conversation';
             
-            // Remove any existing event listener to prevent duplicates
+            
             endConversationBtn.removeEventListener('click', this.endConversationHandler);
             
             endConversationBtn.addEventListener('click', this.endConversationHandler);
@@ -432,7 +432,6 @@ class ComposeBar {
     handleEndConversation() {
         this.botEndConversationLoader = true;
         
-        // Update the button content to show loader
         const endConversationBtn = this.container.querySelector('.bot-input-header-right-text');
         if (endConversationBtn) {
             endConversationBtn.innerHTML = '<div class="waloader"></div>';
@@ -680,7 +679,9 @@ class ComposeBar {
     }
 
     handleRemoveSelectedContext() {
-        this.fileUploaderInterface.clearContext();
+        if(this.fileUploaderInterface && typeof this.fileUploaderInterface.clearContext === 'function') {
+            this.fileUploaderInterface.clearContext();
+        }        
         this.selectedAgent = null;
         this.setCommonAgents();
         this.renderCommonAgents();
@@ -701,7 +702,7 @@ class ComposeBar {
             }, 0);
         }
         this.autoResize(event.target);
-        this.updateMicrophoneButton(); // Update the microphone/close button
+        this.updateMicrophoneButton();
 
         if (this.callbacks.onChange) {
             this.callbacks.onChange(this.input, event);
@@ -834,8 +835,7 @@ class ComposeBar {
     /**
      * Handle key down events
      */
-    handleKeyDown(event) {
-        // Send on Enter (without Shift)
+    handleKeyDown(event) {        
         if (event.key === 'Enter' && !event.shiftKey) {
             event.preventDefault();
             this.handleSend();
@@ -846,7 +846,7 @@ class ComposeBar {
      * Handle paste events
      */
     handlePaste(event) {
-        // Handle file paste if needed in the future
+        
         setTimeout(() => {
             this.autoResize(event.target);
         }, 0);
@@ -873,8 +873,7 @@ class ComposeBar {
         } catch (e) {
             console.error('Error sending message from ComposeBar:', e);
         }
-
-        // Optional external callback
+        
         if (this.callbacks.onSend) {
             this.callbacks.onSend(this.input.trim());
         }
@@ -899,11 +898,7 @@ class ComposeBar {
         } catch (e) {
             console.error('Error stopping message from ComposeBar:', e);
         }
-
-        // Optional external callback
-        if (this.callbacks.onStop) {
-            this.callbacks.onStop();
-        }
+        
     }
 
     /**
@@ -913,7 +908,7 @@ class ComposeBar {
         const actionId = event.target.getAttribute('data-action-id');
         const action = this.quickActions.find(a => a.id === actionId);
 
-        // Default internal handling
+       
         if (action) {
             try {
                 if (this.chatInterface && typeof this.chatInterface.askQuickActions === 'function') {
@@ -928,7 +923,7 @@ class ComposeBar {
             }
         }
 
-        // Optional external callback
+       
         if (action && this.callbacks.onQuickAction) {
             this.callbacks.onQuickAction(action);
         }
@@ -938,7 +933,7 @@ class ComposeBar {
      * Handle attachment button click
      */
     handleAttachment() {
-        // Always open hidden file input
+       
         const fileInput = this.container.querySelector('[data-eva-file-input]');
         if (fileInput) fileInput.click();
     }
@@ -947,11 +942,11 @@ class ComposeBar {
      * Handle speech to text button click or clear input
      */
     handleSpeechToText() {
-        // Double-check the actual textarea value
+        
         const textarea = this.container.querySelector('[data-eva-input]');
         const actualValue = textarea ? textarea.value : '';
 
-        // Use the actual textarea value as source of truth
+        
         const hasInput = actualValue.length > 0;
 
         if (hasInput) {
@@ -959,17 +954,17 @@ class ComposeBar {
             return;
         }
 
-        // Otherwise handle speech to text
+       
         if (!this.recognition) {
             alert('Speech recognition is not supported in this browser');
             return;
         }
 
         if (this.isRecording) {
-            // Stop recording
+            
             this.recognition.stop();
         } else {
-            // Start recording
+            
             this.isRecording = true;
             this.updateSpeechButton();
             try {
@@ -1016,7 +1011,7 @@ class ComposeBar {
         } catch (e) {
             dialog.setAttribute('open', '');
         }
-        // Load and render agents when dialog opens
+        
         this.loadAndRenderAgents('');
     }
 
@@ -1384,9 +1379,12 @@ class ComposeBar {
         }
         try {
             console.log('Removing file:', file);
-            this.fileUploaderInterface.removeContext(file);
             
-            // Also remove from local array immediately for UI responsiveness
+            // Add safety check for consistency
+            if (this.fileUploaderInterface && typeof this.fileUploaderInterface.removeContext === 'function') {
+                this.fileUploaderInterface.removeContext(file);
+            }
+                        
             this.attachments = this.attachments.filter(f => String(f?.uID || f?.componentId || f?.docId) !== String(uid));
             this.renderAttachments();
             
@@ -1441,9 +1439,6 @@ class ComposeBar {
         console.log('🧹 ComposeBar cleanup completed');
     }
 
-    /**
-     * Destroy the compose bar
-     */
     destroy() {
         // Clean up timers and observers first
         this.cleanup();
@@ -1459,4 +1454,3 @@ class ComposeBar {
 }
 
 export default ComposeBar;
-//create another component renderComposeBar

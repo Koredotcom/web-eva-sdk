@@ -76,7 +76,7 @@ function createConversationHTML(
 		if (conversation?.templateType === "bot_template") {
 			content += `
 			<div class="bot-flex-wrapper">				
-				<div class="botTemplate-${conversation?.messageId}"></div>
+				${handleBotTemplates(conversation, props)}
 			</div>
 			`;
 		}
@@ -96,7 +96,7 @@ function createConversationHTML(
 			return `
 			<div class="completed">
 				<div class="bot-flex-wrapper">					
-					<div class="botTemplate-${conversation?.messageId}" style="pointer-events: none;"></div>												
+					${handleBotTemplates(conversation, props)}
 				</div>
 				${renderUserQuestion(conversation?.answer, userIconTemplate)}	
 			</div>
@@ -115,6 +115,16 @@ function createConversationHTML(
 		// }
 	}	
 	return "";
+}
+/*this function returns the div id needed for the setUpTemplates function to render the template html based on the id */
+function handleBotTemplates(conversation, props) {
+	/*if the template_type is hold_conversation invoke holdConversationTemplate.render, else return the div id */
+	if(conversation?.templateType === "hold_conversation"){
+		return holdConversationTemplate.render(conversation);
+	}
+	return `
+		<div class="botTemplate-${conversation?.messageId}" style="${conversation?.status === "completed" ? "pointer-events: none" : ""}"></div>
+	`;
 }
 
 function handleSubmit(conversation, input, props) {
@@ -170,8 +180,8 @@ function setupEventListeners(botConversation, props) {
 			event.preventDefault();
 			event.stopPropagation();
 			
-			const messageId = event.target.closest('.expandAreaBlock').dataset.messageId;
-			const isCollapsed = event.target.closest('.expandAreaBlock').dataset.collapsed === "true";
+			const messageId = event.target.closest('.expandAreaBlock')?.dataset?.messageId;
+			const isCollapsed = event.target.closest('.expandAreaBlock')?.dataset?.collapsed === "true";
 			const contentDiv = document.querySelector(`.bot-conversation-content[data-message-id="${messageId}"]`);
 			const summaryDiv = document.querySelector(`.bot-conversation-summary[data-message-id="${messageId}"]`);
 			const expandBlock = event.target.closest('.expandAreaBlock');
@@ -384,9 +394,9 @@ function renderBotConversation(
 				<div class="top-header">
 					<div class="bot-conversation-icon-block">
 						<span class="icon-block">
-							<img src="https://staticqa-kora.kore.ai/kora/icons/lib/knowledge/yellow.svg" alt="">
+							<img src="${props?.sources?.[0]?.icon}" alt="">
 						</span>
-						<span class="bot-agent-name">MIZUHO AMERICAS SEARCH AGENT</span>
+						<span class="bot-agent-name">${props?.sources?.[0]?.title}</span>
 					</div>
 					<div class="expandAreaBlock" data-message-id="${props?.messageId}" data-collapsed="false">
 						${MinimizeIcon({ size: 16, color: "#667085" })}
