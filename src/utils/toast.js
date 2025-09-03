@@ -42,7 +42,8 @@ function addStyles() {
             .eva-toast-container {
                 position: fixed;
                 top: 20px;
-                right: 20px;
+                left: 50%;
+                transform: translateX(-50%);
                 z-index: 10000;
                 pointer-events: none;
                 max-width: 400px;
@@ -51,14 +52,13 @@ function addStyles() {
             .eva-toast {
                 pointer-events: auto;
                 background: white;
-                border-radius: 8px;
+                border:.0625rem solid #6ce9a6;
                 box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
                 margin-bottom: 12px;
                 padding: 16px 20px;
                 display: flex;
                 align-items: flex-start;
-                gap: 12px;
-                border-left: 4px solid #e5e7eb;
+                gap: 12px;                
                 position: relative;
                 animation: toastSlideIn 0.3s ease-out;
                 transition: all 0.3s ease;
@@ -70,8 +70,7 @@ function addStyles() {
                 animation: toastSlideOut 0.3s ease-in forwards;
             }
 
-            .eva-toast.success {
-                border-left-color: #10b981;
+            .eva-toast.success {                
                 background: #f0fdf4;
             }
 
@@ -192,6 +191,7 @@ function addStyles() {
                     left: 16px;
                     right: 16px;
                     top: 16px;
+                    transform: none;
                     max-width: none;
                 }
 
@@ -227,8 +227,8 @@ function showToast(message, options = {}) {
         type: 'info',
         title: '',
         duration: 4000,
-        closable: true,
-        showProgress: true,
+        closable: false,
+        showProgress: false,
         ...options
     };
 
