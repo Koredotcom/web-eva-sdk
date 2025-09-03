@@ -98,7 +98,8 @@ class ComposeBar {
                             }
                             
                         }else{
-                            console.log("no threaded conversations available - hide bot wrapper");                            
+                            console.log("no threaded conversations available - hide bot wrapper");    
+                            this.input = '';                        
                             
                             this.botEndConversationLoader = false;
                             const botWrapper = this.container.querySelector('.composebar-bot-input-wrapper');
