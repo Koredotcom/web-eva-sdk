@@ -97,6 +97,8 @@ const ChatInterfaceDemo = () => {
       const el = scrollContainerRef.current;
       if (el && el.scrollHeight > el.clientHeight) {
         setShowScrollToBottom(true);
+      }else{
+        setShowScrollToBottom(false);
       }
     }, 100);
 
@@ -165,7 +167,7 @@ const ChatInterfaceDemo = () => {
           ref={scrollContainerRef}
         >
 
-          <div className="chatSec-inner">
+          <div className="chatSec-inner" id ="chat-sec-container">
           {messages &&
             Object.values(messages).map((item, index) => {
               if (item?.isTask) return;

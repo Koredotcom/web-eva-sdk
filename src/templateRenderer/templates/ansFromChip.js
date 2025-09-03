@@ -1,9 +1,10 @@
-import { htmlDecode, renderIcons, getFileExtension, getExtIcon, getDownloadIcon } from "../../utils/helpers";
+import { htmlDecode, renderIcons, getFileExtension, getExtIcon, getDownloadIcon, encodeHtml } from "../../utils/helpers";
 import AnsFromChipFunctionality from "../functionality/ansFromChip";
 import { getTimeline, highlightQuotedText } from "../utils/helper";
 import htmlTableRenderer from "./htmlTableRenderer";
 import { createCopyIcon, createExport, createThumbsDown, createThumbsDownFilled, createThumbsUp, createThumbsUpFilled, setContextIcon, EllipsisVertical, Gmail, Outlookimg, Slackimg, Teamsimg, JiraCommentsIcon } from "../icons-library";
 import store from "../../redux/store";
+import * as feedbackTemplate from "./feedback-template";
 
 const AnsFromChip = ({ item, regeneratingAnswer }) => {
 	const regeneratingChipRenderer = () => {
@@ -420,7 +421,7 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 			<div class="copyAnswerButton" id="copyAnswerButton-${item?.id}" title="Copy Response">${createCopyIcon({ size: 16, color: "#667085" })}</div>
 		`;
 	}
-
+/*feedbackTemplate */
 	const feedbackChip = () => {
 		return `
 			<div class="feedbackChip">
@@ -434,6 +435,7 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 					: 
 					`<div class="feedbackDislikeButton" id="feedbackDislikeButton-${item?.messageId}" title="Not Helpful">${createThumbsDown({ size: 16, color: "#667085" })}</div>`
 				}
+				${renderFeedbackForm()}
 			</div>
 		`;
 	}
@@ -448,6 +450,84 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 		return `
 			<div class="setContextButton" id="setContextButton-${item?.messageId}" title="Set as Context">${setContextIcon({ size: 16, color: "#667085" })}</div>
 		`;
+	}
+
+	const renderFeedbackForm = () => {
+		// Feedback options array
+		const feedbackOptions = [
+			{ label: "Not factually correct", id: 0, active: false },
+			{ label: "Intent mismatch", id: 1, active: false },
+			{ label: "Delayed response", id: 2, active: false },
+			{ label: "Incorrect source", id: 3, active: false },
+			{ label: "Other", id: 4, active: false }
+		];
+
+		// Generate Shoelace button tags for feedback options
+		const feedbackOptionsHtml = feedbackOptions.map(option => 
+			`<sl-button 
+				variant="default" 
+				size="small" 
+				class="feedback-option-btn ${option.active ? 'active' : ''}" 
+				data-feedback-id="${option.id}" 
+				data-message-id="${item?.messageId}"
+				style="margin: 0.25rem;">
+				${option.label}
+			</sl-button>`
+		).join('');
+
+		return `
+        <sl-popup 
+			id="feedbackPopup-${item?.messageId}" 
+			class="feedback-popup"
+			placement="top-start" 
+			distance="8"
+			skidding="0"
+			strategy="fixed"
+			auto-size="vertical"
+			flip
+			shift>
+			
+			<sl-card class="feedback-overlay-card">
+				<div slot="header" style="font-weight: 600; font-size: 0.875rem; color: #374151; display: flex; justify-content: space-between; align-items: center;">
+					<span>Reasons for downvoting (optional)</span>					
+				</div>
+				
+				<div class="feedback-options-container">
+					<div class="feedback-options" style="margin-bottom: 1rem;">
+						${feedbackOptionsHtml}
+					</div>
+				</div>
+				
+				<sl-textarea 
+					placeholder="Additional comments.."
+					resize="vertical"
+					rows="3"
+					id="feedbackInput-${item?.messageId}"
+					style="margin-bottom: 1rem;">
+					${encodeHtml(item?.feedback?.comment || "")}
+				</sl-textarea>
+				
+				<div class="feedback-actions" style="display: flex; justify-content: flex-end; gap: 0.5rem;">
+					<sl-button 
+						variant="default" 
+						size="small" 
+						class="cancel-btn" 
+						data-action="cancel-feedback" 
+						data-message-id="${item?.messageId}">
+						Cancel
+					</sl-button>
+					<sl-button 
+						variant="primary" 
+						size="small" 
+						class="submit-btn" 
+						data-action="submit-feedback" 
+						data-message-id="${item?.messageId}">
+						Submit
+					</sl-button>
+				</div>
+			</sl-card>
+		</sl-popup>
+    `;
 	}
 
 	/*need to creata a menufunction that displays a shoelace menu on clicking */
@@ -526,7 +606,7 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 		}
 
 		if(!item?.disableFeedback) {
-			actionChipsHTML += feedbackChip();
+			actionChipsHTML += feedbackChip();			
 		}
 		
 		// Add three dot menu
@@ -556,14 +636,13 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 		return `<div class="answerFromChipDiv">${chipHTML}${chatFilterGroupWrapper}</div>`;
 	};
 
-	let timeout;
-	clearTimeout(timeout);
-	timeout = setTimeout(() => {
+	// Initialize functionality after DOM insertion
+	setTimeout(() => {
 		AnsFromChipFunctionality({
 			item: item,
 			regeneratingAnswer: regeneratingAnswer,
 		});
-	}, 1000);
+	}, 100);
 
 	return renderChip();
 };

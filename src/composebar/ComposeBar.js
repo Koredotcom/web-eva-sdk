@@ -100,7 +100,7 @@ class ComposeBar {
                         }else{
                             console.log("no threaded conversations available - hide bot wrapper");                            
                             
-                            
+                            this.botEndConversationLoader = false;
                             const botWrapper = this.container.querySelector('.composebar-bot-input-wrapper');
                             if (botWrapper) {
                                 hideElementImmediately(botWrapper, { enableLogging: true });
@@ -120,6 +120,7 @@ class ComposeBar {
                             }                                      
                             this.placeholder = 'Ask or Search Anything...';
                             this.updatePlaceholder();
+                            this.botEndConversationLoader = false;
                         }, 0);                     
                     }
                 });

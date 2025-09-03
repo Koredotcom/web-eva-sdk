@@ -193,7 +193,7 @@ html, body {
     &.question {
         text-align: right;
         margin-top: 1.25rem;
-        padding-right: 1rem;
+        padding-right: 0.25rem;
 
         .message-text {
             padding: 0.525rem 1.25rem;
@@ -2033,9 +2033,9 @@ html, body {
 
 .chatSec {
     .chatSec-inner {
-        width: 47rem;
+        width: calc(47rem - 1.25rem);
         margin: 0 auto;
-        padding-left: 2.5rem;
+        padding-left: 1.25rem;
         
         & > div {
             display: flex;
@@ -2174,6 +2174,136 @@ html, body {
                     display: flex;
                     align-items: center;
                     gap: .25rem;
+                }
+
+                // Feedback popup overlay styles
+                .feedback-popup {
+                    --sl-border-radius-medium: 12px;
+                    
+                    sl-popup::part(popup) {
+                        background: white;
+                        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+                        border-radius: 12px;
+                        border: 1px solid #e2e8f0;
+                        backdrop-filter: blur(8px);
+                        animation: feedbackOverlaySlideIn 0.2s ease-out;
+                        padding: 0;
+                        z-index: 10000;
+                    }
+                }
+
+                @keyframes feedbackOverlaySlideIn {
+                    from {
+                        opacity: 0;
+                        transform: translateY(8px) scale(0.96);
+                    }
+                    to {
+                        opacity: 1;
+                        transform: translateY(0) scale(1);
+                    }
+                }
+
+                .feedback-overlay-card {
+                    width: 320px;
+                    max-width: 90vw;
+                    border: none !important;
+                    box-shadow: none !important;
+                    background: transparent;
+                    
+                    sl-textarea {
+                        --border-radius: 8px;
+                        --border-color: #e2e8f0;
+                        --border-color-focus: #3b82f6;
+                        --border-width: 1px;
+                    }
+                    
+                    // Header styling with close button
+                    div[slot="header"] {
+                        padding-bottom: 0.75rem;
+                        border-bottom: 1px solid #f1f5f9;
+                        margin-bottom: 1rem;
+                        
+                        .close-overlay-btn {
+                            --sl-color-neutral-600: #64748b;
+                            --sl-color-neutral-700: #475569;
+                            
+                            &:hover {
+                                background-color: #f1f5f9;
+                            }
+                        }
+                    }
+                }
+
+                .feedback-options-container {
+                    .feedback-options {
+                        display: flex;
+                        flex-wrap: wrap;
+                        gap: 0.5rem;
+                        
+                        .feedback-option-btn {
+                            transition: all 0.2s ease;
+                            --sl-border-radius-medium: 6px;
+                            font-size: 0.875rem;
+                            
+                            &.active {
+                                box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+                                --sl-color-primary-600: #3b82f6;
+                            }
+                            
+                            &:not(.active) {
+                                --sl-color-neutral-600: #64748b;
+                                --sl-color-neutral-50: #f8fafc;
+                                --sl-color-neutral-100: #f1f5f9;
+                            }
+                        }
+                    }
+                }
+
+                // Custom styling for feedback action buttons
+                .feedback-actions {
+                    sl-button.cancel-btn {
+                        --sl-color-neutral-600: #64748b;
+                        --sl-color-neutral-50: #f8fafc;
+                        --sl-color-neutral-100: #f1f5f9;
+                        --sl-border-radius-medium: 6px;
+                    }
+                    
+                    sl-button.submit-btn {
+                        --sl-color-primary-600: #3b82f6;
+                        --sl-color-primary-700: #2563eb;
+                        --sl-border-radius-medium: 6px;
+                    }
+                }
+
+                // Legacy styles (keeping for backward compatibility)
+                .feedback-form-card {
+                    animation: feedbackSlideIn 0.3s ease-out;
+                    transition: all 0.3s ease;
+                    
+                    sl-textarea {
+                        --border-radius: 6px;
+                    }
+                }
+
+                @keyframes feedbackSlideIn {
+                    from {
+                        opacity: 0;
+                        transform: translateY(-10px);
+                    }
+                    to {
+                        opacity: 1;
+                        transform: translateY(0);
+                    }
+                }
+
+                // Legacy styles (keeping for backward compatibility)
+                .feedback-form {
+                    padding: 1rem;
+                    background: #fff;
+                    border-radius: 8px;
+                    border: 1px solid #e5e7eb;
+                    margin-top: 0.5rem;
+                    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
                 }
 
                 .three-dot-menu-container {
