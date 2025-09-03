@@ -601,7 +601,7 @@ const AnsFromChipFunctionality = ({ item }) => {
 		const threeDotDropdown = document.querySelector(`[data-three-dot-dropdown="${messageId}"]`);
 		
 		
-		if (threeDotTrigger && !threeDotTrigger.eventListenerAdded) {
+		if (threeDotTrigger && threeDotDropdown && !threeDotTrigger.eventListenerAdded) {
 			threeDotTrigger.addEventListener('click', (e) => {
 				e.preventDefault();
 				e.stopPropagation();
