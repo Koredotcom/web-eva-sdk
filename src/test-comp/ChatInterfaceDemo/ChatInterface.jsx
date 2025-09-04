@@ -95,7 +95,8 @@ const ChatInterfaceDemo = () => {
   useEffect(() => {
     const timer = setTimeout(() => {
       const el = scrollContainerRef.current;
-      if (el && el.scrollHeight > el.clientHeight) {
+      const scrollBottom = el.scrollHeight - el.scrollTop - el.clientHeight;      
+      if (el && scrollBottom > 0) {
         setShowScrollToBottom(true);
       }else{
         setShowScrollToBottom(false);
@@ -112,7 +113,7 @@ const ChatInterfaceDemo = () => {
   }
 
   const handleScroll = () => {
-    const el = scrollContainerRef.current;
+    const el = scrollContainerRef.current;    
     if (!el) return;
 
     const nearBottom = isUserNearBottom(el, 50);
