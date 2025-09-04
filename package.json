@@ -20,7 +20,7 @@
     "@codemirror/lang-sql": "^6.9.0",
     "@codemirror/lang-xml": "^6.1.0",
     "@codemirror/search": "^6.5.11",
-    "@koredev/kore-web-sdk": "^11.9.0-rc.9d91139",
+    "@koredev/kore-web-sdk": "^11.17.0-rc.75e58c5",
     "@reduxjs/toolkit": "^2.2.6",
     "@rollup/plugin-alias": "^5.1.0",
     "@rollup/plugin-replace": "^5.0.7",

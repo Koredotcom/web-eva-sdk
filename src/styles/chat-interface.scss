@@ -2444,6 +2444,23 @@ html, body {
         color: #0F0F0F;
         word-break: break-word;
 
+        .bot-scroll-container {
+            max-width: 100%;
+            width: 100%;
+            overflow: auto;
+            display: block;
+        }
+
+        .bot-template-container {
+            max-width: 100%;
+            width: 100%;
+
+            .list-template-carousel-wrapper {
+                padding: 6px 0;
+                width: 100%;
+            }
+        }
+
         .regular-card-temp-container {
             width: auto;
             max-width: 100%;

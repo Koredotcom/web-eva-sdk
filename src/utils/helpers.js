@@ -310,10 +310,7 @@ export const showElementImmediately = (element, displayValue = 'block', enableLo
     element.style.display = displayValue;
     element.removeAttribute('hidden');
     element.removeAttribute('aria-hidden');
-    
-    if (enableLogging) {
-        console.log('Element shown:', element);
-    }
+        
 };
 
 export const showElementDelayed = (element, delay = 100, displayValue = 'block', enableLogging = false) => {
