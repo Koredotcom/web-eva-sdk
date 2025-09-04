@@ -5,6 +5,7 @@ import htmlTableRenderer from "./htmlTableRenderer";
 import { createCopyIcon, createExport, createThumbsDown, createThumbsDownFilled, createThumbsUp, createThumbsUpFilled, setContextIcon, EllipsisVertical, Gmail, Outlookimg, Slackimg, Teamsimg, JiraCommentsIcon, RadioButtonChecked, tickMarkIcon } from "../icons-library";
 import store from "../../redux/store";
 import * as feedbackTemplate from "./feedback-template";
+import * as copyQuestion from "./copy-question";
 
 const AnsFromChip = ({ item, regeneratingAnswer }) => {
 	const regeneratingChipRenderer = () => {
@@ -418,7 +419,9 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 	
 	const copyAnswerChip = () => {
 		return `
-			<div class="copyAnswerButton" id="copyAnswerButton-${item?.id}" title="Copy Response">${createCopyIcon({ size: 16, color: "#667085" })}</div>
+			<div class="copyAnswerButton"title="Copy Response" id="copyAnswerButton-${item?.messageId}">
+			${copyQuestion.render(item, 'answer')}
+			</div>
 		`;
 	}
 /*feedbackTemplate */
@@ -498,14 +501,15 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 								</sl-textarea>
                             </div>
 							<div class='submitfeedbackwrap'>
-								<div class="feedbacksuccesstext"}>
+								<div class="feedbacksuccesstext" style="display: none;">
 									<div class='radiocheckbtn'>${RadioButtonChecked({ size: 18})}</div>
 									<div class='recievedfeedbacktext'>Thanks for your feedback</div>
 								</div>
 								<button
 									data-action="submit-feedback" 
 									data-message-id="${item?.messageId}"
-									class="kr-primary-btn-black btn-sm">
+									class="kr-primary-btn-black btn-sm disable"
+									disabled>
 									Submit
 								</button>
                             </div>
