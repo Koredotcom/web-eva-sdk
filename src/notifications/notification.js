@@ -68,8 +68,7 @@ const Notification = () => {
         let payload = {
             "readTill": state?.notifications?.notifications?.[0]?._id
         }     
-        /*get the total notifications to update the isRead state of the notifications*/   
-        const totalNotifications = await store.dispatch(getNotification({ userId }))        
+        /*get the total notifications to update the isRead state of the notifications*/                  
         const res = await store.dispatch(readNotification({ userId, payload }))                
         if(res?.payload?.SUCCESS){
             let wholeNotifications = [];

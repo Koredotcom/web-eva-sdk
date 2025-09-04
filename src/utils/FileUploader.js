@@ -344,8 +344,7 @@ function FileUploader({
                     if (_self.onSuccess) _self.onSuccess(response);
                 }
             })
-            .catch(function(error) {
-                console.log("error",error);
+            .catch(function(error) {                
                 if(_self?.source?.token?.reason?.message !== "Upload aborted by the user."){
                     _self.onError('FILE_UPLOAD_ERROR');
                  }
