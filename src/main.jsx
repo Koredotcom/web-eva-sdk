@@ -5,19 +5,19 @@ import { initializeSDK} from './index'; // Adjust the import according to your S
 
 
 
-const getAccessToken = 'yHp_9fxv4O83E1yx_X4Z4wO0UZwwuZE7Z9nbzPtB0l7w5AggtB9JyHQ3yQyYztLD'; 
+const getAccessToken = 'bgKlPSpWIdHeyvFEeCTTDYFLgeBzFQaogc6sEVvLNt8HKvvbJG0dgbGt9H4lbT3s'; 
 initializeSDK({
     accessToken: getAccessToken,
     api_url: 'https://eva-qa.kore.ai/api/',
     presence_url: 'https://eva-qa.kore.ai/',
-    userId: 'u-c9d2b051-ca8c-53cf-a808-a1becbc4d981',
+    userId: "u-c9d2b051-ca8c-53cf-a808-a1becbc4d981",
     initializeBotSDK:{
         "name": "ProcureBot",
         "streamId": "st-b6012ef2-810d-5240-b33e-5404d68b680e",
-        "webhook": {
+        "webhook": {            
             "clientId": "cs-79a89a6f-b0ab-5e2f-b912-8dd1e2f95da0",
             "clientSecret": "VJNwkfbPcMZl4bOa1Qn3XtYRz6rqigwtTgOlaYX25Xs="
-        }
+        },
     },
     enableDebugging: false
 });

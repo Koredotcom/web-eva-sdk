@@ -78,9 +78,9 @@ const FileUpload = (props) => {
                     //Checking whether all files have completed token generation to make the searchSession Call
                     if (completedFiles === files.length) {
                         let selectedSources = state?.selectedContext?.data?.sources
-                        if (allSources?.length !== selectedSources?.length) {
+                        if ((allSources?.length !== selectedSources?.length) && selectedSources?.length > 0) {
                             //Checking and uploading the selected sources as context
-                            allSources = allSources.filter(source =>
+                            allSources = allSources?.filter(source =>
                                 selectedSources.some(selected => selected.uID === source.uID)
                             );
                         }
@@ -94,6 +94,7 @@ const FileUpload = (props) => {
     };
 
     const uploadFileInitial = (file, allSources, onComplete) => {
+        let state = store.getState().global;
         let localSize = file.file.size / Math.pow(1024, 2)
         let allowedFileSize = Math.round(state.maxAllowedFileSize / Math.pow(1024, 2));
         //If the file size is greater than Max Allowed File, then returning with a response

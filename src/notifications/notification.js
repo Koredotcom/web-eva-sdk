@@ -68,12 +68,20 @@ const Notification = () => {
         let payload = {
             "readTill": state?.notifications?.notifications?.[0]?._id
         }     
-        /*get the total notifications to update the isRead state of the notifications*/   
-        const totalNotifications = await store.dispatch(getNotification({ userId }))        
+        /*get the total notifications to update the isRead state of the notifications*/                  
         const res = await store.dispatch(readNotification({ userId, payload }))                
         if(res?.payload?.SUCCESS){
+            let wholeNotifications = [];
             let _notificationState = cloneDeep(state?.notifications);
-            const wholeNotifications = [...new Set([..._notificationState.notifications, ...totalNotifications?.payload?.notifications])]
+            wholeNotifications = _notificationState?.notifications
+            if(_notificationState?.alert?.length > 0){                
+                wholeNotifications = [..._notificationState?.alert, ..._notificationState?.notifications]
+                delete _notificationState?.alert;
+            }
+            else{
+                wholeNotifications = _notificationState?.notifications
+            }
+            
             _notificationState.notifications = wholeNotifications?.map(notification => {
                 notification.isRead = true;
                 return notification;

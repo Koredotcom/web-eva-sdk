@@ -135,6 +135,29 @@ html, body {
         padding: 6px 12px;
         border-radius: 12px;
         cursor: pointer;
+        border: none;
+    }
+
+    .file-upload-btn {
+        background-color: #f4f4f5;
+        color: #3f3f46;
+        border: 1px solid #d0d5dd;
+        padding: 8px 12px;
+        font-size: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 40px;
+        height: 36px;
+        
+        &:hover {
+            background-color: #e4e4e7;
+            box-shadow: 0 0 0 4px #eff4ff;
+        }
+        
+        &:active {
+            background-color: #d4d4d8;
+        }
     }
 }
 
