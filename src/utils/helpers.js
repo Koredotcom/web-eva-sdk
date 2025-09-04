@@ -22,11 +22,9 @@ export const Timedifference = (time) => {
 }
 
 export const generateShortUUID = () => {
-    // Generate a random 5-byte buffer and convert it to a hex string
     const randomBytes = crypto.getRandomValues(new Uint8Array(5));
     const hexString = Array.from(randomBytes, byte => byte.toString(16).padStart(2, '0')).join('').substring(0, 9);
 
-    // Prefix with '#'
     const shortUUID = `#${hexString}`;
 
     return shortUUID;
@@ -54,10 +52,10 @@ export const generateComponentId = () => {
 
 export const getQueryParams = (url) => {
     const queryParams = {};
-    const queryString = url.split('?')[1]; // Split the URL at the '?' character to get the query string
+    const queryString = url.split('?')[1]; 
 
     if (queryString) {
-        const paramPairs = queryString.split('&'); // Split the query string into parameter pairs
+        const paramPairs = queryString.split('&'); 
 
         paramPairs.forEach(pair => {
             const [key, value] = pair.split('='); // Split each parameter pair into key and value
@@ -259,4 +257,109 @@ export const getAgentType = (type) => {
 export const isUserNearBottom = (el, threshold = 200) => {
     const delta = el.scrollHeight - el.scrollTop - el.clientHeight;
     return delta <= threshold;
+};
+
+/**
+ * DOM Manipulation Utilities - Aggressive immediate hiding/showing of elements
+ * These functions force immediate DOM updates without delays
+ */
+
+
+export const hideElementImmediately = (element, options = {}) => {
+    if (!element) return;
+    
+    const { enableLogging = false } = options;
+    
+    // Clean up any pending show timeouts
+    if (element._showTimeout) {
+        clearTimeout(element._showTimeout);
+        delete element._showTimeout;
+    }
+    
+    // Clean up any existing observer
+    if (element._hideObserver) {
+        element._hideObserver.disconnect();
+        delete element._hideObserver;
+    }
+        
+    element.style.display = 'none';
+    element.setAttribute('hidden', 'true');
+    element.setAttribute('aria-hidden', 'true');
+    
+    if (enableLogging) {
+        console.log('Element hidden:', element);
+    }
+};
+
+
+export const showElementImmediately = (element, displayValue = 'block', enableLogging = false) => {
+    if (!element) return;
+        
+    if (element._showTimeout) {
+        clearTimeout(element._showTimeout);
+        delete element._showTimeout;
+    }
+    
+    
+    if (element._hideObserver) {
+        element._hideObserver.disconnect();
+        delete element._hideObserver;
+    }
+    
+    
+    element.style.display = displayValue;
+    element.removeAttribute('hidden');
+    element.removeAttribute('aria-hidden');
+    
+    if (enableLogging) {
+        console.log('Element shown:', element);
+    }
+};
+
+export const showElementDelayed = (element, delay = 100, displayValue = 'block', enableLogging = false) => {
+    if (!element) return;
+    
+    
+    
+    
+    if (element._showTimeout) {
+        clearTimeout(element._showTimeout);
+        delete element._showTimeout;
+        
+    }
+    
+    // Mark element as intended to be visible (but delayed)
+    element._intendedState = 'visible-delayed';
+    
+    // Set up the timeout
+    element._showTimeout = setTimeout(() => {
+        if (element._intendedState === 'visible-delayed') { // Only show if not overridden
+            showElementImmediately(element, displayValue, enableLogging);
+        }
+        delete element._showTimeout; 
+    }, delay);
+    
+    
+};
+
+
+
+
+export const quickHide = (target, options = {}) => {
+    const element = typeof target === 'string' ? document.querySelector(target) : target;
+    if (element) {
+        hideElementImmediately(element, options);
+    } else {
+        console.warn('Element not found:', target);
+    }
+};
+
+
+export const quickShow = (target, displayValue = 'block', enableLogging = false) => {
+    const element = typeof target === 'string' ? document.querySelector(target) : target;
+    if (element) {
+        showElementImmediately(element, displayValue, enableLogging);
+    } else if (enableLogging) {
+        console.warn('Element not found:', target);
+    }
 };

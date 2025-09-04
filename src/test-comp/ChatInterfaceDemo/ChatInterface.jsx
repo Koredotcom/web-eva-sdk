@@ -71,7 +71,7 @@ const ChatInterfaceDemo = () => {
     const unsubscribe = chatInterface.current.subscribe(
       (question, searchResponse, moreAvailable, errorStates, quickActions) => {
         setMessages(question);
-        setQuickActions(quickActions);
+        setQuickActions(quickActions);        
       }
     );
 
@@ -89,7 +89,21 @@ const ChatInterfaceDemo = () => {
           // Initialize ComposeBar by passing the div id
       RenderComposeBar('#eva-composebar');
       renderRecentAgents('recent-agents-container');
-  }, []); 
+  }, []);
+
+  // Simple one-time check on mount to show scroll button if needed
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const el = scrollContainerRef.current;
+      if (el && el.scrollHeight > el.clientHeight) {
+        setShowScrollToBottom(true);
+      }else{
+        setShowScrollToBottom(false);
+      }
+    }, 100);
+
+    return () => clearTimeout(timer);
+  }, [messages]); 
 
 
   const fetchAnnouncementData = async () => {
@@ -113,7 +127,6 @@ const ChatInterfaceDemo = () => {
     }
 
     // Show scroll to bottom button when user scrolls up and content is hidden below
-    // Use a larger threshold (100px) to show button before user scrolls too far up
     const isContentHiddenBelow = !isUserNearBottom(el, 100);
     const hasContentToScroll = el.scrollHeight > el.clientHeight; // Check if there's scrollable content
 
@@ -125,17 +138,6 @@ const ChatInterfaceDemo = () => {
     if (isContentHiddenBelow && hasContentToScroll && !showScrollToBottom) {
       setShowScrollToBottom(true);
     }
-
-    // Optional: close overlays
-    // if (
-    //   document.getElementById('ellipisiOverlay_panel') &&
-    //   !isSourceMenuHovered.current
-    // ) {
-    //   setEllipsisDr(false);
-    // }
-    // if (document.getElementById('downVotePanel')) {
-    //   setFeedbackOverlay(false);
-    // }
   };
 
   return (
@@ -165,7 +167,7 @@ const ChatInterfaceDemo = () => {
           ref={scrollContainerRef}
         >
 
-          <div className="chatSec-inner">
+          <div className="chatSec-inner" id ="chat-sec-container">
           {messages &&
             Object.values(messages).map((item, index) => {
               if (item?.isTask) return;

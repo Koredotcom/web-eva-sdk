@@ -4,7 +4,7 @@ import store from "../../redux/store";
 import { sessionItemHandler } from "../../Attachments/createContext";
 import { getRelevantQuestions } from "../../redux/actions/global.action";
 import { highlightQuotedText } from "../utils/helper";
-import { InitiateChatConversationAction } from "../../chat";
+import { InitiateChatConversationAction, toast } from "../../chat";
 import { submitUserFeedback } from "../../Feedback";
 import customMarkdownRenderer from "../utils/customMarkdownRenderer";
 import chatInterface from "../../chat/ChatInterface";
@@ -156,11 +156,10 @@ const AnsFromChipFunctionality = ({ item }) => {
 	};
 
 	const copyAnswerToClipboard = async () => {
-		try {
+		try {			
 			if (item?.answer) {
 				await navigator.clipboard.writeText(item.answer);
-				// Optional: Show success feedback
-				console.log("Answer copied to clipboard");
+				toast.success("Response copied");
 			}
 		} catch (err) {
 			console.error("Failed to copy answer to clipboard:", err);
@@ -569,17 +568,247 @@ const AnsFromChipFunctionality = ({ item }) => {
 					e?.preventDefault();
 					e?.stopPropagation();
 					console.log("feedbackDislikeButton clicked");
-					submitUserFeedback({
-						type: "dislike",
-						cId: item?.cId || item?.reqId,
-						payload: {
-							feedback: "dislike",
-						},
-					});
+						if(item?.feedback === "dislike") {
+							submitUserFeedback({
+								type: "dislike",
+								cId: item?.cId || item?.reqId,
+								payload:{
+									"action": "undo",
+								}								
+							});
+							return;
+						}
+					
+					// Toggle feedback popup overlay
+					const feedbackPopup = document.getElementById(`feedbackPopup-${item?.messageId}`);
+					if (feedbackPopup) {
+											
+						
+						// Force upgrade if it's not a proper Shoelace component
+						if (feedbackPopup.tagName.toLowerCase() === 'sl-popup' && typeof feedbackPopup.show !== 'function') {
+							console.log("Forcing Shoelace component upgrade...");
+							if (window.customElements && window.customElements.upgrade) {
+								customElements.upgrade(feedbackPopup);
+							}
+																					
+						}
+												
+						const isOpen = feedbackPopup.hasAttribute('active') || feedbackPopup.active;
+						
+						if (isOpen) {
+							// Hide popup with fallback
+							if (typeof feedbackPopup.hide === 'function') {
+								feedbackPopup.hide();
+							} else {
+								console.warn("Shoelace hide() method not available, using fallback");
+								feedbackPopup.removeAttribute('active');
+								feedbackPopup.style.display = 'none';
+							}
+							feedbackDislikeButton.classList.remove('active');
+						} else {
+							
+							feedbackPopup.anchor = feedbackDislikeButton;
+							
+							
+							// Show popup with fallback
+							if (typeof feedbackPopup.show === 'function') {
+								feedbackPopup.show();
+							} else {								
+								feedbackPopup.setAttribute('active', '');
+								feedbackPopup.style.display = 'block';
+							}
+							feedbackDislikeButton.classList.add('active');
+						}
+					} else {
+						console.error("Feedback popup not found:", `feedbackPopup-${item?.messageId}`);
+					}
 				});
 			}
 			feedbackLikeButton.eventListenerAdded = true;
 			feedbackDislikeButton.eventListenerAdded = true;
+
+			// Add feedback options multi-selection functionality for Shoelace buttons
+			const feedbackOptions = document.querySelectorAll(`.feedback-option-btn[data-message-id="${item?.messageId}"]`);
+			feedbackOptions.forEach(option => {
+				if (!option.eventListenerAdded) {
+					option.addEventListener('click', (e) => {
+						e.preventDefault();
+						e.stopPropagation();
+						
+						// Toggle active state for Shoelace button
+						const isActive = option.classList.contains('active');
+						if (isActive) {
+							option.classList.remove('active');
+							option.variant = 'default';
+						} else {
+							option.classList.add('active');
+							option.variant = 'primary';
+						}
+						
+						// Log selected options for debugging
+						const selectedOptions = Array.from(feedbackOptions)
+							.filter(opt => opt.classList.contains('active'))
+							.map(opt => ({
+								id: opt.getAttribute('data-feedback-id'),
+								label: opt.textContent.trim()
+							}));
+												
+						
+						// Storing selected options in data attribute for submission
+						const feedbackPopup = document.getElementById(`feedbackPopup-${item?.messageId}`);
+						if (feedbackPopup) {
+							feedbackPopup.setAttribute('data-selected-options', JSON.stringify(selectedOptions));
+						}
+					});
+					option.eventListenerAdded = true;
+				}
+			});
+			
+			const feedbackPopup = document.getElementById(`feedbackPopup-${item?.messageId}`);
+			if (feedbackPopup && !feedbackPopup.eventListenerAdded) {
+								
+				
+				// Cancel button handler
+				const cancelBtn = feedbackPopup.querySelector('sl-button.cancel-btn');
+				if (cancelBtn) {
+					cancelBtn.addEventListener('click', (e) => {
+						e.preventDefault();
+						e.stopPropagation();
+						
+						// Hide popup with fallback
+						if (typeof feedbackPopup.hide === 'function') {
+							feedbackPopup.hide();
+						} else {
+							console.warn("Shoelace hide() method not available, using fallback");
+							feedbackPopup.removeAttribute('active');
+							feedbackPopup.style.display = 'none';
+						}
+						
+						// Remove active state from dislike button
+						const dislikeBtn = document.getElementById(`feedbackDislikeButton-${item?.messageId}`);
+						if (dislikeBtn) {
+							dislikeBtn.classList.remove('active');
+						}
+						
+						// Clear form data - Shoelace textarea
+						const textarea = feedbackPopup.querySelector('sl-textarea');
+						if (textarea) textarea.value = '';
+						
+						// Clear selected options - reset Shoelace buttons
+						const selectedOptions = feedbackPopup.querySelectorAll('.feedback-option-btn.active');
+						selectedOptions.forEach(option => {
+							option.classList.remove('active');
+							option.variant = 'default';
+						});
+						feedbackPopup.removeAttribute('data-selected-options');
+					});
+				}
+				
+				// Submit button handler
+				const submitBtn = feedbackPopup.querySelector('sl-button.submit-btn');
+				if (submitBtn) {
+					submitBtn.addEventListener('click', (e) => {
+						e.preventDefault();
+						e.stopPropagation();
+						
+						// Get selected options
+						const selectedOptionsData = feedbackPopup.getAttribute('data-selected-options');
+						const selectedOptions = selectedOptionsData ? JSON.parse(selectedOptionsData) : [];
+						
+						// Get textarea content - Shoelace textarea
+						const textarea = feedbackPopup.querySelector('sl-textarea');
+						const comment = textarea ? textarea.value.trim() : '';
+						
+						// Submit feedback with selected options and comment
+						submitUserFeedback({
+							type: "dislike",
+							cId: item?.cId || item?.reqId,
+							payload: {
+								feedback: "dislike",
+								comment: comment,								
+								category: selectedOptions.map(opt => opt.label) // For backward compatibility
+							},
+						});
+												
+												
+						if (typeof feedbackPopup.hide === 'function') {
+							feedbackPopup.hide();
+						} else {							
+							feedbackPopup.removeAttribute('active');
+							feedbackPopup.style.display = 'none';
+						}
+												
+					});
+				}
+				
+				// Handle click outside to close popup
+				const handlePopupHide = () => {
+					const dislikeBtn = document.getElementById(`feedbackDislikeButton-${item?.messageId}`);
+					if (dislikeBtn) {
+						dislikeBtn.classList.remove('active');
+					}
+				};
+				
+				// Listen for hide events
+				feedbackPopup.addEventListener('sl-hide', handlePopupHide);
+				feedbackPopup.addEventListener('sl-after-hide', handlePopupHide);
+				
+				// Click outside to close popup
+				const clickOutsideHandler = (event) => {
+					const isPopupOpen = feedbackPopup.hasAttribute('active') || feedbackPopup.active;
+					
+					if (isPopupOpen) {
+						// Check if click is outside the popup and dislike button
+						const isClickInsidePopup = feedbackPopup.contains(event.target);
+						const isClickOnDislikeButton = event.target.closest(`#feedbackDislikeButton-${item?.messageId}`);
+						
+						if (!isClickInsidePopup && !isClickOnDislikeButton) {
+							submitUserFeedback({
+								type: "dislike",
+								cId: item?.cId || item?.reqId,
+								payload: {
+									feedback: "dislike"
+								},
+							});
+							
+							// Hide popup with fallback
+							if (typeof feedbackPopup.hide === 'function') {
+								feedbackPopup.hide();
+							} else {
+								console.warn("Shoelace hide() method not available, using fallback");
+								feedbackPopup.removeAttribute('active');
+								feedbackPopup.style.display = 'none';
+							}
+							
+							// Remove active state from dislike button
+							const dislikeBtn = document.getElementById(`feedbackDislikeButton-${item?.messageId}`);
+							if (dislikeBtn) {
+								dislikeBtn.classList.remove('active');
+							}
+						}
+					}
+				};
+				
+				// Add click outside listener to document
+				document.addEventListener('click', clickOutsideHandler);
+				
+				// Store reference to remove listener later if needed
+				feedbackPopup._clickOutsideHandler = clickOutsideHandler;
+				
+				// Also check for attribute changes as fallback
+				const observer = new MutationObserver((mutations) => {
+					mutations.forEach((mutation) => {
+						if (mutation.type === 'attributes' && mutation.attributeName === 'active') {
+							if (!feedbackPopup.hasAttribute('active')) {
+								handlePopupHide();
+							}
+						}
+					});
+				});
+				observer.observe(feedbackPopup, { attributes: true, attributeFilter: ['active'] });
+				
+				feedbackPopup.eventListenerAdded = true;
+			}
 		}
 
 		if(item?.context?.enable){
@@ -602,7 +831,7 @@ const AnsFromChipFunctionality = ({ item }) => {
 		const threeDotDropdown = document.querySelector(`[data-three-dot-dropdown="${messageId}"]`);
 		
 		
-		if (threeDotTrigger && !threeDotTrigger.eventListenerAdded) {
+		if (threeDotTrigger && threeDotDropdown && !threeDotTrigger.eventListenerAdded) {
 			threeDotTrigger.addEventListener('click', (e) => {
 				e.preventDefault();
 				e.stopPropagation();

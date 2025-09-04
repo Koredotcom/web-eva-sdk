@@ -5,7 +5,7 @@ import TemplateComponents from "./index";
 import { encodeHtml } from "../../utils/helpers";
 import customMarkdownRenderer from "../utils/customMarkdownRenderer";
 import { MessageRenderer } from "../../plugins/Markdown/message-renderer";
-import { cheveronRightIcon } from "../icons-library";
+import { cheveronRightIcon, MaximizeIcon, MinimizeIcon } from "../icons-library";
 
 function escapeHTML(str) {
 	if (!str) return "";
@@ -36,9 +36,10 @@ function renderAssistantQuestion(conversation, assistantIconTemplate) {
 	}
 	return `<div class="bot-flex-wrapper">
 				${assistantIconTemplate}
-				<div class='answerCntr'>
-					${conversation?.thoughts?.length > 0 ? renderThoughts(conversation) : ""}
-					${question ? MessageRenderer(question) : ""}
+				<div class='answerCntr'>					
+					<div class="assistant-question-container ${conversation?.status === 'completed' ? 'completed-assistant-question-container' : ''}">
+						${question ? MessageRenderer(question) : ""}
+					</div>
 				</div>
 			</div>`;
 }
@@ -50,18 +51,17 @@ function createConversationHTML(
 	userIconTemplate,
 	loadingText
 ) {
-	if (
-		conversation?.hasOwnProperty("template_html") ||
-		conversation?.templateType === "hold_conversation"
-	) {
-		return customMarkdownRenderer(`
-            <div class="botTemplate-${conversation?.messageId}"></div>
-        `);
-	}
 
 	if (conversation?.status === "in-progress") {
-		let content;
-
+		let content = "";
+		if (conversation?.loading) {
+			content += `<div class="message-bubble loading">
+					<div class="bot-flex-wrapper">
+						<div class="bot-icon-container">${assistantIconTemplate ? assistantIconTemplate : ""}</div>
+						<div class="message-container"><div class="loading-text">${encodeHtml(loadingText)}</div></div>
+					</div>
+			</div>`;
+		}
 		if (conversation?.templateType === "search_answer") {
 			content = renderAssistantQuestion(conversation, assistantIconTemplate);			
 			if (conversation?.answer) {
@@ -72,14 +72,13 @@ function createConversationHTML(
 				);
 				content += `<br/>`;
 			}
-		}
-		if (conversation?.loading) {
-			content += `<div class="message-bubble loading">
-					<div class="bot-flex-wrapper">
-						<div class="bot-icon-container">${assistantIconTemplate ? assistantIconTemplate : ""}</div>
-						<div class="message-container"><div class="loading-text">${encodeHtml(loadingText)}</div></div>
-					</div>
-			</div>`;
+		}	
+		if (conversation?.templateType === "bot_template") {
+			content += `
+			<div class="bot-flex-wrapper">				
+				${handleBotTemplates(conversation, props)}
+			</div>
+			`;
 		}
 		return content;
 	} else {
@@ -92,19 +91,40 @@ function createConversationHTML(
 					<br/>
                 </div>
             `;
-		} else if (conversation?.templateType === "bot_template") {
+		} 
+		if (conversation?.templateType === "bot_template") {
 			return `
-				<div class="bot-flex-wrapper-group">
-					${renderAssistantQuestion(conversation, assistantIconTemplate)}
-					<br/>
-					${renderUserQuestion(conversation?.answer, userIconTemplate)}
-					<br/>
+			<div class="completed">
+				<div class="bot-flex-wrapper">					
+					${handleBotTemplates(conversation, props)}
 				</div>
-			`; // add pointer events none
+				${renderUserQuestion(conversation?.answer, userIconTemplate)}	
+			</div>
+			`;
 		}
-	}
 
+		// else if (conversation?.templateType === "bot_template") {
+		// 	return `
+		// 		<div class="bot-flex-wrapper-group">
+		// 			${renderAssistantQuestion(conversation, assistantIconTemplate)}
+		// 			<br/>
+		// 			${renderUserQuestion(conversation?.answer, userIconTemplate)}
+		// 			<br/>
+		// 		</div>
+		// 	`;
+		// }
+	}	
 	return "";
+}
+/*this function returns the div id needed for the setUpTemplates function to render the template html based on the id */
+function handleBotTemplates(conversation, props) {
+	/*if the template_type is hold_conversation invoke holdConversationTemplate.render, else return the div id */
+	if(conversation?.templateType === "hold_conversation"){
+		return holdConversationTemplate.render(conversation);
+	}
+	return `
+		<div class="botTemplate-${conversation?.messageId}" style="${conversation?.status === "completed" ? "pointer-events: none" : ""}"></div>
+	`;
 }
 
 function handleSubmit(conversation, input, props) {
@@ -153,13 +173,43 @@ function setupEventListeners(botConversation, props) {
 			}
 		});
 	});
+
+	// Expand/Collapse button handlers - FIXED VERSION
+	document.querySelectorAll(".expandAreaBlock").forEach((button) => {
+		button.addEventListener("click", (event) => {
+			event.preventDefault();
+			event.stopPropagation();
+			
+			const messageId = event.target.closest('.expandAreaBlock')?.dataset?.messageId;
+			const isCollapsed = event.target.closest('.expandAreaBlock')?.dataset?.collapsed === "true";
+			const contentDiv = document.querySelector(`.bot-conversation-content[data-message-id="${messageId}"]`);
+			const summaryDiv = document.querySelector(`.bot-conversation-summary[data-message-id="${messageId}"]`);
+			const expandBlock = event.target.closest('.expandAreaBlock');
+
+			if (isCollapsed) {
+				// Show full conversation
+				contentDiv.style.display = "block";
+				summaryDiv.style.display = "none";
+				expandBlock.dataset.collapsed = "false";
+				// Change icon to minimize
+				expandBlock.innerHTML = `${MinimizeIcon({ size: 16, color: "#667085" })}`;
+			} else {
+				// Show summary (props?.answer)
+				contentDiv.style.display = "none";
+				summaryDiv.style.display = "block";
+				expandBlock.dataset.collapsed = "true";
+				// Change icon to maximize
+				expandBlock.innerHTML = `${MaximizeIcon({ size: 16, color: "#667085" })}`;
+			}
+		});
+	});
 }
 
 const renderQuickRepliesTemplate = (payload) => {
     const payloadText = payload?.text;
     const templateHTML = `
         <div class="usrsChipsList quickRepliesTemplate">
-            <div class="title">${payloadText}</div>
+            <div class="title">${payloadText ? payloadText : ''}</div>
             ${payload?.quick_replies
                 ?.map((data) => `<div class="userChip">${data?.title}</div>`)
                 .join("")}
@@ -311,14 +361,18 @@ function renderBotConversation(
 
 	let conversationsHTML = "";
 
-	if(props?.status === 'completed' && props?.viewType === 'threadView') {
-		conversationsHTML = customMarkdownRenderer(`
-			<div class="botTemplate-${props?.messageId}-completed">
-				${props?.answer}
-			</div>
-		`);
-	}else{
-		conversationsHTML = Object.values(botConversation)
+	// if(props?.status === 'completed' && props?.viewType === 'threadView') {
+	// 	conversationsHTML = customMarkdownRenderer(`
+	// 		<div class="botTemplate-${props?.messageId}">
+	// 			${props?.answer}
+	// 		</div>
+	// 	`);
+	// }else{
+		
+
+	// }
+
+	conversationsHTML = Object.values(botConversation)
 		.map((conversation) =>
 			createConversationHTML(
 				conversation,
@@ -329,13 +383,36 @@ function renderBotConversation(
 			)
 		)
 		.join("");
-
-	}
+	// Find conversation with thoughts
+	const conversationWithThoughts = Object.values(botConversation || {}).find(conv => conv?.thoughts?.length > 0);
+	
 	return `
-        <div class="bot-conversation-wrapper">
-            ${conversationsHTML}
+        <div class="bot-conversation-wrapper ${props?.status === 'completed' ? 'completed' : ''}" data-message-id="${props?.messageId} id="bot-conversation-wrapper">
+		${conversationWithThoughts ? renderThoughts(conversationWithThoughts) : ""}
+			<div class="bot-conversation-content-wrapper ${props?.status === 'completed' ? ' bot-conversation-completed' : ''}">
+				<div class="expand-bot-conversation ${props?.status === 'completed' ? ' conversation-completed' : ''}">
+				<div class="top-header">
+					<div class="bot-conversation-icon-block">
+						<span class="icon-block">
+							<img src="${props?.sources?.[0]?.icon}" alt="">
+						</span>
+						<span class="bot-agent-name">${props?.sources?.[0]?.title}</span>
+					</div>
+					<div class="expandAreaBlock" data-message-id="${props?.messageId}" data-collapsed="false">
+						${MinimizeIcon({ size: 16, color: "#667085" })}
+					</div>
+				</div>
+				</div>
+				<div class="bot-conversation-content" data-message-id="${props?.messageId}">
+					${conversationsHTML}
+				</div>
+				<div class="bot-conversation-summary" data-message-id="${props?.messageId}" style="display: none;">
+					${props?.answer ? MessageRenderer(props.answer) : ''}
+				</div>
+			</div>		
         </div>
     `;
+	
 }
 
 // Main function to be exported

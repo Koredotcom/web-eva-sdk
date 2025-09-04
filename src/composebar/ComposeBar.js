@@ -5,7 +5,7 @@ import store from "../redux/store.js";
 import { fetchAgents } from "../redux/actions/global.action.js";
 import { ActionsFlashIcon, arrowCirlceUpIcon, attachmentIcon, CheveronDownIcon, createCloseIcon, createDeleteIcon, createThumbsUpFilled, microphoneIcon, searchIcon, settingsIcon, Close, StopIcon } from "../templateRenderer/icons-library.js";
 import FileUpload from "../Attachments/fileUpload.js";
-import { getAgentType, getFileExtension } from "../utils/helpers.js";
+import { getAgentType, getFileExtension, hideElementImmediately, showElementImmediately, showElementDelayed } from "../utils/helpers.js";
 
 /**
  * ComposeBar - A standalone compose bar component in plain JavaScript
@@ -42,7 +42,7 @@ class ComposeBar {
         this.currentAnswerResponse=null;
         this.showBotComposeBarHeader = false;
         this.botEndConversationLoader = false;
-        this.endConversationHandler = this.handleEndConversation.bind(this); // Store the bound handler
+        this.endConversationHandler = this.handleEndConversation.bind(this);       
         this.callbacks = {
             onSend: null,
             onNewChat: null,
@@ -85,26 +85,44 @@ class ComposeBar {
                         if(this.showBotComposeBarHeader){
                             console.log("showBotComposeBarHeader", this.showBotComposeBarHeader);
                             this.placeholder = `Chat with ${this.showBotComposeBarHeader?.context?.sources?.[0]?.name}`;
-                            setTimeout(() => {
-                                this.container.querySelector('.composebar-bot-input-wrapper').style.display = 'block';
-                                this.updateBotHeaderContent(); 
-                                this.updatePlaceholder(); 
-                            }, 100);
+                            
+                            
+                            const botWrapper = this.container.querySelector('.composebar-bot-input-wrapper');
+                            if (botWrapper) {
+                                showElementDelayed(botWrapper, 100, 'block', true);
+                                // Update content after the delay
+                                setTimeout(() => {
+                                    this.updateBotHeaderContent(); 
+                                    this.updatePlaceholder();
+                                }, 100);
+                            }
                             
                         }else{
-                            console.log("no threaded conversations available");                            
-                            this.container.querySelector('.composebar-bot-input-wrapper').style.display = 'none';
+                            console.log("no threaded conversations available - hide bot wrapper");    
+                            this.input = '';                        
+                            
+                            this.botEndConversationLoader = false;
+                            const botWrapper = this.container.querySelector('.composebar-bot-input-wrapper');
+                            if (botWrapper) {
+                                hideElementImmediately(botWrapper, { enableLogging: true });
+                            }
                             this.placeholder = 'Ask or Search Anything...';
                             this.updatePlaceholder(); 
                         }
-                    }else{
+                    }else{                                                
                         /*clean up block */
                         const ifBotHeaderPresent = this.container.querySelector('.composebar-bot-input-wrapper');
                         if(ifBotHeaderPresent){
-                            ifBotHeaderPresent.style.display = 'none';
-                        }                        
-                        this.placeholder = 'Ask or Search Anything...';
-                        this.updatePlaceholder();                         
+                            hideElementImmediately(ifBotHeaderPresent, { enableLogging: true });
+                        }                                                   
+                        setTimeout(() => {
+                            if(this.selectedAgent){
+                                this.handleRemoveSelectedContext();
+                            }                                      
+                            this.placeholder = 'Ask or Search Anything...';
+                            this.updatePlaceholder();
+                            this.botEndConversationLoader = false;
+                        }, 0);                     
                     }
                 });
             }
@@ -182,12 +200,12 @@ class ComposeBar {
         /*make composebarcontextcontainer hidden */
         const composebarContextChipContainer = this.container.querySelector('.composebar-context-container'); 
         if(composebarContextChipContainer){
-            composebarContextChipContainer.style.display = 'none';
+            hideElementImmediately(composebarContextChipContainer);
         }
         /*make commonagentscontainer visible */
         const commonAgentsContainerDiv = this.container.querySelector('.common-agents-container'); 
         if(commonAgentsContainerDiv){
-            commonAgentsContainerDiv.style.display = 'flex';
+            showElementImmediately(commonAgentsContainerDiv, 'flex');
         }
         
         const commonAgentsContainer = this.container.querySelector('[data-eva-common-agents]');
@@ -225,15 +243,22 @@ class ComposeBar {
     renderContextChipInComposeBar() {        
         const commonAgentsContainer = this.container.querySelector('.common-agents-container'); 
         if(commonAgentsContainer){
-            commonAgentsContainer.style.display = 'none';
+            hideElementImmediately(commonAgentsContainer);
         }
         const composebarContextChipContainer = this.container.querySelector('.composebar-context-container'); 
         if (!composebarContextChipContainer) return;        
-        composebarContextChipContainer.style.display = 'block';
+        showElementImmediately(composebarContextChipContainer, 'flex');
         /*innerHtml should display the selected agent name and close button */
         composebarContextChipContainer.innerHTML = `
-            <div class="composebar-context-close-button" style="cursor: pointer;">${createCloseIcon({ size: 14, color: "#667085" })}</div>
-            <div class="composebar-context-agent-name">${this.selectedAgent?.name}</div>
+            <button class="context-chip-button">
+                <div class="composebar-context-agent-name-container">
+                    <div class="composebar-context-agent-icon">
+                        <img src="${this.selectedAgent?.icon}" alt="agent-icon" width="16" height="16">
+                    </div>
+                    <div class="composebar-context-agent-name" title="${this.selectedAgent?.name}">${this.selectedAgent?.name}</div>
+                </div>
+                <div class="composebar-context-close-button">${createCloseIcon({ size: 10, color: "#667085" })}</div>                
+            </button>
         `;
 
         /*change the placeholder to the selected agent name */
@@ -363,7 +388,6 @@ class ComposeBar {
         }
     }
 
-    
     /**
      * Update the bot header content dynamically
      */
@@ -390,10 +414,10 @@ class ComposeBar {
         
         const endConversationBtn = botWrapper.querySelector('.bot-input-header-right-text');
         if (endConversationBtn) {
-            // Update button content based on loading state
+            
             endConversationBtn.innerHTML = this.botEndConversationLoader ? '<div class="waloader"></div>' : 'End Conversation';
             
-            // Remove any existing event listener to prevent duplicates
+            
             endConversationBtn.removeEventListener('click', this.endConversationHandler);
             
             endConversationBtn.addEventListener('click', this.endConversationHandler);
@@ -410,7 +434,6 @@ class ComposeBar {
     handleEndConversation() {
         this.botEndConversationLoader = true;
         
-        // Update the button content to show loader
         const endConversationBtn = this.container.querySelector('.bot-input-header-right-text');
         if (endConversationBtn) {
             endConversationBtn.innerHTML = '<div class="waloader"></div>';
@@ -481,12 +504,12 @@ class ComposeBar {
                                 <div class='left-actions'>
                                 <div class='common-agents-container'>
                                     <button class="agents-action-item" data-eva-agents-action data-eva-open-dialog>
-                                        ${ActionsFlashIcon({ size: 16, color: "#667085" })}
+                                        ${ActionsFlashIcon({ size: 18, color: "#667085" })}
                                         ${CheveronDownIcon({ size: 14, color: "#667085" })}
                                     </button>                                
                                     <div data-eva-common-agents style="display: inline-flex; gap: 8px;"></div>
                                 </div>
-                                    <div class="composebar-context-container" style="display: none; gap: 8px;"></div>
+                                    <div class="composebar-context-container" style="display: none;"></div>
                                 </div>
                                 <div class="right-actions">
                                     <button class="eva-input-action-btn attachment-btn" data-eva-attachment title="Attach file">
@@ -658,7 +681,9 @@ class ComposeBar {
     }
 
     handleRemoveSelectedContext() {
-        this.fileUploaderInterface.clearContext();
+        if(this.fileUploaderInterface && typeof this.fileUploaderInterface.clearContext === 'function') {
+            this.fileUploaderInterface.clearContext();
+        }        
         this.selectedAgent = null;
         this.setCommonAgents();
         this.renderCommonAgents();
@@ -679,7 +704,7 @@ class ComposeBar {
             }, 0);
         }
         this.autoResize(event.target);
-        this.updateMicrophoneButton(); // Update the microphone/close button
+        this.updateMicrophoneButton();
 
         if (this.callbacks.onChange) {
             this.callbacks.onChange(this.input, event);
@@ -812,8 +837,7 @@ class ComposeBar {
     /**
      * Handle key down events
      */
-    handleKeyDown(event) {
-        // Send on Enter (without Shift)
+    handleKeyDown(event) {        
         if (event.key === 'Enter' && !event.shiftKey) {
             event.preventDefault();
             this.handleSend();
@@ -824,7 +848,7 @@ class ComposeBar {
      * Handle paste events
      */
     handlePaste(event) {
-        // Handle file paste if needed in the future
+        
         setTimeout(() => {
             this.autoResize(event.target);
         }, 0);
@@ -851,8 +875,7 @@ class ComposeBar {
         } catch (e) {
             console.error('Error sending message from ComposeBar:', e);
         }
-
-        // Optional external callback
+        
         if (this.callbacks.onSend) {
             this.callbacks.onSend(this.input.trim());
         }
@@ -877,11 +900,7 @@ class ComposeBar {
         } catch (e) {
             console.error('Error stopping message from ComposeBar:', e);
         }
-
-        // Optional external callback
-        if (this.callbacks.onStop) {
-            this.callbacks.onStop();
-        }
+        
     }
 
     /**
@@ -891,7 +910,7 @@ class ComposeBar {
         const actionId = event.target.getAttribute('data-action-id');
         const action = this.quickActions.find(a => a.id === actionId);
 
-        // Default internal handling
+       
         if (action) {
             try {
                 if (this.chatInterface && typeof this.chatInterface.askQuickActions === 'function') {
@@ -906,7 +925,7 @@ class ComposeBar {
             }
         }
 
-        // Optional external callback
+       
         if (action && this.callbacks.onQuickAction) {
             this.callbacks.onQuickAction(action);
         }
@@ -916,7 +935,7 @@ class ComposeBar {
      * Handle attachment button click
      */
     handleAttachment() {
-        // Always open hidden file input
+       
         const fileInput = this.container.querySelector('[data-eva-file-input]');
         if (fileInput) fileInput.click();
     }
@@ -925,11 +944,11 @@ class ComposeBar {
      * Handle speech to text button click or clear input
      */
     handleSpeechToText() {
-        // Double-check the actual textarea value
+        
         const textarea = this.container.querySelector('[data-eva-input]');
         const actualValue = textarea ? textarea.value : '';
 
-        // Use the actual textarea value as source of truth
+        
         const hasInput = actualValue.length > 0;
 
         if (hasInput) {
@@ -937,17 +956,17 @@ class ComposeBar {
             return;
         }
 
-        // Otherwise handle speech to text
+       
         if (!this.recognition) {
             alert('Speech recognition is not supported in this browser');
             return;
         }
 
         if (this.isRecording) {
-            // Stop recording
+            
             this.recognition.stop();
         } else {
-            // Start recording
+            
             this.isRecording = true;
             this.updateSpeechButton();
             try {
@@ -994,7 +1013,7 @@ class ComposeBar {
         } catch (e) {
             dialog.setAttribute('open', '');
         }
-        // Load and render agents when dialog opens
+        
         this.loadAndRenderAgents('');
     }
 
@@ -1202,14 +1221,14 @@ class ComposeBar {
             // Store agenticFlows as a class property for tab switching
             this.agenticFlows = agenticFlows;
             
-            let recentAgents = Array.isArray(recents)
-                ? recents.map(id => allAgents.find(a => String(a.id) === String(id))).filter(Boolean)
+            let enabledAgents = Array.isArray(allAgents)
+                ? allAgents.filter(agent => agent?.enabled)
                 : [];   
-            recentAgents = recentAgents.filter(agent => agent?.type !== "agenticApp");
+            enabledAgents = enabledAgents.filter(agent => agent?.type !== "agenticApp");
             if(searchTerm?.length > 0) {
-                recentAgents = recentAgents.filter(agent => agent?.name?.toLowerCase().includes(searchTerm.toLowerCase()));
+                enabledAgents = enabledAgents.filter(agent => agent?.name?.toLowerCase().includes(searchTerm.toLowerCase()));
             }
-            this.renderAgentsList(allListEl, recentAgents, 'recent');
+            this.renderAgentsList(allListEl, enabledAgents, 'recent');
             
 
         } catch (e) {
@@ -1362,9 +1381,12 @@ class ComposeBar {
         }
         try {
             console.log('Removing file:', file);
-            this.fileUploaderInterface.removeContext(file);
             
-            // Also remove from local array immediately for UI responsiveness
+            // Add safety check for consistency
+            if (this.fileUploaderInterface && typeof this.fileUploaderInterface.removeContext === 'function') {
+                this.fileUploaderInterface.removeContext(file);
+            }
+                        
             this.attachments = this.attachments.filter(f => String(f?.uID || f?.componentId || f?.docId) !== String(uid));
             this.renderAttachments();
             
@@ -1413,9 +1435,16 @@ class ComposeBar {
     }
 
     /**
-     * Destroy the compose bar
+     * Clean up ComposeBar resources
      */
+    cleanup() {        
+        console.log('🧹 ComposeBar cleanup completed');
+    }
+
     destroy() {
+        // Clean up timers and observers first
+        this.cleanup();
+        
         if (this.container) {
             this.container.innerHTML = '';
         }
@@ -1427,4 +1456,3 @@ class ComposeBar {
 }
 
 export default ComposeBar;
-//create another component renderComposeBar

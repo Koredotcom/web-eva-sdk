@@ -19,7 +19,7 @@ let container = null;
 function initToastSystem() {
     // Create toast container if it doesn't exist
     createContainer();
-    
+
     // Add styles if not already added
     addStyles();
 }
@@ -42,7 +42,8 @@ function addStyles() {
             .eva-toast-container {
                 position: fixed;
                 top: 20px;
-                right: 20px;
+                left: 50%;
+                transform: translateX(-50%);
                 z-index: 10000;
                 pointer-events: none;
                 max-width: 400px;
@@ -51,14 +52,13 @@ function addStyles() {
             .eva-toast {
                 pointer-events: auto;
                 background: white;
-                border-radius: 8px;
+                border:.0625rem solid #6ce9a6;
                 box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
                 margin-bottom: 12px;
                 padding: 16px 20px;
                 display: flex;
                 align-items: flex-start;
-                gap: 12px;
-                border-left: 4px solid #e5e7eb;
+                gap: 12px;                
                 position: relative;
                 animation: toastSlideIn 0.3s ease-out;
                 transition: all 0.3s ease;
@@ -70,8 +70,7 @@ function addStyles() {
                 animation: toastSlideOut 0.3s ease-in forwards;
             }
 
-            .eva-toast.success {
-                border-left-color: #10b981;
+            .eva-toast.success {                
                 background: #f0fdf4;
             }
 
@@ -192,6 +191,7 @@ function addStyles() {
                     left: 16px;
                     right: 16px;
                     top: 16px;
+                    transform: none;
                     max-width: none;
                 }
 
@@ -201,46 +201,46 @@ function addStyles() {
                 }
             }
         `;
-        document.head.appendChild(styles);
+    document.head.appendChild(styles);
 }
 
 function getIcon(type) {
-        const icons = {
-            success: `<svg viewBox="0 0 20 20" fill="currentColor" style="color: #10b981;">
+    const icons = {
+        success: `<svg viewBox="0 0 20 20" fill="currentColor" style="color: #10b981;">
                 <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
             </svg>`,
-            error: `<svg viewBox="0 0 20 20" fill="currentColor" style="color: #ef4444;">
+        error: `<svg viewBox="0 0 20 20" fill="currentColor" style="color: #ef4444;">
                 <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
             </svg>`,
-            warning: `<svg viewBox="0 0 20 20" fill="currentColor" style="color: #f59e0b;">
+        warning: `<svg viewBox="0 0 20 20" fill="currentColor" style="color: #f59e0b;">
                 <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
             </svg>`,
-            info: `<svg viewBox="0 0 20 20" fill="currentColor" style="color: #3b82f6;">
+        info: `<svg viewBox="0 0 20 20" fill="currentColor" style="color: #3b82f6;">
                 <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
             </svg>`
-        };
-        return icons[type] || icons.info;
+    };
+    return icons[type] || icons.info;
 }
 
 function showToast(message, options = {}) {
-        const config = {
-            type: 'info',
-            title: '',
-            duration: 4000,
-            closable: true,
-            showProgress: true,
-            ...options
-        };
+    const config = {
+        type: 'info',
+        title: '',
+        duration: 4000,
+        closable: false,
+        showProgress: false,
+        ...options
+    };
 
-        const toastId = `toast-${Date.now()}`;
-        
-        // Create toast element
-        const toast = document.createElement('div');
-        toast.className = `eva-toast ${config.type}`;
-        toast.setAttribute('data-toast-id', toastId);
+    const toastId = `toast-${Date.now()}`;
 
-        // Build toast content
-        let content = `
+    // Create toast element
+    const toast = document.createElement('div');
+    toast.className = `eva-toast ${config.type}`;
+    toast.setAttribute('data-toast-id', toastId);
+
+    // Build toast content
+    let content = `
             <div class="eva-toast-icon">
                 ${getIcon(config.type)}
             </div>
@@ -250,64 +250,64 @@ function showToast(message, options = {}) {
             </div>
         `;
 
-        if (config.closable) {
-            content += `
+    if (config.closable) {
+        content += `
                 <button class="eva-toast-close" data-action="close">
                     <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16">
                         <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
                     </svg>
                 </button>
             `;
-        }
+    }
 
-        if (config.showProgress && config.duration > 0) {
-            content += '<div class="eva-toast-progress"></div>';
-        }
+    if (config.showProgress && config.duration > 0) {
+        content += '<div class="eva-toast-progress"></div>';
+    }
 
-        toast.innerHTML = content;
+    toast.innerHTML = content;
 
-        // Add event listeners
-        if (config.closable) {
-            const closeBtn = toast.querySelector('[data-action="close"]');
-            closeBtn.addEventListener('click', () => removeToast(toastId));
-        }
+    // Add event listeners
+    if (config.closable) {
+        const closeBtn = toast.querySelector('[data-action="close"]');
+        closeBtn.addEventListener('click', () => removeToast(toastId));
+    }
 
-        // Add to container
-        container.appendChild(toast);
-        
+    // Add to container
+    container.appendChild(toast);
 
-        // Set up auto-dismiss
-        if (config.duration > 0) {
-            setupAutoDismiss(toastId, config.duration, config.showProgress);
-        }
 
-        return toastId;
+    // Set up auto-dismiss
+    if (config.duration > 0) {
+        setupAutoDismiss(toastId, config.duration, config.showProgress);
+    }
+
+    return toastId;
 }
 
-function setupAutoDismiss(toastId, duration, showProgress) {    
+function setupAutoDismiss(toastId, duration, showProgress) {
     const toastElement = document.querySelector(`[data-toast-id="${toastId}"]`);
     if (!toastElement) return;
 
     const element = toastElement;
-        
-        if (showProgress) {
-            const progressBar = element.querySelector('.eva-toast-progress');
-            if (progressBar) {
-                // Animate progress bar
-                progressBar.style.width = '100%';
-                progressBar.style.transition = `width ${duration}ms linear`;
-                
-                // Use requestAnimationFrame to ensure the initial state is applied
-                requestAnimationFrame(() => {
-                    progressBar.style.width = '0%';
-                });
-            }
-        }
 
-        // Set timeout for auto-dismiss
-        toastElement.timeoutId = setTimeout(() => {
-            removeToast(toastId);
-        }, duration);
+    if (showProgress) {
+        const progressBar = element.querySelector('.eva-toast-progress');
+        if (progressBar) {
+            // Animate progress bar
+            progressBar.style.width = '100%';
+            progressBar.style.transition = `width ${duration}ms linear`;
+
+            // Use requestAnimationFrame to ensure the initial state is applied
+            requestAnimationFrame(() => {
+                progressBar.style.width = '0%';
+            });
+        }
+    }
+
+    // Set timeout for auto-dismiss
+    toastElement.timeoutId = setTimeout(() => {
+        removeToast(toastId);
+    }, duration);
 }
 
 function removeToast(toastId) {
@@ -317,35 +317,35 @@ function removeToast(toastId) {
     const element = toastElement;
     const timeoutId = toastElement.timeoutId;
 
-        // Clear timeout if exists
-        if (timeoutId) {
-            clearTimeout(timeoutId);
+    // Clear timeout if exists
+    if (timeoutId) {
+        clearTimeout(timeoutId);
+    }
+
+    // Add removing class for animation
+    element.classList.add('removing');
+
+    // Remove after animation
+    setTimeout(() => {
+        if (element.parentNode) {
+            element.parentNode.removeChild(element);
         }
-
-        // Add removing class for animation
-        element.classList.add('removing');
-
-        // Remove after animation
-        setTimeout(() => {
-            if (element.parentNode) {
-                element.parentNode.removeChild(element);
-            }
-            toastElement.remove();
-        }, 300);
+        toastElement.remove();
+    }, 300);
 }
 
 
 function escapeHtml(text) {
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
 }
 
 // Main toast function
 function toast(message, options = {}) {
     // Initialize the system on first use
     initToastSystem();
-    
+
     return showToast(message, options);
 }
 
