@@ -2156,6 +2156,7 @@ html, body {
                     align-items: center;
                     justify-content: center;
                     cursor: pointer;
+                    position: relative;
                     &:hover {
                         background: #f5f5f5;
                     }
@@ -2173,7 +2174,10 @@ html, body {
                 .feedbackChip {
                     display: flex;
                     align-items: center;
-                    gap: .25rem;
+                    //gap: .25rem;
+                    .feedbackLikeButton {
+                        margin-right: 0.25rem;
+                    }
                 }
 
                 // Feedback popup overlay styles
@@ -2938,5 +2942,201 @@ html, body {
         &:hover {
             background-color: #FAFAFA;
         }
+    }
+}
+
+.p-overlaypanel {
+    &.feedbackDownvoteOverlay {
+        width: 25rem;  
+        border-radius: 0.5rem;
+        border: 0.0625rem solid #E5E5E5;
+        background: #fff;
+        box-shadow: 0rem 0 0.4375rem 0.3125rem rgba(16, 24, 40, 0.03), 0rem 0.75rem 1rem -0.25rem rgba(16, 24, 40, 0.08);
+        padding: 0.75rem 0.75rem 1rem 0.75rem;
+
+
+        .p-overlaypanel-content {
+            padding: 0;
+            width: 100%;
+        }
+
+        .downVoteOverlayData {
+            display: flex;
+            align-items: flex-start;
+            flex-direction: column;
+            align-self: stretch;
+            border-radius: 0.5rem;
+            background: #fff;
+            &.flexBox {
+                flex-direction: row;
+                align-items: center;
+                gap: 0.5rem;
+                justify-content: center;
+                .upIcon {
+                    display: flex;
+                    align-items: center;
+                }
+            }
+
+            .feedbacklist {
+                display: flex;
+                flex-wrap: wrap;
+                 gap:0.5rem;
+                .feedbackChip {
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    padding: 0.25rem 0.75rem;
+                    border-radius: 1rem;
+                    background: #F5F5F5;
+                    cursor: pointer;
+                    gap: 0.25rem;
+                    border: none;
+                    color: #424242;
+                    font-family: Inter;
+                    font-size: 0.875rem;
+                    font-style: normal;
+                    font-weight: 500;
+                    line-height: 1.25rem;
+                    letter-spacing: 0em;
+                    &:hover{
+                        background: #F5F5F5;
+                    }
+                    .textsuggest {
+                        color: #424242;
+                        font-family: Inter;
+                        font-size: 0.875rem;
+                        font-style: normal;
+                        font-weight: 500;
+                        line-height: 1.25rem;
+                        letter-spacing: 0em;
+                    }
+                    .tickIcon {
+                        display: flex;
+                        align-items: center;
+                        display: none;
+                    }
+                    &.selectedChip {
+                        background-color: #EFF8FF;
+                        &:hover{
+                            background: #EFF8FF;
+                        }
+                        .tickIcon {
+                            display: flex;
+                        }
+                        .textsuggest {
+                            color: #175CD3;
+                        }
+                    }
+                }
+            }
+            .commentsInput {
+                textarea {
+                    padding: 0.625rem 0.875rem;
+                    border-radius: 0.5rem;
+                    border: 0.0625rem solid #D6D6D6;
+                    background: #fff;
+                    box-shadow: 0rem 0.0625rem 0.125rem 0rem rgba(16, 24, 40, 0.05);
+                    width: 100%;
+                    height: 4.625rem;
+                    resize: none;
+                    cursor: default;
+                    max-height: 3.75rem;
+                    overflow-y: auto;
+                    font-family: Inter;
+                    font-size: 0.875rem;
+                    font-style: normal;
+                    font-weight: 400;
+                    line-height: 1.25rem;
+                    letter-spacing: 0em;
+                    color: #0F0F0F;
+                    &:focus {
+                        border-color: #84ADFF;
+                        box-shadow: 0rem 0rem 0rem 0.25rem #EFF4FF, 0rem 0.0625rem 0.125rem 0rem rgba(16, 24, 40, 0.05) !important;
+                    }
+                }
+            }
+            .disagreefeedbackbox {
+                display: flex;
+                flex-direction: column;                
+                gap:0.75rem;
+                width: 100%;
+                &.disagree-hide{
+                    display: none;
+                }                
+                .disagreeheadertext {
+                    color: #737373;
+                    font-family: Inter;
+                    font-size: 0.75rem;
+                    font-style: normal;
+                    font-weight: 600;
+                    line-height: 1.125rem;
+                    letter-spacing: 0em;
+                    padding-bottom: 0.75rem;
+                    border-bottom: 0.0625rem solid #E5E5E5;
+                }
+            }
+            .submitfeedbackwrap {
+                display: flex;
+                align-items: center;
+                justify-content: flex-end;
+                &.isSuccess {
+                    justify-content: space-between;
+                }
+                .feedbacksuccesstext {
+                    display: flex;
+                    align-items: center;
+                    gap:0.5rem;
+                    width: 100%;
+                }
+                .radiocheckbtn {
+                    display: flex;
+                    align-items: center;
+                }
+                .recievedfeedbacktext {
+                    color: #424242;
+                    font-family: Inter;
+                    font-size: 0.875rem;
+                    font-style: normal;
+                    font-weight: 500;
+                    line-height: 1.25rem;
+                    letter-spacing: 0em;
+                }
+            }
+        }
+    }
+}
+
+.kr-primary-btn-black {
+    display: inline-flex;
+    color: #FFFFFF;
+    background: #101828;
+    border: 0.0625rem solid #475467;
+    box-shadow: 0rem 0.0625rem 0.125rem rgba(16, 24, 40, 0.05);
+    border-radius: 0.75rem;
+    vertical-align: middle;
+    justify-content: center;
+    overflow: hidden;
+    position: relative;
+    cursor: pointer;
+    align-items: center;
+    &.btn-sm {
+        height: 2.25rem;
+        padding: 0 0.875rem;
+        font-family: Inter;
+        font-size: 0.875rem;
+        font-style: normal;
+        font-weight: 500;
+        line-height: 1.25rem;
+        letter-spacing: 0em;
+    }
+    &:hover {
+        background: #344054;
+        border-color: #344054;
+        color: #FFFFFF;
+        box-shadow: 0rem 0.0625rem 0.125rem rgba(16, 24, 40, 0.05);
+        -webkit-transition: background 250ms cubic-bezier(0.35, 0, 0.5, 1);
+        transition: background 250ms cubic-bezier(0.35, 0, 0.5, 1);
+        will-change: background;
     }
 }

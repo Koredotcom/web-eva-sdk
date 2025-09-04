@@ -2,7 +2,7 @@ import { htmlDecode, renderIcons, getFileExtension, getExtIcon, getDownloadIcon,
 import AnsFromChipFunctionality from "../functionality/ansFromChip";
 import { getTimeline, highlightQuotedText } from "../utils/helper";
 import htmlTableRenderer from "./htmlTableRenderer";
-import { createCopyIcon, createExport, createThumbsDown, createThumbsDownFilled, createThumbsUp, createThumbsUpFilled, setContextIcon, EllipsisVertical, Gmail, Outlookimg, Slackimg, Teamsimg, JiraCommentsIcon } from "../icons-library";
+import { createCopyIcon, createExport, createThumbsDown, createThumbsDownFilled, createThumbsUp, createThumbsUpFilled, setContextIcon, EllipsisVertical, Gmail, Outlookimg, Slackimg, Teamsimg, JiraCommentsIcon, RadioButtonChecked, tickMarkIcon } from "../icons-library";
 import store from "../../redux/store";
 import * as feedbackTemplate from "./feedback-template";
 
@@ -464,68 +464,56 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 
 		// Generate Shoelace button tags for feedback options
 		const feedbackOptionsHtml = feedbackOptions.map(option => 
-			`<sl-button 
-				variant="default" 
-				size="small" 
-				class="feedback-option-btn ${option.active ? 'active' : ''}" 
+			`<button 
+				class="feedbackChip ${option.active ? 'selectedChip' : ''}" 
 				data-feedback-id="${option.id}" 
-				data-message-id="${item?.messageId}"
-				style="margin: 0.25rem;">
-				${option.label}
-			</sl-button>`
+				data-message-id="${item?.messageId}">
+				<div class="textsuggest">${option.label}</div>
+				<div class='tickIcon'>${tickMarkIcon({ size: 10, color: "#475467" })}</div>
+			</button>`
 		).join('');
 
 		return `
         <sl-popup 
 			id="feedbackPopup-${item?.messageId}" 
 			class="feedback-popup"
-			placement="top-start" 
-			distance="8"
-			skidding="0"
-			strategy="fixed"
-			auto-size="vertical"
-			flip
-			shift>
-			
-			<sl-card class="feedback-overlay-card">
-				<div slot="header" style="font-weight: 600; font-size: 0.875rem; color: #374151; display: flex; justify-content: space-between; align-items: center;">
-					<span>Reasons for downvoting (optional)</span>					
-				</div>
-				
-				<div class="feedback-options-container">
-					<div class="feedback-options" style="margin-bottom: 1rem;">
-						${feedbackOptionsHtml}
+			placement="top-end" 
+			strategy="absolute"
+			auto-size="vertical">
+			<div class="p-overlaypanel feedbackDownvoteOverlay">
+				<div class="p-overlaypanel-content">
+					<div class="downVoteOverlayData">
+						<div class='disagreefeedbackbox'>
+							<div class='disagreeheadertext'>Reasons for downvoting (optional)</div>
+							<div class='feedbacklist'>
+								${feedbackOptionsHtml}
+							</div>
+							<div class='commentsInput'>
+                                <sl-textarea 
+									placeholder="Additional comments.."
+									resize="vertical"
+									rows="3"
+									id="feedbackInput-${item?.messageId}">
+									${encodeHtml(item?.feedback?.comment || "")}
+								</sl-textarea>
+                            </div>
+							<div class='submitfeedbackwrap'>
+								<div class="feedbacksuccesstext"}>
+									<div class='radiocheckbtn'>${RadioButtonChecked({ size: 18})}</div>
+									<div class='recievedfeedbacktext'>Thanks for your feedback</div>
+								</div>
+								<button
+									data-action="submit-feedback" 
+									data-message-id="${item?.messageId}"
+									class="kr-primary-btn-black btn-sm">
+									Submit
+								</button>
+                            </div>
+						</div>
 					</div>
 				</div>
-				
-				<sl-textarea 
-					placeholder="Additional comments.."
-					resize="vertical"
-					rows="3"
-					id="feedbackInput-${item?.messageId}"
-					style="margin-bottom: 1rem;">
-					${encodeHtml(item?.feedback?.comment || "")}
-				</sl-textarea>
-				
-				<div class="feedback-actions" style="display: flex; justify-content: flex-end; gap: 0.5rem;">
-					<sl-button 
-						variant="default" 
-						size="small" 
-						class="cancel-btn" 
-						data-action="cancel-feedback" 
-						data-message-id="${item?.messageId}">
-						Cancel
-					</sl-button>
-					<sl-button 
-						variant="primary" 
-						size="small" 
-						class="submit-btn" 
-						data-action="submit-feedback" 
-						data-message-id="${item?.messageId}">
-						Submit
-					</sl-button>
-				</div>
-			</sl-card>
+			</div>
+			
 		</sl-popup>
     `;
 	}
