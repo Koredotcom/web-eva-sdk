@@ -410,3 +410,13 @@ export function MinimizeIcon({ size = config.size, color = config.color, classNa
       </svg>
   `
 }
+
+export function RadioButtonChecked({ size = config.size, color = config.color, className = '' }) {  
+  return `
+      <svg width="${size}" height="${size}" className="wa-RadioButtonChecked ${className}" viewBox="0 0 16 17" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="0.5" y="1" width="15" height="15" rx="7.5" fill="#12B76A" />
+        <path d="M11.3337 6L6.75033 10.5833L4.66699 8.5" stroke="white" strokeWidth="1.66667" strokeLinecap="round" strokeLinejoin="round" />
+        <rect x="0.5" y="1" width="15" height="15" rx="7.5" stroke="#12B76A" />
+      </svg>
+  `
+}
