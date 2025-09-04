@@ -1221,14 +1221,14 @@ class ComposeBar {
             // Store agenticFlows as a class property for tab switching
             this.agenticFlows = agenticFlows;
             
-            let recentAgents = Array.isArray(recents)
-                ? recents.map(id => allAgents.find(a => String(a.id) === String(id))).filter(Boolean)
+            let enabledAgents = Array.isArray(allAgents)
+                ? allAgents.filter(agent => agent?.enabled)
                 : [];   
-            recentAgents = recentAgents.filter(agent => agent?.type !== "agenticApp");
+            enabledAgents = enabledAgents.filter(agent => agent?.type !== "agenticApp");
             if(searchTerm?.length > 0) {
-                recentAgents = recentAgents.filter(agent => agent?.name?.toLowerCase().includes(searchTerm.toLowerCase()));
+                enabledAgents = enabledAgents.filter(agent => agent?.name?.toLowerCase().includes(searchTerm.toLowerCase()));
             }
-            this.renderAgentsList(allListEl, recentAgents, 'recent');
+            this.renderAgentsList(allListEl, enabledAgents, 'recent');
             
 
         } catch (e) {
