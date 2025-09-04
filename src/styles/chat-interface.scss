@@ -2444,6 +2444,17 @@ html, body {
         color: #0F0F0F;
         word-break: break-word;
 
+        .regular-card-temp-container {
+            width: auto;
+            max-width: 100%;
+            margin-top: 1.5rem;
+            padding: 0;
+
+            .rugular-card-temp {
+                width: calc(100% - 2rem);
+            }
+        }
+
         p {
             padding-top: .25rem;
             margin-top: 0;
