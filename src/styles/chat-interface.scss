@@ -3175,3 +3175,97 @@ html, body {
         will-change: background;
     }
 }
+
+.add-connection {
+    display: flex;
+    padding: 1rem;
+    align-items: flex-start;
+    gap: 1rem;
+    align-self: stretch;
+    border-radius: 1rem;
+    border: 0.0625rem solid #F5F3F1;
+    background: #FAFAF9;
+    cursor: pointer;
+
+    .mainactwrap {
+        display: flex;
+        align-items: center;
+        
+        .choosenimage {
+            width: 3rem;
+            height: 3rem;
+            border-radius: 100%;
+            background: #FFFFFF;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            img {
+                max-width: 1.5rem;
+                max-height: 1.5rem;
+                object-fit: contain;
+            }
+        }
+    }
+    .contentAreawrap {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+        
+        .choosedtext {
+            font-family: Inter;
+            font-size: 1rem;
+            font-style: normal;
+            font-weight: 600;
+            line-height: 1.25rem;
+            letter-spacing: 0em;
+            color: var(--Gray-iron-900, #18181B);
+        }
+        
+        .rightside {
+            .authenticationstatus {
+                display: flex;
+                flex-direction: column;
+                gap: 1.5rem;
+                
+                .authenticateverify {
+                    font-family: Inter;
+                    font-size: 0.875rem;
+                    font-style: normal;
+                    font-weight: 400;
+                    line-height: 1.25rem;
+                    letter-spacing: 0em;
+                    color: var(--Gray-iron-500, #70707B);
+                }
+
+                .addConnection {
+                    display: flex;
+                    align-items: center;
+                    gap: 0.25rem;
+                    cursor: pointer;
+                    display: inline-flex;
+                    width: fit-content;
+
+                    .acIcon {
+                        display: flex;
+                        align-items: center; 
+                    }
+                    
+                    .addConnectionText {
+                        font-family: Inter;
+                        font-size: 0.875rem;
+                        font-style: normal;
+                        font-weight: 500;
+                        line-height: 1.25rem;
+                        letter-spacing: 0em;
+                        color: var(--Gray-iron-950, var(--colors-gray-iron-950, #131316));
+                    }
+                }              
+            }
+        }
+    }
+     
+    &:hover {
+        background: #F8F6F5;             
+    } 
+}
