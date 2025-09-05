@@ -2160,6 +2160,13 @@ html, body {
                     &:hover {
                         background: #f5f5f5;
                     }
+                    .questcopy {
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        cursor: pointer;
+                        position: relative;
+                    }
                 }
                 .feedbackDislikeButton {
                     &.active {

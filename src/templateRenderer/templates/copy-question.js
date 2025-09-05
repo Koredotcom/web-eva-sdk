@@ -69,7 +69,7 @@ function render(data, type = 'question') {
     }, 1000);
 
     return `
-    <sl-tooltip content="Copy" placement="bottom">
+    <sl-tooltip content="Copy Response" placement="bottom">
         <div class='questcopy' id='${copyButtonId}'>
             ${createCopyIcon({ size: 16, color: '#666', className: 'questcopy-icon' })}
         </div>
