@@ -87,7 +87,7 @@ const renderRecentFilesList = (targetEl, files, listType = 'recent', options = {
             <div class="file-details">
                 <div class="file-name" title="${safeName}">${safeName}</div>
                 <div class="file-meta">
-                    <span class="file-extension">${fileExtension.toUpperCase()}</span>
+                    <span class="file-extension"><img src="images/${fileExtension}.png" alt=''/></span>
                     ${fileSize ? `<span>•</span><span class="file-size">${fileSize}</span>` : ''}
                     ${lastModified ? `<span>•</span><span class="file-date">${lastModified}</span>` : ''}
                 </div>
