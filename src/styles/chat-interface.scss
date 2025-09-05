@@ -167,7 +167,7 @@ html, body {
 
     .threadName {
         &.maxLength {
-            //max-width: 80%;
+            
         }
     }
 
@@ -216,8 +216,7 @@ html, body {
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                cursor: pointer;
-                // visibility: hidden;
+                cursor: pointer;                
                 opacity: 0;
                 margin-right: 0.625rem;
                 position: relative;
@@ -327,7 +326,7 @@ html, body {
 
         .query-response-flow {
             .query-response-flow-header-container {
-                //margin-top: 0.5rem;
+                
             }
         }
     }
@@ -2050,9 +2049,7 @@ html, body {
         .ansFromChip {
             display: flex;
             align-items: center;
-            gap: .5rem;
-            //flex-wrap: wrap;
-            //width: 100%;
+            gap: .5rem;            
             font-family: Inter;
             font-size: 0.875rem;
             font-style: normal;
@@ -2106,7 +2103,7 @@ html, body {
                             width: 1.125rem;
                             height: 1.125rem;
                             position: relative;
-                            //top: -0.0625rem;
+                            
                             border-radius: 0.25rem;
                         }
                         &.attachment {
@@ -2181,13 +2178,13 @@ html, body {
                 .feedbackChip {
                     display: flex;
                     align-items: center;
-                    //gap: .25rem;
+
                     .feedbackLikeButton {
                         margin-right: 0.25rem;
                     }
                 }
 
-                // Feedback popup overlay styles
+                
                 .feedback-popup {
                     --sl-border-radius-medium: 12px;
                     
@@ -2228,7 +2225,7 @@ html, body {
                         --border-width: 1px;
                     }
                     
-                    // Header styling with close button
+                    
                     div[slot="header"] {
                         padding-bottom: 0.75rem;
                         border-bottom: 1px solid #f1f5f9;
@@ -2270,7 +2267,7 @@ html, body {
                     }
                 }
 
-                // Custom styling for feedback action buttons
+                
                 .feedback-actions {
                     sl-button.cancel-btn {
                         --sl-color-neutral-600: #64748b;
@@ -2286,7 +2283,7 @@ html, body {
                     }
                 }
 
-                // Legacy styles (keeping for backward compatibility)
+                
                 .feedback-form-card {
                     animation: feedbackSlideIn 0.3s ease-out;
                     transition: all 0.3s ease;
@@ -2307,7 +2304,7 @@ html, body {
                     }
                 }
 
-                // Legacy styles (keeping for backward compatibility)
+                
                 .feedback-form {
                     padding: 1rem;
                     background: #fff;
@@ -2852,8 +2849,7 @@ html, body {
                 overflow: hidden;
             }
         }
-    }
-    // Fade animation for query response flow content
+    }    
      @keyframes fadeInContent {
          0% {
              opacity: 0;
