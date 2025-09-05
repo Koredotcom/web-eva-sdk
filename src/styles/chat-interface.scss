@@ -2160,6 +2160,13 @@ html, body {
                     &:hover {
                         background: #f5f5f5;
                     }
+                    .questcopy {
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        cursor: pointer;
+                        position: relative;
+                    }
                 }
                 .feedbackDislikeButton {
                     &.active {
@@ -2443,6 +2450,23 @@ html, body {
         letter-spacing: 0em;
         color: #0F0F0F;
         word-break: break-word;
+
+        .bot-scroll-container {
+            max-width: 100%;
+            width: 100%;
+            overflow: auto;
+            display: block;
+        }
+
+        .bot-template-container {
+            max-width: 100%;
+            width: 100%;
+
+            .list-template-carousel-wrapper {
+                padding: 6px 0;
+                width: 100%;
+            }
+        }
 
         .regular-card-temp-container {
             width: auto;

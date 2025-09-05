@@ -123,7 +123,9 @@ function handleBotTemplates(conversation, props) {
 		return holdConversationTemplate.render(conversation);
 	}
 	return `
-		<div class="botTemplate-${conversation?.messageId}" style="${conversation?.status === "completed" ? "pointer-events: none" : ""}"></div>
+		<div class="bot-scroll-container">
+			<div class="bot-template-container botTemplate-${conversation?.messageId}" style="${conversation?.status === "completed" ? "pointer-events: none" : ""}"></div>
+		</div>
 	`;
 }
 

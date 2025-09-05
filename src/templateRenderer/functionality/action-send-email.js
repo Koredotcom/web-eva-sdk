@@ -14,6 +14,15 @@ const sendEmailFunctionality = (data) => {
         return { state, currentData };
     };
 
+    // Local reference to current question 
+    let { state: initialState, currentData: initialCurrentData } = getState();
+    let localCurrentData = cloneDeep(initialCurrentData);
+
+    // Store TomSelect instances to manually sync with local data
+    const tomSelectInstances = {};
+        
+    let isSyncing = false;
+
     // Create a promise-aware debounce function
     const debouncedSearch = debounce(async (text, type, resolve, reject) => {
         try {
@@ -33,23 +42,16 @@ const sendEmailFunctionality = (data) => {
             }
 
             let response = await delayedSearchCallback(obj);
-
-            let _questions = cloneDeep(state?.questions)
-            let content = cloneDeep(currentData?.content);
-            content.subject = values?.subject;  
-            content.body = values?.body;
-            _questions[currentData?.reqId] = {
-                ..._questions[currentData?.reqId],
-                content,
-                [`${type}Choices`] : {
-                    res : response,
-                    input : text
-                }
-            }
-
-            store.dispatch(updateChatData(_questions))
             
-            // Return the response for Tom Select
+            localCurrentData.content.subject = values?.subject;  
+            localCurrentData.content.body = values?.body;
+            localCurrentData[`${type}Choices`] = {
+                res: response,
+                input: text
+            };
+
+            
+            
             resolve(response || []);
         } catch (error) {
             reject(error);
@@ -63,53 +65,85 @@ const sendEmailFunctionality = (data) => {
     };
 
     const insertEmail = (email, type) => {
-        let { state, currentData } = getState();
-        let _content = cloneDeep(currentData?.content);
-        let existingEmails = cloneDeep(_content?.[type]);
-        if(existingEmails) {
-                existingEmails.push(email);
-            } else {
-                existingEmails = [email];
-        }
+        
+        if (isSyncing) return;
+        
+        
+        if (!localCurrentData.content) localCurrentData.content = {};
+        if (!localCurrentData.content[type]) localCurrentData.content[type] = [];
+        
+        let existingEmails = [...localCurrentData.content[type]];
+        existingEmails.push(email);
+        localCurrentData.content[type] = existingEmails;
 
-        _content[type] = existingEmails;
-
-        let _questions = cloneDeep(state?.questions);
+        
         let values = preserveEmailContent();
-        _content.subject = values?.subject;
-        _content.body = values?.body;
+        localCurrentData.content.subject = values?.subject;
+        localCurrentData.content.body = values?.body;
 
-        if (_questions[currentData?.reqId]) {
-            delete _questions[currentData?.reqId][`${type}Choices`];
-            _questions[currentData?.reqId].content = _content;
+        
+        if (localCurrentData[`${type}Choices`]) {
+            delete localCurrentData[`${type}Choices`];
         }
 
-        store.dispatch(updateChatData(_questions));
-        if(type === 'to') {
-            setTimeout(()=>validateSendButton(), 100)
-        }
+        
+        clearTomSelectSearchState(type);
+
+        
+        setTimeout(()=>validateSendButton(), 100);
     }
 
     const removePerson = (email, type) => {
-        let { state, currentData } = getState();
-        let _content = cloneDeep(currentData?.content);
-        let existingEmails = cloneDeep(_content?.[type]);
-        existingEmails = existingEmails.filter(item => item?.id !== email?.id);
-        _content[type] = existingEmails;
+        
+        if (isSyncing) return;
+        
+        
+        if (localCurrentData.content && localCurrentData.content[type]) {
+            let existingEmails = [...localCurrentData.content[type]];
+            existingEmails = existingEmails.filter(item => item?.id !== email?.id);
+            localCurrentData.content[type] = existingEmails;
+        }
 
-        let _questions = cloneDeep(state?.questions);
+        
         let values = preserveEmailContent();
-        _content.subject = values?.subject;
-        _content.body = values?.body;
-        if (_questions[currentData?.reqId]) {
-            _questions[currentData?.reqId].content = _content;
-        }
-        store.dispatch(updateChatData(_questions));
+        localCurrentData.content.subject = values?.subject;
+        localCurrentData.content.body = values?.body;
 
-        if(type === 'to') {
-            setTimeout(()=>validateSendButton(), 100)
-        }
+        
+        clearTomSelectSearchState(type);
+
+        
+        setTimeout(()=>validateSendButton(), 100);
     }
+
+    
+        
+
+    
+    const clearTomSelectSearchState = (type) => {
+        const tomInstance = tomSelectInstances[type];
+        if (!tomInstance) return;
+        
+        tomInstance.control_input.value = '';
+        
+        
+        tomInstance.close();
+        
+        
+        tomInstance.clearOptions();
+        
+        // Re-add only the selected items as options
+        const selectedItems = localCurrentData?.content?.[type] || [];
+        selectedItems.forEach(item => {
+            if (!tomInstance.options[item.id]) {
+                tomInstance.addOption({
+                    value: item.id,
+                    text: item.id,
+                    raw: item
+                });
+            }
+        });
+    };
 
     const preserveEmailContent = () => {
         let { state, currentData } = getState();
@@ -126,14 +160,15 @@ const sendEmailFunctionality = (data) => {
         if(_emailBody) {
             values.body = _emailBody.innerHTML;
         }
-        if(currentData?.content?.to) {
-            values.to = currentData?.content?.to;
+        // Use local state as source of truth for email fields (not global state!)
+        if(localCurrentData?.content?.to) {
+            values.to = localCurrentData.content.to;
         }
-        if(currentData?.content?.cc) {
-            values.cc = currentData?.content?.cc;
+        if(localCurrentData?.content?.cc) {
+            values.cc = localCurrentData.content.cc;
         }
-        if(currentData?.content?.bcc) {
-            values.bcc = currentData?.content?.bcc;
+        if(localCurrentData?.content?.bcc) {
+            values.bcc = localCurrentData.content.bcc;
         }
         if(currentData?.content?.includeSource) {
             values.includeSource = currentData?.content?.includeSource;
@@ -146,20 +181,25 @@ const sendEmailFunctionality = (data) => {
     }
 
     const send = async () => {
-        let { state, currentData } = getState();
-        const to = currentData?.content?.to?.map(item => {
+        let { state } = getState();
+                
+        let values = preserveEmailContent();
+        localCurrentData.content.subject = values?.subject;
+        localCurrentData.content.body = values?.body;
+        
+        const to = localCurrentData?.content?.to?.map(item => {
             return {
                 label: item?.label,
                 id:  item?.id
             }
         })?.flat();
-        const cc = currentData?.content?.cc?.map(item => {
+        const cc = localCurrentData?.content?.cc?.map(item => {
             return {
                 label: item?.label,
                 id: item?.id
             }
         })?.flat();
-        const bcc = currentData?.content?.bcc?.map(item => {
+        const bcc = localCurrentData?.content?.bcc?.map(item => {
             return {
                 label: item?.label,
                 id: item?.id
@@ -167,14 +207,14 @@ const sendEmailFunctionality = (data) => {
         })?.flat();
 
 
-        let emailSubject = document.getElementById(`email-subject-${currentData?.reqId}`);
-        let emailBody = document.getElementById(`email-body-${currentData?.reqId}`);
+        let emailSubject = document.getElementById(`email-subject-${data?.reqId}`);
+        let emailBody = document.getElementById(`email-body-${data?.reqId}`);
 
-        const includeSource =  currentData?.includeSource;
+        const includeSource =  localCurrentData?.includeSource;
         const subject = emailSubject?.value || '';
         const body = emailBody?.innerHTML || '';
-        const connectionId = document.getElementById(`email-connection-${currentData?.reqId}`)?.value || '';
-        const attachments =  currentData?.attachmentPreview;
+        const connectionId = document.getElementById(`email-connection-${data?.reqId}`)?.value || '';
+        const attachments =  localCurrentData?.attachmentPreview;
         const attachmentsIds = [], attachmentComponents= []
         attachments?.map(attach => {
             attachmentsIds.push(attach?.fileUrl?.fileId)
@@ -187,7 +227,7 @@ const sendEmailFunctionality = (data) => {
 
         let params = {
             userId: state?.profile?.data?.id,
-            provider: currentData?.provider
+            provider: localCurrentData?.provider
         }
 
         const payload = {
@@ -203,15 +243,20 @@ const sendEmailFunctionality = (data) => {
             },
             contextParams: {
                 includeSource,                
-                messageId:  currentData?.messageId,
-                dataId: currentData?.parentMessageId || currentData?.menuId
+                messageId:  localCurrentData?.messageId,
+                dataId: localCurrentData?.parentMessageId || localCurrentData?.menuId
             }
         }
 
         let response = await store.dispatch(sendEmail({params, payload}));
-        let _questions = cloneDeep(state?.questions);
-        _questions[currentData?.reqId] = response?.payload;
-        store.dispatch(updateChatData(_questions));
+        
+        // Only update global store after successful response
+        let updatedQuestions = cloneDeep(state?.questions);
+        updatedQuestions[data?.reqId] = response?.payload;
+        store.dispatch(updateChatData(updatedQuestions));
+        
+        // Update local reference with successful response
+        localCurrentData = response?.payload;
     }
 
     let toSection = document.getElementById(`email-to-${data?.reqId}`);
@@ -219,64 +264,103 @@ const sendEmailFunctionality = (data) => {
     let bccSection = document.getElementById(`email-bcc-${data?.reqId}`);
 
     if(toSection && !toSection?.eventListenerAdded) {
-        let { state, currentData } = getState();
-        setupTomSelect({
+        const tomInstance = setupTomSelect({
             selectorId: `email-to-${data?.reqId}`,
             type: 'to',
-            initialItems: currentData?.content?.to || [],
+            initialItems: localCurrentData?.content?.to || [],
             fetchSuggestions: getSearchedUsers,
             onAdd: insertEmail,
             onRemove: removePerson
           });
+
+        // Store TomSelect instance for manual syncing
+        tomSelectInstances['to'] = tomInstance;
 
         toSection.eventListenerAdded = true;
     }
 
     if(ccSection && !ccSection?.eventListenerAdded) {
-        let { state, currentData } = getState();
-        setupTomSelect({
+        const ccInstance = setupTomSelect({
             selectorId: `email-cc-${data?.reqId}`,
             type: 'cc',
-            initialItems: currentData?.content?.cc || [],
+            initialItems: localCurrentData?.content?.cc || [],
             fetchSuggestions: getSearchedUsers,
             onAdd: insertEmail,
             onRemove: removePerson
         });
+
+        // Store TomSelect instance for manual syncing
+        tomSelectInstances['cc'] = ccInstance;
+
         ccSection.eventListenerAdded = true;
     }
 
     if(bccSection && !bccSection?.eventListenerAdded) {
-        let { state, currentData } = getState();
-        setupTomSelect({
+        const bccInstance = setupTomSelect({
             selectorId: `email-bcc-${data?.reqId}`,
             type: 'bcc',
-            initialItems: currentData?.content?.bcc || [],
+            initialItems: localCurrentData?.content?.bcc || [],
             fetchSuggestions: getSearchedUsers,
             onAdd: insertEmail,
             onRemove: removePerson
           });
+
+        // Store TomSelect instance for manual syncing
+        tomSelectInstances['bcc'] = bccInstance;
+
         bccSection.eventListenerAdded = true;
     }
 
     function validateSendButton() {
-        const toSelect = document.getElementById(`email-to-${data?.reqId}`);
-        const subject = document.getElementById(`email-subject-${data?.reqId}`)?.value?.trim();
-        const bodyDiv = document.getElementById(`email-body-${data?.reqId}`);
         const sendBtn = document.getElementById(`email-send-${data?.reqId}`);
-      
-        const toFilled = toSelect?.selectedOptions?.length > 0;
+        if (!sendBtn) return;
+
+        // 1. Check if at least 1 user is present in "to" field (from TomSelect DOM)
+        const toSelectElement = document.getElementById(`email-to-${data?.reqId}`);
+        const tomToInstance = tomSelectInstances['to'];
+        
+        let hasToRecipient = false;
+        if (tomToInstance && tomToInstance.items) {
+            // Get selected items directly from TomSelect instance
+            hasToRecipient = tomToInstance.items.length > 0;
+        } else if (toSelectElement && toSelectElement.selectedOptions) {
+            // Fallback: check DOM select element
+            hasToRecipient = toSelectElement.selectedOptions.length > 0;
+        } else {
+            // Last fallback: check local data
+            const toEmails = localCurrentData?.content?.to || [];
+            hasToRecipient = toEmails.length > 0;
+        }
+
+        // 2. Check if subject is filled
+        const subjectInput = document.getElementById(`email-subject-${data?.reqId}`);
+        const hasSubject = subjectInput?.value?.trim().length > 0;
+
+        // 3. Check if body text is filled
+        const bodyDiv = document.getElementById(`email-body-${data?.reqId}`);
         const bodyText = bodyDiv?.innerText?.replace(/\s+/g, '').trim();
-      
-        const valid = toFilled && subject && bodyText;
-      
-        if (sendBtn) {
-          sendBtn.disabled = !valid;
+        const hasBodyText = bodyText.length > 0;
+
+        // All conditions must be met to enable send button
+        const allConditionsMet = hasToRecipient && hasSubject && hasBodyText;
+
+        // Enable/disable send button based on conditions
+        sendBtn.disabled = !allConditionsMet;
+
+        // Optional: Add visual feedback classes
+        if (allConditionsMet) {
+            sendBtn.classList.remove('disabled');
+        } else {
+            sendBtn.classList.add('disabled');
         }
       }
       
 
     document.getElementById(`email-subject-${data?.reqId}`)?.addEventListener('input', validateSendButton);
     document.getElementById(`email-body-${data?.reqId}`)?.addEventListener('input', validateSendButton);
+
+    // Initial validation on form load
+    setTimeout(()=>validateSendButton(), 100);
 
     let sendButton = document.getElementById(`email-send-${data?.reqId}`);
     if(sendButton && !sendButton?.eventListenerAdded) {

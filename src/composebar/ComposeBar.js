@@ -463,7 +463,7 @@ class ComposeBar {
                     <div class='overridingMsgModal'>
                         <div class='headerGroup'>
                             <div class="_heading">Remove Attachments</div>
-                            <div class="msg">The required context conflicts with the selected agent. Do you want to remove the context and set the agent?</div>
+                            <div class="msg">The required agent conflicts with the attached context. Do you want to remove the context and set the agent?</div>
                         </div>
 
                         <div class="_content">

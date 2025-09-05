@@ -517,17 +517,17 @@ const AnsFromChipFunctionality = ({ item }) => {
 
 		// Add copy answer button event listener
 		if (item?.answer) {
-			let copyAnswerButton = document.getElementById(
-				`copyAnswerButton-${item?.id}`
-			);
-			if (copyAnswerButton && !copyAnswerButton.eventListenerAdded) {
-				copyAnswerButton.addEventListener("click", (e) => {
-					e?.preventDefault();
-					e?.stopPropagation();
-					copyAnswerToClipboard();
-				});
-				copyAnswerButton.eventListenerAdded = true;
-			}
+			// let copyAnswerButton = document.getElementById(
+			// 	`copyAnswerButton-${item?.id}`
+			// );
+			// if (copyAnswerButton && !copyAnswerButton.eventListenerAdded) {
+			// 	copyAnswerButton.addEventListener("click", (e) => {
+			// 		e?.preventDefault();
+			// 		e?.stopPropagation();
+			// 		copyAnswerToClipboard();
+			// 	});
+			// 	copyAnswerButton.eventListenerAdded = true;
+			// }
 
 			let exportWordButton = document.getElementById(
 				`exportWordButton-${item?.messageId}`
@@ -582,11 +582,8 @@ const AnsFromChipFunctionality = ({ item }) => {
 					// Toggle feedback popup overlay
 					const feedbackPopup = document.getElementById(`feedbackPopup-${item?.messageId}`);
 					if (feedbackPopup) {
-											
-						
-						// Force upgrade if it's not a proper Shoelace component
-						if (feedbackPopup.tagName.toLowerCase() === 'sl-popup' && typeof feedbackPopup.show !== 'function') {
-							console.log("Forcing Shoelace component upgrade...");
+																							
+						if (feedbackPopup.tagName.toLowerCase() === 'sl-popup' && typeof feedbackPopup.show !== 'function') {							
 							if (window.customElements && window.customElements.upgrade) {
 								customElements.upgrade(feedbackPopup);
 							}
@@ -626,9 +623,34 @@ const AnsFromChipFunctionality = ({ item }) => {
 			}
 			feedbackLikeButton.eventListenerAdded = true;
 			feedbackDislikeButton.eventListenerAdded = true;
+			
+			const checkSubmitButtonState = () => {
+				const feedbackPopup = document.getElementById(`feedbackPopup-${item?.messageId}`);
+				const submitBtn = feedbackPopup?.querySelector('button[data-action="submit-feedback"]');
+				
+				if (submitBtn && feedbackPopup) {
+					// Check if any feedback option is selected
+					const selectedOptionsData = feedbackPopup.getAttribute('data-selected-options');
+					const selectedOptions = selectedOptionsData ? JSON.parse(selectedOptionsData) : [];
+					const hasSelectedOption = selectedOptions.length > 0;
+					
+					// Check if textarea has content
+					const textarea = feedbackPopup.querySelector('sl-textarea');
+					const hasTextContent = textarea && textarea.value && textarea.value.trim().length > 0;
+					
+					// Enable submit button if either condition is met
+					if (hasSelectedOption || hasTextContent) {
+						submitBtn.disabled = false;
+						submitBtn.classList.remove('disable');
+					} else {
+						submitBtn.disabled = true;
+						submitBtn.classList.add('disable');
+					}
+				}
+			};
 
 			// Add feedback options multi-selection functionality for Shoelace buttons
-			const feedbackOptions = document.querySelectorAll(`.feedback-option-btn[data-message-id="${item?.messageId}"]`);
+			const feedbackOptions = document.querySelectorAll(`.feedbackChip[data-message-id="${item?.messageId}"]`);
 			feedbackOptions.forEach(option => {
 				if (!option.eventListenerAdded) {
 					option.addEventListener('click', (e) => {
@@ -636,18 +658,18 @@ const AnsFromChipFunctionality = ({ item }) => {
 						e.stopPropagation();
 						
 						// Toggle active state for Shoelace button
-						const isActive = option.classList.contains('active');
+						const isActive = option.classList.contains('selectedChip');
 						if (isActive) {
-							option.classList.remove('active');
+							option.classList.remove('selectedChip');
 							option.variant = 'default';
 						} else {
-							option.classList.add('active');
+							option.classList.add('selectedChip');
 							option.variant = 'primary';
 						}
 						
 						// Log selected options for debugging
 						const selectedOptions = Array.from(feedbackOptions)
-							.filter(opt => opt.classList.contains('active'))
+							.filter(opt => opt.classList.contains('selectedChip'))
 							.map(opt => ({
 								id: opt.getAttribute('data-feedback-id'),
 								label: opt.textContent.trim()
@@ -659,57 +681,36 @@ const AnsFromChipFunctionality = ({ item }) => {
 						if (feedbackPopup) {
 							feedbackPopup.setAttribute('data-selected-options', JSON.stringify(selectedOptions));
 						}
+						
+						// Check if submit button should be enabled
+						checkSubmitButtonState();
 					});
 					option.eventListenerAdded = true;
 				}
 			});
 			
 			const feedbackPopup = document.getElementById(`feedbackPopup-${item?.messageId}`);
-			if (feedbackPopup && !feedbackPopup.eventListenerAdded) {
-								
-				
-				// Cancel button handler
-				const cancelBtn = feedbackPopup.querySelector('sl-button.cancel-btn');
-				if (cancelBtn) {
-					cancelBtn.addEventListener('click', (e) => {
-						e.preventDefault();
-						e.stopPropagation();
-						
-						// Hide popup with fallback
-						if (typeof feedbackPopup.hide === 'function') {
-							feedbackPopup.hide();
-						} else {
-							console.warn("Shoelace hide() method not available, using fallback");
-							feedbackPopup.removeAttribute('active');
-							feedbackPopup.style.display = 'none';
-						}
-						
-						// Remove active state from dislike button
-						const dislikeBtn = document.getElementById(`feedbackDislikeButton-${item?.messageId}`);
-						if (dislikeBtn) {
-							dislikeBtn.classList.remove('active');
-						}
-						
-						// Clear form data - Shoelace textarea
-						const textarea = feedbackPopup.querySelector('sl-textarea');
-						if (textarea) textarea.value = '';
-						
-						// Clear selected options - reset Shoelace buttons
-						const selectedOptions = feedbackPopup.querySelectorAll('.feedback-option-btn.active');
-						selectedOptions.forEach(option => {
-							option.classList.remove('active');
-							option.variant = 'default';
-						});
-						feedbackPopup.removeAttribute('data-selected-options');
-					});
+			if (feedbackPopup) {
+				const textarea = feedbackPopup.querySelector('sl-textarea');
+				if (textarea && !textarea.inputListenerAdded) {
+					textarea.addEventListener('sl-input', () => {
+						checkSubmitButtonState();
+					});					
+					textarea.inputListenerAdded = true;
 				}
+			}
+			
+			if (feedbackPopup && !feedbackPopup.eventListenerAdded) {																
 				
 				// Submit button handler
-				const submitBtn = feedbackPopup.querySelector('sl-button.submit-btn');
+				const submitBtn = feedbackPopup.querySelector('button[data-action="submit-feedback"]');
 				if (submitBtn) {
 					submitBtn.addEventListener('click', (e) => {
 						e.preventDefault();
 						e.stopPropagation();
+						
+						// Get message ID from button data attribute
+						const messageId = submitBtn.getAttribute('data-message-id');
 						
 						// Get selected options
 						const selectedOptionsData = feedbackPopup.getAttribute('data-selected-options');
@@ -723,20 +724,27 @@ const AnsFromChipFunctionality = ({ item }) => {
 						submitUserFeedback({
 							type: "dislike",
 							cId: item?.cId || item?.reqId,
+							messageId: messageId, // Use the messageId from button attribute
 							payload: {
 								feedback: "dislike",
 								comment: comment,								
 								category: selectedOptions.map(opt => opt.label) // For backward compatibility
 							},
 						});
-												
-												
-						if (typeof feedbackPopup.hide === 'function') {
-							feedbackPopup.hide();
-						} else {							
-							feedbackPopup.removeAttribute('active');
-							feedbackPopup.style.display = 'none';
+																		
+						/*need to display received feedback text*/
+						const feedbacksuccesstextDiv = document.querySelector('.feedbacksuccesstext');
+						if (feedbacksuccesstextDiv) {
+							feedbacksuccesstextDiv.style.display = 'block';
 						}
+						setTimeout(() => {
+							if (typeof feedbackPopup.hide === 'function') {
+								feedbackPopup.hide();
+							} else {
+								feedbackPopup.removeAttribute('active');
+								feedbackPopup.style.display = 'none';
+							}
+						}, 2000);
 												
 					});
 				}
@@ -879,8 +887,7 @@ const AnsFromChipFunctionality = ({ item }) => {
 
 		// Add menu item event listeners
 		if (threeDotDropdown && !threeDotDropdown.eventListenerAdded) {
-			const menuItems = threeDotDropdown.querySelectorAll('sl-menu-item');
-			console.log('Found menu items:', menuItems.length);
+			const menuItems = threeDotDropdown.querySelectorAll('sl-menu-item');			
 			
 			menuItems.forEach(menuItem => {
 				menuItem.addEventListener('click', (e) => {
@@ -933,8 +940,7 @@ const AnsFromChipFunctionality = ({ item }) => {
 						case 'copy':
 							// Trigger copy functionality
 							const copyButton = document.getElementById(`copyAnswerButton-${item?.id}`);
-							if (copyButton) {
-								console.log('Triggering copy button');
+							if (copyButton) {								
 								copyButton.click();
 							} else {
 								console.log('Copy button not found for id:', `copyAnswerButton-${item?.id}`);
