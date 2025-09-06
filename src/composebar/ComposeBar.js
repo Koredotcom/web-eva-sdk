@@ -6,6 +6,7 @@ import { fetchAgents } from "../redux/actions/global.action.js";
 import { ActionsFlashIcon, arrowCirlceUpIcon, attachmentIcon, CheveronDownIcon, createCloseIcon, createDeleteIcon, createThumbsUpFilled, microphoneIcon, searchIcon, settingsIcon, Close, StopIcon } from "../templateRenderer/icons-library.js";
 import FileUpload from "../Attachments/fileUpload.js";
 import { getAgentType, getFileExtension, hideElementImmediately, showElementImmediately, showElementDelayed } from "../utils/helpers.js";
+import { renderRecentFiles } from "./RenderRecentAttachments.js";
 
 /**
  * ComposeBar - A standalone compose bar component in plain JavaScript
@@ -562,6 +563,34 @@ class ComposeBar {
                             </div>
                         </div>                        
                     </sl-dialog>
+                    
+                    <sl-dialog data-eva-attachment-dialog class="eva-attachments-dialog">
+                        <div class="composebarFilter">
+                            <div class="attachmentsTabWrapper">
+                                <div class="attachmentsHeader">
+                                    <div class="attachmentsTitle">
+                                        <h3>Attachments</h3>
+                                    </div>                                    
+                                </div>
+                                <div class="attachments-top-container">
+                                    <div class="attachments-top-container-left">
+                                        <div class="attachments-top-container-left-title">
+                                            <h3>Upload from computer</h3>
+                                            <h2>Upload upto 5 files, max 10MB each: PDF, XLS, DOC, CSV, TXT formats</h2>
+                                        </div>
+                                    </div>
+                                    <div class="attachments-top-container-right">
+                                        <button class="recent-files-container-upload-file-btn" upload-file-btn title="Attach file">
+                                            ${attachmentIcon({ size: 16, color: "#667085" })}
+                                        </button>                                        
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="eva-recent-attachments-container" data-eva-recent-attachments-content>
+                                <ul class="eva-recent-attachments-list" data-eva-recent-files></ul>
+                            </div>                            
+                        </div>                        
+                    </sl-dialog>
                 </div>
             </div>
         `;
@@ -580,9 +609,11 @@ class ComposeBar {
         const quickActionChips = this.container.querySelectorAll('.eva-quick-reply-chip');
         const openDialogBtn = this.container.querySelector('[data-eva-open-dialog]');
         const dialog = this.container.querySelector('[data-eva-dialog]');
+        const attachmentDialog = this.container.querySelector('[data-eva-attachment-dialog]');
         const fileInput = this.container.querySelector('[data-eva-file-input]');
         const agentSearchInputBox = this.container.querySelector('[data-eva-agent-search-input-box]');
         const tabHeadings = this.container.querySelectorAll('.agentsTabHeading');
+        const uploadFileBtn = this.container.querySelector('[upload-file-btn]'); //this event is for the upload button present in container for uploading files
         // Textarea events
         if (textarea) {
             textarea.addEventListener('input', (e) => this.handleInputChange(e));
@@ -592,6 +623,7 @@ class ComposeBar {
         if (agentSearchInputBox) {
             agentSearchInputBox.addEventListener('input', (e) => this.handleAgentSearch(e));
         }
+
 
         // Button events
         if (sendBtn) {
@@ -623,9 +655,21 @@ class ComposeBar {
             }
         }
 
+        if (attachmentDialog) {
+            const closeBtn = attachmentDialog.querySelector('[data-eva-attachment-dialog-close]');
+            if (closeBtn) {
+                closeBtn.addEventListener('click', () => this.handleCloseAttachmentDialog());
+            }
+        }
+
+
         // Attachment button event
         if (attachmentBtn) {
             attachmentBtn.addEventListener('click', () => this.handleAttachment());
+        }
+
+        if(uploadFileBtn) {
+            uploadFileBtn.addEventListener('click', () => this.handleFileUpload());
         }
 
         if (fileInput) {
@@ -634,8 +678,17 @@ class ComposeBar {
                     if (this.fileUploaderInterface && typeof this.fileUploaderInterface.uploadFile === 'function') {
                         this.fileUploaderInterface.uploadFile(e);
                     }
-                } finally {
+                }
+                catch(e){
+                    console.error('Error uploading file:', e);
+                }
+                finally {
                     // reset so selecting the same file again still triggers change
+                    /*once the file is uploaded we need to close the attachment dialog */
+                    const attachmentDialog = this.container.querySelector('[data-eva-attachment-dialog]');
+                    if(attachmentDialog){
+                        attachmentDialog.hide();
+                    }
                     fileInput.value = '';
                 }
             });
@@ -935,9 +988,14 @@ class ComposeBar {
      * Handle attachment button click
      */
     handleAttachment() {
-       
+        this.handleOpenAttachmentDialog();
+    }
+
+    handleFileUpload(){
         const fileInput = this.container.querySelector('[data-eva-file-input]');
-        if (fileInput) fileInput.click();
+        if(fileInput){
+            fileInput.click();
+        }
     }
 
     /**
@@ -1031,6 +1089,113 @@ class ComposeBar {
             }
         } catch (e) {
             dialog.removeAttribute('open');
+        }
+    }
+
+    /**
+     * Open attachment dialog
+     */
+    handleOpenAttachmentDialog() {        
+        const attachmentDialog = this.container.querySelector('[data-eva-attachment-dialog]');
+        if (!attachmentDialog) return;
+        try {
+            if (typeof attachmentDialog.show === 'function') {
+                attachmentDialog.show();
+            } else {
+                attachmentDialog.setAttribute('open', '');
+            }
+        } catch (e) {
+            attachmentDialog.setAttribute('open', '');
+        }
+        
+        this.loadAndRenderRecentFiles();
+    }
+
+    /**
+     * Close attachment dialog
+     */
+    handleCloseAttachmentDialog() {
+        const attachmentDialog = this.container.querySelector('[data-eva-attachment-dialog]');
+        if (!attachmentDialog) return;
+        try {
+            if (typeof attachmentDialog.hide === 'function') {
+                attachmentDialog.hide();
+            } else {
+                attachmentDialog.removeAttribute('open');
+            }
+        } catch (e) {
+            attachmentDialog.removeAttribute('open');
+        }
+    }
+
+    /**
+     * Load and render recent files
+     */
+    loadAndRenderRecentFiles() {
+        try {
+            const recentFilesListEl = this.container.querySelector('[data-eva-recent-files]');
+            if (!recentFilesListEl) return;
+
+            // Show loading state
+            recentFilesListEl.innerHTML = `<li>Loading recent files...</li>`;
+
+            // Render recent files
+            renderRecentFiles(recentFilesListEl, {
+                onFileAttach: (file) => this.handleFileAttachFromRecent(file),
+                onFileRemove: (file) => this.handleFileRemoveFromRecent(file),
+                onFileClose: () => this.handleCloseAttachmentDialog()
+            });
+        } catch (error) {
+            console.error('Error loading recent files:', error);
+            const recentFilesListEl = this.container.querySelector('[data-eva-recent-files]');
+            if (recentFilesListEl) {
+                recentFilesListEl.innerHTML = `<li>Failed to load recent files</li>`;
+            }
+        }
+    }
+
+    /**
+     * Handle file attachment from recent files
+     */
+    handleFileAttachFromRecent(file) {
+        try {
+            console.log('Attaching recent file:', file);
+            
+            // Close the attachment dialog
+            this.handleCloseAttachmentDialog();
+            
+            // Call fileUploaderInterface.uploadFile just like in file input change event
+            if (this.fileUploaderInterface && typeof this.fileUploaderInterface.uploadFile === 'function') {
+                // Create a synthetic event object with the recent file
+                const syntheticEvent = {
+                    target: {
+                        files: [file]
+                    },
+                    type: 'change'
+                };
+                this.fileUploaderInterface.uploadFile(syntheticEvent);
+            }
+        } catch (error) {
+            console.error('Error attaching recent file:', error);
+        }
+    }
+
+    /**
+     * Handle file removal from recent files
+     */
+    handleFileRemoveFromRecent(file) {
+        try {
+            console.log('Removing file from recent:', file);
+            
+            // Here you can add logic to remove file from recent files store
+            // This could dispatch a Redux action to remove from AllrecentFiles
+            const event = new CustomEvent('eva-recent-file-remove', {
+                detail: { file },
+                bubbles: true
+            });
+            this.container.dispatchEvent(event);
+        } catch (error) {
+            console.error('Error removing recent file:', error);
         }
     }
 

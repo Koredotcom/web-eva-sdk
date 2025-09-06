@@ -1,3 +1,5 @@
+import { cloneDeep } from "lodash";
+import { default as fileUpload } from "../Attachments/fileUpload.js";
 import store from "../redux/store.js";
 import { attachmentIcon, createDeleteIcon } from "../templateRenderer/icons-library.js";
 import { getFileExtension } from "../utils/helpers.js";
@@ -33,40 +35,21 @@ const formatDate = (date) => {
     }
 };
 
-const handleFileAttach = (file, options = {}) => {
+const handleFileAttach = (e, file, options = {}) => {
     try {
-        console.log('Attaching file:', file);
+        fileUpload().setAttachmentContext(file);       
         
-        // You can call a callback if provided in options
-        if (options.onFileAttach && typeof options.onFileAttach === 'function') {
-            options.onFileAttach(file);
-        }
     } catch (error) {
         console.error('Error attaching file:', error);
     }
-};
-
-const handleFileRemove = (file, item, options = {}) => {
-    try {
-        console.log('Removing file from recent:', file);
-        
-        // Add fade out animation before removal
-        item.style.opacity = '0.5';
-        item.style.transition = 'opacity 0.3s ease';
-
-        // Remove from DOM after animation
-        setTimeout(() => {
-            item.remove();
-        }, 300);
-
-        // You can call a callback if provided in options
-        if (options.onFileRemove && typeof options.onFileRemove === 'function') {
-            options.onFileRemove(file);
+    finally{
+        /*close the modal */
+        if (options.onFileClose && typeof options.onFileClose === 'function') {
+            options.onFileClose();
         }
-    } catch (error) {
-        console.error('Error removing file:', error);
     }
 };
+
 
 
 const renderRecentFilesList = (targetEl, files, listType = 'recent', options = {}) => {
@@ -108,7 +91,7 @@ const renderRecentFilesList = (targetEl, files, listType = 'recent', options = {
             const file = files.find(f => String(f.id || f.fileId) === String(fileId));
             if (!file) return;
 
-            handleFileAttach(file, options);
+            handleFileAttach(e, file, options);
         });
 
         // Attach button click
@@ -120,22 +103,10 @@ const renderRecentFilesList = (targetEl, files, listType = 'recent', options = {
                 const file = files.find(f => String(f.id || f.fileId) === String(fileId));
                 if (!file) return;
 
-                handleFileAttach(file, options);
+                handleFileAttach(e, file, options);
             });
         }
-
-        // Delete button click
-        const deleteBtn = item.querySelector('.delete-btn');
-        if (deleteBtn) {
-            deleteBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                const fileId = item.getAttribute('data-file-id');
-                const file = files.find(f => String(f.id || f.fileId) === String(fileId));
-                if (!file) return;
-
-                handleFileRemove(file, item, options);
-            });
-        }
+        
     });
 };
 
@@ -151,39 +122,10 @@ const renderRecentFiles = (targetEl, options = {}) => {
     }
 };
 
-/**
- * Search and render filtered recent files
- * @param {HTMLElement} targetEl - The target DOM element
- * @param {string} searchTerm - Search term to filter files
- * @param {Object} options - Options object with callbacks
- */
-const searchAndRenderRecentFiles = (targetEl, searchTerm = '', options = {}) => {
-    try {
-        const state = store.getState();
-        let files = state?.global?.AllrecentFiles?.data?.files || [];
-        
-        // Filter files by search term if provided
-        if (searchTerm?.length > 0) {
-            const term = searchTerm.toLowerCase();
-            files = files.filter(file => 
-                (file?.name || file?.fileName || '').toLowerCase().includes(term) ||
-                getFileExtension(file?.name || file?.fileName || '').toLowerCase().includes(term)
-            );
-        }
-
-        renderRecentFilesList(targetEl, files, 'search', options);
-    } catch (error) {
-        console.error('Error searching recent files:', error);
-        targetEl.innerHTML = `<li class="error-message">Failed to search recent files</li>`;
-    }
-};
-
 export { 
     renderRecentFilesList, 
-    renderRecentFiles, 
-    searchAndRenderRecentFiles,    
+    renderRecentFiles,        
     formatFileSize,
     formatDate,
-    handleFileAttach,
-    handleFileRemove
+    handleFileAttach
 };
