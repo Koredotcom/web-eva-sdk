@@ -505,8 +505,8 @@ class ComposeBar {
                                 <div class='left-actions'>
                                 <div class='common-agents-container'>
                                     <button class="agents-action-item" data-eva-agents-action data-eva-open-dialog>
-                                        ${ActionsFlashIcon({ size: 18, color: "#667085" })}
-                                        ${CheveronDownIcon({ size: 14, color: "#667085" })}
+                                        ${ActionsFlashIcon({ size: 18, color: "#0F0F0F" })}
+                                        ${CheveronDownIcon({ size: 14, color: "#0F0F0F" })}
                                     </button>                                
                                     <div data-eva-common-agents style="display: inline-flex; gap: 8px;"></div>
                                 </div>
@@ -516,12 +516,12 @@ class ComposeBar {
                                     <sl-tooltip>
                                         <div slot="content" class="caTooltips">5 attachments, max 10MB each. <br/>PDF, XLS, DOC, CSV, TXT formats.</div>
                                         <button class="eva-input-action-btn attachment-btn" data-eva-attachment>
-                                            ${attachmentIcon({ size: 16, color: "#667085" })}
+                                            ${attachmentIcon({ size: 16, color: "#0F0F0F" })}
                                         </button>
                                     </sl-tooltip>
                                     <sl-tooltip content="Search using voice">
                                         <button class="eva-input-action-btn voice-btn" data-eva-speech>
-                                            ${microphoneIcon({ size: 16, color: "#667085" })}
+                                            ${microphoneIcon({ size: 16, color: "#0F0F0F" })}
                                         </button>
                                     </sl-tooltip>
                                     <button class="eva-input-action-btn send-btn" data-eva-send title="Send">
@@ -884,10 +884,10 @@ class ComposeBar {
         
 
         if (this.input?.length > 0) {
-            micButton.innerHTML = Close({ size: 12, color: "#667085" });
+            micButton.innerHTML = Close({ size: 12, color: "#0F0F0F" });
             micButton.title = "Clear input";            
         } else {
-            micButton.innerHTML = microphoneIcon({ size: 16, color: "#667085" });
+            micButton.innerHTML = microphoneIcon({ size: 16, color: "#0F0F0F" });
             micButton.title = "Search using voice";
         }
     }
