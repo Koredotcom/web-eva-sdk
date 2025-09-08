@@ -1,11 +1,11 @@
 import { cloneDeep, isEmpty } from "lodash";
-import { getCurrentQuestion } from "../../utils/helpers";
+import { getCurrentQuestion, getFileExtension } from "../../utils/helpers";
 import UpdateGPTPromptValue from "../../chat/gptTemplate/updateGPTPromptValue";
 import MultiResponse from "../../chat/gptTemplate/MultiResponse";
 import gptFormFunctionality from "../functionality/gpt-form-template";
 import store from "../../redux/store";
 import { QuillEditor } from "../../components";
-import { createDeleteIcon, Close } from "../icons-library";
+import { createDeleteIcon, Close, createExport } from "../icons-library";
 
 // Helper function to initialize Quill editor for a container
 const initializeQuillForContainer = (container, field, item, promptDropdownWords, index) => {
@@ -644,31 +644,7 @@ export function render(item) {
 
 		let contextFieldFileKey = `${contextField?.key}-${item?.messageId}`;
 		let fileDetails = uploadedFileState?.[contextFieldFileKey];
-
-		if(item?.loadingFiles?.includes(contextFieldFileKey)){
-			const loadingFileDiv = document.createElement("div");
-			loadingFileDiv.className = "loadingFileDetails";
-			loadingFileDiv.id = `loadingFile-${contextField?.key}-${item?.messageId}`;
-			loadingFileDiv.textContent = "Loading...";
-			grpInputDiv.appendChild(loadingFileDiv);
-		}
-
-		else if(fileDetails && fileDetails?.length > 0){
-			fileDetails?.forEach((file, index) => {
-				const uploadedFileDiv = document.createElement("div");
-				uploadedFileDiv.className = "uploadedFileDetails";
-				uploadedFileDiv.id = `uploadedFile-${contextField?.key}-${item?.messageId}-${index}`;
-				uploadedFileDiv.textContent = file?.title;
-
-				const removeButton = document.createElement("button");
-				removeButton.textContent =  "Remove";
-				removeButton.id = `removeButton-${contextField?.key}-${item?.messageId}-${index}`;
-				uploadedFileDiv.appendChild(removeButton);
-
-				grpInputDiv.appendChild(uploadedFileDiv);
-			});
-		}
-
+		
 		if (
 			contextField?.value?.type === "longText" ||
 			contextField?.value?.type === "simpleText" ||
@@ -691,7 +667,7 @@ export function render(item) {
 			grpWrapDiv.appendChild(grpNameDiv);
 			grpInputDiv.appendChild(grpWrapDiv);
 
-			if (contextField?.value?.allowMultipleFiles || (contextField?.value?.canUploadFile && !fileDetails?.length)) {
+			if ((contextField?.value?.canUploadFile && !fileDetails?.length) || contextField?.value?.allowMultipleFiles) {
 				const formFieldLongTextElement = document.createElement("div");
 				formFieldLongTextElement.className = "formField LongText";
 				const fileUploadLabel = document.createElement("label");
@@ -700,6 +676,10 @@ export function render(item) {
 				formFieldLongTextElement.appendChild(fileUploadLabel);
 
 				const inputField = document.createElement("input");
+				/*if allowMultipleFiles is true, then we need to add multiple attribute to the input field*/
+				if (contextField?.value?.allowMultipleFiles) {
+					inputField.multiple = true;
+				}
 				inputField.type = "file";
 				inputField.id = `fileUpload-${contextField?.key}-${item?.messageId}`;
 				fileUploadLabel.appendChild(inputField);
@@ -718,16 +698,99 @@ export function render(item) {
 		}
 
 		else if ((contextField?.value?.type === "file" && !fileDetails?.length) || contextField?.value?.allowMultipleFiles) {
+			
+			// Create the browse-field wrapper
+			const browseFieldDiv = document.createElement("div");
+			browseFieldDiv.className = "browse-field";
+			
+			// Create the browse-text-field container
+			const browseTextFieldDiv = document.createElement("div");
+			browseTextFieldDiv.className = "browse-text-field";
+			
+			// Create upload icon span
+			const uploadIconSpan = document.createElement("span");
+			uploadIconSpan.className = "uploadIcon";
+			uploadIconSpan.innerHTML = createExport({ size: 20, color: '#667085' });
+			
+			// Create text span
+			const textSpan = document.createElement("span");
+			textSpan.className = "text";
+			textSpan.textContent = "Drop files to attach or ";
+			
+			// Create browse link span
+			const linkTextSpan = document.createElement("span");
+			linkTextSpan.className = "linkText";
+			linkTextSpan.textContent = "browse";
+			linkTextSpan.id = `browseLink-${contextField?.key}-${item?.messageId}`; 
+			linkTextSpan.style.cursor = "pointer";
+			linkTextSpan.style.color = "#667085";
+			linkTextSpan.style.textDecoration = "underline";
+			
+			// Create hidden input field
 			const inputField = document.createElement("input");
 			inputField.type = "file";
+			/*if allowMultipleFiles is true, then we need to add multiple attribute to the input field*/
+			if (contextField?.value?.allowMultipleFiles) {
+				inputField.multiple = true;
+			}
 			inputField.id = `fileUpload-${contextField?.key}-${item?.messageId}`;
-			grpInputDiv.appendChild(inputField);
-
+			// Make input transparent and position it properly instead of display:none
+			inputField.style.display = "none";			
+			
+			// Append elements to build the structure first
+			browseTextFieldDiv.appendChild(uploadIconSpan);
+			browseTextFieldDiv.appendChild(textSpan);
+			browseTextFieldDiv.appendChild(linkTextSpan);
+			browseTextFieldDiv.appendChild(inputField);
+			
+			browseFieldDiv.appendChild(browseTextFieldDiv);
+			grpInputDiv.appendChild(browseFieldDiv);
+			
 			const removeButton = document.createElement("button");
 			removeButton.textContent = "Remove";
 			removeButton.id = `removeButton-${contextField?.key}-${item?.messageId}`;
 			removeButton.style.display = "none";
 			grpInputDiv.appendChild(removeButton);
+		}
+
+		/*once the files are uploaded, need to remove the text area of the context and these uploaded files should be displayed under content */
+
+		if (item?.loadingFiles?.includes(contextFieldFileKey)) {
+			const loadingFileDiv = document.createElement("div");
+			loadingFileDiv.className = "loadingFileDetails";
+			loadingFileDiv.id = `loadingFile-${contextField?.key}-${item?.messageId}`;
+			loadingFileDiv.textContent = "Loading...";
+			grpInputDiv.appendChild(loadingFileDiv);
+		}
+
+		else if (fileDetails && fileDetails?.length > 0) {
+			/*once the files are uploaded, need to remove the text area of the context and these uploaded files should be displayed under content */
+			const contextFieldTextAreaDiv = document.getElementById(`inputValue-${contextField?.key}-${item?.messageId}`);
+			if (contextFieldTextAreaDiv) {
+				contextFieldTextAreaDiv.remove();
+			}
+			fileDetails?.forEach((file, index) => {
+				const uploadedFileDiv = document.createElement("div");
+				uploadedFileDiv.className = "uploadedFileDetails";
+				uploadedFileDiv.id = `uploadedFile-${contextField?.key}-${item?.messageId}-${index}`;
+				
+				const fileImageDiv = document.createElement("div");
+				fileImageDiv.className = "fileImage";
+				fileImageDiv.innerHTML = `<img src="images/${getFileExtension(file?.name || file?.fileName || '')}.png" alt="${file?.title}" />`;
+				uploadedFileDiv.appendChild(fileImageDiv);
+				
+				const fileTitleDiv = document.createElement("div");
+				fileTitleDiv.className = "fileTitle";
+				fileTitleDiv.textContent = file?.title;
+				uploadedFileDiv.appendChild(fileTitleDiv);
+
+				const removeButton = document.createElement("button");
+				removeButton.textContent = "Remove";
+				removeButton.id = `removeButton-${contextField?.key}-${item?.messageId}-${index}`;
+				uploadedFileDiv.appendChild(removeButton);
+
+				grpInputDiv.appendChild(uploadedFileDiv);
+			});
 		}
 
 		tvInputGroupDiv.appendChild(grpInputDiv);
@@ -786,6 +849,10 @@ export function render(item) {
 
 				const inputField = document.createElement("input");
 				inputField.type = "file";
+				/*if allowMultipleFiles is true, then we need to add multiple attribute to the input field*/
+				if (field?.value?.allowMultipleFiles) {
+					inputField.multiple = true;
+				}
 				inputField.id = `fileUpload-${field?.key}-${item?.messageId}-${field?.uniqueFieldId}`;
 				fileUploadLabel.appendChild(inputField);
 
@@ -844,15 +911,24 @@ export function render(item) {
 						loadingFileDiv.textContent = "Loading...";
 						grpInputDiv.appendChild(loadingFileDiv);
 					}else{
-					const uploadedFileDiv = document.createElement("div");
-					uploadedFileDiv.className = "uploadedFileDetails";
-					uploadedFileDiv.id = `uploadedFile-${field?.key}-${item?.messageId}-${field?.uniqueFieldId}-${fileIndex}`;
-					uploadedFileDiv.textContent = file?.title;
+						const uploadedFileDiv = document.createElement("div");
+						uploadedFileDiv.className = "uploadedFileDetails";
+						uploadedFileDiv.id = `uploadedFile-${field?.key}-${item?.messageId}-${field?.uniqueFieldId}-${fileIndex}`;
+						
+						const fileImageDiv = document.createElement("div");
+						fileImageDiv.className = "fileImage";
+						fileImageDiv.innerHTML = `<img src="images/${getFileExtension(file?.name || file?.fileName || '')}.png" alt="${file?.title}" />`;
+						uploadedFileDiv.appendChild(fileImageDiv);
+						
+						const fileTitleDiv = document.createElement("div");
+						fileTitleDiv.className = "fileTitle";
+						fileTitleDiv.textContent = file?.title;
+						uploadedFileDiv.appendChild(fileTitleDiv);
 
-					const removeButton = document.createElement("button");
-					removeButton.textContent = "Remove";
-					removeButton.id = `removeButton-${field?.key}-${item?.messageId}-${field?.uniqueFieldId}-${fileIndex}`;
-					uploadedFileDiv.appendChild(removeButton);
+						const removeButton = document.createElement("button");
+						removeButton.textContent = "Remove";
+						removeButton.id = `removeButton-${field?.key}-${item?.messageId}-${field?.uniqueFieldId}-${fileIndex}`;
+						uploadedFileDiv.appendChild(removeButton);
 
 						grpInputDiv.appendChild(uploadedFileDiv);
 					}
@@ -893,6 +969,10 @@ export function render(item) {
 
 					const inputField = document.createElement("input");
 					inputField.type = "file";
+					/*if allowMultipleFiles is true, then we need to add multiple attribute to the input field*/
+					if (field?.value?.allowMultipleFiles) {
+						inputField.multiple = true;
+					}
 					inputField.id = `fileUpload-${field?.key}-${item?.messageId}-${field?.uniqueFieldId}`;
 					fileUploadLabel.appendChild(inputField);
 
@@ -1228,6 +1308,10 @@ export function render(item) {
 
 				const inputField = document.createElement("input");
 				inputField.type = "file";
+				/*if allowMultipleFiles is true, then we need to add multiple attribute to the input field*/
+				if (field?.value?.allowMultipleFiles) {
+					inputField.multiple = true;
+				}
 				inputField.id = `fileUpload-${field?.key}-${item?.messageId}-${field?.uniqueFieldId}`;
 				fileUploadLabel.appendChild(inputField);				
 				}

@@ -74,12 +74,21 @@ const gptFormFunctionality = (formData, item) => {
 		const inputField = document.getElementById(
 			`fileUpload-${contextField?.key}-${item?.messageId}`
 		);
-		if(inputField){
-		inputField.addEventListener("change", (event) => {
-			if (!inputField.eventListenerAdded) {
-				inputField.eventListenerAdded = true;
-					GptFileUpload(event, `${contextField?.key}-${item?.messageId}`, item?.reqId);
-				}
+
+		const browseField = document.getElementById(
+			`browseLink-${contextField?.key}-${item?.messageId}`
+		);
+		if(browseField && !browseField.eventListenerAdded){
+			browseField.eventListenerAdded = true;
+			browseField.addEventListener("click", (event) => {
+				event.preventDefault();				
+				document.getElementById(`fileUpload-${contextField?.key}-${item?.messageId}`)?.click();
+			});
+		}
+		if(inputField && !inputField.eventListenerAdded){
+			inputField.eventListenerAdded = true;
+			inputField.addEventListener("change", (event) => {
+				GptFileUpload(event, `${contextField?.key}-${item?.messageId}`, item?.reqId);
 			});
 		}
 
@@ -96,12 +105,10 @@ const gptFormFunctionality = (formData, item) => {
 				const inputField = document.getElementById(
 					`fileUpload-${field?.key}-${item?.messageId}-${field?.uniqueFieldId}`
 				);
-				if(inputField){
-				inputField.addEventListener("change", (event) => {
-					if (!inputField.eventListenerAdded) {
-						inputField.eventListenerAdded = true;
+				if(inputField && !inputField.eventListenerAdded){
+					inputField.eventListenerAdded = true;
+					inputField.addEventListener("change", (event) => {
 						GptFileUpload(event, `${field?.key}-${item?.messageId}-${field?.uniqueFieldId}`, item?.reqId);
-						}
 					});
 				}
 
