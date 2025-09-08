@@ -194,6 +194,14 @@ const BotConversation = (args) => {
             console.log("params data: ", data)
         }
         console.log("custom data in getBotConversation line 171 : ", payload?.customData)
+        setTimeout(() => {
+            const conversation = Object.values(state?.questions)?.find(c => c?.reqId === data?.cId)?.botConversation?.[data?.messageId]
+            
+            const scrollToTarget = document.getElementById(conversation?.messageId) 
+            if (scrollToTarget) {
+                scrollToTarget.scrollIntoView({behavior: "smooth" , block: "start"});
+            }
+        }, 1000);
         const res = await store.dispatch(advanceSearch({ params, payload, userId: state?.profile?.data?.id || data?.userId}))
         console.log("custom data in getBotConversation line 173 : ", payload?.customData)
         constructQuestionPostCall(res, data?.cId)
