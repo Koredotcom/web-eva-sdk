@@ -63,13 +63,23 @@ const Notification = () => {
     }
 
     const markAllAsRead = async () => {
-        //Method to mark all the notifications that are displayedas read
+        //Method to mark all the notifications that are displayedas read        
         let userId = state?.profile?.data?.id
-        let payload = {
+        let payload;
+        if (state?.notifications?.alert?.length > 0) {
+            payload = {
+                "readTill": state?.notifications?.alert?.[0]?.cd?.nId
+            }
+            const alertNotificationRes = await store.dispatch(readNotification({ userId, payload }))  
+            console.log("alertNotificationRes", alertNotificationRes)
+        }
+
+        payload = {
             "readTill": state?.notifications?.notifications?.[0]?._id
         }     
         /*get the total notifications to update the isRead state of the notifications*/                  
-        const res = await store.dispatch(readNotification({ userId, payload }))                
+        const res = await store.dispatch(readNotification({ userId, payload }))    
+        /*in case alert is there, when clicked on mark all as read, need to mark read for that alert as well */                    
         if(res?.payload?.SUCCESS){
             let wholeNotifications = [];
             let _notificationState = cloneDeep(state?.notifications);
