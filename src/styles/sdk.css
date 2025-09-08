@@ -71,3 +71,8 @@ html, body {
         font-size: 22px;
     }
 }
+
+*, :after, :before {
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+}

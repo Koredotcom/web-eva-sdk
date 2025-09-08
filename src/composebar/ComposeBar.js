@@ -513,12 +513,17 @@ class ComposeBar {
                                     <div class="composebar-context-container" style="display: none;"></div>
                                 </div>
                                 <div class="right-actions">
-                                    <button class="eva-input-action-btn attachment-btn" data-eva-attachment title="Attach file">
-                                        ${attachmentIcon({ size: 16, color: "#667085" })}
-                                    </button>
-                                    <button class="eva-input-action-btn voice-btn" data-eva-speech title="Search using voice">
-                                        ${microphoneIcon({ size: 16, color: "#667085" })}
-                                    </button>
+                                    <sl-tooltip>
+                                        <div slot="content" class="caTooltips">5 attachments, max 10MB each. <br/>PDF, XLS, DOC, CSV, TXT formats.</div>
+                                        <button class="eva-input-action-btn attachment-btn" data-eva-attachment>
+                                            ${attachmentIcon({ size: 16, color: "#667085" })}
+                                        </button>
+                                    </sl-tooltip>
+                                    <sl-tooltip content="Search using voice">
+                                        <button class="eva-input-action-btn voice-btn" data-eva-speech>
+                                            ${microphoneIcon({ size: 16, color: "#667085" })}
+                                        </button>
+                                    </sl-tooltip>
                                     <button class="eva-input-action-btn send-btn" data-eva-send title="Send">
                                         ${arrowCirlceUpIcon({ size: 16, color: "#101828" })}
                                     </button>
@@ -550,8 +555,8 @@ class ComposeBar {
                                             data-eva-agent-search-input-box                                            
                                             />
                                         </div>
-                                        <button class="agentSettings" style="display: none;">${settingsIcon({ size: 14, color: "#667085" })}</button>
-                                        <button class="agentSettings" data-eva-dialog-close>${createCloseIcon({ size: 14, color: "#667085" })}</button>
+                                        <button class="agentSettings" style="display: none;">${settingsIcon({ size: 13, color: "#667085" })}</button>
+                                        <button class="agentSettings" data-eva-dialog-close>${createCloseIcon({ size: 12, color: "#667085" })}</button>
                                     </div>
                                 </div>
                             </div>
@@ -564,27 +569,27 @@ class ComposeBar {
                         </div>                        
                     </sl-dialog>
                     
-                    <sl-dialog data-eva-attachment-dialog class="eva-attachments-dialog">
+                    <sl-dialog label="Attachments" data-eva-attachment-dialog class="eva-attachments-dialog">
                         <div class="composebarFilter">
                             <div class="attachmentsTabWrapper">
                                 <div class="attachmentsHeader">
                                     <div class="attachmentsTitle">
-                                        <h3>Attachments</h3>
-                                    </div>                                    
+                                        Attachments
+                                    </div> 
+                                    <div class="closeBtn" data-eva-attachment-dialog-close>${createCloseIcon({ size: 12, color: "#667085" })}</div>                                   
                                 </div>
                                 <div class="attachments-top-container">
-                                    <div class="attachments-top-container-left">
-                                        <div class="attachments-top-container-left-title">
-                                            <h3>Upload from computer</h3>
-                                            <h2>Upload upto 5 files, max 10MB each: PDF, XLS, DOC, CSV, TXT formats</h2>
-                                        </div>
+                                    <div class="container-left">
+                                        <div class="title">Upload from computer</div>
+                                        <div class="description">Upload upto 5 files, max 10MB each: PDF, XLS, DOC, CSV, TXT formats</div>
                                     </div>
-                                    <div class="attachments-top-container-right">
-                                        <button class="recent-files-container-upload-file-btn" upload-file-btn title="Attach file">
-                                            ${attachmentIcon({ size: 16, color: "#667085" })}
+                                    <div class="container-right">
+                                        <button class="recent-files-container-upload-file-btn" upload-file-btn>
+                                            Upload
                                         </button>                                        
                                     </div>
                                 </div>
+                                <div class="recent-title">Recents</div>
                             </div>
                             <div class="eva-recent-attachments-container" data-eva-recent-attachments-content>
                                 <ul class="eva-recent-attachments-list" data-eva-recent-files></ul>

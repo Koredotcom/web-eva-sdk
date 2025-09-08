@@ -66,11 +66,11 @@ const renderRecentFilesList = (targetEl, files, listType = 'recent', options = {
         const lastModified = formatDate(file?.lastModified || file?.updatedAt);
 
         return `<li class="eva-file-item" data-file-id="${file.id || file.fileId}" data-file-type="${listType}">
-            <div class="file-icon"></div>
+            <div class="file-icon"><img src="images/${fileExtension}.png" alt=''/></div>
             <div class="file-details">
                 <div class="file-name" title="${safeName}">${safeName}</div>
                 <div class="file-meta">
-                    <span class="file-extension"><img src="images/${fileExtension}.png" alt=''/></span>
+                    <span class="file-extension">${fileExtension}</span>
                     ${fileSize ? `<span>•</span><span class="file-size">${fileSize}</span>` : ''}
                     ${lastModified ? `<span>•</span><span class="file-date">${lastModified}</span>` : ''}
                 </div>
