@@ -17,9 +17,9 @@ function escapeHTML(str) {
 		?.replace(/'/g, "&#039;");
 }
 
-function renderUserQuestion(question, userIconTemplate) {
+function renderUserQuestion(question, userIconTemplate, conversation) {
 	if (question) {
-		return `<div class="message-bubble question">
+		return `<div class="message-bubble question" id = "${conversation?.messageId}">
 					<div class="message-content">
 						<div class="message-text">${encodeHtml(question)}</div>
 						${userIconTemplate ? userIconTemplate : ""}
@@ -34,7 +34,7 @@ function renderAssistantQuestion(conversation, assistantIconTemplate) {
 	if(conversation?.template_html){
 		question = conversation?.template_html;
 	}
-	return `<div class="bot-flex-wrapper">
+	return `<div class="bot-flex-wrapper answer-container">
 				${assistantIconTemplate}
 				<div class='answerCntr'>					
 					<div class="assistant-question-container ${conversation?.status === 'completed' ? 'completed-assistant-question-container' : ''}">
@@ -60,7 +60,8 @@ function createConversationHTML(
 				content += `<br/>`;
 				content += renderUserQuestion(
 					conversation?.answer,
-					userIconTemplate
+					userIconTemplate,
+					conversation
 				);
 				content += `<br/>`;
 			}
@@ -70,6 +71,7 @@ function createConversationHTML(
 						<div class="bot-icon-container">${assistantIconTemplate ? assistantIconTemplate : ""}</div>
 						<div class="message-container"><div class="loading-text">${encodeHtml(loadingText)}</div></div>
 					</div>
+					<div class="min-view-container"></div>
 			</div>`;
 			}
 		}	
@@ -87,7 +89,7 @@ function createConversationHTML(
                 <div class="completed">
 					${renderAssistantQuestion(conversation, assistantIconTemplate)}
 					<br/>
-					${renderUserQuestion(conversation?.answer, userIconTemplate)}
+					${renderUserQuestion(conversation?.answer, userIconTemplate, conversation)}
 					<br/>
                 </div>
             `;
