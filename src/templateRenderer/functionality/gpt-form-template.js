@@ -7,6 +7,7 @@ import AddAdditionalGPTResponse from "../../chat/gptTemplate/addAdditionalGPTRes
 import GptFileUpload from "../../chat/gptTemplate/gptFileUpload";
 import { cloneDeep } from "lodash";
 import store from "../../redux/store";
+import toast from "../../utils/toast";
 
 const gptFormFunctionality = (formData, item) => {
 	let contextField = formData?.contextFields?.[0];
@@ -92,6 +93,47 @@ const gptFormFunctionality = (formData, item) => {
 			});
 		}
 
+		// Add click listener for disabled context field upload inputs to show toast
+		if (contextField?.value?.canUploadFile && !contextField?.value?.allowMultipleFiles) {
+			const contextInputField = document.getElementById(
+				`fileUpload-${contextField?.key}-${item?.messageId}`
+			);
+			
+			if (contextInputField && !contextInputField.disabledClickListenerAdded) {
+				contextInputField.disabledClickListenerAdded = true;
+				
+				// Check if the context field has uploaded files to determine if input should be disabled
+				setTimeout(() => {
+					const contextFileKey = `${contextField?.key}-${item?.messageId}`;
+					const contextFileDetails = uploadedFilesState?.[contextFileKey];
+					const hasContextFiles = contextFileDetails && contextFileDetails?.length > 0;
+					
+					if (hasContextFiles) {
+						contextInputField.disabled = true;
+					}
+					
+					// Listen on parent label to catch both label and input clicks
+					const parentLabel = contextInputField.closest('label');
+					if (parentLabel && !parentLabel.disabledClickListenerAdded) {
+						parentLabel.disabledClickListenerAdded = true;
+						parentLabel.addEventListener("click", (event) => {
+							if (contextInputField.disabled) {
+								event.preventDefault();
+								event.stopPropagation();
+								
+								// Show warning toast
+								toast.warning("Upload limit reached. Remove the current file to upload a new one.", {
+									title: "Context Upload Disabled",
+									duration: 4000,
+									closable: true
+								});
+							}
+						});
+					}
+				}, 100); 
+			}
+		}
+
 	}
 
 	formData?.fieldValues?.forEach((parameters, index) => {
@@ -124,6 +166,36 @@ const gptFormFunctionality = (formData, item) => {
 							});
 						}
 					});
+				}
+			}
+
+			// Add click listener for disabled upload inputs to show toast
+			if (field?.value?.canUploadFile && !field?.value?.allowMultipleFiles) {
+				const inputField = document.getElementById(
+					`fileUpload-${field?.key}-${item?.messageId}-${field?.uniqueFieldId}`
+				);
+				
+				if (inputField && !inputField.disabledClickListenerAdded) {
+					inputField.disabledClickListenerAdded = true;
+					
+					// Listen on parent label to catch both label and input clicks
+					const parentLabel = inputField.closest('label');
+					if (parentLabel && !parentLabel.disabledClickListenerAdded) {
+						parentLabel.disabledClickListenerAdded = true;
+						parentLabel.addEventListener("click", (event) => {
+							if (inputField.disabled) {
+								event.preventDefault();
+								event.stopPropagation();
+								
+								// Show warning toast
+								toast.warning("Upload limit reached. Remove the current file to upload a new one.", {
+									title: "Upload Disabled",
+									duration: 4000,
+									closable: true
+								});
+							}
+						});
+					}
 				}
 			}
 

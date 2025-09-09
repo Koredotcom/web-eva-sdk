@@ -667,12 +667,12 @@ export function render(item) {
 			grpWrapDiv.appendChild(grpNameDiv);
 			grpInputDiv.appendChild(grpWrapDiv);
 
-			if ((contextField?.value?.canUploadFile && !fileDetails?.length) || contextField?.value?.allowMultipleFiles) {
+			if (contextField?.value?.canUploadFile) {
 				const formFieldLongTextElement = document.createElement("div");
 				formFieldLongTextElement.className = "formField LongText";
 				const fileUploadLabel = document.createElement("label");
 				fileUploadLabel.textContent = "Upload";
-				fileUploadLabel.className = "fileUploadLabel";
+				fileUploadLabel.className = "fileUploadLabel";				
 				formFieldLongTextElement.appendChild(fileUploadLabel);
 
 				const inputField = document.createElement("input");
@@ -697,7 +697,7 @@ export function render(item) {
 			grpInputDiv.appendChild(textareaElement);
 		}
 
-		else if ((contextField?.value?.type === "file" && !fileDetails?.length) || contextField?.value?.allowMultipleFiles) {
+		else if (contextField?.value?.type === "file") {
 			
 			// Create the browse-field wrapper
 			const browseFieldDiv = document.createElement("div");
@@ -752,18 +752,16 @@ export function render(item) {
 			removeButton.style.display = "none";
 			grpInputDiv.appendChild(removeButton);
 		}
+		
 
-		/*once the files are uploaded, need to remove the text area of the context and these uploaded files should be displayed under content */
-
-		if (item?.loadingFiles?.includes(contextFieldFileKey)) {
-			const loadingFileDiv = document.createElement("div");
-			loadingFileDiv.className = "loadingFileDetails";
-			loadingFileDiv.id = `loadingFile-${contextField?.key}-${item?.messageId}`;
-			loadingFileDiv.textContent = "Loading...";
-			grpInputDiv.appendChild(loadingFileDiv);
-		}
-
-		else if (fileDetails && fileDetails?.length > 0) {
+		if (fileDetails && fileDetails?.length > 0) {
+			/*if field has allowMultipleFiles as false, need to disable the upload button */
+			if (!contextField?.value?.allowMultipleFiles) {
+				const contextInputFieldToDisable = document.getElementById(`fileUpload-${contextField?.key}-${item?.messageId}`);
+				if (contextInputFieldToDisable) {
+					contextInputFieldToDisable.disabled = true;
+				}
+			}
 			/*once the files are uploaded, need to remove the text area of the context and these uploaded files should be displayed under content */
 			const contextFieldTextAreaDiv = document.getElementById(`inputValue-${contextField?.key}-${item?.messageId}`);
 			if (contextFieldTextAreaDiv) {
@@ -772,8 +770,7 @@ export function render(item) {
 			fileDetails?.forEach((file, index) => {
 				const uploadedFileDiv = document.createElement("div");
 				uploadedFileDiv.className = "uploadedFileDetails";
-				uploadedFileDiv.id = `uploadedFile-${contextField?.key}-${item?.messageId}-${index}`;
-				
+				uploadedFileDiv.id = `uploadedFile-${contextField?.key}-${item?.messageId}-${index}`;				
 				const fileImageDiv = document.createElement("div");
 				fileImageDiv.className = "fileImage";
 				fileImageDiv.innerHTML = `<img src="images/${getFileExtension(file?.name || file?.fileName || '')}.png" alt="${file?.title}" />`;
@@ -783,6 +780,23 @@ export function render(item) {
 				fileTitleDiv.className = "fileTitle";
 				fileTitleDiv.textContent = file?.title;
 				uploadedFileDiv.appendChild(fileTitleDiv);
+
+				/*when file is in loading state, need to append a loading div */
+				if (file?.loading) {
+					const loadingFileDiv = document.createElement("div");
+					loadingFileDiv.className = "loadingFileDetails";
+					loadingFileDiv.id = `loadingFile-${contextField?.key}-${item?.messageId}-${index}`;
+					loadingFileDiv.textContent = "Loading...";
+					uploadedFileDiv.appendChild(loadingFileDiv);
+				}
+				/*add file size div */
+				const fileSizeDiv = document.createElement("div");
+				fileSizeDiv.className = "fileSize";
+				fileSizeDiv.textContent = (file?.size >= 1024 * 1024
+					? `${(file.size / (1024 * 1024)).toFixed(2)} MB`
+					: `${(file.size / 1024).toFixed(2)} KB`
+				);
+				uploadedFileDiv.appendChild(fileSizeDiv);
 
 				const removeButton = document.createElement("button");
 				removeButton.textContent = "Remove";
@@ -827,20 +841,22 @@ export function render(item) {
 		parameters?.forEach((field, i) => {
 
 			let parameterFileKey = `${field?.key}-${item?.messageId}-${field?.uniqueFieldId}`;
-			let fileDetails = uploadedFileState?.[parameterFileKey];
+			let fileDetails = uploadedFileState?.[parameterFileKey] || [];
 			let hasUploadedFiles = fileDetails && fileDetails?.length > 0;
 			let isLoading = item?.loadingFiles?.includes(parameterFileKey);
+
+			let displayFieldTextArea = fileDetails?.length === 0 ;
 		
 			const tvInputGroupDiv = document.createElement("div");
+			const formFieldLongTextElement = document.createElement("div");
 			tvInputGroupDiv.className = `tvInputGroup ${field?.value?.type} ${
 				field?.value?.canUploadFile ? "uploadGrp" : ""
 			}`;
 		
 			const grpInputDiv = document.createElement("div");
 			grpInputDiv.className = "grpInput";
-
-			if (((field?.value?.canUploadFile && !hasUploadedFiles) || field?.value?.allowMultipleFiles) && field?.value?.type !== "file" && field?.value?.type !== "simpleText" && field?.value?.type !== "number" && field?.value?.type !== "longText") {
-				const formFieldLongTextElement = document.createElement("div");
+			/*the below block prepares upload button for all the fields except file */
+			if (field?.value?.canUploadFile && field?.value?.type !== "file" ) {				
 				formFieldLongTextElement.className = "formField LongText";
 				const fileUploadLabel = document.createElement("label");
 				fileUploadLabel.textContent = "Upload";
@@ -862,86 +878,8 @@ export function render(item) {
 				removeButton.style.display = "none";
 				formFieldLongTextElement.appendChild(removeButton);
 
-				grpInputDiv.appendChild(formFieldLongTextElement);
-			}	
-		
-			if (hasUploadedFiles || isLoading) {
-				const grpWrapDiv = document.createElement("div");
-				grpWrapDiv.className = "grpwrap";
-
-				const grpNameDiv = document.createElement("div");
-				grpNameDiv.className = "grpName";
-
-				const nameTitleDiv = document.createElement("div");
-				nameTitleDiv.className = "nameTitle";
-				nameTitleDiv.textContent = `${field?.label} ${field?.required || field?.value?.required ? "*" : ""
-					}`;
-				grpNameDiv.appendChild(nameTitleDiv);
-				grpWrapDiv.appendChild(grpNameDiv);
-				grpInputDiv.appendChild(grpWrapDiv);
-
-				// if (isLoading) {
-				// 	const loadingFileDiv = document.createElement("div");
-				// 	loadingFileDiv.className = "loadingFileDetails";
-				// 	loadingFileDiv.id = `loadingFile-${field?.key}-${item?.messageId}-${index}`;
-				// 	loadingFileDiv.textContent = "Loading...";
-				// 	grpInputDiv.appendChild(loadingFileDiv);
-				// } else {
-				// 	fileDetails?.forEach((file, fileIndex) => {
-				// 		const uploadedFileDiv = document.createElement("div");
-				// 		uploadedFileDiv.className = "uploadedFileDetails";
-				// 		uploadedFileDiv.id = `uploadedFile-${field?.key}-${item?.messageId}-${index}`;
-				// 		uploadedFileDiv.textContent = file?.title;
-
-				// 		const removeButton = document.createElement("button");
-				// 		removeButton.textContent =  "Remove";
-				// 		removeButton.id = `removeButton-${field?.key}-${item?.messageId}-${index}`;
-				// 		uploadedFileDiv.appendChild(removeButton);
-
-				// 		grpInputDiv.appendChild(uploadedFileDiv);
-				// 	});
-				// }
-
-				fileDetails?.forEach((file, fileIndex) => {
-					if(file?.loading){
-						/*add loading file div*/
-						const loadingFileDiv = document.createElement("div");
-						loadingFileDiv.className = "loadingFileDetails";
-						loadingFileDiv.id = `loadingFile-${field?.key}-${item?.messageId}-${field?.uniqueFieldId}-${fileIndex}`;
-						loadingFileDiv.textContent = "Loading...";
-						grpInputDiv.appendChild(loadingFileDiv);
-					}else{
-						const uploadedFileDiv = document.createElement("div");
-						uploadedFileDiv.className = "uploadedFileDetails";
-						uploadedFileDiv.id = `uploadedFile-${field?.key}-${item?.messageId}-${field?.uniqueFieldId}-${fileIndex}`;
-						
-						const fileImageDiv = document.createElement("div");
-						fileImageDiv.className = "fileImage";
-						fileImageDiv.innerHTML = `<img src="images/${getFileExtension(file?.name || file?.fileName || '')}.png" alt="${file?.title}" />`;
-						uploadedFileDiv.appendChild(fileImageDiv);
-						
-						const fileTitleDiv = document.createElement("div");
-						fileTitleDiv.className = "fileTitle";
-						fileTitleDiv.textContent = file?.title;
-						uploadedFileDiv.appendChild(fileTitleDiv);
-
-						const removeButton = document.createElement("button");
-						removeButton.textContent = "Remove";
-						removeButton.id = `removeButton-${field?.key}-${item?.messageId}-${field?.uniqueFieldId}-${fileIndex}`;
-						uploadedFileDiv.appendChild(removeButton);
-
-						grpInputDiv.appendChild(uploadedFileDiv);
-					}
-				});
-				
-				tvInputGroupDiv.appendChild(grpInputDiv);
-				singleResponseWrapper.appendChild(tvInputGroupDiv);
-
-				
-				return; // prevent further input rendering
-			}	
-				
-
+				// grpInputDiv.appendChild(formFieldLongTextElement);
+			}											
 			if (field?.value?.type === "richText" && field?.key === "content") {
 				const grpWrapDiv = document.createElement("div");
 				grpWrapDiv.className = "grpwrap";
@@ -958,7 +896,7 @@ export function render(item) {
 				grpWrapDiv.appendChild(grpNameDiv);
 				grpInputDiv.appendChild(grpWrapDiv);
 
-				if ((field?.value?.canUploadFile && !hasUploadedFiles) || field?.value?.allowMultipleFiles) {
+				if (field?.value?.canUploadFile) {
 					const formFieldLongTextElement =
 					document.createElement("div");
 					formFieldLongTextElement.className = "formField LongText";
@@ -1010,43 +948,19 @@ export function render(item) {
 					field?.required || field?.value?.required ? "*" : ""
 				}`;
 				grpNameDiv.appendChild(nameTitleDiv);
-				grpWrapDiv.appendChild(grpNameDiv);
-
-				// Add file upload inside grpwrap if needed
-				if (((field?.value?.canUploadFile && !hasUploadedFiles) || field?.value?.allowMultipleFiles)) {
-					const formFieldLongTextElement = document.createElement("div");
-					formFieldLongTextElement.className = "formField LongText";
-					const fileUploadLabel = document.createElement("label");
-					fileUploadLabel.textContent = "Upload";
-					fileUploadLabel.className = "fileUploadLabel";
-					formFieldLongTextElement.appendChild(fileUploadLabel);
-
-					const inputField = document.createElement("input");
-					inputField.type = "file";
-					/*if allowMultipleFiles is true, then we need to add multiple attribute to the input field*/
-					if (field?.value?.allowMultipleFiles) {
-						inputField.multiple = true;
-					}
-					inputField.id = `fileUpload-${field?.key}-${item?.messageId}-${field?.uniqueFieldId}`;
-					fileUploadLabel.appendChild(inputField);
-
-					const removeButton = document.createElement("button");
-					removeButton.textContent = "Remove";
-					removeButton.id = `removeButton-${field?.key}-${item?.messageId}-${field?.uniqueFieldId}`;
-					removeButton.style.display = "none";
-					formFieldLongTextElement.appendChild(removeButton);
-
-					grpWrapDiv.appendChild(formFieldLongTextElement);
-				}
+				grpWrapDiv.appendChild(grpNameDiv);				
+				grpWrapDiv.appendChild(formFieldLongTextElement);
+				// }
 
 				grpInputDiv.appendChild(grpWrapDiv);
-
+				if(displayFieldTextArea){
 				const textareaElement = document.createElement("sl-textarea");
 				textareaElement.id = `inputValue-${field?.key}-${item?.messageId}-${index}`;
 				textareaElement.placeholder =
 					field?.value?.placeholder || "Enter Text...";
 				textareaElement.value = field?.value?.default || "";
 				grpInputDiv.appendChild(textareaElement);
+				}
 			}
 
 			if (field?.value?.type === "dropdown" && !field?.value?.multi) {
@@ -1283,42 +1197,17 @@ export function render(item) {
 				}`;
 				grpNameDiv.appendChild(nameTitleDiv);
 				grpWrapDiv.appendChild(grpNameDiv);
-
-				// Add file upload inside grpwrap if needed
-				if (((field?.value?.canUploadFile && !hasUploadedFiles) || field?.value?.allowMultipleFiles)) {
-					const formFieldLongTextElement = document.createElement("div");
-					formFieldLongTextElement.className = "formField LongText";
-					const fileUploadLabel = document.createElement("label");
-					fileUploadLabel.textContent = "Upload";
-					fileUploadLabel.className = "fileUploadLabel";
-					formFieldLongTextElement.appendChild(fileUploadLabel);
-
-					const inputField = document.createElement("input");
-					inputField.type = "file";
-					/*if allowMultipleFiles is true, then we need to add multiple attribute to the input field*/
-					if (field?.value?.allowMultipleFiles) {
-						inputField.multiple = true;
-					}
-					inputField.id = `fileUpload-${field?.key}-${item?.messageId}-${field?.uniqueFieldId}`;
-					fileUploadLabel.appendChild(inputField);
-
-					const removeButton = document.createElement("button");
-					removeButton.textContent = "Remove";
-					removeButton.id = `removeButton-${field?.key}-${item?.messageId}-${field?.uniqueFieldId}`;
-					removeButton.style.display = "none";
-					formFieldLongTextElement.appendChild(removeButton);
-
-					grpWrapDiv.appendChild(formFieldLongTextElement);
-				}
-
+				grpWrapDiv.appendChild(formFieldLongTextElement);
+				
 				grpInputDiv.appendChild(grpWrapDiv);
-
+				if(displayFieldTextArea){
 				const textareaElement = document.createElement("sl-textarea");
 				textareaElement.id = `inputValue-${field?.key}-${item?.messageId}-${index}`;
 				textareaElement.placeholder =
 					field?.value?.placeholder || "Enter text...";
 				textareaElement.value = field?.value?.default || "";
 				grpInputDiv.appendChild(textareaElement);
+				}
 			}
 
 			if (field?.value?.type === "number") {
@@ -1335,34 +1224,7 @@ export function render(item) {
 				}`;
 				grpNameDiv.appendChild(nameTitleDiv);
 				grpWrapDiv.appendChild(grpNameDiv);
-
-				// Add file upload inside grpwrap if needed
-				if (((field?.value?.canUploadFile && !hasUploadedFiles) || field?.value?.allowMultipleFiles)) {
-					const formFieldLongTextElement = document.createElement("div");
-					formFieldLongTextElement.className = "formField LongText";
-					const fileUploadLabel = document.createElement("label");
-					fileUploadLabel.textContent = "Upload";
-					fileUploadLabel.className = "fileUploadLabel";
-					formFieldLongTextElement.appendChild(fileUploadLabel);
-
-					const inputField = document.createElement("input");
-					inputField.type = "file";
-					/*if allowMultipleFiles is true, then we need to add multiple attribute to the input field*/
-					if (field?.value?.allowMultipleFiles) {
-						inputField.multiple = true;
-					}
-					inputField.id = `fileUpload-${field?.key}-${item?.messageId}-${field?.uniqueFieldId}`;
-					fileUploadLabel.appendChild(inputField);
-
-					const removeButton = document.createElement("button");
-					removeButton.textContent = "Remove";
-					removeButton.id = `removeButton-${field?.key}-${item?.messageId}-${field?.uniqueFieldId}`;
-					removeButton.style.display = "none";
-					formFieldLongTextElement.appendChild(removeButton);
-
-					grpWrapDiv.appendChild(formFieldLongTextElement);
-				}
-
+				
 				grpInputDiv.appendChild(grpWrapDiv);
 
 				const numberElement = document.createElement("sl-input");
@@ -1380,26 +1242,11 @@ export function render(item) {
 				grpInputDiv.appendChild(numberElement);
 			}
 			/*need to revisit, as for the type file, we need to show upload bar only */
-			if (field?.value?.type === "file") {
-				// const grpWrapDiv = document.createElement("div");
-				// grpWrapDiv.className = "grpwrap";
-				// const nameTitleDiv = document.createElement("div");
-				// nameTitleDiv.className = "nameTitle";
-				// nameTitleDiv.textContent = `${field?.label} ${
-				// 	field?.required || field?.value?.required ? "*" : ""
-				// }`;
-				// grpInputDiv.appendChild(nameTitleDiv);
-				// grpWrapDiv.appendChild(grpInputDiv);
-				// const textareaElement = document.createElement("sl-textarea");
-				// textareaElement.id = `inputValue-${field?.key}-${item?.messageId}-${index}`;
-				// textareaElement.placeholder =
-				// 	field?.value?.placeholder || "Enter Content...";
-				// textareaElement.value = field?.value?.default || "";
-				// grpInputDiv.appendChild(textareaElement);
+			if (field?.value?.type === "file") {				
 				const formFieldLongTextElement = document.createElement("div");
 				formFieldLongTextElement.className = "formField file";
 
-				if((field?.value?.canUploadFile && !hasUploadedFiles) || field?.value?.allowMultipleFiles) {				
+								
 				const fileUploadLabel = document.createElement("label");
 				fileUploadLabel.textContent = "Drop files to attach or browse";
 				fileUploadLabel.className = "fileUploadLabel";
@@ -1413,7 +1260,7 @@ export function render(item) {
 				}
 				inputField.id = `fileUpload-${field?.key}-${item?.messageId}-${field?.uniqueFieldId}`;
 				fileUploadLabel.appendChild(inputField);				
-				}
+				
 				const grpWrapDiv = document.createElement("div");
 				grpWrapDiv.className = "grpwrap";
 
@@ -1430,29 +1277,61 @@ export function render(item) {
 				grpInputDiv.appendChild(grpWrapDiv);
 				
 			}
+			if (hasUploadedFiles || isLoading) {				
+				fileDetails?.forEach((file, fileIndex) => {
+					/*if field has allowMultipleFiles as false, need to disable the upload button */
+					if (!field?.value?.allowMultipleFiles) {
+						const inputFieldToDisable = document.getElementById(`fileUpload-${field?.key}-${item?.messageId}-${field?.uniqueFieldId}`);
+						if (inputFieldToDisable) {
+							inputFieldToDisable.disabled = true;
+						}
+					}
 
-			// if (field?.value?.canUploadFile) {
-			// 	const formFieldLongTextElement = document.createElement("div");
-			// 	formFieldLongTextElement.className = "formField LongText";
-			// 	const fileUploadLabel = document.createElement("label");
-			// 	fileUploadLabel.textContent = "Upload";
-			// 	fileUploadLabel.className = "fileUploadLabel";
-			// 	formFieldLongTextElement.appendChild(fileUploadLabel);
+					const uploadedFileDiv = document.createElement("div");
+					uploadedFileDiv.className = "uploadedFileDetails";
+					uploadedFileDiv.id = `uploadedFile-${field?.key}-${item?.messageId}-${field?.uniqueFieldId}-${fileIndex}`;
 
-			// 	const inputField = document.createElement("input");
-			// 	inputField.type = "file";
-			// 	inputField.id = `fileUpload-${field?.key}-${item?.messageId}-${field?.uniqueFieldId}`;
-			// 	fileUploadLabel.appendChild(inputField);
+					const fileImageDiv = document.createElement("div");
+					fileImageDiv.className = "fileImage";
+					fileImageDiv.innerHTML = `<img src="images/${getFileExtension(file?.name || file?.fileName || '')}.png" alt="${file?.title}" />`;
+					uploadedFileDiv.appendChild(fileImageDiv);
 
-			// 	const removeButton = document.createElement("button");
-			// 	removeButton.textContent = "Remove";
-			// 	removeButton.id = `removeButton-${field?.key}-${item?.messageId}-${field?.uniqueFieldId}`;
-			// 	removeButton.style.display = "none";
-			// 	formFieldLongTextElement.appendChild(removeButton);
+					const fileTitleDiv = document.createElement("div");
+					fileTitleDiv.className = "fileTitle";
+					fileTitleDiv.textContent = file?.title;
+					uploadedFileDiv.appendChild(fileTitleDiv);
 
-			// 	grpInputDiv.appendChild(formFieldLongTextElement);
-			// }
+					/*when file is in loading state, need to append a loading div */
+					if (file?.loading) {
+						const loadingFileDiv = document.createElement("div");
+						loadingFileDiv.className = "loadingFileDetails";
+						loadingFileDiv.id = `loadingFile-${field?.key}-${item?.messageId}-${field?.uniqueFieldId}-${fileIndex}`;
+						loadingFileDiv.textContent = "Loading...";
+						uploadedFileDiv.appendChild(loadingFileDiv);
+					}
+					/*add file size div */
+					const fileSizeDiv = document.createElement("div");
+					fileSizeDiv.className = "fileSize";
+					fileSizeDiv.textContent = (file?.size >= 1024 * 1024
+						? `${(file.size / (1024 * 1024)).toFixed(2)} MB`
+						: `${(file.size / 1024).toFixed(2)} KB`
+					);
+					uploadedFileDiv.appendChild(fileSizeDiv);
+					const removeButton = document.createElement("button");
+					removeButton.textContent = "Remove";
+					removeButton.id = `removeButton-${field?.key}-${item?.messageId}-${field?.uniqueFieldId}-${fileIndex}`;
+					uploadedFileDiv.appendChild(removeButton);
 
+					grpInputDiv.appendChild(uploadedFileDiv);
+
+				});
+
+				// tvInputGroupDiv.appendChild(grpInputDiv);
+				// singleResponseWrapper.appendChild(tvInputGroupDiv);
+
+
+			}
+			
 			tvInputGroupDiv.appendChild(grpInputDiv);
 			singleResponseWrapper.appendChild(tvInputGroupDiv);
 		});
