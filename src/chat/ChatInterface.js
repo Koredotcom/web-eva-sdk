@@ -104,7 +104,8 @@ const ChatInterface = (props) => {
         const scrollableElement = document.querySelector('.chatSec');
         if (scrollableElement) {
           requestAnimationFrame(() => {
-            scrollableElement.scrollTop = scrollableElement.scrollHeight;
+            //scrollableElement.scrollTop = scrollableElement.scrollHeight;
+            scrollableElement.scrollTo({ top: scrollableElement.scrollHeight, behavior: 'smooth' });
           });
         }
         console.log("payload in chat interface", payload)

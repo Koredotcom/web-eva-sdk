@@ -839,7 +839,7 @@ export function render(item) {
 			const grpInputDiv = document.createElement("div");
 			grpInputDiv.className = "grpInput";
 
-			if (((field?.value?.canUploadFile && !hasUploadedFiles) || field?.value?.allowMultipleFiles) && field?.value?.type !== "file") {
+			if (((field?.value?.canUploadFile && !hasUploadedFiles) || field?.value?.allowMultipleFiles) && field?.value?.type !== "file" && field?.value?.type !== "simpleText" && field?.value?.type !== "number" && field?.value?.type !== "longText") {
 				const formFieldLongTextElement = document.createElement("div");
 				formFieldLongTextElement.className = "formField LongText";
 				const fileUploadLabel = document.createElement("label");
@@ -1011,6 +1011,34 @@ export function render(item) {
 				}`;
 				grpNameDiv.appendChild(nameTitleDiv);
 				grpWrapDiv.appendChild(grpNameDiv);
+
+				// Add file upload inside grpwrap if needed
+				if (((field?.value?.canUploadFile && !hasUploadedFiles) || field?.value?.allowMultipleFiles)) {
+					const formFieldLongTextElement = document.createElement("div");
+					formFieldLongTextElement.className = "formField LongText";
+					const fileUploadLabel = document.createElement("label");
+					fileUploadLabel.textContent = "Upload";
+					fileUploadLabel.className = "fileUploadLabel";
+					formFieldLongTextElement.appendChild(fileUploadLabel);
+
+					const inputField = document.createElement("input");
+					inputField.type = "file";
+					/*if allowMultipleFiles is true, then we need to add multiple attribute to the input field*/
+					if (field?.value?.allowMultipleFiles) {
+						inputField.multiple = true;
+					}
+					inputField.id = `fileUpload-${field?.key}-${item?.messageId}-${field?.uniqueFieldId}`;
+					fileUploadLabel.appendChild(inputField);
+
+					const removeButton = document.createElement("button");
+					removeButton.textContent = "Remove";
+					removeButton.id = `removeButton-${field?.key}-${item?.messageId}-${field?.uniqueFieldId}`;
+					removeButton.style.display = "none";
+					formFieldLongTextElement.appendChild(removeButton);
+
+					grpWrapDiv.appendChild(formFieldLongTextElement);
+				}
+
 				grpInputDiv.appendChild(grpWrapDiv);
 
 				const textareaElement = document.createElement("sl-textarea");
@@ -1242,12 +1270,48 @@ export function render(item) {
 			}
 
 			if (field?.value?.type === "simpleText") {
+				const grpWrapDiv = document.createElement("div");
+				grpWrapDiv.className = "grpwrap";
+
+				const grpNameDiv = document.createElement("div");
+				grpNameDiv.className = "grpName";
+
 				const nameTitleDiv = document.createElement("div");
 				nameTitleDiv.className = "nameTitle";
 				nameTitleDiv.textContent = `${field?.label} ${
 					field?.required || field?.value?.required ? "*" : ""
 				}`;
-				grpInputDiv.appendChild(nameTitleDiv);
+				grpNameDiv.appendChild(nameTitleDiv);
+				grpWrapDiv.appendChild(grpNameDiv);
+
+				// Add file upload inside grpwrap if needed
+				if (((field?.value?.canUploadFile && !hasUploadedFiles) || field?.value?.allowMultipleFiles)) {
+					const formFieldLongTextElement = document.createElement("div");
+					formFieldLongTextElement.className = "formField LongText";
+					const fileUploadLabel = document.createElement("label");
+					fileUploadLabel.textContent = "Upload";
+					fileUploadLabel.className = "fileUploadLabel";
+					formFieldLongTextElement.appendChild(fileUploadLabel);
+
+					const inputField = document.createElement("input");
+					inputField.type = "file";
+					/*if allowMultipleFiles is true, then we need to add multiple attribute to the input field*/
+					if (field?.value?.allowMultipleFiles) {
+						inputField.multiple = true;
+					}
+					inputField.id = `fileUpload-${field?.key}-${item?.messageId}-${field?.uniqueFieldId}`;
+					fileUploadLabel.appendChild(inputField);
+
+					const removeButton = document.createElement("button");
+					removeButton.textContent = "Remove";
+					removeButton.id = `removeButton-${field?.key}-${item?.messageId}-${field?.uniqueFieldId}`;
+					removeButton.style.display = "none";
+					formFieldLongTextElement.appendChild(removeButton);
+
+					grpWrapDiv.appendChild(formFieldLongTextElement);
+				}
+
+				grpInputDiv.appendChild(grpWrapDiv);
 
 				const textareaElement = document.createElement("sl-textarea");
 				textareaElement.id = `inputValue-${field?.key}-${item?.messageId}-${index}`;
@@ -1258,12 +1322,48 @@ export function render(item) {
 			}
 
 			if (field?.value?.type === "number") {
+				const grpWrapDiv = document.createElement("div");
+				grpWrapDiv.className = "grpwrap";
+
+				const grpNameDiv = document.createElement("div");
+				grpNameDiv.className = "grpName";
+
 				const nameTitleDiv = document.createElement("div");
 				nameTitleDiv.className = "nameTitle";
 				nameTitleDiv.textContent = `${field?.label} ${
 					field?.required || field?.value?.required ? "*" : ""
 				}`;
-				grpInputDiv.appendChild(nameTitleDiv);
+				grpNameDiv.appendChild(nameTitleDiv);
+				grpWrapDiv.appendChild(grpNameDiv);
+
+				// Add file upload inside grpwrap if needed
+				if (((field?.value?.canUploadFile && !hasUploadedFiles) || field?.value?.allowMultipleFiles)) {
+					const formFieldLongTextElement = document.createElement("div");
+					formFieldLongTextElement.className = "formField LongText";
+					const fileUploadLabel = document.createElement("label");
+					fileUploadLabel.textContent = "Upload";
+					fileUploadLabel.className = "fileUploadLabel";
+					formFieldLongTextElement.appendChild(fileUploadLabel);
+
+					const inputField = document.createElement("input");
+					inputField.type = "file";
+					/*if allowMultipleFiles is true, then we need to add multiple attribute to the input field*/
+					if (field?.value?.allowMultipleFiles) {
+						inputField.multiple = true;
+					}
+					inputField.id = `fileUpload-${field?.key}-${item?.messageId}-${field?.uniqueFieldId}`;
+					fileUploadLabel.appendChild(inputField);
+
+					const removeButton = document.createElement("button");
+					removeButton.textContent = "Remove";
+					removeButton.id = `removeButton-${field?.key}-${item?.messageId}-${field?.uniqueFieldId}`;
+					removeButton.style.display = "none";
+					formFieldLongTextElement.appendChild(removeButton);
+
+					grpWrapDiv.appendChild(formFieldLongTextElement);
+				}
+
+				grpInputDiv.appendChild(grpWrapDiv);
 
 				const numberElement = document.createElement("sl-input");
 				numberElement.setAttribute("type", "number");
@@ -1276,7 +1376,6 @@ export function render(item) {
 				if (field?.value?.min !== undefined) {
 					numberElement.setAttribute("min", 0);
 				}
-				
 				
 				grpInputDiv.appendChild(numberElement);
 			}
