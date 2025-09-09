@@ -53,17 +53,9 @@ function createConversationHTML(
 ) {
 
 	if (conversation?.status === "in-progress") {
-		let content = "";
-		if (conversation?.loading) {
-			content += `<div class="message-bubble loading">
-					<div class="bot-flex-wrapper">
-						<div class="bot-icon-container">${assistantIconTemplate ? assistantIconTemplate : ""}</div>
-						<div class="message-container"><div class="loading-text">${encodeHtml(loadingText)}</div></div>
-					</div>
-			</div>`;
-		}
+		let content = "";		
 		if (conversation?.templateType === "search_answer") {
-			content = renderAssistantQuestion(conversation, assistantIconTemplate);			
+			content += renderAssistantQuestion(conversation, assistantIconTemplate);			
 			if (conversation?.answer) {
 				content += `<br/>`;
 				content += renderUserQuestion(
@@ -71,6 +63,14 @@ function createConversationHTML(
 					userIconTemplate
 				);
 				content += `<br/>`;
+			}
+			if (conversation?.loading) {
+				content += `<div class="message-bubble loading">
+					<div class="bot-flex-wrapper">
+						<div class="bot-icon-container">${assistantIconTemplate ? assistantIconTemplate : ""}</div>
+						<div class="message-container"><div class="loading-text">${encodeHtml(loadingText)}</div></div>
+					</div>
+			</div>`;
 			}
 		}	
 		if (conversation?.templateType === "bot_template") {
@@ -241,8 +241,10 @@ export function setupTemplates(botConversation) {
 				const templateDiv = document.querySelector(
 					`.botTemplate-${conversation?.messageId}`
 				);
-				if (templateDiv && conversation?.template_html) {
-					templateDiv.appendChild(conversation.template_html);
+				if (templateDiv && conversation?.template_html) {					
+					if (!templateDiv.contains(conversation.template_html)) {
+						templateDiv.appendChild(conversation.template_html);
+					}
 				}
 			});
 		}
