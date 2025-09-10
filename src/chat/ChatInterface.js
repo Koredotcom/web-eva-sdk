@@ -180,6 +180,15 @@ const ChatInterface = (props) => {
 		}else{
 			qId = constructQuestionInitial({...params, ...payload, replaceExistingQsn})
 		}
+    setTimeout(() => {
+       const scrollableElement = document.querySelector('.chatSec');
+       if (scrollableElement) {
+            scrollableElement.scrollTo({
+              top: scrollableElement.scrollHeight,
+              behavior: 'smooth'
+            });
+       }
+    }, 200);
 
 		if(arg?.multiIntentExecution){
 			// params.qId = arg?.params?.stepId;
