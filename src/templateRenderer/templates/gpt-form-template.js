@@ -925,8 +925,7 @@ export function render(item) {
 
 				const textareaElement = document.createElement("sl-textarea");
 				textareaElement.id = `inputValue-${field?.key}-${item?.messageId}-${index}`;
-				textareaElement.placeholder =
-					field?.value?.placeholder || "Enter Text...";
+				textareaElement.setAttribute("placeholder", field?.value?.placeholder || "Enter Text...");
 				textareaElement.value = field?.value?.default || "";
 				grpInputDiv.appendChild(textareaElement);
 			}
@@ -1357,7 +1356,12 @@ export function render(item) {
 	submitButton.type = "button";
 	submitButton.textContent = item?.content?.formFields?.submitAction?.title;
 	submitButton.setAttribute("variant", "primary");
-	submitButton.id = `submitGptForm-${item?.messageId}`;
+	submitButton.id = `submitGptForm-${item?.messageId}`;	
+	if (enableSubmitButton(item)){
+		submitButton.removeAttribute("disabled");
+	}else{
+		submitButton.setAttribute("disabled", "");
+	}
 	actionButtonsDiv.appendChild(submitButton);
 
 	buttonWrapper.appendChild(actionButtonsDiv);
@@ -1392,6 +1396,29 @@ const updateChoice = (event, item, index) => {
 	const updatedPromptValue = event?.target?.value;
 	UpdateGPTPromptValue(currentQsn, index, updatedPromptValue, true);
 };
+
+const enableSubmitButton = (item) => {	
+	const isContextFieldCheckPassed = checkContextField(item?.gpt_forms?.contextFields?.[0], item?.messageId);
+	const isParamFieldsCheckPassed = true;
+	return isContextFieldCheckPassed && isParamFieldsCheckPassed;
+};
+
+const checkContextField = (contextField, messageId) => {
+	const isContextFieldRequired = contextField?.value?.required;
+	const gptUploadedFiles = cloneDeep(store.getState().global.GptUploadedFiles);
+	const contextFileKey = `${contextField?.key}-${messageId}`;
+	const contextFileDetails = gptUploadedFiles?.[contextFileKey] || [];
+	const contextFieldDiv = document.getElementById(`inputValue-${contextField?.key}-${messageId}`);
+	if(!isContextFieldRequired){
+		return true;
+	}else{
+		return (contextFieldDiv?.value?.length > 0 || contextFileDetails?.length > 0);
+	}
+	
+}
+
+
+
 
 // Utility function to get selected value from any dropdown
 const getDropdownSelectedValue = (dropdownId) => {
