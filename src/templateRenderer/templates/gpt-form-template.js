@@ -5,7 +5,7 @@ import MultiResponse from "../../chat/gptTemplate/MultiResponse";
 import gptFormFunctionality from "../functionality/gpt-form-template";
 import store from "../../redux/store";
 import { QuillEditor } from "../../components";
-import { createDeleteIcon, Close, createExport } from "../icons-library";
+import { createDeleteIcon, Close, createExport, createCloseIcon } from "../icons-library";
 
 // Helper function to initialize Quill editor for a container
 const initializeQuillForContainer = (container, field, item, promptDropdownWords, index) => {
@@ -697,36 +697,75 @@ export function render(item) {
 			grpInputDiv.appendChild(textareaElement);
 		}
 
-		else if (contextField?.value?.type === "file") {
+		else if (contextField?.value?.type === "file") 
+		// 	{
 			
-			// Create the browse-field wrapper
-			const browseFieldDiv = document.createElement("div");
-			browseFieldDiv.className = "browse-field";
+		// 	// Create the browse-field wrapper
+		// 	const browseFieldDiv = document.createElement("div");
+		// 	browseFieldDiv.className = "browse-field";
 			
-			// Create the browse-text-field container
-			const browseTextFieldDiv = document.createElement("div");
-			browseTextFieldDiv.className = "browse-text-field";
+		// 	// Create the browse-text-field container
+		// 	const browseTextFieldDiv = document.createElement("div");
+		// 	browseTextFieldDiv.className = "browse-text-field";
 			
-			// Create upload icon span
+		// 	// Create upload icon span
+		// 	const uploadIconSpan = document.createElement("span");
+		// 	uploadIconSpan.className = "uploadIcon";
+		// 	uploadIconSpan.innerHTML = createExport({ size: 20, color: '#667085' });
+			
+		// 	// Create text span
+		// 	const textSpan = document.createElement("span");
+		// 	textSpan.className = "text";
+		// 	textSpan.textContent = "Drop files to attach or ";
+			
+		// 	// Create browse link span
+		// 	const linkTextSpan = document.createElement("span");
+		// 	linkTextSpan.className = "linkText";
+		// 	linkTextSpan.textContent = "browse";
+		// 	linkTextSpan.id = `browseLink-${contextField?.key}-${item?.messageId}`; 
+		// 	linkTextSpan.style.cursor = "pointer";
+		// 	linkTextSpan.style.color = "#667085";
+		// 	linkTextSpan.style.textDecoration = "underline";
+			
+		// 	// Create hidden input field
+		// 	const inputField = document.createElement("input");
+		// 	inputField.type = "file";
+		// 	/*if allowMultipleFiles is true, then we need to add multiple attribute to the input field*/
+		// 	if (contextField?.value?.allowMultipleFiles) {
+		// 		inputField.multiple = true;
+		// 	}
+		// 	inputField.id = `fileUpload-${contextField?.key}-${item?.messageId}`;
+		// 	// Make input transparent and position it properly instead of display:none
+		// 	inputField.style.display = "none";			
+			
+		// 	// Append elements to build the structure first
+		// 	browseTextFieldDiv.appendChild(uploadIconSpan);
+		// 	browseTextFieldDiv.appendChild(textSpan);
+		// 	browseTextFieldDiv.appendChild(linkTextSpan);
+		// 	browseTextFieldDiv.appendChild(inputField);
+			
+		// 	browseFieldDiv.appendChild(browseTextFieldDiv);
+		// 	grpInputDiv.appendChild(browseFieldDiv);
+			
+		// 	const removeButton = document.createElement("button");
+		// 	removeButton.textContent = "Remove";
+		// 	removeButton.id = `removeButton-${contextField?.key}-${item?.messageId}`;
+		// 	removeButton.style.display = "none";
+		// 	grpInputDiv.appendChild(removeButton);
+		// }
+		{				
+			const formFieldLongTextElement = document.createElement("div");
+			formFieldLongTextElement.className = "formField file";
+
 			const uploadIconSpan = document.createElement("span");
 			uploadIconSpan.className = "uploadIcon";
 			uploadIconSpan.innerHTML = createExport({ size: 20, color: '#667085' });
-			
-			// Create text span
-			const textSpan = document.createElement("span");
-			textSpan.className = "text";
-			textSpan.textContent = "Drop files to attach or ";
-			
-			// Create browse link span
-			const linkTextSpan = document.createElement("span");
-			linkTextSpan.className = "linkText";
-			linkTextSpan.textContent = "browse";
-			linkTextSpan.id = `browseLink-${contextField?.key}-${item?.messageId}`; 
-			linkTextSpan.style.cursor = "pointer";
-			linkTextSpan.style.color = "#667085";
-			linkTextSpan.style.textDecoration = "underline";
-			
-			// Create hidden input field
+			formFieldLongTextElement.appendChild(uploadIconSpan);
+			const fileUploadLabel = document.createElement("label");
+			fileUploadLabel.textContent = "Drop files to attach or browse";
+			fileUploadLabel.className = "fileUploadLabel";
+			formFieldLongTextElement.appendChild(fileUploadLabel);
+
 			const inputField = document.createElement("input");
 			inputField.type = "file";
 			/*if allowMultipleFiles is true, then we need to add multiple attribute to the input field*/
@@ -734,78 +773,139 @@ export function render(item) {
 				inputField.multiple = true;
 			}
 			inputField.id = `fileUpload-${contextField?.key}-${item?.messageId}`;
-			// Make input transparent and position it properly instead of display:none
-			inputField.style.display = "none";			
+			fileUploadLabel.appendChild(inputField);				
 			
-			// Append elements to build the structure first
-			browseTextFieldDiv.appendChild(uploadIconSpan);
-			browseTextFieldDiv.appendChild(textSpan);
-			browseTextFieldDiv.appendChild(linkTextSpan);
-			browseTextFieldDiv.appendChild(inputField);
+			const grpWrapDiv = document.createElement("div");
+			grpWrapDiv.className = "grpwrap";
+
+			const grpNameDiv = document.createElement("div");
+			grpNameDiv.className = "grpName";
+
+			const nameTitleDiv = document.createElement("div");
+			nameTitleDiv.className = "nameTitle";
+			nameTitleDiv.textContent = `${contextField?.label} ${contextField?.required || contextField?.value?.required ? "*" : ""
+				}`;
+			grpNameDiv.appendChild(nameTitleDiv);
+			grpWrapDiv.appendChild(grpNameDiv);	
+			grpWrapDiv.appendChild(formFieldLongTextElement);			
+			grpInputDiv.appendChild(grpWrapDiv);
 			
-			browseFieldDiv.appendChild(browseTextFieldDiv);
-			grpInputDiv.appendChild(browseFieldDiv);
-			
-			const removeButton = document.createElement("button");
-			removeButton.textContent = "Remove";
-			removeButton.id = `removeButton-${contextField?.key}-${item?.messageId}`;
-			removeButton.style.display = "none";
-			grpInputDiv.appendChild(removeButton);
 		}
 		
 
-		if (fileDetails && fileDetails?.length > 0) {
+		if (fileDetails && fileDetails?.length > 0) 
+		// 	{
+		// 	/*if field has allowMultipleFiles as false, need to disable the upload button */
+		// 	if (!contextField?.value?.allowMultipleFiles) {
+		// 		const contextInputFieldToDisable = document.getElementById(`fileUpload-${contextField?.key}-${item?.messageId}`);
+		// 		if (contextInputFieldToDisable) {
+		// 			contextInputFieldToDisable.disabled = true;
+		// 		}
+		// 	}
+		// 	/*once the files are uploaded, need to remove the text area of the context and these uploaded files should be displayed under content */
+		// 	const contextFieldTextAreaDiv = document.getElementById(`inputValue-${contextField?.key}-${item?.messageId}`);
+		// 	if (contextFieldTextAreaDiv) {
+		// 		contextFieldTextAreaDiv.remove();
+		// 	}
+		// 	fileDetails?.forEach((file, index) => {
+		// 		const uploadedFileDiv = document.createElement("div");
+		// 		uploadedFileDiv.className = "uploadedFileDetails";
+		// 		uploadedFileDiv.id = `uploadedFile-${contextField?.key}-${item?.messageId}-${index}`;				
+		// 		const fileImageDiv = document.createElement("div");
+		// 		fileImageDiv.className = "fileImage";
+		// 		fileImageDiv.innerHTML = `<img src="images/${getFileExtension(file?.name || file?.fileName || '')}.png" alt="${file?.title}" />`;
+		// 		uploadedFileDiv.appendChild(fileImageDiv);
+				
+		// 		const fileTitleDiv = document.createElement("div");
+		// 		fileTitleDiv.className = "fileTitle";
+		// 		fileTitleDiv.textContent = file?.title;
+		// 		uploadedFileDiv.appendChild(fileTitleDiv);
+
+		// 		/*when file is in loading state, need to append a loading div */
+		// 		if (file?.loading) {
+		// 			const loadingFileDiv = document.createElement("div");
+		// 			loadingFileDiv.className = "loadingFileDetails";
+		// 			loadingFileDiv.id = `loadingFile-${contextField?.key}-${item?.messageId}-${index}`;
+		// 			loadingFileDiv.textContent = "Loading...";
+		// 			uploadedFileDiv.appendChild(loadingFileDiv);
+		// 		}
+		// 		/*add file size div */
+		// 		const fileSizeDiv = document.createElement("div");
+		// 		fileSizeDiv.className = "fileSize";
+		// 		fileSizeDiv.textContent = (file?.size >= 1024 * 1024
+		// 			? `${(file.size / (1024 * 1024)).toFixed(2)} MB`
+		// 			: `${(file.size / 1024).toFixed(2)} KB`
+		// 		);
+		// 		uploadedFileDiv.appendChild(fileSizeDiv);
+
+		// 		const removeButton = document.createElement("button");
+		// 		removeButton.textContent = "Remove";
+		// 		removeButton.id = `removeButton-${contextField?.key}-${item?.messageId}-${index}`;
+		// 		uploadedFileDiv.appendChild(removeButton);
+
+		// 		grpInputDiv.appendChild(uploadedFileDiv);
+		// 	});
+		// }
+
+		fileDetails?.forEach((file, index) => {
 			/*if field has allowMultipleFiles as false, need to disable the upload button */
 			if (!contextField?.value?.allowMultipleFiles) {
-				const contextInputFieldToDisable = document.getElementById(`fileUpload-${contextField?.key}-${item?.messageId}`);
-				if (contextInputFieldToDisable) {
-					contextInputFieldToDisable.disabled = true;
+				const inputFieldToDisable = document.getElementById(`fileUpload-${contextField?.key}-${item?.messageId}`);
+				if (inputFieldToDisable) {
+					inputFieldToDisable.disabled = true;
 				}
 			}
-			/*once the files are uploaded, need to remove the text area of the context and these uploaded files should be displayed under content */
-			const contextFieldTextAreaDiv = document.getElementById(`inputValue-${contextField?.key}-${item?.messageId}`);
-			if (contextFieldTextAreaDiv) {
-				contextFieldTextAreaDiv.remove();
+
+			const uploadedFileDiv = document.createElement("div");
+			uploadedFileDiv.className = "uploadedFileDetails";
+			uploadedFileDiv.id = `uploadedFile-${contextField?.key}-${item?.messageId}-${index}`;
+
+			const fileImageDiv = document.createElement("div");
+			fileImageDiv.className = "fileImage";
+			fileImageDiv.innerHTML = `<img src="images/${getFileExtension(file?.name || file?.fileName || '')}.png" alt="${file?.title}" />`;
+			uploadedFileDiv.appendChild(fileImageDiv);
+
+			const fileTitleDiv = document.createElement("div");
+			fileTitleDiv.className = "fileTitle";
+			fileTitleDiv.textContent = file?.title;
+			const fileInfoDiv = document.createElement("div");
+			fileInfoDiv.className = "fileInfo";
+			fileInfoDiv.appendChild(fileTitleDiv);
+
+			/*when file is in loading state, need to append a loading div */
+			if (file?.loading) {
+				const loadingFileDiv = document.createElement("div");
+				loadingFileDiv.className = "loadingOverlay";
+				loadingFileDiv.id = `loadingFile-${contextField?.key}-${item?.messageId}-${index}`;
+				const waloaderDiv = document.createElement("div");
+				waloaderDiv.className ="waloader";
+				loadingFileDiv.appendChild(waloaderDiv)
+				fileInfoDiv.appendChild(loadingFileDiv);
 			}
-			fileDetails?.forEach((file, index) => {
-				const uploadedFileDiv = document.createElement("div");
-				uploadedFileDiv.className = "uploadedFileDetails";
-				uploadedFileDiv.id = `uploadedFile-${contextField?.key}-${item?.messageId}-${index}`;				
-				const fileImageDiv = document.createElement("div");
-				fileImageDiv.className = "fileImage";
-				fileImageDiv.innerHTML = `<img src="images/${getFileExtension(file?.name || file?.fileName || '')}.png" alt="${file?.title}" />`;
-				uploadedFileDiv.appendChild(fileImageDiv);
-				
-				const fileTitleDiv = document.createElement("div");
-				fileTitleDiv.className = "fileTitle";
-				fileTitleDiv.textContent = file?.title;
-				uploadedFileDiv.appendChild(fileTitleDiv);
+			/*add file size div */
+			const fileSizeDiv = document.createElement("div");
+			fileSizeDiv.className = "fileSize";
+			fileSizeDiv.textContent = (file?.size >= 1024 * 1024
+				? `${(file.size / (1024 * 1024)).toFixed(2)} MB`
+				: `${(file.size / 1024).toFixed(2)} KB`
+			);
+			fileInfoDiv.appendChild(fileSizeDiv);
+			uploadedFileDiv.appendChild(fileInfoDiv);
+			/*add remove button */
+			const removeButton = document.createElement("span");
+			removeButton.innerHTML = createCloseIcon({ size: 10, color: '#A0A0AB' });
+			removeButton.className = "closeIcon";
+			removeButton.id = `removeButton-${contextField?.key}-${item?.messageId}-${index}`;
+			uploadedFileDiv.appendChild(removeButton);
 
-				/*when file is in loading state, need to append a loading div */
-				if (file?.loading) {
-					const loadingFileDiv = document.createElement("div");
-					loadingFileDiv.className = "loadingFileDetails";
-					loadingFileDiv.id = `loadingFile-${contextField?.key}-${item?.messageId}-${index}`;
-					loadingFileDiv.textContent = "Loading...";
-					uploadedFileDiv.appendChild(loadingFileDiv);
-				}
-				/*add file size div */
-				const fileSizeDiv = document.createElement("div");
-				fileSizeDiv.className = "fileSize";
-				fileSizeDiv.textContent = (file?.size >= 1024 * 1024
-					? `${(file.size / (1024 * 1024)).toFixed(2)} MB`
-					: `${(file.size / 1024).toFixed(2)} KB`
-				);
-				uploadedFileDiv.appendChild(fileSizeDiv);
+			// grpInputDiv.appendChild(uploadedFileDiv);
+			/*add uploaded file wrapper */
+			const uploadedFileWrapper = document.createElement("div");
+			uploadedFileWrapper.className = "uploadedFileWrapper";
+			uploadedFileWrapper.appendChild(uploadedFileDiv);
+			grpInputDiv.appendChild(uploadedFileWrapper);
 
-				const removeButton = document.createElement("button");
-				removeButton.textContent = "Remove";
-				removeButton.id = `removeButton-${contextField?.key}-${item?.messageId}-${index}`;
-				uploadedFileDiv.appendChild(removeButton);
-
-				grpInputDiv.appendChild(uploadedFileDiv);
-			});
-		}
+		});
 
 		tvInputGroupDiv.appendChild(grpInputDiv);
 		contextFieldWrapper.appendChild(tvInputGroupDiv);
@@ -1299,15 +1399,19 @@ export function render(item) {
 					const fileTitleDiv = document.createElement("div");
 					fileTitleDiv.className = "fileTitle";
 					fileTitleDiv.textContent = file?.title;
-					uploadedFileDiv.appendChild(fileTitleDiv);
+					const fileInfoDiv = document.createElement("div");
+					fileInfoDiv.className = "fileInfo";
+					fileInfoDiv.appendChild(fileTitleDiv);
 
 					/*when file is in loading state, need to append a loading div */
 					if (file?.loading) {
 						const loadingFileDiv = document.createElement("div");
-						loadingFileDiv.className = "loadingFileDetails";
+						loadingFileDiv.className = "loadingOverlay";
 						loadingFileDiv.id = `loadingFile-${field?.key}-${item?.messageId}-${field?.uniqueFieldId}-${fileIndex}`;
-						loadingFileDiv.textContent = "Loading...";
-						uploadedFileDiv.appendChild(loadingFileDiv);
+						const waloaderDiv = document.createElement("div");
+						waloaderDiv.className ="waloader";
+						loadingFileDiv.appendChild(waloaderDiv)
+						fileInfoDiv.appendChild(loadingFileDiv);
 					}
 					/*add file size div */
 					const fileSizeDiv = document.createElement("div");
@@ -1316,13 +1420,21 @@ export function render(item) {
 						? `${(file.size / (1024 * 1024)).toFixed(2)} MB`
 						: `${(file.size / 1024).toFixed(2)} KB`
 					);
-					uploadedFileDiv.appendChild(fileSizeDiv);
-					const removeButton = document.createElement("button");
-					removeButton.textContent = "Remove";
+					fileInfoDiv.appendChild(fileSizeDiv);
+					uploadedFileDiv.appendChild(fileInfoDiv);
+					/*add remove button */
+					const removeButton = document.createElement("span");
+					removeButton.innerHTML = createCloseIcon({ size: 10, color: '#A0A0AB' });
+					removeButton.className = "closeIcon";
 					removeButton.id = `removeButton-${field?.key}-${item?.messageId}-${field?.uniqueFieldId}-${fileIndex}`;
 					uploadedFileDiv.appendChild(removeButton);
 
-					grpInputDiv.appendChild(uploadedFileDiv);
+					// grpInputDiv.appendChild(uploadedFileDiv);
+					/*add uploaded file wrapper */
+					const uploadedFileWrapper = document.createElement("div");
+					uploadedFileWrapper.className = "uploadedFileWrapper";
+					uploadedFileWrapper.appendChild(uploadedFileDiv);
+					grpInputDiv.appendChild(uploadedFileWrapper);
 
 				});
 
