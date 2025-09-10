@@ -439,6 +439,7 @@ const ChatInterface = (props) => {
         reqId = Object.entries(_questions).find(([key, value]) => value?.reqId === detail?.data?.reqId)?.[0]
       }
       let currentQuestion = _questions[reqId]
+      if(detail?.entity !== "answerContext"){      
       if(detail?.data?.answerMeta?.hasOwnProperty('messageId')) {
         currentQuestion = {...currentQuestion, ...detail?.data?.answerMeta}      
         currentQuestion.botConversation = {}  
@@ -454,7 +455,11 @@ const ChatInterface = (props) => {
             "status": "in-progress",
             "templateType": detail?.data?.templateType || "search_answer",
         }
-      }      
+      } 
+    } else {
+      currentQuestion.agentIcon = detail?.data?.answerMeta?.agentIcon
+      currentQuestion.agentName = detail?.data?.answerMeta?.agentName
+    }
       
       _questions[reqId] = currentQuestion      
       store.dispatch(updateChatData(_questions))      

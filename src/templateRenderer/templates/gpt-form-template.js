@@ -578,6 +578,38 @@ export function render(item) {
 
 	let uploadedFileState = cloneDeep(store.getState().global.GptUploadedFiles);
 
+	// preserving values
+	const preservedValues = {};
+		
+	if (contextField) {
+		const contextTextArea = document.getElementById(`inputValue-${contextField?.key}-${item?.messageId}`);
+		if (contextTextArea && contextTextArea.value) {
+			preservedValues[`inputValue-${contextField?.key}-${item?.messageId}`] = contextTextArea.value;
+		}
+	}
+		
+	if (!isEmpty(formData?.fieldValues)) {
+		formData.fieldValues.forEach((parameters, index) => {
+			parameters?.forEach((field, i) => {
+				const fieldElement = document.getElementById(`inputValue-${field?.key}-${item?.messageId}-${index}`);
+				if (fieldElement) {					
+					if (fieldElement.quillEditor) {
+						// Quill editor
+						preservedValues[`inputValue-${field?.key}-${item?.messageId}-${index}`] = fieldElement.quillEditor.getText();
+					} else if (fieldElement.value !== undefined) {
+						// Regular textarea/input
+						preservedValues[`inputValue-${field?.key}-${item?.messageId}-${index}`] = fieldElement.value;
+					}
+				}
+				
+				const dropdownElement = document.getElementById(`dropdownValue-${field?.key}-${item?.messageId}-${index}`);
+				if (dropdownElement && dropdownElement.value) {
+					preservedValues[`dropdownValue-${field?.key}-${item?.messageId}-${index}`] = dropdownElement.value;
+				}
+			});
+		});
+	}
+
 	if (!isEmpty(formData?.fieldValues)) {
 		fieldValues = formData?.fieldValues;
 	}
@@ -691,9 +723,10 @@ export function render(item) {
 
 			const textareaElement = document.createElement("sl-textarea");
 			textareaElement.id = `inputValue-${contextField?.key}-${item?.messageId}`;
-			textareaElement.placeholder =
-				contextField?.value?.placeholder || "Enter Text...";
-			textareaElement.value = contextField?.value?.default || "";
+			textareaElement.setAttribute('placeholder', contextField?.value?.placeholder || "Enter Text...");				
+						
+			const preservedValue = preservedValues[`inputValue-${contextField?.key}-${item?.messageId}`];
+			textareaElement.setAttribute('value', preservedValue || contextField?.value?.default || "");
 			grpInputDiv.appendChild(textareaElement);
 		}
 
@@ -854,6 +887,10 @@ export function render(item) {
 				if (inputFieldToDisable) {
 					inputFieldToDisable.disabled = true;
 				}
+			}
+			const contextFieldTextAreaDiv = document.getElementById(`inputValue-${contextField?.key}-${item?.messageId}`);
+			if (contextFieldTextAreaDiv) {
+				contextFieldTextAreaDiv.remove();
 			}
 
 			const uploadedFileDiv = document.createElement("div");
@@ -1026,7 +1063,10 @@ export function render(item) {
 				const textareaElement = document.createElement("sl-textarea");
 				textareaElement.id = `inputValue-${field?.key}-${item?.messageId}-${index}`;
 				textareaElement.setAttribute("placeholder", field?.value?.placeholder || "Enter Text...");
-				textareaElement.value = field?.value?.default || "";
+				
+				
+				const preservedParamValue = preservedValues[`inputValue-${field?.key}-${item?.messageId}-${index}`];
+				textareaElement.setAttribute('value', preservedParamValue || field?.value?.default || "");
 				grpInputDiv.appendChild(textareaElement);
 			}
 
@@ -1055,9 +1095,10 @@ export function render(item) {
 				if(displayFieldTextArea){
 				const textareaElement = document.createElement("sl-textarea");
 				textareaElement.id = `inputValue-${field?.key}-${item?.messageId}-${index}`;
-				textareaElement.placeholder =
-					field?.value?.placeholder || "Enter Text...";
-				textareaElement.value = field?.value?.default || "";
+				textareaElement.setAttribute('placeholder', field?.value?.placeholder || "Enter Text...");					
+									
+				const preservedLongTextValue = preservedValues[`inputValue-${field?.key}-${item?.messageId}-${index}`];
+				textareaElement.setAttribute('value', preservedLongTextValue || field?.value?.default || "");
 				grpInputDiv.appendChild(textareaElement);
 				}
 			}
@@ -1302,9 +1343,10 @@ export function render(item) {
 				if(displayFieldTextArea){
 				const textareaElement = document.createElement("sl-textarea");
 				textareaElement.id = `inputValue-${field?.key}-${item?.messageId}-${index}`;
-				textareaElement.placeholder =
-					field?.value?.placeholder || "Enter text...";
-				textareaElement.value = field?.value?.default || "";
+				textareaElement.setAttribute('placeholder', field?.value?.placeholder || "Enter Text...");
+								
+				const preservedSimpleTextValue = preservedValues[`inputValue-${field?.key}-${item?.messageId}-${index}`];
+				textareaElement.setAttribute('value', preservedSimpleTextValue || field?.value?.default || "");
 				grpInputDiv.appendChild(textareaElement);
 				}
 			}
@@ -1329,9 +1371,11 @@ export function render(item) {
 				const numberElement = document.createElement("sl-input");
 				numberElement.setAttribute("type", "number");
 				numberElement.id = `inputValue-${field?.key}-${item?.messageId}-${index}`;
-				numberElement.placeholder =
-					field?.value?.placeholder || "Enter Number...";
-				numberElement.value = field?.value?.default || "";
+				numberElement.setAttribute('placeholder', field?.value?.placeholder || "Enter Number...");				
+				
+				// 🔥 RESTORE PRESERVED VALUE - Use preserved value if available, otherwise use default
+				const preservedNumberValue = preservedValues[`inputValue-${field?.key}-${item?.messageId}-${index}`];
+				numberElement.setAttribute('value', preservedNumberValue || field?.value?.default || "");
 				
 				// Add additional number-specific attributes if needed
 				if (field?.value?.min !== undefined) {
@@ -1468,12 +1512,7 @@ export function render(item) {
 	submitButton.type = "button";
 	submitButton.textContent = item?.content?.formFields?.submitAction?.title;
 	submitButton.setAttribute("variant", "primary");
-	submitButton.id = `submitGptForm-${item?.messageId}`;	
-	if (enableSubmitButton(item)){
-		submitButton.removeAttribute("disabled");
-	}else{
-		submitButton.setAttribute("disabled", "");
-	}
+	submitButton.id = `submitGptForm-${item?.messageId}`;		
 	actionButtonsDiv.appendChild(submitButton);
 
 	buttonWrapper.appendChild(actionButtonsDiv);
@@ -1494,7 +1533,7 @@ export function render(item) {
 	tvBodyDiv.appendChild(buttonWrapper);
 
 	setTimeout(() => {
-		gptFormFunctionality(formData, item);
+		gptFormFunctionality(formData, item, preservedValues);
 	}, 1000);
 
 	return gptAgentDiv.outerHTML;
@@ -1509,25 +1548,7 @@ const updateChoice = (event, item, index) => {
 	UpdateGPTPromptValue(currentQsn, index, updatedPromptValue, true);
 };
 
-const enableSubmitButton = (item) => {	
-	const isContextFieldCheckPassed = checkContextField(item?.gpt_forms?.contextFields?.[0], item?.messageId);
-	const isParamFieldsCheckPassed = true;
-	return isContextFieldCheckPassed && isParamFieldsCheckPassed;
-};
 
-const checkContextField = (contextField, messageId) => {
-	const isContextFieldRequired = contextField?.value?.required;
-	const gptUploadedFiles = cloneDeep(store.getState().global.GptUploadedFiles);
-	const contextFileKey = `${contextField?.key}-${messageId}`;
-	const contextFileDetails = gptUploadedFiles?.[contextFileKey] || [];
-	const contextFieldDiv = document.getElementById(`inputValue-${contextField?.key}-${messageId}`);
-	if(!isContextFieldRequired){
-		return true;
-	}else{
-		return (contextFieldDiv?.value?.length > 0 || contextFileDetails?.length > 0);
-	}
-	
-}
 
 
 

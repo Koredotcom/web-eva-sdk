@@ -44,6 +44,15 @@ function renderAssistantQuestion(conversation, assistantIconTemplate) {
 			</div>`;
 }
 
+function renderConversationAgentIcon(data){
+	return `
+		<div class='bot-conversation-icon-block'>                                    
+                                        <span class='icon-block'><img src=${data?.sources?.[0]?.icon || data?.agentIcon} alt="" /></span>
+                                        <span class='bot-agent-name'>${data?.sources?.[0]?.title || data?.agentName}</span>                                        
+        </div>
+	`;
+}
+
 function createConversationHTML(
 	conversation,
 	props,
@@ -393,6 +402,7 @@ function renderBotConversation(
 	const conversationWithThoughts = Object.values(botConversation || {}).find(conv => conv?.thoughts?.length > 0);
 	
 	return `
+		${renderConversationAgentIcon(props)}
         <div class="bot-conversation-wrapper ${props?.status === 'completed' ? 'completed' : ''}" data-message-id="${props?.messageId} id="bot-conversation-wrapper">
 		${conversationWithThoughts ? renderThoughts(conversationWithThoughts) : ""}
 			<div class="bot-conversation-content-wrapper ${props?.status === 'completed' ? ' bot-conversation-completed' : ''}">

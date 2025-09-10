@@ -2637,7 +2637,53 @@ html, body {
         }
     }
 }
+.bot-conversation-icon-block {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
 
+            .expandAreaBlock {
+                cursor: pointer;
+            }
+            
+            .icon-block {
+                width: 2rem;
+                height: 2rem;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border-radius: 100%;
+                border: 0.0625rem solid var(--colors-gray-true-200, #E5E5E5);
+                background: var(--colors-base-white, #FFF);
+                text-transform: uppercase;
+                color: white;
+                flex-shrink: 0;
+                img {
+                    width: 1rem;
+                    max-height: 1rem;
+                    object-fit: contain;
+                }
+            }
+            .bot-agent-name {
+                font-family: Inter;
+                font-size: 0.875rem;
+                font-style: normal;
+                font-weight: 500;
+                line-height: 1.25rem;
+                letter-spacing: 0em;
+                color: #0F0F0F;
+            }
+            .agent-name {
+                font-family: Inter;
+                font-size: 0.75rem;
+                font-style: normal;
+                font-weight: 400;
+                line-height: 1.125rem;
+                letter-spacing: 0em;
+                color: #737373;
+                margin-top: 0.25rem;
+            }
+        }
 
 .bot-conversation-wrapper {
     .top-header {

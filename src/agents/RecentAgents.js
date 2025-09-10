@@ -4,8 +4,7 @@ const constructRecents = (enabledAgents, recentAgents) => {
     let obj = []
     recentAgents?.map(a => {
         const agentIndex = enabledAgents?.findIndex(e => e?.id === a)
-        if(agentIndex !== -1) {  
-            console.log("enabled agent", enabledAgents[agentIndex])          
+        if(agentIndex !== -1) {                  
             obj.push(enabledAgents[agentIndex])
         }
     })

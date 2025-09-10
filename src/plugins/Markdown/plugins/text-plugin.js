@@ -69,6 +69,13 @@ renderer.link = function (href, title, text) {
   return `<a href="${href}" target="_blank" rel="noopener noreferrer" onclick="event.preventDefault(); window.open('${href}','_blank');">${text}</a>`;
 };
 
+// --- Images ---
+renderer.image = function (href, title, text) {
+  const titleAttr = title ? ` title="${title}"` : '';
+  const altAttr = text ? ` alt="${text}"` : '';
+  return `<img src="${href}"${titleAttr}${altAttr} style="max-width: 100%; max-height: 400px; height: auto; object-fit: contain; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);" />`;
+};
+
 // ✅ Use setOptions (v2 API)
 marked.setOptions({
   gfm: true,
