@@ -128,8 +128,9 @@ export function renderTemplateContent(
 	loadingText
 ) {
 	let htmlTemplate = "";
+	htmlTemplate = responseQueryFlow.render(data);
 	if (data.viewType === "threadView" || data.botConversation) {
-		htmlTemplate = botConversation.render(
+		htmlTemplate += botConversation.render(
 			data,
 			assistantIconTemplate,
 			userIconTemplate,
@@ -139,11 +140,10 @@ export function renderTemplateContent(
 					<div class="answerCntr">${htmlTemplate}</div>
 				</div>`;
 	} else if (data?.status === "terminated") {
-		return `<div class="message-bubble answer"> 
+		return htmlTemplate += `<div class="message-bubble answer"> 
 					I see you interrupted the answer generation. Please feel free to provide more details or let me know how can I assist you further
 				</div>`;
-	} else {
-		htmlTemplate = responseQueryFlow.render(data);
+	} else {		
 		switch (data.templateType) {
 			case "resolve_ambiguity":
 				htmlTemplate += ambiguityTemplate.render(data);
