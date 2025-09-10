@@ -2,9 +2,11 @@ import store from "../redux/store";
 
 const constructRecents = (enabledAgents, recentAgents) => {
     let obj = []
-    enabledAgents?.map(a => {
-        if(recentAgents?.includes(a?.id)) {
-            obj.push(a)
+    recentAgents?.map(a => {
+        const agentIndex = enabledAgents?.findIndex(e => e?.id === a)
+        if(agentIndex !== -1) {  
+            console.log("enabled agent", enabledAgents[agentIndex])          
+            obj.push(enabledAgents[agentIndex])
         }
     })
     return obj;
