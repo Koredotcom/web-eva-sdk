@@ -420,3 +420,11 @@ export function RadioButtonChecked({ size = config.size, color = config.color, c
       </svg>
   `
 }
+
+export function PlusIcon({ size = config.size, color = config.color, className = '' }) {  
+  return `
+      <svg width="${size}" height="${size}" className="wa-PlusIcon ${className}" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M6.84976 1.33329C6.84976 0.965103 6.55129 0.666626 6.1831 0.666626C5.81491 0.666626 5.51643 0.965103 5.51643 1.33329V5.33329H1.51643C1.14824 5.33329 0.849762 5.63177 0.849762 5.99996C0.849762 6.36815 1.14824 6.66663 1.51643 6.66663H5.51643V10.6666C5.51643 11.0348 5.81491 11.3333 6.1831 11.3333C6.55129 11.3333 6.84976 11.0348 6.84976 10.6666V6.66663H10.8498C11.218 6.66663 11.5164 6.36815 11.5164 5.99996C11.5164 5.63177 11.218 5.33329 10.8498 5.33329H6.84976V1.33329Z" fill="${color}" />
+      </svg>
+  `
+}

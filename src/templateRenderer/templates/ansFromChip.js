@@ -143,7 +143,7 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 		).outerHTML;
 
 		return `
-            <div class="leftWrapperBlock">
+            <div class="leftWrapperBlock" style="pointer-events: none;">
                 <span class="koraSpecDr${
 					warning ? " fromWarning" : ""
 				}" id = "ansFromChip-${item?.id}">

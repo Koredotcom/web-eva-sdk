@@ -7,8 +7,9 @@ import AddAdditionalGPTResponse from "../../chat/gptTemplate/addAdditionalGPTRes
 import GptFileUpload from "../../chat/gptTemplate/gptFileUpload";
 import { cloneDeep } from "lodash";
 import store from "../../redux/store";
+import toast from "../../utils/toast";
 
-const gptFormFunctionality = (formData, item) => {
+const gptFormFunctionality = (formData, item, preservedValues = {}) => {
 	let contextField = formData?.contextFields?.[0];
 	let uploadedFiles = item?.filesUploaded;
 
@@ -74,13 +75,77 @@ const gptFormFunctionality = (formData, item) => {
 		const inputField = document.getElementById(
 			`fileUpload-${contextField?.key}-${item?.messageId}`
 		);
-		if(inputField){
-		inputField.addEventListener("change", (event) => {
-			if (!inputField.eventListenerAdded) {
-				inputField.eventListenerAdded = true;
-					GptFileUpload(event, `${contextField?.key}-${item?.messageId}`, item?.reqId);
-				}
+
+		const browseField = document.getElementById(
+			`browseLink-${contextField?.key}-${item?.messageId}`
+		);
+		if(browseField && !browseField.eventListenerAdded){
+			browseField.eventListenerAdded = true;
+			browseField.addEventListener("click", (event) => {
+				event.preventDefault();				
+				document.getElementById(`fileUpload-${contextField?.key}-${item?.messageId}`)?.click();
 			});
+		}
+		if(inputField && !inputField.eventListenerAdded){
+			inputField.eventListenerAdded = true;
+			inputField.addEventListener("change", (event) => {
+				GptFileUpload(event, `${contextField?.key}-${item?.messageId}`, item?.reqId);				
+				setTimeout(() => {
+					const submitButton = document.getElementById(`submitGptForm-${item?.messageId}`);
+					if (submitButton) {
+						const isContextFieldValid = checkContextField(formData?.contextFields?.[0], item?.messageId);
+						const isParamFieldsValid = checkParamFields(formData?.fieldValues, item?.messageId);
+						const isFormValid = isContextFieldValid && isParamFieldsValid;
+						
+						if (isFormValid) {
+							submitButton.removeAttribute("disabled");
+						} else {
+							submitButton.setAttribute("disabled", "");
+						}
+					}
+				}, 500); 
+			});
+		}
+
+		// Add click listener for disabled context field upload inputs to show toast
+		if (contextField?.value?.canUploadFile && !contextField?.value?.allowMultipleFiles) {
+			const contextInputField = document.getElementById(
+				`fileUpload-${contextField?.key}-${item?.messageId}`
+			);
+			
+			if (contextInputField && !contextInputField.disabledClickListenerAdded) {
+				contextInputField.disabledClickListenerAdded = true;
+				
+				// Check if the context field has uploaded files to determine if input should be disabled
+				setTimeout(() => {
+					const contextFileKey = `${contextField?.key}-${item?.messageId}`;
+					const contextFileDetails = uploadedFilesState?.[contextFileKey];
+					const hasContextFiles = contextFileDetails && contextFileDetails?.length > 0;
+					
+					if (hasContextFiles) {
+						contextInputField.disabled = true;
+					}
+					
+					// Listen on parent label to catch both label and input clicks
+					const parentLabel = contextInputField.closest('label');
+					if (parentLabel && !parentLabel.disabledClickListenerAdded) {
+						parentLabel.disabledClickListenerAdded = true;
+						parentLabel.addEventListener("click", (event) => {
+							if (contextInputField.disabled) {
+								event.preventDefault();
+								event.stopPropagation();
+								
+								// Show warning toast
+								toast.warning("Upload limit reached. Remove the current file to upload a new one.", {
+									title: "Context Upload Disabled",
+									duration: 4000,
+									closable: true
+								});
+							}
+						});
+					}
+				}, 100); 
+			}
 		}
 
 	}
@@ -96,12 +161,24 @@ const gptFormFunctionality = (formData, item) => {
 				const inputField = document.getElementById(
 					`fileUpload-${field?.key}-${item?.messageId}-${field?.uniqueFieldId}`
 				);
-				if(inputField){
-				inputField.addEventListener("change", (event) => {
-					if (!inputField.eventListenerAdded) {
-						inputField.eventListenerAdded = true;
-						GptFileUpload(event, `${field?.key}-${item?.messageId}-${field?.uniqueFieldId}`, item?.reqId);
-						}
+				if(inputField && !inputField.eventListenerAdded){
+					inputField.eventListenerAdded = true;
+					inputField.addEventListener("change", (event) => {
+						GptFileUpload(event, `${field?.key}-${item?.messageId}-${field?.uniqueFieldId}`, item?.reqId);						
+						setTimeout(() => {
+							const submitButton = document.getElementById(`submitGptForm-${item?.messageId}`);
+							if (submitButton) {
+								const isContextFieldValid = checkContextField(formData?.contextFields?.[0], item?.messageId);
+								const isParamFieldsValid = checkParamFields(formData?.fieldValues, item?.messageId);
+								const isFormValid = isContextFieldValid && isParamFieldsValid;
+								
+								if (isFormValid) {
+									submitButton.removeAttribute("disabled");
+								} else {
+									submitButton.setAttribute("disabled", "");
+								}
+							}
+						}, 500); 
 					});
 				}
 
@@ -114,9 +191,54 @@ const gptFormFunctionality = (formData, item) => {
 							removeButton.eventListenerAdded = true;
 							removeButton.addEventListener("click", (event) => {
 								removeUploadedFile(event, `${field?.key}-${item?.messageId}-${field?.uniqueFieldId}`, item?.reqId, file?.mediaName);
+								
+								setTimeout(() => {
+									const submitButton = document.getElementById(`submitGptForm-${item?.messageId}`);
+									if (submitButton) {
+										const isContextFieldValid = checkContextField(formData?.contextFields?.[0], item?.messageId);
+										const isParamFieldsValid = checkParamFields(formData?.fieldValues, item?.messageId);
+										const isFormValid = isContextFieldValid && isParamFieldsValid;
+										
+										if (isFormValid) {
+											submitButton.removeAttribute("disabled");
+										} else {
+											submitButton.setAttribute("disabled", "");
+										}
+									}
+								}, 500); 
 							});
 						}
 					});
+				}
+			}
+
+			// Add click listener for disabled upload inputs to show toast
+			if (field?.value?.canUploadFile && !field?.value?.allowMultipleFiles) {
+				const inputField = document.getElementById(
+					`fileUpload-${field?.key}-${item?.messageId}-${field?.uniqueFieldId}`
+				);
+				
+				if (inputField && !inputField.disabledClickListenerAdded) {
+					inputField.disabledClickListenerAdded = true;
+					
+					// Listen on parent label to catch both label and input clicks
+					const parentLabel = inputField.closest('label');
+					if (parentLabel && !parentLabel.disabledClickListenerAdded) {
+						parentLabel.disabledClickListenerAdded = true;
+						parentLabel.addEventListener("click", (event) => {
+							if (inputField.disabled) {
+								event.preventDefault();
+								event.stopPropagation();
+								
+								// Show warning toast
+								toast.warning("Upload limit reached. Remove the current file to upload a new one.", {
+									title: "Upload Disabled",
+									duration: 4000,
+									closable: true
+								});
+							}
+						});
+					}
 				}
 			}
 
@@ -128,9 +250,13 @@ const gptFormFunctionality = (formData, item) => {
 				// Wait for Quill editor to be initialized
 				setTimeout(() => {
 					if (quillContainer && quillContainer.quillEditor) {
+						// 🔥 RESTORE PRESERVED VALUE - Use preserved value if available, otherwise use default
+						const preservedQuillValue = preservedValues[`inputValue-${field?.key}-${item?.messageId}-${index}`];
 						const defaultValue = field?.value?.default || "";
-						if (defaultValue) {
-							quillContainer.quillEditor.setContent(defaultValue, 'text');
+						const valueToSet = preservedQuillValue || defaultValue;
+						
+						if (valueToSet) {
+							quillContainer.quillEditor.setContent(valueToSet, 'text');
 						}
 					}
 				}, 200);
@@ -144,9 +270,13 @@ const gptFormFunctionality = (formData, item) => {
 				// Wait for Quill editor to be initialized
 				setTimeout(() => {
 					if (quillContainer && quillContainer.quillEditor) {
+						// 🔥 RESTORE PRESERVED VALUE - Use preserved value if available, otherwise use default
+						const preservedNestedQuillValue = preservedValues[`inputValue-${field?.key}-${item?.messageId}-${index}`];
 						const initialPromptValue = field?.value?.nested?.value || "";
-						if (initialPromptValue) {
-							quillContainer.quillEditor.setContent(initialPromptValue, 'text');
+						const valueToSet = preservedNestedQuillValue || initialPromptValue;
+						
+						if (valueToSet) {
+							quillContainer.quillEditor.setContent(valueToSet, 'text');
 						}
 					}
 				}, 200);
@@ -200,6 +330,123 @@ const gptFormFunctionality = (formData, item) => {
 			}
 		});
 	}
+
+	// SUBMIT BUTTON VALIDATION
+	setupRealTimeValidation(formData, item);
+};
+
+
+const setupRealTimeValidation = (formData, item) => {
+	const submitButton = document.getElementById(`submitGptForm-${item?.messageId}`);
+	if (!submitButton) return;
+	
+	const updateSubmitButtonState = () => {		
+		const isContextFieldValid = checkContextField(formData?.contextFields?.[0], item?.messageId);
+		const isParamFieldsValid = checkParamFields(formData?.fieldValues, item?.messageId);
+		const isFormValid = isContextFieldValid && isParamFieldsValid;
+
+		if (isFormValid) {
+			submitButton.removeAttribute("disabled");
+		} else {
+			submitButton.setAttribute("disabled", "");
+		}
+	};
+
+	// CONTEXT FIELD VALIDATION
+	if (formData?.contextFields?.[0]) {
+		const contextField = formData.contextFields[0];
+		const contextTextArea = document.getElementById(`inputValue-${contextField?.key}-${item?.messageId}`);
+		if (contextTextArea && !contextTextArea.validationListenerAdded) {
+			contextTextArea.validationListenerAdded = true;
+			
+			// Add input event listener for real-time validation
+			contextTextArea.addEventListener("input", updateSubmitButtonState);
+			contextTextArea.addEventListener("change", updateSubmitButtonState);
+		}
+	}
+
+	// PARAMETER FIELDS VALIDATION
+	if (formData?.fieldValues) {
+		formData.fieldValues.forEach((parameters, index) => {
+			parameters?.forEach((field, i) => {
+				const fieldElement = document.getElementById(`inputValue-${field?.key}-${item?.messageId}-${index}`);
+				if (fieldElement && !fieldElement.validationListenerAdded) {
+					fieldElement.validationListenerAdded = true;
+										
+					fieldElement.addEventListener("input", updateSubmitButtonState);
+					fieldElement.addEventListener("change", updateSubmitButtonState);
+										
+					setTimeout(() => {
+						if (fieldElement.quillEditor) {
+							fieldElement.quillEditor.on('text-change', updateSubmitButtonState);
+						}
+					}, 200);
+				}
+				
+				const dropdownElement = document.getElementById(`dropdownValue-${field?.key}-${item?.messageId}-${index}`);
+				if (dropdownElement && !dropdownElement.validationListenerAdded) {
+					dropdownElement.validationListenerAdded = true;
+					dropdownElement.addEventListener("change", updateSubmitButtonState);
+				}
+			});
+		});
+	}
+
+	
+	updateSubmitButtonState();
+};
+
+
+const checkContextField = (contextField, messageId) => {
+	if (!contextField || !contextField.value.required) return true;
+	
+	if (contextField.value?.canUploadFile) {
+		const uploadedFilesState = cloneDeep(store.getState().global.GptUploadedFiles);
+		const contextFieldFileKey = `${contextField?.key}-${messageId}`;
+		const fileDetails = uploadedFilesState?.[contextFieldFileKey]?.filter(file => !file?.loading) || [];
+		
+		if (contextField.value?.type === "file") {
+			return fileDetails?.length > 0;
+		} else {
+			const contextTextArea = document.getElementById(`inputValue-${contextField?.key}-${messageId}`);
+			const hasText = contextTextArea?.value?.trim()?.length > 0;
+			return hasText || fileDetails.length > 0;
+		}
+	} else {
+		const contextTextArea = document.getElementById(`inputValue-${contextField?.key}-${messageId}`);
+		return contextTextArea?.value?.trim()?.length > 0;
+	}
+};
+
+
+const checkParamFields = (paramFields, messageId) => {
+	if (!paramFields) return true;
+	
+	const uploadedFilesState = cloneDeep(store.getState().global.GptUploadedFiles);
+	
+	for (let OuterIndex=0; OuterIndex < paramFields.length; OuterIndex++) {
+		const parameters = paramFields[OuterIndex];
+		for (const [index, field] of parameters.entries()) {
+			if (field?.value?.required) {
+				if (field?.value?.canUploadFile) {
+					const paramFieldKey = `${field?.key}-${messageId}-${field?.uniqueFieldId}`;
+					const paramFieldFileDetails = uploadedFilesState?.[paramFieldKey]?.filter(file => !file?.loading) || [];
+					
+					if (field?.value?.type === "file") {
+						if (paramFieldFileDetails.length === 0) return false;
+					} else {
+						const paramFieldDiv = document.getElementById(`inputValue-${field?.key}-${messageId}-${OuterIndex}`);
+						const hasText = paramFieldDiv?.value?.trim()?.length > 0;
+						if (!hasText && paramFieldFileDetails.length === 0) return false;
+					}
+				} else {
+					const paramFieldDiv = document.getElementById(`inputValue-${field?.key}-${messageId}-${OuterIndex}`);
+					if (!paramFieldDiv?.value?.trim()?.length) return false;
+				}
+			}
+		}
+	}
+	return true;
 };
 
 export default gptFormFunctionality;

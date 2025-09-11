@@ -6,6 +6,7 @@ import { fetchAgents } from "../redux/actions/global.action.js";
 import { ActionsFlashIcon, arrowCirlceUpIcon, attachmentIcon, CheveronDownIcon, createCloseIcon, createDeleteIcon, createThumbsUpFilled, microphoneIcon, searchIcon, settingsIcon, Close, StopIcon } from "../templateRenderer/icons-library.js";
 import FileUpload from "../Attachments/fileUpload.js";
 import { getAgentType, getFileExtension, hideElementImmediately, showElementImmediately, showElementDelayed } from "../utils/helpers.js";
+import { renderRecentFiles } from "./RenderRecentAttachments.js";
 
 /**
  * ComposeBar - A standalone compose bar component in plain JavaScript
@@ -504,20 +505,25 @@ class ComposeBar {
                                 <div class='left-actions'>
                                 <div class='common-agents-container'>
                                     <button class="agents-action-item" data-eva-agents-action data-eva-open-dialog>
-                                        ${ActionsFlashIcon({ size: 18, color: "#667085" })}
-                                        ${CheveronDownIcon({ size: 14, color: "#667085" })}
+                                        ${ActionsFlashIcon({ size: 18, color: "#0F0F0F" })}
+                                        ${CheveronDownIcon({ size: 14, color: "#0F0F0F" })}
                                     </button>                                
                                     <div data-eva-common-agents style="display: inline-flex; gap: 8px;"></div>
                                 </div>
                                     <div class="composebar-context-container" style="display: none;"></div>
                                 </div>
                                 <div class="right-actions">
-                                    <button class="eva-input-action-btn attachment-btn" data-eva-attachment title="Attach file">
-                                        ${attachmentIcon({ size: 16, color: "#667085" })}
-                                    </button>
-                                    <button class="eva-input-action-btn voice-btn" data-eva-speech title="Search using voice">
-                                        ${microphoneIcon({ size: 16, color: "#667085" })}
-                                    </button>
+                                    <sl-tooltip>
+                                        <div slot="content" class="caTooltips">5 attachments, max 10MB each. <br/>PDF, XLS, DOC, CSV, TXT formats.</div>
+                                        <button class="eva-input-action-btn attachment-btn" data-eva-attachment>
+                                            ${attachmentIcon({ size: 16, color: "#0F0F0F" })}
+                                        </button>
+                                    </sl-tooltip>
+                                    <sl-tooltip content="Search using voice">
+                                        <button class="eva-input-action-btn voice-btn" data-eva-speech>
+                                            ${microphoneIcon({ size: 16, color: "#0F0F0F" })}
+                                        </button>
+                                    </sl-tooltip>
                                     <button class="eva-input-action-btn send-btn" data-eva-send title="Send">
                                         ${arrowCirlceUpIcon({ size: 16, color: "#101828" })}
                                     </button>
@@ -549,8 +555,8 @@ class ComposeBar {
                                             data-eva-agent-search-input-box                                            
                                             />
                                         </div>
-                                        <button class="agentSettings" style="display: none;">${settingsIcon({ size: 14, color: "#667085" })}</button>
-                                        <button class="agentSettings" data-eva-dialog-close>${createCloseIcon({ size: 14, color: "#667085" })}</button>
+                                        <button class="agentSettings" style="display: none;">${settingsIcon({ size: 13, color: "#667085" })}</button>
+                                        <button class="agentSettings" data-eva-dialog-close>${createCloseIcon({ size: 12, color: "#667085" })}</button>
                                     </div>
                                 </div>
                             </div>
@@ -560,6 +566,34 @@ class ComposeBar {
                             <div class="eva-flows-container" data-eva-flows-content style="display: none;">
                                 <ul class="eva-flows-list" data-eva-all-flows></ul>
                             </div>
+                        </div>                        
+                    </sl-dialog>
+                    
+                    <sl-dialog label="Attachments" data-eva-attachment-dialog class="eva-attachments-dialog">
+                        <div class="composebarFilter">
+                            <div class="attachmentsTabWrapper">
+                                <div class="attachmentsHeader">
+                                    <div class="attachmentsTitle">
+                                        Attachments
+                                    </div> 
+                                    <div class="closeBtn" data-eva-attachment-dialog-close>${createCloseIcon({ size: 12, color: "#667085" })}</div>                                   
+                                </div>
+                                <div class="attachments-top-container">
+                                    <div class="container-left">
+                                        <div class="title">Upload from computer</div>
+                                        <div class="description">Upload upto 5 files, max 10MB each: PDF, XLS, DOC, CSV, TXT formats</div>
+                                    </div>
+                                    <div class="container-right">
+                                        <button class="recent-files-container-upload-file-btn" upload-file-btn>
+                                            Upload
+                                        </button>                                        
+                                    </div>
+                                </div>
+                                <div class="recent-title">Recents</div>
+                            </div>
+                            <div class="eva-recent-attachments-container" data-eva-recent-attachments-content>
+                                <ul class="eva-recent-attachments-list" data-eva-recent-files></ul>
+                            </div>                            
                         </div>                        
                     </sl-dialog>
                 </div>
@@ -580,9 +614,11 @@ class ComposeBar {
         const quickActionChips = this.container.querySelectorAll('.eva-quick-reply-chip');
         const openDialogBtn = this.container.querySelector('[data-eva-open-dialog]');
         const dialog = this.container.querySelector('[data-eva-dialog]');
+        const attachmentDialog = this.container.querySelector('[data-eva-attachment-dialog]');
         const fileInput = this.container.querySelector('[data-eva-file-input]');
         const agentSearchInputBox = this.container.querySelector('[data-eva-agent-search-input-box]');
         const tabHeadings = this.container.querySelectorAll('.agentsTabHeading');
+        const uploadFileBtn = this.container.querySelector('[upload-file-btn]'); //this event is for the upload button present in container for uploading files
         // Textarea events
         if (textarea) {
             textarea.addEventListener('input', (e) => this.handleInputChange(e));
@@ -592,6 +628,7 @@ class ComposeBar {
         if (agentSearchInputBox) {
             agentSearchInputBox.addEventListener('input', (e) => this.handleAgentSearch(e));
         }
+
 
         // Button events
         if (sendBtn) {
@@ -623,9 +660,21 @@ class ComposeBar {
             }
         }
 
+        if (attachmentDialog) {
+            const closeBtn = attachmentDialog.querySelector('[data-eva-attachment-dialog-close]');
+            if (closeBtn) {
+                closeBtn.addEventListener('click', () => this.handleCloseAttachmentDialog());
+            }
+        }
+
+
         // Attachment button event
         if (attachmentBtn) {
             attachmentBtn.addEventListener('click', () => this.handleAttachment());
+        }
+
+        if(uploadFileBtn) {
+            uploadFileBtn.addEventListener('click', () => this.handleFileUpload());
         }
 
         if (fileInput) {
@@ -634,8 +683,17 @@ class ComposeBar {
                     if (this.fileUploaderInterface && typeof this.fileUploaderInterface.uploadFile === 'function') {
                         this.fileUploaderInterface.uploadFile(e);
                     }
-                } finally {
+                }
+                catch(e){
+                    console.error('Error uploading file:', e);
+                }
+                finally {
                     // reset so selecting the same file again still triggers change
+                    /*once the file is uploaded we need to close the attachment dialog */
+                    const attachmentDialog = this.container.querySelector('[data-eva-attachment-dialog]');
+                    if(attachmentDialog){
+                        attachmentDialog.hide();
+                    }
                     fileInput.value = '';
                 }
             });
@@ -826,10 +884,10 @@ class ComposeBar {
         
 
         if (this.input?.length > 0) {
-            micButton.innerHTML = Close({ size: 12, color: "#667085" });
+            micButton.innerHTML = Close({ size: 12, color: "#0F0F0F" });
             micButton.title = "Clear input";            
         } else {
-            micButton.innerHTML = microphoneIcon({ size: 16, color: "#667085" });
+            micButton.innerHTML = microphoneIcon({ size: 16, color: "#0F0F0F" });
             micButton.title = "Search using voice";
         }
     }
@@ -935,9 +993,14 @@ class ComposeBar {
      * Handle attachment button click
      */
     handleAttachment() {
-       
+        this.handleOpenAttachmentDialog();
+    }
+
+    handleFileUpload(){
         const fileInput = this.container.querySelector('[data-eva-file-input]');
-        if (fileInput) fileInput.click();
+        if(fileInput){
+            fileInput.click();
+        }
     }
 
     /**
@@ -1031,6 +1094,113 @@ class ComposeBar {
             }
         } catch (e) {
             dialog.removeAttribute('open');
+        }
+    }
+
+    /**
+     * Open attachment dialog
+     */
+    handleOpenAttachmentDialog() {        
+        const attachmentDialog = this.container.querySelector('[data-eva-attachment-dialog]');
+        if (!attachmentDialog) return;
+        try {
+            if (typeof attachmentDialog.show === 'function') {
+                attachmentDialog.show();
+            } else {
+                attachmentDialog.setAttribute('open', '');
+            }
+        } catch (e) {
+            attachmentDialog.setAttribute('open', '');
+        }
+        
+        this.loadAndRenderRecentFiles();
+    }
+
+    /**
+     * Close attachment dialog
+     */
+    handleCloseAttachmentDialog() {
+        const attachmentDialog = this.container.querySelector('[data-eva-attachment-dialog]');
+        if (!attachmentDialog) return;
+        try {
+            if (typeof attachmentDialog.hide === 'function') {
+                attachmentDialog.hide();
+            } else {
+                attachmentDialog.removeAttribute('open');
+            }
+        } catch (e) {
+            attachmentDialog.removeAttribute('open');
+        }
+    }
+
+    /**
+     * Load and render recent files
+     */
+    loadAndRenderRecentFiles() {
+        try {
+            const recentFilesListEl = this.container.querySelector('[data-eva-recent-files]');
+            if (!recentFilesListEl) return;
+
+            // Show loading state
+            recentFilesListEl.innerHTML = `<li>Loading recent files...</li>`;
+
+            // Render recent files
+            renderRecentFiles(recentFilesListEl, {
+                onFileAttach: (file) => this.handleFileAttachFromRecent(file),
+                onFileRemove: (file) => this.handleFileRemoveFromRecent(file),
+                onFileClose: () => this.handleCloseAttachmentDialog()
+            });
+        } catch (error) {
+            console.error('Error loading recent files:', error);
+            const recentFilesListEl = this.container.querySelector('[data-eva-recent-files]');
+            if (recentFilesListEl) {
+                recentFilesListEl.innerHTML = `<li>Failed to load recent files</li>`;
+            }
+        }
+    }
+
+    /**
+     * Handle file attachment from recent files
+     */
+    handleFileAttachFromRecent(file) {
+        try {
+            console.log('Attaching recent file:', file);
+            
+            // Close the attachment dialog
+            this.handleCloseAttachmentDialog();
+            
+            // Call fileUploaderInterface.uploadFile just like in file input change event
+            if (this.fileUploaderInterface && typeof this.fileUploaderInterface.uploadFile === 'function') {
+                // Create a synthetic event object with the recent file
+                const syntheticEvent = {
+                    target: {
+                        files: [file]
+                    },
+                    type: 'change'
+                };
+                this.fileUploaderInterface.uploadFile(syntheticEvent);
+            }
+        } catch (error) {
+            console.error('Error attaching recent file:', error);
+        }
+    }
+
+    /**
+     * Handle file removal from recent files
+     */
+    handleFileRemoveFromRecent(file) {
+        try {
+            console.log('Removing file from recent:', file);
+            
+            // Here you can add logic to remove file from recent files store
+            // This could dispatch a Redux action to remove from AllrecentFiles
+            const event = new CustomEvent('eva-recent-file-remove', {
+                detail: { file },
+                bubbles: true
+            });
+            this.container.dispatchEvent(event);
+        } catch (error) {
+            console.error('Error removing recent file:', error);
         }
     }
 

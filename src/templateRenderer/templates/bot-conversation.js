@@ -17,7 +17,7 @@ function escapeHTML(str) {
 		?.replace(/'/g, "&#039;");
 }
 
-function renderUserQuestion(question, userIconTemplate , conversation) {
+function renderUserQuestion(question, userIconTemplate, conversation) {
 	if (question) {
 		return `<div class="message-bubble question" id = "${conversation?.messageId}">
 					<div class="message-content">
@@ -44,6 +44,15 @@ function renderAssistantQuestion(conversation, assistantIconTemplate) {
 			</div>`;
 }
 
+function renderConversationAgentIcon(data){
+	return `
+		<div class='bot-conversation-icon-block'>                                    
+                                        <span class='icon-block'><img src=${data?.sources?.[0]?.icon || data?.agentIcon} alt="" /></span>
+                                        <span class='bot-agent-name'>${data?.sources?.[0]?.title || data?.agentName}</span>                                        
+        </div>
+	`;
+}
+
 function createConversationHTML(
 	conversation,
 	props,
@@ -53,18 +62,9 @@ function createConversationHTML(
 ) {
 
 	if (conversation?.status === "in-progress") {
-		let content = "";
-		if (conversation?.loading) {
-			content += `<div class="message-bubble loading">
-					<div class="bot-flex-wrapper">
-						<div class="bot-icon-container">${assistantIconTemplate ? assistantIconTemplate : ""}</div>
-						<div class="message-container"><div class="loading-text">${encodeHtml(loadingText)}</div></div>
-					</div>
-					<div class="min-view-container"></div>
-			</div>`;
-		}
+		let content = "";		
 		if (conversation?.templateType === "search_answer") {
-			content = renderAssistantQuestion(conversation, assistantIconTemplate);			
+			content += renderAssistantQuestion(conversation, assistantIconTemplate);			
 			if (conversation?.answer) {
 				content += `<br/>`;
 				content += renderUserQuestion(
@@ -72,7 +72,16 @@ function createConversationHTML(
 					userIconTemplate,
 					conversation
 				);
-				// content += `<br/>`;
+				content += `<br/>`;
+			}
+			if (conversation?.loading) {
+				content += `<div class="message-bubble loading">
+					<div class="bot-flex-wrapper">
+						<div class="bot-icon-container">${assistantIconTemplate ? assistantIconTemplate : ""}</div>
+						<div class="message-container"><div class="loading-text">${encodeHtml(loadingText)}</div></div>
+					</div>
+					<div class="min-view-container"></div>
+			</div>`;
 			}
 		}	
 		if (conversation?.templateType === "bot_template") {
@@ -89,7 +98,7 @@ function createConversationHTML(
                 <div class="completed">
 					${renderAssistantQuestion(conversation, assistantIconTemplate)}
 					<br/>
-					${renderUserQuestion(conversation?.answer, userIconTemplate , conversation)}
+					${renderUserQuestion(conversation?.answer, userIconTemplate, conversation)}
 					<br/>
                 </div>
             `;
@@ -243,8 +252,10 @@ export function setupTemplates(botConversation) {
 				const templateDiv = document.querySelector(
 					`.botTemplate-${conversation?.messageId}`
 				);
-				if (templateDiv && conversation?.template_html) {
-					templateDiv.appendChild(conversation.template_html);
+				if (templateDiv && conversation?.template_html) {					
+					if (!templateDiv.contains(conversation.template_html)) {
+						templateDiv.appendChild(conversation.template_html);
+					}
 				}
 			});
 		}
@@ -391,6 +402,7 @@ function renderBotConversation(
 	const conversationWithThoughts = Object.values(botConversation || {}).find(conv => conv?.thoughts?.length > 0);
 	
 	return `
+		${renderConversationAgentIcon(props)}
         <div class="bot-conversation-wrapper ${props?.status === 'completed' ? 'completed' : ''}" data-message-id="${props?.messageId} id="bot-conversation-wrapper">
 		${conversationWithThoughts ? renderThoughts(conversationWithThoughts) : ""}
 			<div class="bot-conversation-content-wrapper ${props?.status === 'completed' ? ' bot-conversation-completed' : ''}">

@@ -78,7 +78,7 @@ const ChatInterface = (props) => {
 
         if(!isEmpty(selectedContext?.data)) {
           let _agents = cloneDeep(allAgents?.data?.agents)
-          _agents = [..._agents, ...commonAgents]
+          _agents = [..._agents, ...commonAgents]?.filter(ag => !ag.disabled)          
           let isAgentSetAsSource = _agents.find(ag => ag.id === selectedContext?.data?.sources?.[0]?.source)
           let isAgent = isAgentSetAsSource ? "agent" : null
           if(isAgent) {
@@ -104,7 +104,8 @@ const ChatInterface = (props) => {
         const scrollableElement = document.querySelector('.chatSec');
         if (scrollableElement) {
           requestAnimationFrame(() => {
-            scrollableElement.scrollTop = scrollableElement.scrollHeight;
+            //scrollableElement.scrollTop = scrollableElement.scrollHeight;
+            scrollableElement.scrollTo({ top: scrollableElement.scrollHeight, behavior: 'smooth' });
           });
         }
         console.log("payload in chat interface", payload)
@@ -179,6 +180,15 @@ const ChatInterface = (props) => {
 		}else{
 			qId = constructQuestionInitial({...params, ...payload, replaceExistingQsn})
 		}
+    setTimeout(() => {
+       const scrollableElement = document.querySelector('.chatSec');
+       if (scrollableElement) {
+            scrollableElement.scrollTo({
+              top: scrollableElement.scrollHeight,
+              behavior: 'smooth'
+            });
+       }
+    }, 200);
 
 		if(arg?.multiIntentExecution){
 			// params.qId = arg?.params?.stepId;
@@ -438,6 +448,7 @@ const ChatInterface = (props) => {
         reqId = Object.entries(_questions).find(([key, value]) => value?.reqId === detail?.data?.reqId)?.[0]
       }
       let currentQuestion = _questions[reqId]
+      if(detail?.entity !== "answerContext"){      
       if(detail?.data?.answerMeta?.hasOwnProperty('messageId')) {
         currentQuestion = {...currentQuestion, ...detail?.data?.answerMeta}      
         currentQuestion.botConversation = {}  
@@ -453,7 +464,11 @@ const ChatInterface = (props) => {
             "status": "in-progress",
             "templateType": detail?.data?.templateType || "search_answer",
         }
-      }      
+      } 
+    } else {
+      currentQuestion.agentIcon = detail?.data?.answerMeta?.agentIcon
+      currentQuestion.agentName = detail?.data?.answerMeta?.agentName
+    }
       
       _questions[reqId] = currentQuestion      
       store.dispatch(updateChatData(_questions))      

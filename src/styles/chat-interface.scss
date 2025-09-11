@@ -15,7 +15,7 @@ html, body {
     .historySec {
         padding: 1rem 0 1rem 1rem;
         flex-shrink: 0;
-        height: calc(100% - 2.25rem);
+        height: 100%;
         display: flex;
         flex-direction: column;
         border-radius: 1rem;        
@@ -1209,23 +1209,76 @@ html, body {
                                 padding: .5rem;
                                 border-radius: .75rem;
                                 display: flex;
-                                align-items: center;
-                                justify-content: space-between;
                                 gap: .5rem;
                                 background: #FFFFFF;
                                 border: .0625rem solid #E5E5E5;
                                 width: 12.5rem;
                                 position: relative;
                                 flex-shrink: 0;
-                                .fileTitle {
-                                    white-space: nowrap;
-                                    overflow: hidden;
-                                    text-overflow: ellipsis;
-                                    max-width: 11.25rem;
+                                .fileImage {
+                                    width: 1.25rem;
+                                    height: 1.25rem;
+                                    display: flex;
+                                    flex-shrink: 0;
+                                    img {
+                                        max-width: 100%;
+                                        max-height: 100%;
+                                        object-fit: cover;
+                                        flex-shrink: 0;
+                                    }
+                                }
+                                .fileInfo {
+                                    width: calc(100% - 3.125rem);
+                                    .fileTitle {
+                                        white-space: nowrap;
+                                        overflow: hidden;
+                                        text-overflow: ellipsis;
+                                        font-family: Inter;
+                                        font-size: 0.75rem;
+                                        font-style: normal;
+                                        font-weight: 600;
+                                        line-height: 1.125rem;
+                                        letter-spacing: 0em;
+                                        color: #141414;
+                                    }
+                                    .fileSize {
+                                        font-family: Inter;
+                                        font-size: 0.625rem;
+                                        font-style: normal;
+                                        font-weight: 400;
+                                        line-height: 0.75rem;
+                                        letter-spacing: 0em;
+                                        color: #737373;
+                                    }
+                                    .loadingOverlay {
+                                        position: absolute;
+                                        top: 0;
+                                        left: 0;
+                                        bottom: 0;
+                                        right: 0;
+                                        margin: auto;
+                                        display: flex;
+                                        align-items: center;
+                                        justify-content: center;
+                                        width: 100%;
+                                        height: 100%;
+                                        background: rgba(255, 255, 255, 0.80);
+                                        border-radius: 0.75rem;
+                                        .waloader {
+                                            position: relative;
+                                            top: 0;
+                                            right: 0;
+                                            border-bottom-color: #292929;
+                                            border-left-color: #292929;
+                                        }
+                                    }
                                 }
                                 .closeIcon {
                                     display: flex;
                                     align-items: center;
+                                    justify-content: center;
+                                    width: 1.5rem;
+                                    height: 1.5rem;
                                     cursor: pointer;
                                 }
                             }
@@ -1286,23 +1339,76 @@ html, body {
                                 padding: .5rem;
                                 border-radius: .75rem;
                                 display: flex;
-                                align-items: center;
-                                justify-content: space-between;
                                 gap: .5rem;
                                 background: #FFFFFF;
                                 border: .0625rem solid #E5E5E5;
                                 width: 12.5rem;
                                 position: relative;
                                 flex-shrink: 0;
-                                .fileTitle {
-                                    white-space: nowrap;
-                                    overflow: hidden;
-                                    text-overflow: ellipsis;
-                                    max-width: 11.25rem;
+                                .fileImage {
+                                    width: 1.25rem;
+                                    height: 1.25rem;
+                                    display: flex;
+                                    flex-shrink: 0;
+                                    img {
+                                        max-width: 100%;
+                                        max-height: 100%;
+                                        object-fit: cover;
+                                        flex-shrink: 0;
+                                    }
+                                }
+                                .fileInfo {
+                                    width: calc(100% - 3.125rem);
+                                    .fileTitle {
+                                        white-space: nowrap;
+                                        overflow: hidden;
+                                        text-overflow: ellipsis;
+                                        font-family: Inter;
+                                        font-size: 0.75rem;
+                                        font-style: normal;
+                                        font-weight: 600;
+                                        line-height: 1.125rem;
+                                        letter-spacing: 0em;
+                                        color: #141414;
+                                    }
+                                    .fileSize {
+                                        font-family: Inter;
+                                        font-size: 0.625rem;
+                                        font-style: normal;
+                                        font-weight: 400;
+                                        line-height: 0.75rem;
+                                        letter-spacing: 0em;
+                                        color: #737373;
+                                    }
+                                    .loadingOverlay {
+                                        position: absolute;
+                                        top: 0;
+                                        left: 0;
+                                        bottom: 0;
+                                        right: 0;
+                                        margin: auto;
+                                        display: flex;
+                                        align-items: center;
+                                        justify-content: center;
+                                        width: 100%;
+                                        height: 100%;
+                                        background: rgba(255, 255, 255, 0.80);
+                                        border-radius: 0.75rem;
+                                        .waloader {
+                                            position: relative;
+                                            top: 0;
+                                            right: 0;
+                                            border-bottom-color: #292929;
+                                            border-left-color: #292929;
+                                        }
+                                    }
                                 }
                                 .closeIcon {
                                     display: flex;
                                     align-items: center;
+                                    justify-content: center;
+                                    width: 1.5rem;
+                                    height: 1.5rem;
                                     cursor: pointer;
                                 }
                             }
@@ -1363,23 +1469,76 @@ html, body {
                                 padding: .5rem;
                                 border-radius: .75rem;
                                 display: flex;
-                                align-items: center;
-                                justify-content: space-between;
                                 gap: .5rem;
                                 background: #FFFFFF;
                                 border: .0625rem solid #E5E5E5;
                                 width: 12.5rem;
                                 position: relative;
                                 flex-shrink: 0;
-                                .fileTitle {
-                                    white-space: nowrap;
-                                    overflow: hidden;
-                                    text-overflow: ellipsis;
-                                    max-width: 11.25rem;
+                                .fileImage {
+                                    width: 1.25rem;
+                                    height: 1.25rem;
+                                    display: flex;
+                                    flex-shrink: 0;
+                                    img {
+                                        max-width: 100%;
+                                        max-height: 100%;
+                                        object-fit: cover;
+                                        flex-shrink: 0;
+                                    }
+                                }
+                                .fileInfo {
+                                    width: calc(100% - 3.125rem);
+                                    .fileTitle {
+                                        white-space: nowrap;
+                                        overflow: hidden;
+                                        text-overflow: ellipsis;
+                                        font-family: Inter;
+                                        font-size: 0.75rem;
+                                        font-style: normal;
+                                        font-weight: 600;
+                                        line-height: 1.125rem;
+                                        letter-spacing: 0em;
+                                        color: #141414;
+                                    }
+                                    .fileSize {
+                                        font-family: Inter;
+                                        font-size: 0.625rem;
+                                        font-style: normal;
+                                        font-weight: 400;
+                                        line-height: 0.75rem;
+                                        letter-spacing: 0em;
+                                        color: #737373;
+                                    }
+                                    .loadingOverlay {
+                                        position: absolute;
+                                        top: 0;
+                                        left: 0;
+                                        bottom: 0;
+                                        right: 0;
+                                        margin: auto;
+                                        display: flex;
+                                        align-items: center;
+                                        justify-content: center;
+                                        width: 100%;
+                                        height: 100%;
+                                        background: rgba(255, 255, 255, 0.80);
+                                        border-radius: 0.75rem;
+                                        .waloader {
+                                            position: relative;
+                                            top: 0;
+                                            right: 0;
+                                            border-bottom-color: #292929;
+                                            border-left-color: #292929;
+                                        }
+                                    }
                                 }
                                 .closeIcon {
                                     display: flex;
                                     align-items: center;
+                                    justify-content: center;
+                                    width: 1.5rem;
+                                    height: 1.5rem;
                                     cursor: pointer;
                                 }
                             }
@@ -1410,6 +1569,94 @@ html, body {
                                         box-shadow: 0rem 0rem 0rem .25rem #eff4ff;
                                     }
                                 } 
+                            }
+                        }
+                        .uploadedFileWrapper {
+                            background: #FAFAFA;
+                            border: .0625rem solid #F5F5F5;
+                            padding: .5rem;
+                            border-radius: .75rem;
+                            display: flex;
+                            align-items: flex-start;
+                            gap: .5rem;
+                            white-space: nowrap;
+                            overflow-x: auto;
+                            .uploadedFileDetails {
+                                padding: .5rem;
+                                border-radius: .75rem;
+                                display: flex;
+                                gap: .5rem;
+                                background: #FFFFFF;
+                                border: .0625rem solid #E5E5E5;
+                                width: 12.5rem;
+                                position: relative;
+                                flex-shrink: 0;
+                                .fileImage {
+                                    width: 1.25rem;
+                                    height: 1.25rem;
+                                    display: flex;
+                                    flex-shrink: 0;
+                                    img {
+                                        max-width: 100%;
+                                        max-height: 100%;
+                                        object-fit: cover;
+                                        flex-shrink: 0;
+                                    }
+                                }
+                                .fileInfo {
+                                    width: calc(100% - 3.125rem);
+                                    .fileTitle {
+                                        white-space: nowrap;
+                                        overflow: hidden;
+                                        text-overflow: ellipsis;
+                                        font-family: Inter;
+                                        font-size: 0.75rem;
+                                        font-style: normal;
+                                        font-weight: 600;
+                                        line-height: 1.125rem;
+                                        letter-spacing: 0em;
+                                        color: #141414;
+                                    }
+                                    .fileSize {
+                                        font-family: Inter;
+                                        font-size: 0.625rem;
+                                        font-style: normal;
+                                        font-weight: 400;
+                                        line-height: 0.75rem;
+                                        letter-spacing: 0em;
+                                        color: #737373;
+                                    }
+                                    .loadingOverlay {
+                                        position: absolute;
+                                        top: 0;
+                                        left: 0;
+                                        bottom: 0;
+                                        right: 0;
+                                        margin: auto;
+                                        display: flex;
+                                        align-items: center;
+                                        justify-content: center;
+                                        width: 100%;
+                                        height: 100%;
+                                        background: rgba(255, 255, 255, 0.80);
+                                        border-radius: 0.75rem;
+                                        .waloader {
+                                            position: relative;
+                                            top: 0;
+                                            right: 0;
+                                            border-bottom-color: #292929;
+                                            border-left-color: #292929;
+                                        }
+                                    }
+                                }
+                                .closeIcon {
+                                    display: flex;
+                                    align-items: center;
+                                    justify-content: center;
+                                    width: 1.5rem;
+                                    height: 1.5rem;
+                                    cursor: pointer;
+                                }
                             }
                         }
                     }
@@ -2390,7 +2637,53 @@ html, body {
         }
     }
 }
+.bot-conversation-icon-block {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
 
+            .expandAreaBlock {
+                cursor: pointer;
+            }
+            
+            .icon-block {
+                width: 2rem;
+                height: 2rem;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border-radius: 100%;
+                border: 0.0625rem solid var(--colors-gray-true-200, #E5E5E5);
+                background: var(--colors-base-white, #FFF);
+                text-transform: uppercase;
+                color: white;
+                flex-shrink: 0;
+                img {
+                    width: 1rem;
+                    max-height: 1rem;
+                    object-fit: contain;
+                }
+            }
+            .bot-agent-name {
+                font-family: Inter;
+                font-size: 0.875rem;
+                font-style: normal;
+                font-weight: 500;
+                line-height: 1.25rem;
+                letter-spacing: 0em;
+                color: #0F0F0F;
+            }
+            .agent-name {
+                font-family: Inter;
+                font-size: 0.75rem;
+                font-style: normal;
+                font-weight: 400;
+                line-height: 1.125rem;
+                letter-spacing: 0em;
+                color: #737373;
+                margin-top: 0.25rem;
+            }
+        }
 
 .bot-conversation-wrapper {
     .top-header {
@@ -3172,10 +3465,105 @@ html, body {
         will-change: background;
     }
 }
+
 .bot-conversation-content > div:last-child{
     min-height: 100dvh;
     // document.getElementById('chatSec').scrollHeight - document.getElementById('chatSec').scrollTop - document.getElementById('chatSec').offsetHeight
 }
 .bot-conversation-completed .bot-conversation-content > div:last-child{
     min-height: unset;
+}
+
+.add-connection {
+    display: flex;
+    padding: 1rem;
+    align-items: flex-start;
+    gap: 1rem;
+    align-self: stretch;
+    border-radius: 1rem;
+    border: 0.0625rem solid #F5F3F1;
+    background: #FAFAF9;
+    cursor: pointer;
+
+    .mainactwrap {
+        display: flex;
+        align-items: center;
+        
+        .choosenimage {
+            width: 3rem;
+            height: 3rem;
+            border-radius: 100%;
+            background: #FFFFFF;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            img {
+                max-width: 1.5rem;
+                max-height: 1.5rem;
+                object-fit: contain;
+            }
+        }
+    }
+    .contentAreawrap {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+        
+        .choosedtext {
+            font-family: Inter;
+            font-size: 1rem;
+            font-style: normal;
+            font-weight: 600;
+            line-height: 1.25rem;
+            letter-spacing: 0em;
+            color: var(--Gray-iron-900, #18181B);
+        }
+        
+        .rightside {
+            .authenticationstatus {
+                display: flex;
+                flex-direction: column;
+                gap: 1.5rem;
+                
+                .authenticateverify {
+                    font-family: Inter;
+                    font-size: 0.875rem;
+                    font-style: normal;
+                    font-weight: 400;
+                    line-height: 1.25rem;
+                    letter-spacing: 0em;
+                    color: var(--Gray-iron-500, #70707B);
+                }
+
+                .addConnection {
+                    display: flex;
+                    align-items: center;
+                    gap: 0.25rem;
+                    cursor: pointer;
+                    display: inline-flex;
+                    width: fit-content;
+
+                    .acIcon {
+                        display: flex;
+                        align-items: center; 
+                    }
+                    
+                    .addConnectionText {
+                        font-family: Inter;
+                        font-size: 0.875rem;
+                        font-style: normal;
+                        font-weight: 500;
+                        line-height: 1.25rem;
+                        letter-spacing: 0em;
+                        color: var(--Gray-iron-950, var(--colors-gray-iron-950, #131316));
+                    }
+                }              
+            }
+        }
+    }
+     
+    &:hover {
+        background: #F8F6F5;             
+    } 
 }
