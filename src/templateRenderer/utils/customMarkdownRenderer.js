@@ -1,5 +1,4 @@
 import marked from "marked";
-import { encodeHtml } from "../../utils/helpers"; // optional, if you still need it
 import DOMPurify from "dompurify";
 
 // Set marked config
@@ -19,9 +18,12 @@ const customMarkdownRenderer = (text) => {
 	rawHtml = rawHtml.replace("<a", '<a target="_blank"');
 
 	// Sanitize to prevent XSS (recommended)
-	const sanitizedHtml = DOMPurify.sanitize(rawHtml);
+	// Configured DOMPurify to allow target attribute on anchor tags
+	const sanitizedHtml = DOMPurify.sanitize(rawHtml, {
+		ADD_ATTR: ['target']
+	});
 
-	return encodeHtml ? encodeHtml(sanitizedHtml) : sanitizedHtml;
+	return sanitizedHtml;
 };
 
 export default customMarkdownRenderer;

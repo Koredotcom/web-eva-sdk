@@ -1,3 +1,4 @@
+import customMarkdownRenderer from "../utils/customMarkdownRenderer";
 import { encodeHtml } from "../utils/helper";
 
 function render(data) {
@@ -12,7 +13,7 @@ function render(data) {
 
     let html = `
         <div class="search-answer-container">
-            ${renderAnswer(data)}
+            ${customMarkdownRenderer(data.answer)}
         </div>
     `;
 
@@ -37,8 +38,8 @@ function renderAnswer(data) {
 	if (!data.answer) return "";
 
     let html = `
-        <div id="answer-${data.id}" class="threadName maxLength">
-            ${data.answer}
+        <div id="answer-${data?.messageId}" class="threadName maxLength">
+            ${customMarkdownRenderer(data.answer)}
         </div>
     `;
     return html;
