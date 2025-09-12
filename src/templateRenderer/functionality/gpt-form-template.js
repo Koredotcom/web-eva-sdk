@@ -258,7 +258,7 @@ const gptFormFunctionality = (formData, item, preservedValues = {}) => {
 				// Wait for Quill editor to be initialized
 				setTimeout(() => {
 					if (quillContainer && quillContainer.quillEditor) {
-						// 🔥 RESTORE PRESERVED VALUE - Use preserved value if available, otherwise use default
+						
 						const preservedQuillValue = preservedValues[`inputValue-${field?.key}-${item?.messageId}-${index}`];
 						const defaultValue = field?.value?.default || "";
 						const valueToSet = preservedQuillValue || defaultValue;
@@ -278,7 +278,7 @@ const gptFormFunctionality = (formData, item, preservedValues = {}) => {
 				// Wait for Quill editor to be initialized
 				setTimeout(() => {
 					if (quillContainer && quillContainer.quillEditor) {
-						// 🔥 RESTORE PRESERVED VALUE - Use preserved value if available, otherwise use default
+						
 						const preservedNestedQuillValue = preservedValues[`inputValue-${field?.key}-${item?.messageId}-${index}`];
 						const initialPromptValue = field?.value?.nested?.value || "";
 						const valueToSet = preservedNestedQuillValue || initialPromptValue;
