@@ -2,7 +2,7 @@ import { htmlDecode, renderIcons, getFileExtension, getExtIcon, getDownloadIcon,
 import AnsFromChipFunctionality from "../functionality/ansFromChip";
 import { getTimeline, highlightQuotedText } from "../utils/helper";
 import htmlTableRenderer from "./htmlTableRenderer";
-import { createCopyIcon, createExport, createThumbsDown, createThumbsDownFilled, createThumbsUp, createThumbsUpFilled, setContextIcon, EllipsisVertical, Gmail, Outlookimg, Slackimg, Teamsimg, JiraCommentsIcon, RadioButtonChecked, tickMarkIcon } from "../icons-library";
+import { createCopyIcon, createExport, createThumbsDown, createThumbsDownFilled, createThumbsUp, createThumbsUpFilled, setContextIcon, EllipsisVertical, Gmail, Outlookimg, Slackimg, Teamsimg, JiraCommentsIcon, RadioButtonChecked, tickMarkIcon, Close } from "../icons-library";
 import store from "../../redux/store";
 import { updateChatData } from "../../redux/globalSlice";
 import { cloneDeep } from "lodash";
@@ -572,10 +572,31 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 				// Check if dialog already exists to prevent duplicates
 				const existingDialog = document.getElementById(`gptDialog-${item?.id}`);
 				if (!existingDialog) {
+					const source = item?.sources?.[0] || {};
+					const icon = renderIcons(
+						source.source,
+						source.extIcon || source.iconUrl,
+						source.providerIcon || source.icon
+					).outerHTML;
+					const title = htmlDecode(source?.title || item?.title || "No subject");
+					
 					let html = `
-	                    <sl-dialog id="gptDialog-${
+	                    <sl-dialog class="gpt-form-dialog" id="gptDialog-${
 							item?.id
-						}" label="GPT Response" style="--width: 500px;">
+						}" label="">
+							<div class="gpt-form-dialog-header">
+								<div class="left-section">
+									<div class="gpt-form-dialog-header-icon">
+										${icon}
+									</div>
+									<div class="gpt-form-dialog-header-title">
+										${title}
+									</div>
+								</div>
+								<div class="right-section" id="closeDialog-${item?.id}">
+									${Close({ size: 12, color: "#667085" })}
+								</div>
+							</div>
 	                        <div class="formModalContent">
 	                            ${multiAnswerChipRenderer()}
 	                        </div>
@@ -585,6 +606,14 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 					container.innerHTML = html;
 					const dialog = container.firstElementChild;
 					document.body.appendChild(dialog);
+					
+					// Add close button functionality
+					const closeButton = document.getElementById(`closeDialog-${item?.id}`);
+					if (closeButton) {
+						closeButton.addEventListener('click', () => {
+							dialog.hide();
+						});
+					}
 					
 					// Show the dialog
 					dialog.show();
