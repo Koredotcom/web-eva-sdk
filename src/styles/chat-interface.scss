@@ -3468,7 +3468,6 @@ html, body {
 
 .bot-conversation-content > div:last-child{
     min-height: 100dvh;
-    // document.getElementById('chatSec').scrollHeight - document.getElementById('chatSec').scrollTop - document.getElementById('chatSec').offsetHeight
 }
 .bot-conversation-completed .bot-conversation-content > div:last-child{
     min-height: unset;
