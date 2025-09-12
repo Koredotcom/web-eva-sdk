@@ -5,7 +5,7 @@ import MultiResponse from "../../chat/gptTemplate/MultiResponse";
 import gptFormFunctionality from "../functionality/gpt-form-template";
 import store from "../../redux/store";
 import { QuillEditor } from "../../components";
-import { createDeleteIcon, Close, createExport, createCloseIcon } from "../icons-library";
+import { createDeleteIcon, Close, createExport, createCloseIcon, EllipsisVertical, ExportIcon, CheckCircle, ToastWarningIcon } from "../icons-library";
 
 // Helper function to initialize Quill editor for a container
 const initializeQuillForContainer = (container, field, item, promptDropdownWords, index) => {
@@ -724,7 +724,26 @@ export function render(item) {
 				inputField.id = `fileUpload-${contextField?.key}-${item?.messageId}`;
 				fileUploadLabel.appendChild(inputField);
 
-				
+				// Add upload limit message div
+				const uploadLimitMessageDiv = document.createElement("div");
+				uploadLimitMessageDiv.id = `upload-limit-message-${contextField?.key}-${item?.messageId}`;
+				uploadLimitMessageDiv.className = "generic-common-error wa-dropdown-enter-anim";
+				uploadLimitMessageDiv.style.display = "none";
+				uploadLimitMessageDiv.innerHTML = `
+					<div class='message-content'>
+						<div class='copy-message-icon'>
+							${ToastWarningIcon({ size: 46})}
+							</div>
+							<div class='copy-message-text warning-message'>
+								<div class='copy-message-text-type'>Warning</div>
+								<div class='copy-message-text-description'>Maximum 1 file can be selected</div>
+							</div>
+					</div>
+					<div class='close-icon'>
+						${Close({ size: 12, color: '#212121' })}
+					</div>
+				`;
+				formFieldLongTextElement.appendChild(uploadLimitMessageDiv);
 
 				grpWrapDiv.appendChild(formFieldLongTextElement);
 			}
@@ -962,7 +981,7 @@ export function render(item) {
 		responsesFieldWrapper.className = "responsesFieldWrapper";
 
 		const singleResponseWrapper = document.createElement("div");
-		singleResponseWrapper.className = `response-${index}`;
+		singleResponseWrapper.className = `response-wrapper response-${index}`;
 
 		const responseHeaderWrapper = document.createElement("div");
 		responseHeaderWrapper.className = "responseHeaderWrapper";
@@ -1022,6 +1041,27 @@ export function render(item) {
 				removeButton.id = `removeButton-${field?.key}-${item?.messageId}-${field?.uniqueFieldId}`;
 				removeButton.style.display = "none";
 				formFieldLongTextElement.appendChild(removeButton);
+
+				// Add upload limit message div
+				const uploadLimitMessageDiv = document.createElement("div");
+				uploadLimitMessageDiv.id = `upload-limit-message-${field?.key}-${item?.messageId}-${field?.uniqueFieldId}`;
+				uploadLimitMessageDiv.className = "generic-common-error wa-dropdown-enter-anim";
+				uploadLimitMessageDiv.style.display = "none";
+				uploadLimitMessageDiv.innerHTML = `
+					<div class='message-content'>
+						<div class='copy-message-icon'>
+							${ToastWarningIcon({ size: 46})}
+							</div>
+							<div class='copy-message-text warning-message'>
+								<div class='copy-message-text-type'>Warning</div>
+								<div class='copy-message-text-description'>Maximum 1 file can be selected</div>
+							</div>
+					</div>
+					<div class='close-icon'>
+						${Close({ size: 12, color: '#212121' })}
+					</div>
+				`;
+				formFieldLongTextElement.appendChild(uploadLimitMessageDiv);
 
 				// grpInputDiv.appendChild(formFieldLongTextElement);
 			}											
@@ -1501,7 +1541,7 @@ export function render(item) {
 
 								
 				const fileUploadLabel = document.createElement("label");
-				fileUploadLabel.textContent = "Drop files to attach or browse";
+				fileUploadLabel.innerHTML = `${ExportIcon({ size: 16, color: "#667085" })} Drop files to attach or <span class='browseText'>browse</span>`;
 				fileUploadLabel.className = "fileUploadLabel";
 				formFieldLongTextElement.appendChild(fileUploadLabel);
 

@@ -1038,6 +1038,37 @@ html, body {
                 /*background: $wa-gray-50; */                             
             }
         }
+        .responsesFieldWrapper {
+            .response-wrapper {
+                display: flex;
+                flex-wrap: wrap;
+                justify-content: space-between;
+
+                .responseHeaderWrapper, .tvInputGroup {
+                    width: 100%;
+                }
+                .tvInputGroup {
+                    &.dropdown {
+                        width: 49%;
+                    }
+                    &.number {
+                        width: 49%;
+                    }
+                    &.simpleText {
+                        width: 100%;
+                    }
+                    &.longText {
+                        width: 100%;
+                    }
+                    &.richText {
+                        width: 100%;
+                    }
+                    &.uploadGrp {
+                        width: 100%;
+                    }
+                }
+            }
+        }
         .contextFieldHeader, .parameterFieldHeader, .responseHeader {
             font-size: .875rem;
             font-weight: 500;
@@ -1567,6 +1598,31 @@ html, body {
                                     &:hover {
                                         background: #fafafa;
                                         box-shadow: 0rem 0rem 0rem .25rem #eff4ff;
+                                    }
+                                    .fileUploadLabel {
+                                        display: flex;
+                                        align-items: center;
+                                        gap: .5rem;
+                                        justify-content: center;
+                                        font-family: Inter;
+                                        font-size: .875rem;
+                                        font-style: normal;
+                                        font-weight: 400;
+                                        line-height: 1.25rem;
+                                        letter-spacing: 0em;
+                                        color: #737373;
+
+                                        .browseText {
+                                            display: inline-flex;
+                                            font-family: Inter;
+                                            font-size: .875rem;
+                                            font-style: normal;
+                                            font-weight: 600;
+                                            line-height: 1.25rem;
+                                            letter-spacing: 0em;
+                                            color: #155eef;
+                                            text-decoration: underline;
+                                        }
                                     }
                                 } 
                             }
@@ -3566,4 +3622,89 @@ html, body {
     &:hover {
         background: #F8F6F5;             
     } 
+}
+
+.generic-common-error {
+    display: inline-flex;
+    align-items: center;
+    padding: .75rem .6875rem;
+    align-items: flex-start;
+    gap: .75rem;
+    border-radius: .5rem;
+    border: .0625rem solid #FFFFFF;
+    background: #FFFFFF;
+    box-shadow: 0rem .25rem .375rem -0.125rem rgba(16, 24, 40, .03), 0rem .75rem 1rem -0.25rem rgba(16, 24, 40, .08);
+    position: fixed;
+    z-index: 9999;
+    right: 1.5rem;
+    top: 1.5rem;    
+    width: 325px;
+    display: none;
+
+    .message-content {
+        flex-grow: 1;
+        display: flex;
+        align-items: flex-start;
+    }
+
+    .close-icon {
+        flex-shrink: 0;
+        width: 1.875rem;
+        height: 1.875rem;
+        border-radius: 50%;
+        background: rgba(0, 0, 0, 0);
+        display: flex;
+        align-items: center;
+        justify-content: center;        
+        margin-left: .9375rem;
+        cursor: pointer;
+
+        &:hover {
+            background: #f2f4f7;
+        }
+    }
+    
+
+    .copy-message-icon {
+        width: 2.5rem;
+        min-width: 2.5rem;
+        height: 2.5rem;
+        border-radius: 6.25rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: #eff0f1;
+        margin-right: .9375rem;
+    }
+
+    .copy-message-text {
+        font-family: "Inter";
+        font-style: normal;
+        font-weight: 400;
+        font-size: .875rem;
+        line-height: 1.25rem;
+        color: #667085;
+        margin-top: .25rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.125rem;
+
+        .copy-message-text-type {
+            font-family: "Inter";
+            font-style: normal;
+            font-weight: 500;
+            font-size: .875rem;
+            line-height: 1.25rem;
+            color: #101828;
+        }
+
+        .copy-message-text-description {
+            font-family: "Inter";
+            font-style: normal;
+            font-weight: 400;
+            font-size: .875rem;
+            line-height: 1.25rem;
+            color: #667085;
+        }
+    }
 }
