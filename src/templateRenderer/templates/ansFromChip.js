@@ -4,8 +4,11 @@ import { getTimeline, highlightQuotedText } from "../utils/helper";
 import htmlTableRenderer from "./htmlTableRenderer";
 import { createCopyIcon, createExport, createThumbsDown, createThumbsDownFilled, createThumbsUp, createThumbsUpFilled, setContextIcon, EllipsisVertical, Gmail, Outlookimg, Slackimg, Teamsimg, JiraCommentsIcon, RadioButtonChecked, tickMarkIcon } from "../icons-library";
 import store from "../../redux/store";
+import { updateChatData } from "../../redux/globalSlice";
+import { cloneDeep } from "lodash";
 import * as feedbackTemplate from "./feedback-template";
 import * as copyQuestion from "./copy-question";
+import { initializeQuillEditor } from "../../utils/quillUtils";
 
 const AnsFromChip = ({ item, regeneratingAnswer }) => {
 	const regeneratingChipRenderer = () => {
@@ -143,7 +146,7 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 		).outerHTML;
 
 		return `
-            <div class="leftWrapperBlock" style="pointer-events: none;">
+            <div class="leftWrapperBlock">
                 <span class="koraSpecDr${
 					warning ? " fromWarning" : ""
 				}" id = "ansFromChip-${item?.id}">
@@ -164,7 +167,7 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 	};
 
 	const chatFilterGroupRenderer = () => {
-		if (!item?.showData || item?.sources?.length !== 1) {
+		if (!item?.showData || item?.sources?.length !== 1 || !item?.data) {
 			return '';
 		}
 
@@ -268,7 +271,7 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 				(form) => form?.key === value
 			);
 			selectedFormField = requiredField?.value?.choices?.find(
-				(data) => data?.id === id
+				(data) => data?.id === id?.toLowerCase()
 			)?.label;
 		}
 		return selectedFormField;
@@ -298,7 +301,9 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 		const responseLength = item?.content?.formData?.requestParams?.length;
 
 		const contextValue =
-			item?.content?.formData?.contextFields?.[contextKey]?.value || "";
+			item?.content?.formData?.contextFields?.[contextKey]?.type === "file" 
+											? item?.content?.formData?.contextFields?.[contextKey]?.value?.[0]?.title 
+											: item?.content?.formData?.contextFields?.[contextKey]?.value || "";
 		if (
 			Object.keys(item?.content?.formData?.contextFields || {}).length > 0
 		) {
@@ -373,17 +378,20 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 					html += `<div class='grpInput'>`;
 
 					if (data.toLowerCase() === "prompt") {
-						// const parsed = parseContent(parameter?.fields?.prompt?.value || parameter?.fields?.prompt);
-						const parsed =
-							parameter?.fields?.prompt?.value ||
-							parameter?.fields?.prompt;
-						html += `<div class='promptId' contentEditable="false">${parsed}</div>`;
+						const parsed = parameter?.fields?.prompt?.value || parameter?.fields?.prompt;
+						const editorId = `quill-prompt-editor-${item?.id}-${Date.now()}`;
+						
+						html += `<div id="${editorId}" class="quill-prompt-container" style="height: 200px; border: 1px solid #ccc;"></div>`;
+												
+						initializeQuillEditor(editorId, parsed);
 					} else {
 						const field = parameter?.fields?.[data];
 						const fieldValue =
 							field?.type === "file"
-								? field?.title
-								: field?.value;
+								? field?.value?.length > 0 
+											? field?.value?.[0]?.title 
+											: ""
+								: field?.title || field?.value;
 
 						if (field?.type === "simpleText") {
 							html += `<div class='grpInput answerFromChip'><input type="text" readonly value="${fieldValue}" /></div>`;
@@ -525,7 +533,7 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 	/*need to creata a menufunction that displays a shoelace menu on clicking */
 	const threeDotMenu = () => {
 		const messageId = item?.messageId || item?.id;
-		console.log('Creating three dot menu for messageId:', messageId);
+		
 		
 		// Get available integration actions
 		const availableActions = getAvailableActions();
@@ -561,26 +569,53 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 		} else {
 			chipHTML = knowledgeChipRenderer();
 			if (item?.showGPTDialog) {
-				let html = `
-                    <dialog id="gptDialog-${
-						item?.id
-					}" class="formDialog" style="width:500px; padding:20px;">
-                        <button class="close-btn" id="close-btn-dialog-${
+				// Check if dialog already exists to prevent duplicates
+				const existingDialog = document.getElementById(`gptDialog-${item?.id}`);
+				if (!existingDialog) {
+					let html = `
+	                    <sl-dialog id="gptDialog-${
 							item?.id
-						}" 
-                        style="position:absolute; top:10px; right:10px; border:none; background:transparent; font-size:16px; cursor:pointer;">
-                            X
-                        </button>
-                        <div class="formModalContent">
-                            ${multiAnswerChipRenderer()}
-                        </div>
-                    </dialog>
-                `;
-				const container = document.createElement("div");
-				container.innerHTML = html;
-				const dialog = container.firstElementChild;
-				document.body.appendChild(dialog);
-				dialog.showModal();
+						}" label="GPT Response" style="--width: 500px;">
+	                        <div class="formModalContent">
+	                            ${multiAnswerChipRenderer()}
+	                        </div>
+	                    </sl-dialog>
+	                `;
+					const container = document.createElement("div");
+					container.innerHTML = html;
+					const dialog = container.firstElementChild;
+					document.body.appendChild(dialog);
+					
+					// Show the dialog
+					dialog.show();
+					
+					
+					dialog.addEventListener('sl-hide', () => {
+						// Update state to set showGPTDialog = false
+						try {
+							let state = store.getState()?.global;
+							let _questions = cloneDeep(state?.questions);
+							let constId = item?.reqId || item?.id;
+							
+							if (_questions[constId]) {
+								_questions[constId].showGPTDialog = false;
+								store.dispatch(updateChatData(_questions));
+								console.log('Dialog closed - showGPTDialog set to false for:', constId);
+							}
+						} catch (error) {
+							console.error('Error updating showGPTDialog state:', error);
+						}
+						
+						// Remove dialog from DOM after state update
+						setTimeout(() => {
+							if (document.body.contains(dialog)) {
+								document.body.removeChild(dialog);
+							}
+						}, 300); 
+					});
+				} else {					
+					existingDialog.show();
+				}
 			}
 		}
 		let actionChipsHTML = `<div class="answerActionChips">`;

@@ -819,7 +819,7 @@ class ComposeBar {
             if (!agenticFlows) {
                 const state = store.getState();
                 const allAgents = state?.global?.allAgents?.data?.agents || [];
-                agenticFlows = allAgents.filter(agent => agent?.type === "agenticApp");
+                agenticFlows = allAgents.filter(agent => (agent?.type === "agenticApp" && agent?.enabled));
                 this.agenticFlows = agenticFlows;
             }
 
@@ -849,7 +849,7 @@ class ComposeBar {
             if (!agenticFlows) {
                 const state = store.getState();
                 const allAgents = state?.global?.allAgents?.data?.agents || [];
-                agenticFlows = allAgents.filter(agent => agent?.type === "agenticApp");
+                agenticFlows = allAgents.filter(agent => (agent?.type === "agenticApp" && agent?.enabled));
                 this.agenticFlows = agenticFlows;
             }
 
@@ -1386,7 +1386,7 @@ class ComposeBar {
             const state = store.getState();
             const allAgents = state?.global?.allAgents?.data?.agents || [];
             const recents = state?.global?.allAgents?.data?.recents || [];
-            const agenticFlows = allAgents.filter(agent => agent?.type === "agenticApp") ;
+            const agenticFlows = allAgents.filter(agent => (agent?.type === "agenticApp" && agent?.enabled)) ;
             
             // Store agenticFlows as a class property for tab switching
             this.agenticFlows = agenticFlows;

@@ -13,7 +13,7 @@ const AnsFromChipFunctionality = ({ item }) => {
 	const getRelevantQuestionsData = async () => {
 		let state = store.getState()?.global;
 		let _questions = cloneDeep(state?.questions);
-		let constId = item?.cId || item?.id;
+		let constId = item?.reqId || item?.id;
 
 		if (item?.altQuestions?.showAltQuestions) {
 			_questions[constId].altQuestions.showAltQuestions = false;
@@ -123,7 +123,7 @@ const AnsFromChipFunctionality = ({ item }) => {
 		) {
 			let state = store.getState()?.global;
 			let _questions = cloneDeep(state?.questions);
-			let constId = item?.cId || item?.id;
+			let constId = item?.reqId || item?.id;
 			let showGPTDialog = !!_questions[constId]?.showGPTDialog;
 			_questions[constId].showGPTDialog = !showGPTDialog;
 			store.dispatch(updateChatData(_questions));
@@ -136,7 +136,7 @@ const AnsFromChipFunctionality = ({ item }) => {
 		} else if (item?.sources?.length > 1) {
 			let state = store.getState()?.global;
 			let _questions = cloneDeep(state?.questions);
-			let constId = item?.cId || item?.id;
+			let constId = item?.reqId || item?.id;
 			let showMultiSourceList =
 				!!_questions[constId]?.showMultiSourceList;
 			_questions[constId].showMultiSourceList = !showMultiSourceList;
@@ -144,7 +144,7 @@ const AnsFromChipFunctionality = ({ item }) => {
 		} else {
 			let state = store.getState()?.global;
 			let _questions = cloneDeep(state?.questions);
-			let constId = item?.cId || item?.id;
+			let constId = item?.reqId || item?.id;
 			let showData = !!_questions[constId]?.showData;
 			_questions[constId].showData = !showData;
 			store.dispatch(updateChatData(_questions));
@@ -500,20 +500,7 @@ const AnsFromChipFunctionality = ({ item }) => {
 				}
 			});
 		}
-
-		if (item?.showGPTDialog) {
-			let dialog = document.getElementById(`gptDialog-${item?.id}`);
-			let closeBtn = document.getElementById(
-				`close-btn-dialog-${item?.id}`
-			);
-			if (closeBtn && !closeBtn.eventListenerAdded) {
-				closeBtn.addEventListener("click", () => {
-					dialog.close();
-					dialog.remove();
-				});
-				closeBtn.eventListenerAdded = true;
-			}
-		}
+		
 
 		// Add copy answer button event listener
 		if (item?.answer) {

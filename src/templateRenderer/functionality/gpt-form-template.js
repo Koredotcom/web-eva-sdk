@@ -440,8 +440,18 @@ const checkParamFields = (paramFields, messageId) => {
 						if (!hasText && paramFieldFileDetails.length === 0) return false;
 					}
 				} else {
-					const paramFieldDiv = document.getElementById(`inputValue-${field?.key}-${messageId}-${OuterIndex}`);
-					if (!paramFieldDiv?.value?.trim()?.length) return false;
+					if(field?.value?.type === "dropdown"){
+						const paramFieldDiv = document.getElementById(`dropdownValue-${field?.key}-${messageId}-${OuterIndex}`);
+						if (paramFieldDiv?.hasAttribute('multiple')) {
+							const currentValues = Array.isArray(paramFieldDiv.value) ? paramFieldDiv.value : [];
+							if (currentValues.length === 0) return false;
+						} else {
+							if (!paramFieldDiv?.value?.trim()?.length) return false;
+						}			
+					} else {
+						const paramFieldDiv = document.getElementById(`inputValue-${field?.key}-${messageId}-${OuterIndex}`);
+						if (!paramFieldDiv?.value?.trim()?.length) return false;
+					}
 				}
 			}
 		}
