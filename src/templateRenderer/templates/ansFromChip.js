@@ -544,10 +544,12 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 		
 		return `
 			<div class="three-dot-menu-container">
-				<button class="three-dot-trigger" data-three-dot-trigger="${messageId}" title="More options">${EllipsisVertical({ size: 16, color: "#667085" })}</button>				
-				<sl-menu class="three-dot-dropdown" data-three-dot-dropdown="${messageId}">
-					${integrationMenuItems}
-				</sl-menu>
+				<sl-dropdown>
+					<button class="three-dot-trigger" data-three-dot-trigger="${messageId}" title="More options" slot="trigger">${EllipsisVertical({ size: 16, color: "#667085" })}</button>				
+					<sl-menu class="three-dot-dropdown" data-three-dot-dropdown="${messageId}">
+						${integrationMenuItems}
+					</sl-menu>
+				</sl-dropdown>
 			</div>
 		`;
 	}

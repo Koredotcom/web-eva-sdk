@@ -829,9 +829,9 @@ const AnsFromChipFunctionality = ({ item }) => {
 					e?.stopPropagation();
 
 				});
+				setContextButton.eventListenerAdded = true;
+			}
 		}
-	}
-
 
 		// Add three dot menu functionality
 		const messageId = item?.messageId || item?.reqId;
@@ -839,51 +839,7 @@ const AnsFromChipFunctionality = ({ item }) => {
 		const threeDotDropdown = document.querySelector(`[data-three-dot-dropdown="${messageId}"]`);
 		
 		
-		if (threeDotTrigger && threeDotDropdown && !threeDotTrigger.eventListenerAdded) {
-			threeDotTrigger.addEventListener('click', (e) => {
-				e.preventDefault();
-				e.stopPropagation();
-				
-				// Toggle dropdown visibility
-				const dropdown = threeDotDropdown;
-				const isHidden = dropdown.style.display === 'none' || 
-								dropdown.style.display === '' || 
-								!dropdown.style.display;
-				
-				if (isHidden) {
-					// Close any other open dropdowns first
-					document.querySelectorAll('[data-three-dot-dropdown]').forEach(dd => {
-						dd.style.display = 'none';
-					});
-					
-					// Remove active class from all triggers
-					document.querySelectorAll('[data-three-dot-trigger]').forEach(trigger => {
-						trigger.classList.remove('active');
-					});
-					
-					// Show this dropdown
-					dropdown.style.display = 'flex';
-					dropdown.style.position = 'fixed';
-					dropdown.style.zIndex = '9999';
-					
-					// Add active class to this trigger
-					threeDotTrigger.classList.add('active');
-					
-					// Position the dropdown relative to the trigger button
-					const rect = threeDotTrigger.getBoundingClientRect();
-					dropdown.style.top = `${rect.bottom + 5}px`;
-					dropdown.style.left = `${Math.max(10, rect.right - 220)}px`; // 220px is menu width, with 10px minimum margin
-					
-				} else {
-					dropdown.style.display = 'none';
-					// Remove active class from this trigger
-					threeDotTrigger.classList.remove('active');
-				}
-			});
-			threeDotTrigger.eventListenerAdded = true;
-		} else {
-			console.log('Three dot trigger not found or already has listener:');
-		}
+		// Let Shoelace handle dropdown behavior automatically - no manual control needed
 
 		// Add menu item event listeners
 		if (threeDotDropdown && !threeDotDropdown.eventListenerAdded) {
@@ -897,10 +853,12 @@ const AnsFromChipFunctionality = ({ item }) => {
 					
 					const action = menuItem.getAttribute('data-menu-action');
 					const actionType = menuItem.getAttribute('data-action-type');
-					threeDotDropdown.style.display = 'none'; // Close menu after selection
 					
-					// Remove active class from trigger when menu item is clicked
-					threeDotTrigger.classList.remove('active');
+					// Close Shoelace dropdown after selection
+					const dropdown = threeDotDropdown.closest('sl-dropdown');
+					if (dropdown) {
+						dropdown.hide();
+					}
 					
 					console.log('Menu action:', action, 'Type:', actionType);
 					
@@ -970,21 +928,7 @@ const AnsFromChipFunctionality = ({ item }) => {
 			threeDotDropdown.eventListenerAdded = true;
 		}
 
-		// Close dropdown when clicking outside
-		if (!document.threeDotOutsideClickAdded) {
-			document.addEventListener('click', (e) => {
-				if (!e.target.closest('.three-dot-menu-container')) {
-					document.querySelectorAll('[data-three-dot-dropdown]').forEach(dd => {
-						dd.style.display = 'none';
-					});
-					// Remove active class from all triggers when clicking outside
-					document.querySelectorAll('[data-three-dot-trigger]').forEach(trigger => {
-						trigger.classList.remove('active');
-					});
-				}
-			});
-			document.threeDotOutsideClickAdded = true;
-		}
+		// Shoelace handles outside clicks automatically - no manual handling needed
 	};
 
 	const renderLogic = () => {
