@@ -887,7 +887,7 @@ const AnsFromChipFunctionality = ({ item }) => {
 
 		// Add menu item event listeners
 		if (threeDotDropdown && !threeDotDropdown.eventListenerAdded) {
-			const menuItems = threeDotDropdown.querySelectorAll('sl-menu-item');			
+			const menuItems = threeDotDropdown.querySelectorAll('.menu-item');			
 			
 			menuItems.forEach(menuItem => {
 				menuItem.addEventListener('click', (e) => {

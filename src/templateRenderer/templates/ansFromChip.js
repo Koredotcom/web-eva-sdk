@@ -532,18 +532,20 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 		
 		// Generate Shoelace menu items for integration actions
 		const integrationMenuItems = availableActions.map(action => `
-			<sl-menu-item data-menu-action="${action.appId}" data-action-type="integration">
-				<div slot="prefix" style="display: flex; align-items: center; margin-right: 8px;">
+			<button class="menu-item" data-menu-action="${action.appId}" data-action-type="integration">
+				<div class="menu-item-icon">
 					${action.icon}
 				</div>
-				${action.label}
-			</sl-menu-item>
+				<div class="menu-item-label">
+					${action.label}
+				</div>
+			</button>
 		`).join('');
 		
 		return `
 			<div class="three-dot-menu-container">
 				<button class="three-dot-trigger" data-three-dot-trigger="${messageId}" title="More options">${EllipsisVertical({ size: 16, color: "#667085" })}</button>				
-				<sl-menu class="three-dot-dropdown" data-three-dot-dropdown="${messageId}" style="display: none; position: absolute; background: white; border: 1px solid #ccc; border-radius: 6px; box-shadow: 0 8px 16px rgba(0,0,0,0.15); min-width: 160px; z-index: 1000;">
+				<sl-menu class="three-dot-dropdown" data-three-dot-dropdown="${messageId}">
 					${integrationMenuItems}
 				</sl-menu>
 			</div>
