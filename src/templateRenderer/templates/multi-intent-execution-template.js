@@ -3,6 +3,7 @@ import store from "../../redux/store";
 import { multiIntentExecutionFunc } from "../functionality/multi-intent-execution";
 import TemplateRenderer from "../templateRenderer";
 import "./../styles/template.scss";
+import { Close, PlusIcon } from "../icons-library";
 
 
 const assistantIconTemplate = () => {
@@ -21,13 +22,13 @@ function render(data) {
     let initialState = items?.status === "draft"
 
     let header = `
-        <div id="answer-${items?.id}" class="threadName maxLength" >
+        <div id="answer-${items?.reqId}" class="threadName maxLength" >
             ${items?.templateInfo?.label}
         </div>
 
         ${items?.status === 'draft' ? items?.executionPipeline?.length > 0 ? `
-            <button class="startBtn" id = "startBtn-${items?.id}">${items?.templateInfo?.action}</button>
-            <button class="editFlowBtn" id = "editFlowBtn-${items?.id}">Edit Flow</button>
+            <button class="startBtn" id = "startBtn-${items?.reqId}">${items?.templateInfo?.action}</button>
+            <button class="editFlowBtn" id = "editFlowBtn-${items?.reqId}">Edit Flow</button>
         ` : '' : ''}
         `;
 
@@ -63,8 +64,8 @@ function render(data) {
                             <div class="utterance">${task?.utterance}</div>
                         </div>
                         ${initialState ? `<div class="optionsWrapper">
-                            <button class="editBtn" id = "editBtn-${items?.id}-${index}">Edit</button>
-                            <button class="deleteBtn" id = "deleteBtn-${items?.id}-${index}">Delete</button>
+                            <button class="editBtn" id = "editBtn-${items?.reqId}-${index}">Edit</button>
+                            <button class="deleteBtn" id = "deleteBtn-${items?.reqId}-${index}">Delete</button>
                         </div>` : ''}
                         ${task?.showResponse ? `
                             <div class="bottomCard">
@@ -107,16 +108,31 @@ const addNewTaskRenderer = (task, index, items) => {
           <div class="headerInfo">
             <div class='step'>${task?.step || `Step ${index+1}`}</div>
               ${items?.executionPipeline?.length > 1 ?
-                `<button class="deleteBtn" id = "deleteNewTaskBtn-${items?.id}-${index}">Delete</button>`
+                `<button class="deleteBtn" id = "deleteNewTaskBtn-${items?.reqId}-${index}">Delete</button>`
               : ''}
           </div>
           <div class="addDescription">
-            <input type="text" value = "${task?.utterance}" placeholder="Add the description of step(s) which I missed!" id = "utterance-${items?.id}-${index}" />
+            <input type="text" value = "${task?.utterance}" placeholder="Add the description of step(s) which I missed!" id = "utterance-${items?.reqId}-${index}" />
+          </div>
+          <div class="intents">
+            <sl-button class="addAgentLabel" style="border: none;" id="addAgentLabel-${items?.reqId}-${index}">
+                ${PlusIcon({ size: "13", color: "#131316" })}
+                Add Agent
+              </sl-button>              
+            ${task?.intents?.length > 0 ? task?.intents?.map((intent, idx) => `
+                <div key="${intent?.agentId}" class="agentBadge">
+                        <span class='badgeimg'><img src="${intent?.agentMeta?.icon}" /></span>
+                        <span class='ellipsisTextBlock'>${intent?.agentMeta?.name}</span>
+                        <span class='badge-close' id = "deleteIntent-${items?.reqId}-${index}-${idx}">
+                          ${Close({ size: "8", color: "#98A2B3" })}
+                        </span>
+                </div>
+            `).join('') : ''}
           </div>
           <div class="footerSec">
             <div class="btns">
-                <button class="cancelBtn" id = "cancelBtn-${items?.id}-${index}">Cancel</button>
-                <button class="doneBtn" id = "doneBtn-${items?.id}-${index}">Done</button>
+                <button class="cancelBtn" id = "cancelBtn-${items?.reqId}-${index}">Cancel</button>
+                <button class="doneBtn" id = "doneBtn-${items?.reqId}-${index}">Done</button>
             </div>
           </div>
         </div>

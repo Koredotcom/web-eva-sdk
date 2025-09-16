@@ -2512,6 +2512,54 @@ html, body {
                     }
                 }
 
+                // Agent selection popup styles
+                .agent-selection-popup {
+                    --sl-border-radius-medium: 8px;
+                    
+                    sl-popup::part(popup) {
+                        background: white;
+                        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+                        border-radius: 8px;
+                        border: 1px solid #e2e8f0;
+                        animation: agentPopupSlideIn 0.15s ease-out;
+                        padding: 0;
+                        z-index: 10000;
+                        max-height: 240px;
+                        overflow: hidden;
+                    }
+
+                    sl-menu {
+                        border: none;
+                        box-shadow: none;
+                        background: transparent;
+                        border-radius: 8px;
+                        
+                        sl-menu-item {
+                            --sl-spacing-x-small: 8px;
+                            --sl-spacing-small: 12px;
+                            
+                            &:hover {
+                                background-color: #f8fafc;
+                            }
+                            
+                            &:not(:last-child) {
+                                border-bottom: 1px solid #f1f5f9;
+                            }
+                        }
+                    }
+                }
+
+                @keyframes agentPopupSlideIn {
+                    from {
+                        opacity: 0;
+                        transform: translateY(8px) scale(0.95);
+                    }
+                    to {
+                        opacity: 1;
+                        transform: translateY(0) scale(1);
+                    }
+                }
+
                 @keyframes feedbackOverlaySlideIn {
                     from {
                         opacity: 0;
