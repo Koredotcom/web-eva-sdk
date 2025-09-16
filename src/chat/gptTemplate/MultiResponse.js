@@ -68,7 +68,7 @@ const MultiResponse = () => {
     const addAdditionalResponse = (item, defaultTemplate = false) => {
         // The Additional responses will be added here
 
-        let reqId = item?.reqId;
+        let reqId = item?.reqId || item?.id;
         let currentQuestion = cloneDeep(_questions[reqId]);
         let _formData = cloneDeep(currentQuestion?.gpt_forms);
         let newResponseFormFields = getInitialFormData(item);
@@ -93,19 +93,27 @@ const MultiResponse = () => {
         });
 
         // The updated gpt_forms data will be saved here
-        // if(defaultTemplate){
-        //     handleDefaultTemplateChanges(_formData, currentQuestion)
-        // } 
-        // else {
-        currentQuestion.gpt_forms = _formData;
-        _questions[reqId] = currentQuestion;
-        store.dispatch(updateChatData(_questions));
-        // }
+        if(defaultTemplate){
+            handleDefaultTemplateChanges(_formData, currentQuestion)
+        } 
+        else {
+            
+            const gptFormConstructedData = constructGptForm(_formData, currentQuestion);
+            currentQuestion.template_html = gptFormConstructedData.outerHTML;
+            currentQuestion.gpt_forms = _formData;
+            _questions[reqId] = currentQuestion;
+            store.dispatch(updateChatData(_questions));
+            
+            
+            setTimeout(() => {
+                gptFormFunctionality(_formData, currentQuestion);
+            }, 100);
+        }
     }
 
     const deleteAdditionalResponse = (item, subIndex, defaultTemplate = false) => {
         // The Additional responses will be deleted here
-        let reqId = item?.reqId;
+        let reqId = item?.reqId || item?.id;
         let currentQuestion = cloneDeep(_questions[reqId]);
         let newFieldValues = cloneDeep(currentQuestion?.gpt_forms?.fieldValues);
         let contextField = currentQuestion?.gpt_forms?.contextFields?.[0]
@@ -138,12 +146,20 @@ const MultiResponse = () => {
 
         // The updated gpt_forms data will be saved here
 
-        // if(defaultTemplate){
-        // handleDefaultTemplateChanges(currentQuestion.gpt_forms, currentQuestion)
-        // }else{
-        _questions[reqId] = currentQuestion;
-        store.dispatch(updateChatData(_questions));
-        // }
+        if(defaultTemplate){
+            handleDefaultTemplateChanges(currentQuestion.gpt_forms, currentQuestion)
+        }else{
+            
+            const gptFormConstructedData = constructGptForm(currentQuestion.gpt_forms, currentQuestion);
+            currentQuestion.template_html = gptFormConstructedData.outerHTML;
+            _questions[reqId] = currentQuestion;
+            store.dispatch(updateChatData(_questions));
+            
+            
+            setTimeout(() => {
+                gptFormFunctionality(currentQuestion.gpt_forms, currentQuestion);
+            }, 100);
+        }
     }
 
 
@@ -180,9 +196,10 @@ const MultiResponse = () => {
             if (state?.enableDebugging) {
                 console.log("Recieved Context Fields", contextFields)
             }
+            let contextFieldDiv;
             // Checking the Type of Context Field and getting Input Values
             if (contextFields?.value?.type === "file") {
-                let contextFieldDiv = document.getElementById(`fileUpload-${contextFields?.key}-${item?.messageId}`);
+                contextFieldDiv = document.getElementById(`fileUpload-${contextFields?.key}-${item?.messageId}`);
 
                 // "MORGAN STANLEY REQUIREMENT" -> TO HANDLE CASES WHICH DOES NOT HAVE DEPENDENCY ON ID OF THE FILE UPLOADER. 
                 if (contextFieldDiv) {
@@ -192,7 +209,7 @@ const MultiResponse = () => {
                         payloadContext[contextFields?.key].value = reqdValue
                     }
                 } else {
-                    reqdValue = ''
+                    reqdValue = []
                 }
             } else if (contextFields?.value?.canUploadFile) {
                 // "MORGAN STANLEY REQUIREMENT" -> TO HANDLE CASES WHICH DOES NOT HAVE DEPENDENCY ON ID OF THE FILE UPLOADER. 
@@ -211,35 +228,28 @@ const MultiResponse = () => {
                             value: reqdValue || []
                         }
                     }
-                }
-                // if(contextFieldDiv){
-                //     reqdValue = contextFieldDiv?.value || '';
-                // }
+                }                
                 else {
-                    // let contextFieldDiv = document.getElementById(`fileUpload-${contextFields?.key}-${item?.messageId}`);
-                    let contextFieldDiv = document.getElementById(`inputValue-${contextFields?.key}-${item?.messageId}`);
+                    contextFieldDiv = document.getElementById(`inputValue-${contextFields?.key}-${item?.messageId}`);
                     reqdValue = contextFieldDiv?.value || contextFieldDiv?.textContent || '';
                 }
-            } else {
-                let contextFieldDiv = document.getElementById(`inputValue-${contextFields?.key}-${item?.messageId}`);
+            }
+        else if(contextFields?.value?.type === "dropdown"){
+            contextFieldDiv = document.getElementById(`dropdownValue-${contextFields?.key}-${item?.messageId}`);
+            reqdValue = contextFieldDiv?.value || contextFieldDiv?.textContent || '';
+        } else {
+                contextFieldDiv = document.getElementById(`inputValue-${contextFields?.key}-${item?.messageId}`);
                 reqdValue = contextFieldDiv?.value || contextFieldDiv?.textContent || '';
             }
 
             // Constructing the payloadContext
-            //Latest Update :- moved this block to top
-            // payloadContext = {
-            //     [contextFields?.key]: {
-            //         type: contextFields?.value?.type,
-            //         required: !!contextFields?.value?.required,
-            //         label: contextFields?.label
-            //     }    
-            // }
+            
             if (state?.enableDebugging) {
                 console.log("Modified Payload Context", payloadContext)
             }
 
             // Checking if the Context Field has a file and getting the file from the uploadedFiles
-            //latest update: to recheck
+            
             if (contextFields?.value?.canUploadFile && uploadedFiles && (Object.keys(uploadedFiles)?.includes(`${contextFields?.key}`))) {
                 let ind = Object.keys(uploadedFiles).indexOf(`${contextFields?.key}`);
                 if (ind !== -1) {
@@ -280,7 +290,7 @@ const MultiResponse = () => {
                         reqdValue = reqdInputElement?.value || [];
                     } else {
                         reqdValue = reqdInputElement?.value || reqdInputElement?.textContent || "";
-                        //this check is for multi output, where we need to pass the id of the output for the context
+                        
                         reqdValue = /^Output\s\d+$/.test(reqdValue)
                             ? reqdValue.split(" ")[1]
                             : reqdValue?.includes("Original Content")
@@ -339,12 +349,12 @@ const MultiResponse = () => {
 
                 // Checking if the Field has a file and getting the file from the uploadedFiles
                 if (field?.value?.canUploadFile) {
+                    acc[field.key].type = "file"
                     let ind = Object.keys(uploadedFiles || {}).indexOf(`${field?.key}-${item?.messageId}-${index}`);
-                    if (ind !== -1) {
-                        acc[field.key].type = "file"
+                    if (ind !== -1) {                        
                         acc[field.key].value = Object.values(state.GptUploadedFiles)?.[ind]?.map(({ title, fileId }) => ({ title, fileId }));;
                         // reqdValue = acc[field.key].value;
-                        reqdValue = acc[field.key];
+                        reqdValue = acc[field.key].value;
                     }else{
                         acc[field.key].value = []
                     }
