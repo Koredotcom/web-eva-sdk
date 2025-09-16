@@ -318,6 +318,8 @@ const MultiResponse = () => {
 
                 if (reqdValue) {
                     acc[field.key].value = reqdValue;
+                }else{
+                    acc[field.key].value = '';
                 }
 
                 if (field?.value?.nested?.key === "prompt" || field?.key === 'prompt') {
@@ -336,25 +338,29 @@ const MultiResponse = () => {
                 }
 
                 // Checking if the Field has a file and getting the file from the uploadedFiles
-                if (field?.value?.canUploadFile && uploadedFiles && (Object.keys(uploadedFiles)?.includes(`${field?.key}-${item?.messageId}-${index}`))) {
-                    let ind = Object.keys(uploadedFiles).indexOf(`${field?.key}-${item?.messageId}-${index}`);
+                if (field?.value?.canUploadFile) {
+                    let ind = Object.keys(uploadedFiles || {}).indexOf(`${field?.key}-${item?.messageId}-${index}`);
                     if (ind !== -1) {
                         acc[field.key].type = "file"
                         acc[field.key].value = Object.values(state.GptUploadedFiles)?.[ind]?.map(({ title, fileId }) => ({ title, fileId }));;
                         // reqdValue = acc[field.key].value;
                         reqdValue = acc[field.key];
+                    }else{
+                        acc[field.key].value = []
                     }
                 }
 
-                if (field?.value?.type === 'file' && uploadedFiles && (Object.keys(uploadedFiles)?.includes(`${field?.key}-${item?.messageId}-${index}`))) {
-                    let ind = Object.keys(uploadedFiles).indexOf(`${field?.key}-${item?.messageId}-${index}`);
-                    if (ind !== -1) {
-                        acc[field.key].type = "file"
-                        acc[field.key].value = Object.values(state.GptUploadedFiles)?.[ind]?.map(({ title, fileId }) => ({ title, fileId }));;
-                        // reqdValue = acc[field.key].value;
-                        reqdValue = acc[field.key];
-                    }
-                }
+                // if (field?.value?.type === 'file') {
+                //     let ind = Object.keys(uploadedFiles).indexOf(`${field?.key}-${item?.messageId}-${index}`);
+                //     if (ind !== -1) {
+                //         acc[field.key].type = "file"
+                //         acc[field.key].value = Object.values(state.GptUploadedFiles)?.[ind]?.map(({ title, fileId }) => ({ title, fileId }));;
+                //         // reqdValue = acc[field.key].value;
+                //         reqdValue = acc[field.key];
+                //     }else{
+                //         reqdValue = []
+                //     }
+                // }
 
                 // Checking if the Required Field is empty and returning an Error
                 if (field?.required || field?.value?.required) {
