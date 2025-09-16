@@ -135,12 +135,16 @@ const gptFormFunctionality = (formData, item, preservedValues = {}) => {
 								event.preventDefault();
 								event.stopPropagation();
 								
-								// Show warning toast
-								toast.warning("Upload limit reached. Remove the current file to upload a new one.", {
-									title: "Context Upload Disabled",
-									duration: 4000,
-									closable: true
-								});
+								// Show warning message div
+								const messageDiv = document.getElementById(`upload-limit-message-${contextField?.key}-${item?.messageId}`);
+								if (messageDiv) {
+									messageDiv.style.display = 'flex';
+									
+									// Hide the message div after 3 seconds
+									setTimeout(() => {
+										messageDiv.style.display = 'none';
+									}, 3000);
+								}
 							}
 						});
 					}
@@ -226,16 +230,20 @@ const gptFormFunctionality = (formData, item, preservedValues = {}) => {
 					if (parentLabel && !parentLabel.disabledClickListenerAdded) {
 						parentLabel.disabledClickListenerAdded = true;
 						parentLabel.addEventListener("click", (event) => {
-							if (inputField.disabled) {
-								event.preventDefault();
-								event.stopPropagation();
+						if (inputField.disabled) {
+							event.preventDefault();
+							event.stopPropagation();
+							
+							// Show warning message div
+							const messageDiv = document.getElementById(`upload-limit-message-${field?.key}-${item?.messageId}-${field?.uniqueFieldId}`);
+							if (messageDiv) {
+								messageDiv.style.display = 'flex';
 								
-								// Show warning toast
-								toast.warning("Upload limit reached. Remove the current file to upload a new one.", {
-									title: "Upload Disabled",
-									duration: 4000,
-									closable: true
-								});
+								// Hide the message div after 3 seconds
+								setTimeout(() => {
+									messageDiv.style.display = 'none';
+								}, 3000);
+							}
 							}
 						});
 					}
@@ -330,6 +338,39 @@ const gptFormFunctionality = (formData, item, preservedValues = {}) => {
 			}
 		});
 	}
+
+	// CLOSE ICON FUNCTIONALITY FOR UPLOAD LIMIT MESSAGES
+	// Add close functionality for context field upload limit message
+	if (contextField?.value?.canUploadFile && !contextField?.value?.allowMultipleFiles) {
+		const contextCloseIcon = document.querySelector(`#upload-limit-message-${contextField?.key}-${item?.messageId} .close-icon`);
+		if (contextCloseIcon && !contextCloseIcon.eventListenerAdded) {
+			contextCloseIcon.eventListenerAdded = true;
+			contextCloseIcon.addEventListener("click", () => {
+				const messageDiv = document.getElementById(`upload-limit-message-${contextField?.key}-${item?.messageId}`);
+				if (messageDiv) {
+					messageDiv.style.display = 'none';
+				}
+			});
+		}
+	}
+
+	// Add close functionality for parameter field upload limit messages
+	formData?.fieldValues?.forEach((parameters, index) => {
+		parameters?.forEach((field, i) => {
+			if (field?.value?.canUploadFile && !field?.value?.allowMultipleFiles) {
+				const paramCloseIcon = document.querySelector(`#upload-limit-message-${field?.key}-${item?.messageId}-${field?.uniqueFieldId} .close-icon`);
+				if (paramCloseIcon && !paramCloseIcon.eventListenerAdded) {
+					paramCloseIcon.eventListenerAdded = true;
+					paramCloseIcon.addEventListener("click", () => {
+						const messageDiv = document.getElementById(`upload-limit-message-${field?.key}-${item?.messageId}-${field?.uniqueFieldId}`);
+						if (messageDiv) {
+							messageDiv.style.display = 'none';
+						}
+					});
+				}
+			}
+		});
+	});
 
 	// SUBMIT BUTTON VALIDATION
 	setupRealTimeValidation(formData, item);
