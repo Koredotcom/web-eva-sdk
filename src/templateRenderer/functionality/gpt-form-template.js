@@ -124,7 +124,8 @@ const gptFormFunctionality = (formData, item) => {
 	const addAdditionalResponseButton = document.getElementById(
 		`addAdditionalResponse-${item?.messageId}`
 	);
-	if (addAdditionalResponseButton) {
+	if (addAdditionalResponseButton && !addAdditionalResponseButton?.eventListenerAdded) {
+		addAdditionalResponseButton.eventListenerAdded = true;
 		addAdditionalResponseButton.addEventListener("click", (event) =>
 			addResponse(event)
 		);

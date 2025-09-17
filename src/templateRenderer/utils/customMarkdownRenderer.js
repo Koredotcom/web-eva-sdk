@@ -15,7 +15,7 @@ const customMarkdownRenderer = (text) => {
 	// Convert markdown to HTML
 	const cleanedMarkdown = text.replace(/^\s{2,}/gm, "");
 	let rawHtml = marked(cleanedMarkdown);
-	rawHtml = rawHtml.replace("<a", '<a target="_blank"');
+	rawHtml = rawHtml.replaceAll("<a", '<a target="_blank"');
 
 	// Sanitize to prevent XSS (recommended)
 	// Configured DOMPurify to allow target attribute on anchor tags
