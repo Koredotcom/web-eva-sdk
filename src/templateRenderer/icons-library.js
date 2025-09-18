@@ -466,3 +466,29 @@ export function DragHandleIcon({ size = config.size, color = config.color, class
       </svg>
   `
 }
+
+export function EditIcon({ size = config.size, color = config.color, className = '' }) {  
+  return `
+      <svg width="${size}" height="${size}" className="wa-EditIcon ${className}" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M18 10L14 6M2.49997 21.5L5.88434 21.124C6.29783 21.078 6.50457 21.055 6.69782 20.9925C6.86926 20.937 7.03242 20.8586 7.18286 20.7594C7.35242 20.6475 7.49951 20.5005 7.7937 20.2063L21 7C22.1046 5.89543 22.1046 4.10457 21 3C19.8954 1.89543 18.1046 1.89543 17 3L3.7937 16.2063C3.49952 16.5005 3.35242 16.6475 3.24061 16.8171C3.1414 16.9676 3.06298 17.1307 3.00748 17.3022C2.94493 17.4954 2.92195 17.7021 2.87601 18.1156L2.49997 21.5Z" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+      </svg>
+  `
+}
+
+export function HistoryIcon({ size = config.size, color = config.color, className = '' }) {  
+  return `
+      <svg width="${size}" height="${size}" className="wa-HistoryIcon ${className}" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M18.9166 9.58333L17.2505 11.25L15.5833 9.58333M17.4542 10.8333C17.4845 10.5597 17.5 10.2817 17.5 10C17.5 5.85786 14.1421 2.5 10 2.5C5.85786 2.5 2.5 5.85786 2.5 10C2.5 14.1421 5.85786 17.5 10 17.5C12.3561 17.5 14.4584 16.4136 15.8333 14.7144M10 5.83333V10L12.5 11.6667" stroke="${color}" stroke-width="1.66667" stroke-linecap="round" stroke-linejoin="round" />
+      </svg>
+  `
+}
+
+export function AddStepFilledIcon({ size = config.size, color = config.color, className = '' }) {  
+  return `
+      <svg width="${size}" height="${size}" className="wa-AddStepFilledIcon ${className}" viewBox="0 0 32 38" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="11.5" y="2.50879" width="16" height="16" transform="rotate(45 11.5 2.50879)" fill="#475467"/>
+            <rect x="3" width="28" height="28" rx="14" fill="#475467"/>
+            <path d="M17 10.5V17.5M13.5 14H20.5" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+  `
+}

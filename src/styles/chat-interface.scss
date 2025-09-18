@@ -1,3 +1,5 @@
+@import "../../src/styles/mixins_new.scss";
+
 html, body {
     padding: 0;
     margin: 0;
@@ -4030,6 +4032,848 @@ sl-dialog.gpt-form-dialog {
                 img {
                     width: 1rem;
                     cursor: pointer;
+                }
+            }
+        }
+    }
+}
+
+
+.multiIntentExecution {
+    padding-bottom: 1rem;
+    .tasksToRun {        
+        // padding-bottom: 1rem;
+        // margin-top: 1rem;
+        .taskItems {
+            display: flex;
+            flex-direction: column;
+            &.runFlow {
+                gap: 0.75rem;
+                margin-top: 1rem;
+            }
+            .addNewLineWrapper {
+                width: 100%;
+                height: 0.75rem;
+                display: flex;
+                align-items: center;
+                position: relative;
+                left: 0.25rem;
+                cursor: pointer;
+                &:hover {
+                    .addNewLine {
+                        display: flex;
+                    }
+                }
+                .addNewLine {
+                    width: calc(100% + 2rem);
+                    display: none;
+                    align-items: center;
+                    position: absolute;
+                    &:before {
+                        content: '';
+                        height: 0.0625rem;
+                        width: 100%;
+                        border-bottom: 0.0625rem dashed $wa-gray-300;
+                        display: block;
+                    }
+                    .stepIcon {
+                        display: flex;
+                        align-items: center;
+                        position: relative;
+                        top: 4px;
+                        .wa-AddStepOutlined {
+                            display: block;
+                        }
+                        .wa-AddStepFilled {
+                            display: none;
+                        }
+                    }
+                    &:hover {                        
+                        &:before {
+                            border-color: $wa-gray-500;
+                        }
+                        .stepIcon {
+                            .wa-AddStepOutlined {
+                                display: none;
+                            }
+                            .wa-AddStepFilled {
+                                display: block;
+                            }
+                        }    
+                    }
+                }
+            }
+            .dragTaskItem {
+                display: flex;
+                align-items: center;
+                width: 100%;
+                gap: 0.5rem;
+                cursor: grab;
+                min-height: 3.125rem;
+                &.dragging {
+                    cursor: grabbing;
+                }
+                &:hover {
+                    .dragHandle {
+                        opacity: 1;
+                        visibility: visible;
+                    }
+                }
+                .dragHandle {
+                    display: flex;
+                    flex-shrink: 0;
+                    opacity: 0;
+                    visibility: hidden;
+                    &.showOptions {
+                        opacity: 1;
+                        visibility: visible;
+                    }
+                }
+            }
+            .taskItem {
+                //padding: 0.75rem;
+                min-height: 3rem;
+                border-radius: 0.625rem;
+                // border: 0.0625rem solid $wa-gray-200;
+                // background: $wa-gray-25;
+                display: flex;
+                align-items: center;                
+                position: relative;
+                cursor: pointer;
+                width: calc(100% - 1.375rem);
+                // opacity: 0.7;
+                &.showCheveron {
+                    opacity: 1;
+                    width: 100%;
+                    &:hover {
+                        border-radius: 0.625rem;
+                        background: $wa-gray-50;
+                    }
+                    .rightBlock {
+                        &.showCheveronBlock {
+                            opacity: 1;
+                            visibility: visible;
+                            height: 0.875rem;
+                            .cheveronDown {
+                                position: absolute;
+                                width: 1.75rem;
+                                height: 1.75rem;
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                right: 1rem;
+                                top: 0.625rem;
+                                border-radius: 100%;
+                                svg {
+                                    width: 0.875rem;
+                                    height: 0.875rem;
+                                }
+                                &:hover {
+                                    cursor: pointer;
+                                    background-color: $wa-gray-200;
+                                }
+                                &.rotate {
+                                    transform: rotate(180deg);
+                                }
+                            }
+                        }
+                    }                                       
+                }
+                &.showOptions {
+                    background-color: $wa-gray-50;
+                    .rightBlock {
+                        opacity: 1;
+                        .options {
+                            display: flex;
+                            visibility: visible;
+                        }
+                    }
+                }
+                .leftBlock {
+                    display: flex;
+                    align-items: center;
+                    gap: 0.75rem;
+                    width: calc(100% - 7rem);
+                    .statusIcon {
+                        width: 1rem;
+                        height: 1rem;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        .spinLoader {
+                            animation: spin 2s linear infinite;
+                            width: 1rem;
+                            height: 1rem;
+                            @keyframes spin {
+                                0% { transform: rotate(0deg); }
+                                100% { transform: rotate(360deg); }
+                            }
+                        }
+                    }
+                    .contentBlock {
+                        display: flex;
+                        align-items: center;
+                        width: calc(100% - 1.25rem);
+                        .agentIcon {
+                            width: 1.25rem;
+                            height: 1.25rem;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            margin-right: 0.5rem;
+
+                            img {
+                                max-width: 1rem;
+                                max-height: 100%;
+                                object-fit: cover;
+                            }
+                        }
+                        .utterance {
+                            @include typography-regular(0.875rem,500,1.25rem);
+                            color: $wa-gray-700;
+                            width: calc(100% - 2.5rem);
+                        }
+                        .agentsAmbiguity {
+                            display: flex;
+                            align-items: center;
+                            gap: 0.25rem;
+                            margin-right: 0.5rem;
+                            &:empty {
+                                display: none;
+                            }
+                            .agentDetails {
+                                padding: 0;
+                                img {
+                                    width: auto !important;
+                                    max-width: 1rem;
+                                }
+                            }
+                            .agentIcon {
+                                margin-right: 0;
+                            }
+                            .agentIconBadge {
+                                display: flex;
+                                align-items: center;
+                                border-radius: 1rem;
+                                padding: 0rem 0.375rem;
+                                background-color: $wa-gray-100;
+                            }
+                        }
+                    }
+                }   
+                .rightBlock {
+                    width: 6.25rem;
+                    display: flex;
+                    align-items: center;
+                    justify-content: flex-end;
+                    opacity: 0;
+                    visibility: hidden;
+                    transition: all 0.2s ease-in-out;                   
+                   
+                    &:hover {
+                        .addNewLine {
+                            &:before {
+                                border-color: $wa-gray-500;
+                            }
+                            .stepIcon {
+                                .wa-AddStepOutlined {
+                                    display: none;
+                                }
+                                .wa-AddStepFilled {
+                                    display: block;
+                                }
+                            }                             
+                        }
+                    }
+                    .options {
+                        display: flex;
+                        align-items: center;
+                        gap: 0.75rem;
+                        .wa-Delete {
+                            height: inherit;
+                        }
+                        .opItem {
+                            width: 1.5rem;
+                            height: 1.5rem;
+                            border-radius: 0.25rem;
+                            background-color: transparent;
+                            cursor: pointer;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            &:hover {
+                                background-color: $wa-base-white;
+                                box-shadow: 0px 1px 2px 0px #1018280F;
+
+                                .wa-EditIconTwo {
+                                    path {
+                                        stroke: $wa-gray-700;
+                                    }
+                                }
+
+                                .wa-Delete {
+                                    path {
+                                        fill: $wa-gray-700;
+                                    }
+                                }
+                            }
+                        }
+                        &.showOptions {
+                            background-color: $wa-base-white;
+
+                            .wa-EditIconTwo {
+                                path {
+                                    stroke: $wa-gray-700;
+                                }
+                            }
+
+                            .wa-Delete {
+                                path {
+                                    fill: $wa-gray-700;
+                                }
+                            }
+                        }
+                    }
+                    .addNewLine {
+                        width: calc(100% + 2rem);
+                        position: absolute;
+                        display: flex;
+                        align-items: center;
+                        left: 0;
+                        top: -1.3rem;
+                        // top: -20.0313rem;
+                        &:before {
+                            content: '';
+                            height: 0.0625rem;
+                            width: 100%;
+                            border-bottom: 0.0625rem dashed $wa-gray-300;
+                            display: block;
+                        }
+                        .stepIcon {
+                            display: flex;
+                            align-items: center;
+                            .wa-AddStepOutlined {
+                                display: block;
+                            }
+                            .wa-AddStepFilled {
+                                display: none;
+                            }
+                        }
+                    }
+                } 
+                .intentGroup {
+                    @include krflexContainer($items:center);
+                    gap: 0.5rem;
+                    flex-wrap: wrap;
+                    margin-top: 0.25rem;
+                    margin-bottom: 0.25rem;
+                    .intent {
+                        @include krflexContainer($items:center, $content:center);
+                        padding: 0.25rem 0.75rem !important;
+                        gap: 0.5rem;
+                        border-radius: 0.5rem;
+                        border: 0.0625rem solid $wa-gray-300;
+                        background: $wa-base-white;
+                        transition: all 0.4s ease-in-out;
+                        cursor: pointer;
+                        height: auto !important;
+
+                        .srcimg {
+                            width: 1.25rem;
+                            height: 1.25rem;
+                            position: relative;
+                            .backgroundIcon {
+                                position: absolute;
+                                width: 1rem;
+                                max-height: 1rem;
+                                height: auto;
+                                top: 0;
+                                bottom: 0;
+                                left: 0;
+                                right: 0;
+                                margin: auto;
+                            }
+                            .subIcon{
+                                position: absolute;
+                                width: 0.75rem;
+                                height: 0.75rem;
+                                right: 0;
+                                bottom: 0;
+                                top: inherit;
+                                border-radius: 100%;
+                                border: 0.0625rem solid $wa-base-white;
+                            }
+                        }
+                        &:hover {
+                            background-color: $wa-gray-100;
+                        }
+                        .intIcon, .intSelection {
+                            @include krflexContainer($items:center);
+                            position: relative;
+                        }
+                        .intText {
+                            @include typography-regular(0.875rem,500,1.25rem);
+                            color: $wa-gray-700;
+                            &:first-letter {
+                                text-transform: uppercase;
+                            }
+                        }
+                        .intSelection {
+                            display: none;
+                        }
+                        &.selected {
+                            .intSelection {
+                                display: flex;
+                            }
+                        }
+                    }
+                }
+                &.intentResolver {
+                    flex-direction: column;
+                    .intentGroupWrapper {
+                        width: 100%;
+                        padding-left: 2.25rem;
+                        padding-bottom: 0.5rem;
+                        display: flex;
+                        flex-direction: column;
+                        gap: 0.25rem;
+                    }
+                }
+                .topCard {
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    gap: 0.5rem;
+                    width: 100%;
+                    padding: 0.75rem;
+                }  
+                .bottomCard {
+                    display: none;
+                    // border-top: 0.0625rem solid $wa-gray-200;
+                    margin-bottom: 0.75rem;
+                    // margin-top: 0.75rem;
+                    margin-left: 1.75rem;
+                    width: calc(100% - 1.75rem);
+                    padding: 0 0.75rem 0.75rem 0.75rem;
+                    .pocSkeleton {
+                        .groupBox {
+                            display: flex;
+                            flex-direction: column;
+                            gap: 0.5rem;
+                        }
+                    }
+                }    
+                &.loadingSkeleton {
+                    flex-direction: column;
+                    cursor: default;
+                    opacity: 1;
+                    width: 100%;
+                    &:hover {
+                        //background: transparent !important;
+                        .rightBlock {
+                            visibility: hidden !important;
+                            opacity: 0 !important;
+                        }
+                    }
+                    .bottomCard {
+                        display: block;
+                        margin-bottom: 0;
+                        .resultTemplate {
+                            .question-answer-pair {
+                                margin-bottom: 0;
+                                .threadGroup {
+                                    .threadData {
+                                        .threadName {
+                                            .translateForm-view {
+                                                margin-bottom: 0;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    &.showCheveron {
+                        .rightBlock {
+                            &.showCheveronBlock {
+                                opacity: 1 !important;
+                                visibility: visible !important;
+                                height: 0.875rem;
+                                .cheveronDown {
+                                    position: absolute;
+                                    width: 1.75rem;
+                                    height: 1.75rem;
+                                    display: flex;
+                                    align-items: center;
+                                    justify-content: center;
+                                    right: 1rem;
+                                    top: 0.625rem;
+                                    border-radius: 100%;
+    
+                                    svg {
+                                        width: 0.875rem;
+                                        height: 0.875rem;
+                                    }
+                                    &:hover {
+                                        cursor: pointer;
+                                        background-color: $wa-gray-200;
+                                    }
+                                }
+                            }
+                        }
+                        .resultTemplate {
+                            .question-answer-pair {
+                                .threadGroup {
+                                    .threadData {
+                                        .threadName {
+                                            .leftContainer {
+                                                .ansFromChip {
+                                                    .krSpecEllipsis {
+                                                        display: none;
+                                                    }
+                                                }
+                                            }
+                                            .rightContainerBlock {
+                                                #feedbackComponent {
+                                                    display: none;
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }  
+                        .topCard {
+                            cursor: pointer;
+                            &:hover {
+                                border-radius: 0.625rem;
+                                background: $wa-gray-50;
+                            }
+                        }           
+                    }
+                }   
+                .continuebtn {
+                    padding: 0.25rem 1rem;
+                    background: $wa-gray-100;
+                    border-radius: 0.5rem;
+                    cursor: pointer;
+                }
+            }
+        }
+        .resultTemplate {
+            width: 100%;
+            .generating-answer-block-item, .stream-answer-wrapper {
+                .dot-flashing {
+                    display: none;
+                }
+            }
+            .question-answer-pair {
+                width: 100%;
+                max-width: 100%;
+                .threadGroup {
+                    width: 100%;
+                    &.questionGroup {
+                        display: none;
+                    }
+                    &.answerGroup {
+                        // background-color: $wa-gray-25;
+                        padding: 0.25rem 0;
+                        gap: 0.5rem;
+                        background-color: transparent;
+                        .chatFilterParentGroup {
+                            margin-bottom: 0;
+                        }
+                        .threadUser {
+                            display: none;
+                            &.noRadius {
+                                .profileImageIcon {
+                                    width: 1rem !important;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }        
+    }
+    .kr-primary-btn-black {
+        color: #fff;
+        background: #101828;
+        border: .0625rem solid #475467;
+        box-shadow: 0rem .0625rem .125rem rgba(16, 24, 40, .05);
+        font-family: Inter;
+        font-size: 1rem;
+        font-style: normal;
+        font-weight: 500;
+        line-height: 1.5rem;
+        letter-spacing: 0em;
+        vertical-align: middle;
+        justify-content: center;
+        display: inline-flex;
+        cursor: pointer;
+        user-select: none;
+        align-items: center;
+        position: relative;
+        overflow: hidden;
+        border-radius: 0.75rem;
+        height: 2.25rem;
+        padding: 0 0.875rem;
+        &:hover {
+            background: #344054;
+            border-color: #344054;
+            color: #fff;
+            box-shadow: 0rem .0625rem .125rem rgba(16, 24, 40, .05);
+        }
+        &:active {
+            background: #0d2020;
+            border-color: #0d2020;
+        }
+        &:disabled {
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+        &.btn-lg {
+            &.startBtn {
+                padding: 0.25rem 1rem;
+                border-radius: 0.5rem;
+                height: 1.75rem;
+                font-size: 0.875rem;
+                line-height: 1.25rem;
+                margin: 0.75rem 0;
+            }
+        }            
+    }
+    .kr-secondary-btn {
+        color: #344054;
+        background: #fff;
+        border: .0625rem solid #d0d5dd;
+        box-shadow: 0rem .0625rem .125rem rgba(16, 24, 40, .05);
+        font-weight: 500;
+        line-height: 1.5rem;
+        letter-spacing: 0em;
+        vertical-align: middle;
+        justify-content: center;
+        display: inline-flex;
+        cursor: pointer;
+        user-select: none;
+        align-items: center;
+        position: relative;
+        overflow: hidden;
+        border-radius: 0.75rem;
+        height: 2.25rem;
+        padding: 0 0.875rem;
+        font-family: Inter;
+        &.btn-lg {
+            &.editFlowBtn {
+                padding: 0.25rem 1rem;
+                border-radius: 0.5rem;
+                height: 1.75rem;
+                font-size: 0.875rem;
+                line-height: 1.25rem;
+                margin: 0.75rem 0 0.75rem 0.5rem;
+                &:hover {
+                    background: #f9fafb;
+                    border-color: #d0d5dd;
+                    color: #1d2939;
+                    box-shadow: 0rem .0625rem .125rem rgba(16, 24, 40, .05);
+                }
+            }
+        }
+    }
+    .addingNewTask {
+        margin-top: 0.75rem;
+        .headerSec {
+            border: 0.0625rem solid var(--Gray-iron-200, #E4E4E7);
+            border-radius: 0.75rem;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0rem 0.0625rem 0.125rem 0rem rgba(16, 24, 40, 0.05), 0rem 0rem 0rem 0.25rem #F2F4F7;
+            background-color: $wa-base-white;
+            .headerMsg {
+                height: 3.25rem;
+                border-bottom: 0.0625rem solid $wa-gray-200;
+                background: $wa-gray-50;
+                display: flex;
+                padding: 1rem 0.75rem;
+                align-items: center;
+                gap: 0.75rem;
+                align-self: stretch;
+                @include typography-regular(0.875rem,500,1.25rem);
+                color: $wa-gray-700;
+                @include ellipsisText;
+                border-radius: 0.75rem 0.75rem 0 0;
+            }
+            .headerInfo {
+                height: 3rem;
+                border-bottom: 0.0625rem solid $wa-gray-200;
+                background: $wa-gray-50;
+                display: flex;
+                padding: 1rem;
+                align-items: center;
+                justify-content: space-between;
+                @include typography-regular(1rem,600,1.5rem);
+                color: $wa-gray-700;
+                border-radius: 0.75rem 0.75rem 0 0;
+                .opItem {
+                    width: 1.5rem;
+                    height: 1.5rem;
+                    border-radius: 0.25rem;
+                    background-color: transparent;
+                    cursor: pointer;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    &:hover {
+                        background-color: $wa-base-white;
+                        
+                        .wa-Delete {
+                            path {
+                                fill: $wa-gray-700;
+                            }
+                        }
+                    }
+                    .wa-Delete {
+                        height: inherit;
+                    }
+                }
+            }
+            .addDescription {
+                width: 100%;
+                min-height: 3.125rem;
+                .p-inputtext {
+                    border-color: $wa-base-white;
+                    width: 100%;
+                    height: 100%;
+                    padding: 1rem;
+                    @include typography-regular(0.875rem,400,1.25rem);
+                    color: $wa-gray-700;
+                    @include placeholder {
+                        color: $wa-gray-400;
+                    }
+                    &:focus {
+                        border-color: $wa-base-white !important;
+                        box-shadow: none !important;
+                    }
+                }
+                .agentBlock {
+                    display: flex;
+                    align-items: center;
+                    gap: 0.5rem;
+                    padding: 0.75rem 1rem 1rem 1rem;
+                    margin: 0;
+                    border-radius: 0rem 0rem 0.75rem 0.75rem;
+                    border-top: 0.0625rem solid $wa-gray-200;
+                    &.space-between {
+                        justify-content: space-between
+                    }
+                    .agentLabel {
+                        @include typography-regular(0.875rem,500,1.25rem);
+                        color: $wa-gray-700;
+                    }
+                    .defaultSearchText {
+                        @include typography-regular(0.875rem,400,1.25rem);
+                        color: $wa-yellow-700;
+                    }
+                    .agentBadgeWrapper {
+                        display: flex; 
+                        align-items: center;
+                        gap: 0.5rem;
+                        @include scrollbar;
+                        overflow-x: auto;
+                        max-width: calc(100% - 3.5rem);
+                        .agentBadge {
+                            background: $wa-base-white;
+                            display: flex;
+                            align-items: center;
+                            gap: 0.375rem;
+                            border: 0.0625rem solid $wa-gray-200;
+                            padding: 0.25rem 0.75rem;
+                            border-radius: 0.5rem;
+                            .badgeimg {
+                                display: flex;
+                                align-items: center;
+                                flex-shrink: 0;
+                                img {
+                                    width: 1rem;
+                                    max-height: 1rem;
+                                    object-fit: contain;
+                                }
+                            }
+                            
+                            .ellipsisTextBlock {
+                                @include typography-regular(0.875rem,400,1.25rem);
+                                color: $wa-gray-600;
+                                max-width: 5rem;
+                            }
+                            .badge-close {
+                                flex-shrink: 0;
+                                display: flex;
+                                align-items: center;
+                                .wa-Close {
+                                    cursor: pointer;
+                                }
+                            }
+                        }
+                    }
+                    .add-agent-label {
+                        @include typography-regular(0.875rem,500,1.25rem);
+                        color: $wa-gray-900;
+                        padding: 0px 8px;
+                        border-radius: 8px;
+                        cursor: pointer;
+                        display: inline-flex;
+                        align-items: center;
+                        height: 1.75rem;
+                        &:hover, &.active {
+                            background-color: $wa-gray-200;
+                        }
+                        white-space: nowrap;
+                    }
+                    .agentBlock-last {
+                        display: flex;
+                        align-items: center;
+                        gap: 0.5rem; 
+                    }
+                }
+            }
+            .footerSec {
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+                padding: 0.25rem 1rem 1rem 1rem;
+                justify-content: space-between;
+                .btns {
+                    display: flex;
+                    align-items: center;
+                    gap: 0.5rem; 
+                }
+                button {
+                    margin-right: 0;
+                    padding: 0.25rem 1rem;
+                    border-radius: 0.5rem;
+                    height: 1.75rem;
+                    font-size: 0.875rem;
+                    line-height: 1.25rem;
+                }
+                .errorMessage {
+                    @include typography-regular(0.875rem,500,1.25rem);
+                    color: $wa-error-500;
+                }
+            }
+        }
+    }
+
+    &.draft {
+        .tasksToRun {        
+            .taskItems {
+                .taskItem {
+                    &:hover {
+                        background-color: $wa-gray-50;
+                        .rightBlock {
+                            visibility: visible;
+                            opacity: 1;
+                        }
+                    }
                 }
             }
         }
