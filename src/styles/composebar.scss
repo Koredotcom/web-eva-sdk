@@ -943,6 +943,35 @@ sl-dialog.eva-agents-dialog {
         background: var(--Base-White, #FFF);
         cursor: pointer;
 
+        &.agenticApp {
+            flex-direction: row-reverse;
+
+            .recent-agent-icon {
+                width: auto;
+                height: auto;
+                gap: .5rem;
+
+                .agentBorder {
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-family: Inter;
+                    font-size: .875rem;
+                    font-style: normal;
+                    font-weight: 500;
+                    line-height: 1.25rem;
+                    letter-spacing: 0em;
+                    color: #737373;
+
+                    img {
+                        width: .75rem;
+                        max-height: .75rem;
+                        object-fit: cover;
+                    }
+                }
+            }
+        }
+
         &:hover {
             background: #F5F5F5;
             box-shadow: 0rem .125rem .25rem -0.125rem rgba(16, 24, 40, 0.06) !important;
