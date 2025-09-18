@@ -3,7 +3,7 @@ import store from "../../redux/store";
 import { multiIntentExecutionFunc } from "../functionality/multi-intent-execution";
 import TemplateRenderer from "../templateRenderer";
 import "./../styles/template.scss";
-import { Close, PlusIcon, DragHandleIcon } from "../icons-library";
+import { Close, PlusIcon, DragHandleIcon, RadioButtonChecked, createDeleteIcon, EditIcon, HistoryIcon, AddStepFilledIcon } from "../icons-library";
 
 
 const assistantIconTemplate = () => {
@@ -27,8 +27,8 @@ function render(data) {
         </div>
 
         ${items?.status === 'draft' ? items?.executionPipeline?.length > 0 ? `
-            <button class="startBtn" id = "startBtn-${items?.reqId}">${items?.templateInfo?.action}</button>
-            <button class="editFlowBtn" id = "editFlowBtn-${items?.reqId}">Edit Flow</button>
+            <button class="kr-primary-btn-black btn-lg startBtn" id = "startBtn-${items?.reqId}">${items?.templateInfo?.action}</button>
+            <button class="kr-secondary-btn btn-lg editFlowBtn" id = "editFlowBtn-${items?.reqId}">Edit</button>
         ` : '' : ''}
         `;
 
@@ -43,41 +43,55 @@ function render(data) {
             }
 
             return `
-                <div class='addNewLineWrapper'>
-                  ${initialState ? `<div class='addNewLine'>
-                      <button class="addNewTaskBtn" id = "addNewTaskBtn-${index}">+</button>
-                  </div>` : ''}
-                </div>
-                <div class="taskItem" 
-                     draggable="${initialState ? 'true' : 'false'}" 
-                     data-task-id="${task?._id}" 
-                     data-task-index="${index}">
-                    ${initialState ? `<div class="dragHandle" title="Drag to reorder">
-                        ${DragHandleIcon({ size: 14, color: "#9CA3AF" })}
-                    </div>` : ''}
-                    <div class="taskItemHeader">
-                        <div class="taskItemHeaderTitle">Task ${index + 1}</div>
-                        <div class="contentBlock">
-                            ${Array.isArray(task?.intents) && task.intents.length > 0 ? `
-                                <div class="agentIcons">
-                                ${task.intents.slice(0, 2).map((intent, idx) => `
-                                    <div class="agentIcon">
-                                        <img src="${intent?.agentMeta?.icon}" alt="Agent ${idx + 1}" />
-                                    </div>
-                                `).join('')}
-                                </div>
-                            ` : ''}
-                            <div class="utterance">${task?.utterance}</div>
+                <div class="tasksToRun">
+                    <div class="taskItems">
+                        <div class='addNewLineWrapper'>
+                            ${initialState ? `<div class='addNewLine'>
+                                <span class="stepIcon addNewTaskBtn" id="addNewTaskBtn-${index}">
+                                    ${AddStepFilledIcon({ size: 32, color: "#98A2B3" })}
+                                </span>
+                            </div>` : ''}
                         </div>
-                        ${initialState ? `<div class="optionsWrapper">
-                            <button class="editBtn" id = "editBtn-${task?._id}">Edit</button>
-                            <button class="deleteBtn" id = "deleteBtn-${task?._id}">Delete</button>
-                        </div>` : ''}
-                        ${task?.showResponse ? `
-                            <div class="bottomCard">
-                            ${html?.innerHTML}
-                            </div>
-                        ` : ''}
+                        <div class="dragTaskItem" 
+                            draggable="${initialState ? 'true' : 'false'}" 
+                            data-task-id="${task?._id}" 
+                            data-task-index="${index}">
+                            ${initialState ? `<div class="dragHandle" title="Drag to reorder">
+                                ${DragHandleIcon({ size: 14, color: "#9CA3AF" })}
+                            </div>` : ''}
+                            <div class="taskItem">
+                                <div class="topCard">
+                                    <div class="leftBlock">
+                                        <div class="statusIcon">${HistoryIcon({ size: 16, color: "#98A2B3" })}</div>
+                                        <div class="contentBlock">
+                                            ${Array.isArray(task?.intents) && task.intents.length > 0 ? `
+                                                <div class="agentsAmbiguity">
+                                                ${task.intents.slice(0, 2).map((intent, idx) => `
+                                                    <div class="agentIcon">
+                                                        <img src="${intent?.agentMeta?.icon}" alt="Agent ${idx + 1}" />
+                                                    </div>
+                                                `).join('')}
+                                                </div>
+                                            ` : ''}                                    
+                                            <div class="utterance">${task?.utterance}</div>
+                                        </div>
+                                    </div>
+                                    <div class="rightBlock">
+                                    ${initialState ? `
+                                        <div class="options">
+                                            <div class="opItem" id="editBtn-${task?._id}">${EditIcon({ size: 14, color: "#667085" })}</div>
+                                            <div class="opItem" id="deleteBtn-${task?._id}">${createDeleteIcon({ size: 14, color: "#667085" })}</div>
+                                        </div>
+                                    ` : ''}
+                                    </div>
+                                </div>
+                                ${task?.showResponse ? `
+                                    <div class="bottomCard">
+                                    ${html?.innerHTML}
+                                    </div>
+                                ` : ''}
+                            </div>                    
+                        </div>
                     </div>
                 </div>
             `;
