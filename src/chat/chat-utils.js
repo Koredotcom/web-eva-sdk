@@ -178,7 +178,7 @@ export const constructQuestionPostCall = (data, qId) => {
 			}
 		}
         /*Clearing the selected context when search results are received */
-        if (data?.payload?.context?.enable === false || state?.selectedContext?.type === "agent" || state?.selectedContext?.type === "commonAgent" || state?.selectedContext?.type === "searchAgent") {
+        if (state.autoRemoveWebSearchFromContext) {
             store.dispatch(setSelectedContext(null))
         }
 	}

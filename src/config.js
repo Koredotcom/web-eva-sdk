@@ -2,7 +2,7 @@ import BotConversation from "./chat/botAgent/getBotConversation";
 // import CustomTemplateComponentManager from "./chat/botAgent/customTemplatesFolder/CustomTemplateComponentManager";
 // import HoldConversationTemplateManager from "./chat/botAgent/customTemplatesFolder/HoldConversationTemplateManager";
 import { fetchAgents, fetchConfigData, fetchProfileData, fetchHistory, fetchRecentFiles, presenceStart, getAllAnnouncements } from "./redux/actions/global.action";
-import { setAnnouncements, setEnabledDebugging } from "./redux/globalSlice";
+import { setAnnouncements, setAutoRemoveWebSearchFromContext, setEnabledDebugging } from "./redux/globalSlice";
 import store from "./redux/store";
 import { WebSocketService } from "./socket/socket.service";
 export const initializeSDK = async (config) => {
@@ -23,6 +23,10 @@ export const initializeSDK = async (config) => {
 
   // Set the SDK config globally
   window.sdkConfig = config;
+
+  if(config?.autoRemoveWebSearchFromContext){
+    store.dispatch(setAutoRemoveWebSearchFromContext(true))
+  }
 
   // making foundation api call once sdk initialized properly
   store.dispatch(fetchConfigData(config.userId))
