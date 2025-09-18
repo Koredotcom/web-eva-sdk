@@ -360,3 +360,37 @@ export const quickShow = (target, displayValue = 'block', enableLogging = false)
         console.warn('Element not found:', target);
     }
 };
+
+export const getIconsList = (agent = {}, icons = []) => {
+    const intentList = icons;
+    if(intentList?.length === 0) {
+    agent?.config?.executionPipeline?.map((task, index) => {
+        task?.intents?.map((intent) => {
+            if (intentList?.find((i) => i?.agentMeta?.name === intent?.agentMeta?.name)) return;
+            intentList?.push(intent)
+        })
+    });
+}
+    
+    let html = '';
+    
+    // Add first 3 icons
+    intentList?.slice(0, 3).forEach((intent, idx) => {
+        html += `            
+                <div class="agentBorder" title="${intent?.agentMeta?.name}">
+                    <img src="${intent?.agentMeta?.icon}" size="16" alt="Agent ${idx + 1}" />
+                </div>            
+        `;
+    });
+    
+    // Add count indicator if more than 3 icons
+    if (intentList?.length > 3) {
+        html += `
+            <div class = "agentBorder">
+                <div>+${intentList.length - 3}</div>
+            </div>
+        `;
+    }
+    
+    return html;
+}

@@ -5,7 +5,7 @@ import store from "../redux/store.js";
 import { fetchAgents } from "../redux/actions/global.action.js";
 import { ActionsFlashIcon, arrowCirlceUpIcon, attachmentIcon, CheveronDownIcon, createCloseIcon, createDeleteIcon, createThumbsUpFilled, microphoneIcon, searchIcon, settingsIcon, Close, StopIcon } from "../templateRenderer/icons-library.js";
 import FileUpload from "../Attachments/fileUpload.js";
-import { getAgentType, getFileExtension, hideElementImmediately, showElementImmediately, showElementDelayed } from "../utils/helpers.js";
+import { getAgentType, getFileExtension, hideElementImmediately, showElementImmediately, showElementDelayed, getIconsList } from "../utils/helpers.js";
 import { renderRecentFiles } from "./RenderRecentAttachments.js";
 
 /**
@@ -254,7 +254,7 @@ class ComposeBar {
             <button class="context-chip-button">
                 <div class="composebar-context-agent-name-container">
                     <div class="composebar-context-agent-icon">
-                        <img src="${this.selectedAgent?.icon}" alt="agent-icon" width="16" height="16">
+                    ${this.selectedAgent?.agentType === "agenticApp" ? `${getIconsList({}, this.selectedAgent?.agenticAppIcons)}` : `<img src="${this.selectedAgent?.icon}" alt="agent-icon" width="16" height="16">`}                        
                     </div>
                     <div class="composebar-context-agent-name" title="${this.selectedAgent?.name}">${this.selectedAgent?.name}</div>
                 </div>
