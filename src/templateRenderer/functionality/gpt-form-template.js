@@ -188,7 +188,7 @@ const gptFormFunctionality = (formData, item, preservedValues = {}) => {
 
 				if(hasUploadedFiles){
 					fileDetails?.forEach((file, fileIndex) => {
-						const removeButton = document.getElementById(
+				const removeButton = document.getElementById(
 							`removeButton-${field?.key}-${item?.messageId}-${field?.uniqueFieldId}-${fileIndex}`
 						);
 						if(removeButton && !removeButton.eventListenerAdded){

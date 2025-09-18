@@ -3,7 +3,7 @@ import store from "../../redux/store";
 import { multiIntentExecutionFunc } from "../functionality/multi-intent-execution";
 import TemplateRenderer from "../templateRenderer";
 import "./../styles/template.scss";
-import { Close, PlusIcon } from "../icons-library";
+import { Close, PlusIcon, DragHandleIcon } from "../icons-library";
 
 
 const assistantIconTemplate = () => {
@@ -48,7 +48,13 @@ function render(data) {
                       <button class="addNewTaskBtn" id = "addNewTaskBtn-${index}">+</button>
                   </div>` : ''}
                 </div>
-                <div class="taskItem">
+                <div class="taskItem" 
+                     draggable="${initialState ? 'true' : 'false'}" 
+                     data-task-id="${task?._id}" 
+                     data-task-index="${index}">
+                    ${initialState ? `<div class="dragHandle" title="Drag to reorder">
+                        ${DragHandleIcon({ size: 14, color: "#9CA3AF" })}
+                    </div>` : ''}
                     <div class="taskItemHeader">
                         <div class="taskItemHeaderTitle">Task ${index + 1}</div>
                         <div class="contentBlock">
@@ -64,8 +70,8 @@ function render(data) {
                             <div class="utterance">${task?.utterance}</div>
                         </div>
                         ${initialState ? `<div class="optionsWrapper">
-                            <button class="editBtn" id = "editBtn-${items?.reqId}-${index}">Edit</button>
-                            <button class="deleteBtn" id = "deleteBtn-${items?.reqId}-${index}">Delete</button>
+                            <button class="editBtn" id = "editBtn-${task?._id}">Edit</button>
+                            <button class="deleteBtn" id = "deleteBtn-${task?._id}">Delete</button>
                         </div>` : ''}
                         ${task?.showResponse ? `
                             <div class="bottomCard">
@@ -108,14 +114,14 @@ const addNewTaskRenderer = (task, index, items) => {
           <div class="headerInfo">
             <div class='step'>${task?.step || `Step ${index+1}`}</div>
               ${items?.executionPipeline?.length > 1 ?
-                `<button class="deleteBtn" id = "deleteNewTaskBtn-${items?.reqId}-${index}">Delete</button>`
+                `<button class="deleteBtn" id = "deleteNewTaskBtn-${task?._id}">Delete</button>`
               : ''}
           </div>
           <div class="addDescription">
             <input type="text" value = "${task?.utterance}" placeholder="Add the description of step(s) which I missed!" id = "utterance-${items?.reqId}-${index}" />
           </div>
           <div class="intents">
-            <sl-button class="addAgentLabel" style="border: none;" id="addAgentLabel-${items?.reqId}-${index}">
+            <sl-button class="addAgentLabel" style="border: none;" id="addAgentLabel-${task?._id}">
                 ${PlusIcon({ size: "13", color: "#131316" })}
                 Add Agent
               </sl-button>              
@@ -123,16 +129,17 @@ const addNewTaskRenderer = (task, index, items) => {
                 <div key="${intent?.agentId}" class="agentBadge">
                         <span class='badgeimg'><img src="${intent?.agentMeta?.icon}" /></span>
                         <span class='ellipsisTextBlock'>${intent?.agentMeta?.name}</span>
-                        <span class='badge-close' id = "deleteIntent-${items?.reqId}-${index}-${idx}">
+                        <span class='badge-close' id = "deleteIntent-${task?._id}-${intent?.agentMeta?.agentId}">
                           ${Close({ size: "8", color: "#98A2B3" })}
                         </span>
                 </div>
-            `).join('') : ''}
+            `).join('') : "<div class='defaultAgentMsg'>Default Search will respond</div>"}
           </div>
           <div class="footerSec">
             <div class="btns">
-                <button class="cancelBtn" id = "cancelBtn-${items?.reqId}-${index}">Cancel</button>
-                <button class="doneBtn" id = "doneBtn-${items?.reqId}-${index}">Done</button>
+                <button class="cancelBtn" id = "cancelBtn-${task?._id}">Cancel</button>
+                <button class="doneBtn" id = "doneBtn-${task?._id}">${task?.loading ? 'Loading...' : 'Done'}</button>
+                ${task?.intents?.length === 0 ? "<span class='relevantAgentNotFound'>Relevant agent not found</span>" : ''}
             </div>
           </div>
         </div>

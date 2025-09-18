@@ -3,6 +3,7 @@ import store from "../../redux/store";
 import InitiateChatConversationAction from "../../chat/InitiateChatConversationAction";
 import { updateChatData } from "../../redux/globalSlice";
 import { executionPipelineActions } from "../../redux/actions/global.action";
+import { tickMarkIcon } from "../icons-library.js";
 
 const multiIntentExecutionFunc = (item) => {
 
@@ -37,10 +38,8 @@ const multiIntentExecutionFunc = (item) => {
 
     const runNextTask = (index, status , question) => {
         const nextTaskIndex = index+1;
-        // if(nextTaskIndex > item?.executionPipeline?.length) return;
         if([undefined, null, '', 'draft', 'in-progress', 'threadRunning'].includes(status)){
           return;
-    
         }
         else runTask(nextTaskIndex , question)
       }
@@ -64,9 +63,17 @@ const multiIntentExecutionFunc = (item) => {
           type: 'addTask' 
         }
 
-        _questions[item?.reqId].executionPipeline.splice(index, 0, newTask);
-
-        store.dispatch(updateChatData(_questions))
+        const updatedPipeline = [..._questions[item?.reqId].executionPipeline];
+        updatedPipeline.splice(index, 0, newTask);
+        
+        const updatedQuestions = {
+          ..._questions,
+          [item?.reqId]: { 
+            ..._questions[item?.reqId], 
+            executionPipeline: updatedPipeline 
+          }
+        };
+        store.dispatch(updateChatData(updatedQuestions))
       }
 
     const saveTask = async (index, task, executionPipeline) => {
@@ -77,33 +84,62 @@ const multiIntentExecutionFunc = (item) => {
       let payload = {
         utterance: utterance,
         action: task?.type == 'addTask' ? 'add' : 'update',
-        addIntents: task?.intents?.filter(intent => !intent?._id)?.map(intent => intent?.id)
       }
 
       if(task?._id > 0 && task?.type === 'addTask'){
         payload.stepId = executionPipeline[task?._id - 1]?._id;
       }else if(task?.type === 'modify'){
-        payload.stepId = task?._id;
+        payload.stepId = task?._id;        
+        /*check for additional intents that might have been added */
+        let additionalIntents = task?.intents?.filter(intent => !intent?._id);
+        if(additionalIntents?.length > 0){
+          payload.addIntents = additionalIntents?.map(intent => intent?.id);
+        }
       }
+      payload.index = index;
 
       let params = {
         messageId: item?.messageId,
         boardId: state?.activeBoardId,
       }
+      
+      /*put the loading state in the task */
+      let currentExecutionPipeline = cloneDeep(_questions[item?.reqId]?.executionPipeline);
+      currentExecutionPipeline[index] = { ...currentExecutionPipeline[index], loading: true };
+      const updatedQuestions = {
+        ..._questions,
+        [item?.reqId]: {
+          ..._questions[item?.reqId],
+          executionPipeline: currentExecutionPipeline
+        }
+      };
+      store.dispatch(updateChatData(updatedQuestions))
 
       const response = await store.dispatch(executionPipelineActions({params, payload}))
       
       if(!!response?.payload){
-        _questions[item?.reqId].executionPipeline = response?.payload?.executionPipeline;
-        _questions[item?.reqId].savedExecutionPipeline = response?.payload?.executionPipeline;
-        store.dispatch(updateChatData(_questions))
+        const updatedQuestions = {
+          ..._questions,
+          [item?.reqId]: {
+            ..._questions[item?.reqId],
+            executionPipeline: response?.payload?.executionPipeline,
+            savedExecutionPipeline: response?.payload?.executionPipeline
+          }
+        };
+        store.dispatch(updateChatData(updatedQuestions))
       }
     }
 
     const deleteNewTask = () => {
         const _questions = cloneDeep(state?.questions);
-        _questions[item?.reqId].executionPipeline = _questions[item?.reqId].savedExecutionPipeline;
-        store.dispatch(updateChatData(_questions))
+        const updatedQuestions = {
+          ..._questions,
+          [item?.reqId]: { 
+            ..._questions[item?.reqId], 
+            executionPipeline: _questions[item?.reqId].savedExecutionPipeline 
+          }
+        };
+        store.dispatch(updateChatData(updatedQuestions))
     }
 
     const deleteExistingTask = async (index, task) => {
@@ -122,9 +158,15 @@ const multiIntentExecutionFunc = (item) => {
       const response = await store.dispatch(executionPipelineActions({params, payload}))
 
       if(!!response?.payload){
-        _questions[item?.reqId].executionPipeline = response?.payload?.executionPipeline;
-        _questions[item?.reqId].savedExecutionPipeline = response?.payload?.executionPipeline;
-        store.dispatch(updateChatData(_questions))
+        const updatedQuestions = {
+          ..._questions,
+          [item?.reqId]: {
+            ..._questions[item?.reqId],
+            executionPipeline: response?.payload?.executionPipeline,
+            savedExecutionPipeline: response?.payload?.executionPipeline
+          }
+        };
+        store.dispatch(updateChatData(updatedQuestions))
       }
     }
 
@@ -142,13 +184,17 @@ const multiIntentExecutionFunc = (item) => {
 
       currentExecutionPipeline.splice(index, 1, _task);
 
-      _questions[item?.reqId].executionPipeline = currentExecutionPipeline;
-      store.dispatch(updateChatData(_questions))
+      const updatedQuestions = {
+        ..._questions,
+        [item?.reqId]: { ..._questions[item?.reqId], executionPipeline: currentExecutionPipeline }
+      };
+      store.dispatch(updateChatData(updatedQuestions))
     }
 
     const addIntent = (index, task, selectedAgent) => {
       const _questions = cloneDeep(state?.questions);
       let currentExecutionPipeline = cloneDeep(_questions[item?.reqId]?.executionPipeline);
+      let savedExecutionPipeline = cloneDeep(currentExecutionPipeline);
       if(!currentExecutionPipeline[index].intents){
         currentExecutionPipeline[index].intents = [];
       }
@@ -161,19 +207,27 @@ const multiIntentExecutionFunc = (item) => {
         name: selectedAgent.name,
         id: selectedAgent.id
       });
-      _questions[item?.reqId].executionPipeline = currentExecutionPipeline;
-      store.dispatch(updateChatData(_questions))
+      
+      const updatedQuestions = {
+        ..._questions,
+        [item?.reqId]: { ..._questions[item?.reqId], executionPipeline: currentExecutionPipeline, savedExecutionPipeline }
+      };
+      store.dispatch(updateChatData(updatedQuestions));
+      
+      // Trigger change check for Done button
+      const doneBtn = document.getElementById(`doneBtn-${task?._id}`);
+      if (doneBtn && doneBtn.checkForChanges) {
+        
+        doneBtn.checkForChanges();
+      }
     }
 
-    // show agent selection popup
     const showAgentSelectionPopup = (buttonElement, index, task, reqId) => {
-      // Remove any existing popup
       const existingPopup = document.querySelector('.agent-selection-popup');
       if (existingPopup) {
         existingPopup.remove();
       }
 
-      // Get available agents from Redux store
       const state = store.getState();
       const allAgents = state?.global?.allAgents?.data?.agents || [];
       const enabledAgents = allAgents.filter(agent => agent?.enabled && agent?.type !== "agenticApp");
@@ -183,7 +237,6 @@ const multiIntentExecutionFunc = (item) => {
         return;
       }
 
-      // Create the popup
       const popup = document.createElement('sl-popup');
       popup.className = 'agent-selection-popup';
       popup.setAttribute('placement', 'top-start');
@@ -194,61 +247,203 @@ const multiIntentExecutionFunc = (item) => {
         z-index: 10000;
       `;
 
-      // Create menu with agents
-      const menu = document.createElement('sl-menu');
-      menu.style.cssText = `
-        max-height: 200px;
-        overflow-y: auto;
-        min-width: 200px;
+      
+      const container = document.createElement('div');
+      container.style.cssText = `
         background: white;
         border: 1px solid #e2e8f0;
         border-radius: 6px;
         box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+        min-width: 200px;
       `;
 
-      // Add agents as menu items
-      enabledAgents.forEach(agent => {
+      
+      const header = document.createElement('div');
+      header.style.cssText = `
+        display: flex;
+        align-items: center;
+        padding: 8px 12px;
+        border-bottom: 1px solid #e2e8f0;
+        background: #f8fafc;
+        border-radius: 6px 6px 0 0;
+      `;
+
+      // Create search input
+      const searchInput = document.createElement('input');
+      searchInput.type = 'text';
+      searchInput.placeholder = 'Search agents...';
+      searchInput.style.cssText = `
+        flex: 1;
+        border: 1px solid #d1d5db;
+        border-radius: 4px;
+        padding: 6px 8px;
+        font-size: 12px;
+        outline: none;
+        margin-right: 8px;
+      `;
+
+      // Create close button
+      const closeButton = document.createElement('button');
+      closeButton.innerHTML = '×';
+      closeButton.style.cssText = `
+        background: none;
+        border: none;
+        font-size: 16px;
+        cursor: pointer;
+        color: #6b7280;
+        padding: 2px 6px;
+        border-radius: 2px;
+        line-height: 1;
+      `;
+
+      header.appendChild(searchInput);
+      header.appendChild(closeButton);
+
+      const menu = document.createElement('sl-menu');
+      menu.style.cssText = `
+        max-height: 200px;
+        overflow-y: auto;
+        border-radius: 0 0 6px 6px;
+      `;
+
+      const createAgentMenuItem = (agent) => {
         const menuItem = document.createElement('sl-menu-item');
+        
+        // Check if this agent is already selected
+        const isSelected = task?.intents?.length > 0 && task?.intents?.find(intent => intent?.agentId === agent.id);
+        
+        if(isSelected){
+          menuItem.setAttribute('disabled', '');
+          menuItem.style.cssText = `
+            display: flex;
+            align-items: center;
+            padding: 8px 12px;
+            cursor: not-allowed;
+            opacity: 0.6;
+            background-color: #f8fafc;
+          `;
+        } else {
+          menuItem.style.cssText = `
+            display: flex;
+            align-items: center;
+            padding: 8px 12px;
+            cursor: pointer;
+          `;
+        }
+        
         menuItem.setAttribute('value', agent.id);
-        menuItem.style.cssText = `
-          display: flex;
-          align-items: center;
-          padding: 8px 12px;
-          cursor: pointer;
-        `;
         
         menuItem.innerHTML = `
           <div slot="prefix" style="display: flex; align-items: center; margin-right: 8px;">
             <img src="${agent.icon || ''}" alt="${agent.name}" style="width: 16px; height: 16px; border-radius: 2px;" onerror="this.style.display='none'" />
           </div>
           <span style="font-size: 14px; color: #374151;">${agent.name}</span>
+          ${isSelected ? `<div slot="suffix" style="margin-left: auto;">${tickMarkIcon({ size: 16, color: "#10b981" })}</div>` : ''}
         `;
 
-        // Add click handler
-        menuItem.addEventListener('click', (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          
-          // Add the selected agent
-          addIntent(index, task, agent);
-          
-          // Hide and remove popup
-          if (popup.hide) {
-            popup.hide();
-          } else {
-            popup.removeAttribute('active');
-            popup.style.display = 'none';
-          }
-          setTimeout(() => popup.remove(), 100);
-        });
+        // Add click handler only if not selected
+        if (!isSelected) {
+          menuItem.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            addIntent(index, task, agent);
+            
+            // Trigger change check after adding agent
+            const doneBtn = document.getElementById(`doneBtn-${task?._id}`);
+            if (doneBtn && doneBtn.checkForChanges) {
+              setTimeout(() => doneBtn.checkForChanges(), 50);
+            }
+            
+            closePopupFunction();
+          });
+        }
 
-        menu.appendChild(menuItem);
+        return menuItem;
+      };
+
+      // Function to render agents based on search
+      const renderAgents = (agentsToRender = enabledAgents) => {
+        // Clear existing menu items
+        menu.innerHTML = '';
+        
+        if (agentsToRender.length === 0) {
+          const noResults = document.createElement('div');
+          noResults.style.cssText = `
+            padding: 12px;
+            text-align: center;
+            color: #6b7280;
+            font-size: 12px;
+          `;
+          noResults.textContent = 'No agents found';
+          menu.appendChild(noResults);
+          return;
+        }
+        
+        agentsToRender.forEach(agent => {
+          const menuItem = createAgentMenuItem(agent);
+          menu.appendChild(menuItem);
+        });
+      };
+
+      // Initial render of all agents
+      renderAgents();
+
+      // Add search functionality
+      searchInput.addEventListener('input', (e) => {
+        const searchTerm = e.target.value.toLowerCase().trim();
+        
+        if (searchTerm === '') {
+          renderAgents();
+        } else {
+          const filteredAgents = enabledAgents.filter(agent => 
+            agent.name.toLowerCase().includes(searchTerm)
+          );
+          renderAgents(filteredAgents);
+        }
       });
 
-      popup.appendChild(menu);
+      // Add keyboard navigation
+      searchInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          e.preventDefault();
+          closePopupFunction();
+        } else if (e.key === 'Enter') {
+          e.preventDefault();
+          // Select the first available (non-disabled) agent from current filter
+          const firstMenuItem = menu.querySelector('sl-menu-item:not([disabled])');
+          if (firstMenuItem) {
+            firstMenuItem.click();
+          }
+        }
+      });
+
+      // Close popup function
+      const closePopupFunction = () => {
+        if (popup.hide) {
+          popup.hide();
+        } else {
+          popup.removeAttribute('active');
+          popup.style.display = 'none';
+        }
+        setTimeout(() => popup.remove(), 100);
+        document.removeEventListener('click', closePopup);
+      };
+
+      // Add close button functionality
+      closeButton.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        closePopupFunction();
+      });
+
+      // Assemble the popup
+      container.appendChild(header);
+      container.appendChild(menu);
+
+      popup.appendChild(container);
       document.body.appendChild(popup);
 
-      // Set the button as anchor and show popup
       popup.anchor = buttonElement;
       
       // Show popup with fallback
@@ -262,14 +457,7 @@ const multiIntentExecutionFunc = (item) => {
       // Close popup when clicking outside
       const closePopup = (e) => {
         if (!popup.contains(e.target) && !buttonElement.contains(e.target)) {
-          if (popup.hide) {
-            popup.hide();
-          } else {
-            popup.removeAttribute('active');
-            popup.style.display = 'none';
-          }
-          setTimeout(() => popup.remove(), 100);
-          document.removeEventListener('click', closePopup);
+          closePopupFunction();
         }
       };
 
@@ -277,19 +465,198 @@ const multiIntentExecutionFunc = (item) => {
       setTimeout(() => {
         document.addEventListener('click', closePopup);
       }, 100);
+      
+      setTimeout(() => {
+        searchInput.focus();
+      }, 150);
     }
 
-    const deleteIntent = (index, task) => {
+    const deleteIntent = (index, intentToDelete) => {
+      const _questions = cloneDeep(state?.questions);
+      let currentQuestion = cloneDeep(_questions[item?.reqId]);
+      let currentExecutionPipeline = cloneDeep(currentQuestion?.executionPipeline);
+      let savedExecutionPipeline = cloneDeep(currentExecutionPipeline);
+      currentExecutionPipeline[index].intents = currentExecutionPipeline[index]?.intents?.filter(intent => intent?.agentId !== intentToDelete?.agentId);
+            
+      currentQuestion.executionPipeline[index].intents = currentExecutionPipeline?.[index]?.intents || [];
+      
+      
+      const updatedQuestions = {
+        ..._questions,
+        [item?.reqId]: { ...currentQuestion, savedExecutionPipeline }
+      };
+      store.dispatch(updateChatData(updatedQuestions));
+      
+      // Trigger change check for Done button
+      let task = currentExecutionPipeline[index];
+      const doneBtn = document.getElementById(`doneBtn-${task?._id}`);
+      if (doneBtn && doneBtn.checkForChanges) {
+        doneBtn.checkForChanges();
+      }
+    }
+/*this compare array should check where the array are same or not, if same then not changes are required so it should return false, else true */
+    const compareArrays = (arr1, arr2) => {
+      if(arr1.length !== arr2.length) return true;
+      /*this below line should check whether the arrays are same, if same then no changes are required so it should return false, else true */
+      return !arr1.every(item => arr2.some(item2 => item2.agentId === item.agentId));
+    }
+
+    // Drag and Drop functionality
+    let draggedElement = null;
+    let draggedIndex = null;
+    let dropIndicator = null;
+
+    const createDropIndicator = () => {
+      const indicator = document.createElement('div');
+      indicator.className = 'drop-indicator';
+      indicator.style.cssText = `
+        height: 2px;
+        background-color: #3b82f6;
+        border-radius: 1px;
+        margin: 4px 0;
+        transition: all 0.2s ease;
+        opacity: 0;
+      `;
+      return indicator;
+    };
+
+    const showDropIndicator = (target, position) => {
+      hideDropIndicator();
+      dropIndicator = createDropIndicator();
+      dropIndicator.style.opacity = '1';
+      
+      if (position === 'before') {
+        target.parentNode.insertBefore(dropIndicator, target);
+      } else {
+        target.parentNode.insertBefore(dropIndicator, target.nextSibling);
+      }
+    };
+
+    const hideDropIndicator = () => {
+      if (dropIndicator) {
+        dropIndicator.remove();
+        dropIndicator = null;
+      }
+    };
+
+    const reorderExecutionPipeline = (fromIndex, toIndex) => {
       const _questions = cloneDeep(state?.questions);
       let currentExecutionPipeline = cloneDeep(_questions[item?.reqId]?.executionPipeline);
-      currentExecutionPipeline[index].intents = currentExecutionPipeline[index].intents.filter(intent => intent.agentId !== task?.intents[0].agentId);
-      _questions[item?.reqId].executionPipeline = currentExecutionPipeline;
-      store.dispatch(updateChatData(_questions))
-    }
+      
+      // Remove the dragged item
+      const draggedItem = currentExecutionPipeline.splice(fromIndex, 1)[0];
+      
+      // Insert it at the new position
+      currentExecutionPipeline.splice(toIndex, 0, draggedItem);
+      
+      const updatedQuestions = {
+        ..._questions,
+        [item?.reqId]: {
+          ..._questions[item?.reqId],
+          executionPipeline: currentExecutionPipeline,
+          savedExecutionPipeline: currentExecutionPipeline
+        }
+      };
+      
+      store.dispatch(updateChatData(updatedQuestions));
+    };
 
-     const runButton = document.getElementById(`startBtn-${item?.id}`);
-     const editButton = document.getElementById(`editFlowBtn-${item?.id}`);
-     
+    const setupDragAndDrop = () => {
+      const taskItems = document.querySelectorAll('.taskItem[draggable="true"]');
+      
+      taskItems.forEach((taskItem, index) => {
+        
+        if (taskItem.dragListenersAdded) return;
+        
+        taskItem.addEventListener('dragstart', (e) => {
+          draggedElement = taskItem;
+          draggedIndex = parseInt(taskItem.dataset.taskIndex);
+          
+          
+          taskItem.style.opacity = '0.5';
+          taskItem.classList.add('dragging');
+          
+          e.dataTransfer.effectAllowed = 'move';
+          e.dataTransfer.setData('text/html', taskItem.outerHTML);
+        });
+
+        taskItem.addEventListener('dragend', (e) => {
+          // Reset visual state
+          taskItem.style.opacity = '';
+          taskItem.classList.remove('dragging');
+          hideDropIndicator();
+          
+          // Reset drag variables
+          draggedElement = null;
+          draggedIndex = null;
+        });
+
+        taskItem.addEventListener('dragover', (e) => {
+          e.preventDefault();
+          e.dataTransfer.dropEffect = 'move';
+          
+          if (draggedElement && draggedElement !== taskItem) {
+            const rect = taskItem.getBoundingClientRect();
+            const midpoint = rect.top + rect.height / 2;
+            const position = e.clientY < midpoint ? 'before' : 'after';
+            
+            showDropIndicator(taskItem, position);
+          }
+        });
+
+        taskItem.addEventListener('drop', (e) => {
+          e.preventDefault();
+          hideDropIndicator();
+          
+          if (draggedElement && draggedElement !== taskItem) {
+            const targetIndex = parseInt(taskItem.dataset.taskIndex);
+            const rect = taskItem.getBoundingClientRect();
+            const midpoint = rect.top + rect.height / 2;
+            
+            let newIndex;
+            if (e.clientY < midpoint) {
+              // Dropping before the target
+              newIndex = targetIndex;
+            } else {
+              // Dropping after the target
+              newIndex = targetIndex + 1;
+            }
+            
+            
+            if (draggedIndex < newIndex) {
+              newIndex--;
+            }
+            
+            
+            if (draggedIndex !== newIndex) {
+              reorderExecutionPipeline(draggedIndex, newIndex);
+            }
+          }
+        });
+
+        
+        taskItem.dragListenersAdded = true;
+      });
+
+      
+      const container = document.querySelector('.multiIntentExecution');
+      if (container && !container.dragOverListenerAdded) {
+        container.addEventListener('dragover', (e) => {
+          e.preventDefault();
+          hideDropIndicator();
+        });
+        
+        container.addEventListener('drop', (e) => {
+          e.preventDefault();
+          hideDropIndicator();
+        });
+        
+        container.dragOverListenerAdded = true;
+      }
+    };
+
+     const runButton = document.getElementById(`startBtn-${item?.reqId}`);
+     const editButton = document.getElementById(`editFlowBtn-${item?.reqId}`);
 
      if(runButton && !runButton.eventListenerAdded){
         runButton.addEventListener("click", () => {
@@ -314,7 +681,7 @@ const multiIntentExecutionFunc = (item) => {
             addNewTaskBtn.eventListenerAdded = true;
         }
 
-        const deleteBtn = document.getElementById(`deleteBtn-${item?.reqId}-${index}`);
+        const deleteBtn = document.getElementById(`deleteBtn-${task?._id}`);
         if(deleteBtn && !deleteBtn.eventListenerAdded){
             deleteBtn.addEventListener("click", () => {
                 deleteExistingTask(index, task);
@@ -322,7 +689,7 @@ const multiIntentExecutionFunc = (item) => {
             deleteBtn.eventListenerAdded = true;
         }
 
-        const editBtn = document.getElementById(`editBtn-${item?.reqId}-${index}`);
+        const editBtn = document.getElementById(`editBtn-${task?._id}`);
         if(editBtn && !editBtn.eventListenerAdded){
             editBtn.addEventListener("click", () => {
                 editTask(index, task);
@@ -331,7 +698,7 @@ const multiIntentExecutionFunc = (item) => {
         }
 
        if (task?.type === 'addTask' || task?.type === 'modify') {
-         const cancelBtn = document.getElementById(`cancelBtn-${item?.reqId}-${index}`);
+         const cancelBtn = document.getElementById(`cancelBtn-${task?._id}`);
          if (cancelBtn && !cancelBtn.eventListenerAdded) {
            cancelBtn.addEventListener("click", () => {
             deleteNewTask();
@@ -339,15 +706,64 @@ const multiIntentExecutionFunc = (item) => {
            cancelBtn.eventListenerAdded = true;
          }
 
-         const doneBtn = document.getElementById(`doneBtn-${item?.reqId}-${index}`);
+         const doneBtn = document.getElementById(`doneBtn-${task?._id}`);
+         const utteranceInput = document.getElementById(`utterance-${item?.reqId}-${index}`);
+         
+         // Function to check if there are changes by comparing with store values
+         const checkForChanges = () => {
+           if (!doneBtn || !utteranceInput) return;
+           
+           const currentState = store.getState().global;
+           const currentTask = currentState?.questions[item?.reqId]?.executionPipeline?.[index];
+           
+           if (!currentTask) return;
+           
+           const domUtterance = utteranceInput.value || '';
+           const storeUtterance = currentTask?.utterance || '';           
+           const taskIntents = currentTask?.intents || [];
+           const currentTaskSavedIntents = currentState?.questions[item?.reqId]?.savedExecutionPipeline?.[index]?.intents || [];
+           
+           const hasChanges = 
+             domUtterance !== storeUtterance || compareArrays(taskIntents, currentTaskSavedIntents);
+           
+           if (hasChanges) {
+             doneBtn.disabled = false;
+             doneBtn.style.opacity = '1';
+             doneBtn.style.cursor = 'pointer';
+           } else {
+             doneBtn.disabled = true;
+             doneBtn.style.opacity = '0.5';
+             doneBtn.style.cursor = 'not-allowed';
+           }
+         };
+
+         // Initial check to set correct button state
+         if (doneBtn) {
+           checkForChanges();
+         }
+
+         // Add input listener for description changes
+         if (utteranceInput && !utteranceInput.changeListenerAdded) {
+           utteranceInput.addEventListener('input', checkForChanges);
+           utteranceInput.addEventListener('change', checkForChanges);
+           utteranceInput.changeListenerAdded = true;
+         }
+
          if (doneBtn && !doneBtn.eventListenerAdded) {
-           doneBtn.addEventListener("click", () => {
+           doneBtn.addEventListener("click", (e) => {
+             if (doneBtn.disabled) {
+               e.preventDefault();
+               return;
+             }
              saveTask(index, task, item?.executionPipeline);
            });
            doneBtn.eventListenerAdded = true;
          }
 
-         const addIntentBtn = document.getElementById(`addAgentLabel-${item?.reqId}-${index}`);
+         // Store reference to checkForChanges for intent modifications
+         doneBtn.checkForChanges = checkForChanges;
+
+         const addIntentBtn = document.getElementById(`addAgentLabel-${task?._id}`);
          if (addIntentBtn && !addIntentBtn.eventListenerAdded) {
            addIntentBtn.addEventListener("click", (e) => {
              e.preventDefault();
@@ -357,16 +773,24 @@ const multiIntentExecutionFunc = (item) => {
            addIntentBtn.eventListenerAdded = true;
          }
 
-         const deleteIntentBtn = document.getElementById(`deleteIntent-${item?.reqId}-${index}`);
-         if (deleteIntentBtn && !deleteIntentBtn.eventListenerAdded) {
-           deleteIntentBtn.addEventListener("click", () => {
-             deleteIntent(index, task);
-           });
-           deleteIntentBtn.eventListenerAdded = true;
-         }
+         task?.intents?.forEach((intent, idx) => {
+          const deleteIntentBtn = document.getElementById(`deleteIntent-${task?._id}-${intent?.agentMeta?.agentId}`);
+          if(deleteIntentBtn && !deleteIntentBtn.eventListenerAdded){
+            deleteIntentBtn.addEventListener("click", () => {
+              deleteIntent(index, intent);
+              // Trigger change check after deletion
+              if (doneBtn && doneBtn.checkForChanges) {
+                setTimeout(() => doneBtn.checkForChanges(), 50);
+              }
+            });
+          }
+         })
        }
 
      });
+
+     // Setup drag and drop functionality
+     setupDragAndDrop();
 
      return {
         runTask,
@@ -374,10 +798,9 @@ const multiIntentExecutionFunc = (item) => {
         addNewTask,
         deleteExistingTask,
         saveTask,
-        editTask
+        editTask,
+        reorderExecutionPipeline
      }
 }
 
 export { multiIntentExecutionFunc };
-
-

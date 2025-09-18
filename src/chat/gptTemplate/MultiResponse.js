@@ -320,7 +320,7 @@ const MultiResponse = () => {
                 // if (reqdValue) {
                 //     acc[field.key].value = reqdValue;
                 // }
-                acc[field.key].value = reqdValue;
+                    acc[field.key].value = reqdValue;
 
                 if (field?.value?.nested?.key === "prompt" || field?.key === 'prompt') {
                     // Need to send the Prompt Field Value as the prompt can be changed manually by the user if editable

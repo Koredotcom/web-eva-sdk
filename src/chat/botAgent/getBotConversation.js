@@ -82,7 +82,7 @@ const BotConversation = (args) => {
                                 }
                             ]
                         }
-                        currentBotSDKInstance.chatEle = document.getElementById("chat-sec-container")
+                        currentBotSDKInstance.chatEle = document.getElementsByClassName("bot-conversation-wrapper")[0]
                         if(state?.enableDebugging){
                             console.log("template html: ", currentBotSDKInstance.generateMessageDOM(templatePayload))
                         }

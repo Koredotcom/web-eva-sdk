@@ -10,8 +10,9 @@ import * as copyQuestion from "./copy-question";
  */
 export function renderQuestionBubble(data, userIconTemplate = false) {
 	const { question, timestamp, icon} = data;
+    if(data?.isTask) return "";
 	return `
-        <div class="message-bubble question">
+        <div class="message-bubble question ${data?.isTask ? 'task-item' : ''}">
             <div class="message-content">
                 ${copyQuestion.render(data)}
                 <div class="message-text" id="message-text-${data?.messageId || data?.reqId}">${encodeHtml(question)}</div>
@@ -80,18 +81,24 @@ export function renderLoading(
 ) {
 	// const { text = "Thinking...", icon } = data;
 	const text = loadingText || "Thinking...";
-	return ` <div class="message-bubble question">
+    let html = "";
+    if(data?.isTask){
+        html = `<div class="task-item-loader">Loading...</div>`
+    }else{
+        html = ` <div class="message-bubble question">
                 <div class="message-content">
                     <div class="message-text">${encodeHtml(
-						data?.question
-					)}</div>
+            data?.question
+        )}</div>
                     ${userIconTemplate ? userIconTemplate : ""}
                 </div>
             </div>
             <div class="message-bubble loading" >
                 ${assistantIconTemplate ? assistantIconTemplate : ""}
                 ${responseQueryFlow.render(data)}
-            </div>`;
+            </div>`
+    }
+	return html;
 }
 
 /**
