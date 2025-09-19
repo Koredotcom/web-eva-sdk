@@ -671,9 +671,30 @@ const multiIntentExecutionFunc = (item) => {
      }
 
      if(editButton && !editButton.eventListenerAdded){
-        editButton.addEventListener("click", () => {
-            console.log("editButton", item);                        
-            
+        editButton.addEventListener("click", () => {            
+            const isEditMode = editButton.textContent === 'Edit';
+            if(isEditMode){
+            /*fetch the class with taskIteam and  dragHandle and append showOptions to those divs*/
+            /*when we click again on this button it should remove the appended showOptions */
+            const taskItems = document.querySelectorAll('.taskItem');
+            const dragHandles = document.querySelectorAll('.dragHandle');
+            taskItems.forEach(taskItem => {
+                taskItem.classList.add('showOptions');
+            });
+            dragHandles.forEach(dragHandle => {
+                dragHandle.classList.add('showOptions');
+            });   
+          }else{
+            const taskItems = document.querySelectorAll('.taskItem');
+            const dragHandles = document.querySelectorAll('.dragHandle');
+            taskItems.forEach(taskItem => {
+                taskItem.classList.remove('showOptions');
+            });
+            dragHandles.forEach(dragHandle => {
+                dragHandle.classList.remove('showOptions');
+            });
+          }          
+          editButton.textContent = isEditMode ? 'Done' : 'Edit';
         });
         editButton.eventListenerAdded = true;
      }
