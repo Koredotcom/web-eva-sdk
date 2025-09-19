@@ -5,8 +5,6 @@
 @import "./chat-interface.scss";
 @import "./composebar.scss";
 @import "./tooltip.scss";
-@import "./variables_new.scss";
-@import "./mixins_new.scss";
 /* @import './quill-editor.css'; */
 
 /* @import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap'); */
