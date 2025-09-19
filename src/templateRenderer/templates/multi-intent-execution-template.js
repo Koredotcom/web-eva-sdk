@@ -140,31 +140,34 @@ const addNewTaskRenderer = (task, index, items) => {
           <div class="headerInfo">
             <div class='step'>${task?.step || `Step ${index + 1}`}</div>
               ${items?.executionPipeline?.length > 1 ?
-            `<button class="deleteBtn" id = "deleteNewTaskBtn-${task?._id}">Delete</button>`
+            `<div class="opItem" id = "deleteNewTaskBtn-${task?._id}">${createDeleteIcon({ size: 14, color: "#667085" })}</div>`
             : ''}
           </div>
           <div class="addDescription">
             <input type="text" value = "${task?.utterance}" placeholder="Add the description of step(s) which I missed!" id = "utterance-${items?.reqId}-${index}" />
-          </div>
-          <div class="intents">
-            <sl-button class="addAgentLabel" style="border: none;" id="addAgentLabel-${task?._id}">
-                ${PlusIcon({ size: "13", color: "#131316" })}
-                Add Agent
-              </sl-button>              
+
+            <div class="agentBlock">
+            <span class="add-agent-label" id="addAgentLabel-${task?._id}">                
+                + Add Agent
+              </span>              
             ${task?.intents?.length > 0 ? task?.intents?.map((intent, idx) => `
-                <div key="${intent?.agentId}" class="agentBadge">
-                        <span class='badgeimg'><img src="${intent?.agentMeta?.icon}" /></span>
-                        <span class='ellipsisTextBlock'>${intent?.agentMeta?.name}</span>
-                        <span class='badge-close' id = "deleteIntent-${task?._id}-${intent?.agentMeta?.agentId}">
-                          ${Close({ size: "8", color: "#98A2B3" })}
-                        </span>
+                <div key="${intent?.agentId}" class="agentBadgeWrapper">
+                    <div class="agentBadge">
+                            <span class='badgeimg'><img src="${intent?.agentMeta?.icon}" /></span>
+                            <span class='ellipsisTextBlock'>${intent?.agentMeta?.name}</span>
+                            <span class='badge-close' id = "deleteIntent-${task?._id}-${intent?.agentMeta?.agentId}">
+                            ${Close({ size: "8", color: "#98A2B3" })}
+                            </span>
+                    </div>
                 </div>
             `).join('') : "<div class='defaultAgentMsg'>Default Search will respond</div>"}
           </div>
+          </div>
+          
           <div class="footerSec">
             <div class="btns">
-                <button class="cancelBtn" id = "cancelBtn-${task?._id}">Cancel</button>
-                <button class="doneBtn" id = "doneBtn-${task?._id}">${task?.loading ? 'Loading...' : 'Done'}</button>
+                <button class="kr-secondary-btn btn-sm cancelBtn" id = "cancelBtn-${task?._id}">Cancel</button>
+                <button class="kr-primary-btn-black btn-sm doneBtn" id = "doneBtn-${task?._id}">${task?.loading ? 'Loading...' : 'Done'}</button>
                 ${task?.intents?.length === 0 ? "<span class='relevantAgentNotFound'>Relevant agent not found</span>" : ''}
             </div>
           </div>
