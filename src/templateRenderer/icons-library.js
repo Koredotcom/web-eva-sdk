@@ -492,3 +492,30 @@ export function AddStepFilledIcon({ size = config.size, color = config.color, cl
       </svg>
   `
 }
+
+export function WarningStrokeCircle({ className = '', size = config.size, color = config.color, stroke = config.stroke || config.color, insideFill = config.insideFill || 'white' }) {
+  return `    
+      <svg className={'wa-ManageMembers' + className} width="${size}" height="${size}" viewBox="0 0 21 21" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path opacity="0.2" d="M10.7397 17.625C14.8819 17.625 18.2397 14.2671 18.2397 10.125C18.2397 5.98286 14.8819 2.625 10.7397 2.625C6.59761 2.625 3.23975 5.98286 3.23975 10.125C3.23975 14.2671 6.59761 17.625 10.7397 17.625Z" fill="black" />
+        <path d="M10.7397 17.625C14.8819 17.625 18.2397 14.2671 18.2397 10.125C18.2397 5.98286 14.8819 2.625 10.7397 2.625C6.59761 2.625 3.23975 5.98286 3.23975 10.125C3.23975 14.2671 6.59761 17.625 10.7397 17.625Z" fill="${color}" stroke="${stroke}" strokeWidth="1.33" strokeMiterlimit="10" />
+        <path d="M10.7397 6.375V10.75" stroke="${insideFill}" strokeWidth="1.33" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M10.7397 14.5C11.2575 14.5 11.6772 14.0803 11.6772 13.5625C11.6772 13.0447 11.2575 12.625 10.7397 12.625C10.222 12.625 9.80225 13.0447 9.80225 13.5625C9.80225 14.0803 10.222 14.5 10.7397 14.5Z" fill="${insideFill}" />
+      </svg>    
+  `
+}
+
+export function LoadingSpinner({ className = '', size = config.size, color = config.color }) {
+  return `
+    <svg width="${size}" height="${size}" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" class="wa-LoadingSpinner ${className}">
+      <style>
+        .spinner_qM83{animation:spinner_8HQG 1.05s infinite}
+        .spinner_oXPr{animation-delay:.1s}
+        .spinner_ZTLf{animation-delay:.2s}
+        @keyframes spinner_8HQG{0%,57.14%{animation-timing-function:cubic-bezier(0.33,.66,.66,1);transform:translate(0)}28.57%{animation-timing-function:cubic-bezier(0.33,0,.66,.33);transform:translateY(-6px)}100%{transform:translate(0)}}
+      </style>
+      <circle class="spinner_qM83" cx="4" cy="12" r="3" fill="${color}"/>
+      <circle class="spinner_qM83 spinner_oXPr" cx="12" cy="12" r="3" fill="${color}"/>
+      <circle class="spinner_qM83 spinner_ZTLf" cx="20" cy="12" r="3" fill="${color}"/>
+    </svg>
+  `;
+}

@@ -4,6 +4,7 @@ import InitiateChatConversationAction from "../../chat/InitiateChatConversationA
 import { updateChatData } from "../../redux/globalSlice";
 import { executionPipelineActions } from "../../redux/actions/global.action";
 import { tickMarkIcon } from "../icons-library.js";
+import { cancelOngoingCall } from "../utils/helper.js";
 
 const multiIntentExecutionFunc = (item) => {
 
@@ -501,6 +502,10 @@ const multiIntentExecutionFunc = (item) => {
       return !arr1.every(item => arr2.some(item2 => item2.agentId === item.agentId));
     }
 
+    const cancelTask = (task) => {
+      cancelOngoingCall(task?._id);
+    }
+
     // Drag and Drop functionality
     let draggedElement = null;
     let draggedIndex = null;
@@ -562,7 +567,7 @@ const multiIntentExecutionFunc = (item) => {
     };
 
     const setupDragAndDrop = () => {
-      const taskItems = document.querySelectorAll('.taskItem[draggable="true"]');
+      const taskItems = document.querySelectorAll('.dragTaskItem[draggable="true"]');
       
       taskItems.forEach((taskItem, index) => {
         
@@ -667,13 +672,22 @@ const multiIntentExecutionFunc = (item) => {
 
      if(editButton && !editButton.eventListenerAdded){
         editButton.addEventListener("click", () => {
-            console.log("editButton", item);
+            console.log("editButton", item);                        
+            
         });
         editButton.eventListenerAdded = true;
      }
 
      item?.executionPipeline?.forEach((task, index) => {
         const addNewTaskBtn = document.getElementById(`addNewTaskBtn-${index}`);
+        const continueBtn = document.getElementById(`continueBtn-${task?._id}`);
+        if(continueBtn && !continueBtn.eventListenerAdded){
+            continueBtn.addEventListener("click", () => {
+                cancelTask(task);
+            });
+            continueBtn.eventListenerAdded = true;
+        }
+
         if(addNewTaskBtn && !addNewTaskBtn.eventListenerAdded){
             addNewTaskBtn.addEventListener("click", () => {
                 addNewTask(index, task);

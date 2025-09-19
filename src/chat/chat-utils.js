@@ -41,7 +41,7 @@ export const constructQuestionInitial = (args) => {
 			isTask: true,
 			parentMsgId: args?.reqId,
 			cId: args?.stepId,
-			reqId: args?.stepId,
+			reqId: uniqueMsgId,
 			showResponse: true,
 		}
 

@@ -3,7 +3,7 @@ import store from "../../redux/store";
 import { multiIntentExecutionFunc } from "../functionality/multi-intent-execution";
 import TemplateRenderer from "../templateRenderer";
 import "./../styles/template.scss";
-import { Close, PlusIcon, DragHandleIcon, RadioButtonChecked, createDeleteIcon, EditIcon, HistoryIcon, AddStepFilledIcon } from "../icons-library";
+import { Close, PlusIcon, DragHandleIcon, RadioButtonChecked, createDeleteIcon, EditIcon, HistoryIcon, AddStepFilledIcon, WarningStrokeCircle, tickMarkIcon, LoadingSpinner } from "../icons-library";
 
 
 const assistantIconTemplate = () => {
@@ -32,15 +32,15 @@ function render(data) {
         ` : '' : ''}
         `;
 
-       
+
     let body = `
         ${items?.executionPipeline?.map((task, index) => {
-            task = {...task, ..._questions[task?._id], isTask: true};
-            let html = TemplateRenderer.generateHTMLTemplate(task, {});
-           
-            if(task?.type === 'addTask' || task?.type === 'modify'){
-                return addNewTaskRenderer(task, index, items);
-            }
+        task = { ...task, ..._questions[task?._id], isTask: true };
+        let html = TemplateRenderer.generateHTMLTemplate(task, {});
+
+        if (task?.type === 'addTask' || task?.type === 'modify') {
+            return addNewTaskRenderer(task, index, items);
+        }
 
             return `
                 <div class="tasksToRun">
@@ -59,10 +59,17 @@ function render(data) {
                             ${initialState ? `<div class="dragHandle" title="Drag to reorder">
                                 ${DragHandleIcon({ size: 14, color: "#9CA3AF" })}
                             </div>` : ''}
-                            <div class="taskItem">
+                            <div class="taskItem ${task?.showResponse ? 'loadingSkeleton' : ''}">
                                 <div class="topCard">
-                                    <div class="leftBlock">
-                                        <div class="statusIcon">${HistoryIcon({ size: 16, color: "#98A2B3" })}</div>
+                                    <div class="leftBlock">                                                                            
+                                ${task?.loading ? `<span class='spinLoader'>${LoadingSpinner({ size: 16, color: "#98A2B3" })}</span>`:
+                                task?.status === "completed"
+                                    ? tickMarkIcon({ size: 16, color: "#475467" }) 
+                                            : task?.status === "discard"
+                                                ? WarningStrokeCircle({ size: 16, color: "white", stroke: "#F04438", insideFill: "#F04438" }) 
+                                                : HistoryIcon({ size: 16, color: "#98A2B3" }) 
+                                        } 
+                              
                                         <div class="contentBlock">
                                             ${Array.isArray(task?.intents) && task.intents.length > 0 ? `
                                                 <div class="agentsAmbiguity">
@@ -74,6 +81,16 @@ function render(data) {
                                                 </div>
                                             ` : ''}                                    
                                             <div class="utterance">${task?.utterance}</div>
+                                            ${task?.showResponse ? `
+                                                    <div class="bottomCard">
+                                                        ${html?.innerHTML}
+                                                        ${index < items?.executionPipeline?.length - 1 &&
+                                                        `<div class='continuebtn' id="continueBtn-${task?._id}">
+                                                            Continue Flow 
+                                                        </div>`    
+                                                        }
+                                                    </div>
+                                            ` : ''}
                                         </div>
                                     </div>
                                     <div class="rightBlock">
@@ -84,12 +101,7 @@ function render(data) {
                                         </div>
                                     ` : ''}
                                     </div>
-                                </div>
-                                ${task?.showResponse ? `
-                                    <div class="bottomCard">
-                                    ${html?.innerHTML}
-                                    </div>
-                                ` : ''}
+                                </div>                                
                             </div>                    
                         </div>
                     </div>
@@ -98,7 +110,7 @@ function render(data) {
         }).join('')}
     `;
 
-   
+
     let multiIntentExecution = `
         <div class="multiIntentExecution ${items?.status} ${items?.executionPipeline?.length === 0 ? 'd-none' : ''}">
             ${header}
@@ -126,10 +138,10 @@ const addNewTaskRenderer = (task, index, items) => {
                ? ${task?.headerMsg}
             </div>` : ''}
           <div class="headerInfo">
-            <div class='step'>${task?.step || `Step ${index+1}`}</div>
+            <div class='step'>${task?.step || `Step ${index + 1}`}</div>
               ${items?.executionPipeline?.length > 1 ?
-                `<button class="deleteBtn" id = "deleteNewTaskBtn-${task?._id}">Delete</button>`
-              : ''}
+            `<button class="deleteBtn" id = "deleteNewTaskBtn-${task?._id}">Delete</button>`
+            : ''}
           </div>
           <div class="addDescription">
             <input type="text" value = "${task?.utterance}" placeholder="Add the description of step(s) which I missed!" id = "utterance-${items?.reqId}-${index}" />

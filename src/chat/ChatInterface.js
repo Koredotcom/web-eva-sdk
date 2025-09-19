@@ -120,8 +120,9 @@ const ChatInterface = (props) => {
 
 
       const reqId = id || state.currentQuestion.reqId;
+      const questions = cloneDeep(store.getState().global.questions);
       const payload = { boardId: state.activeBoardId };
-      const currQuestion = state.questions[state.currentQuestion.reqId];
+      const currQuestion = questions[state.currentQuestion.reqId];
       if(currQuestion?.viewType === "threadView" && currQuestion?.botConversation) {
          stopBotAnswer()
         return;
@@ -132,9 +133,8 @@ const ChatInterface = (props) => {
         reqId, 
         payload 
       }));
-    
-      const questions = cloneDeep(store.getState().global.questions);
-      const reqdCId = getCidByReqId(questions, reqId);
+      
+      const reqdCId = currQuestion?.isTask ? currQuestion?.cId : getCidByReqId(questions, reqId);
     
       constructQuestionPostCall(response, reqdCId);
     };

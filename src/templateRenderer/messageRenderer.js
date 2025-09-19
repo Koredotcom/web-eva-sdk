@@ -28,7 +28,7 @@ export function render(
 ) {
 	try {
 		// Handle loading state
-		if (data?.loading && !data?.botConversation) {
+		if (data?.loading && !data?.botConversation && !data?.isTask) {
 			return TemplateComponents.wrapTemplate(
 				TemplateComponents.renderLoading(
 					data,
@@ -220,7 +220,7 @@ export function renderTemplateContent(
 				// 	htmlTemplate = renderBotConversation(data);
 				// }
 				console.warn(`Unknown template type: ${data.templateType}`);
-				htmlTemplate = TemplateComponents.renderAnswerBubble(data);
+				// htmlTemplate = TemplateComponents.renderAnswerBubble(data);
 		}
 	}
 	// Add feedback if supported

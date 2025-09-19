@@ -85,10 +85,10 @@ export const getReqIdByMessageId = (messageId) => {
     return null; // or an appropriate value if no match is found
 };
 
-export const getCidByReqId = (data, reqId) => {
-    for (const key in data) {
-        if (data[key].reqId === reqId) {
-            return data[key].reqId;
+export const getCidByReqId = (questions, reqId) => {
+    for (const key in questions) {
+        if (questions[key].reqId === reqId) {
+            return questions[key].reqId;
         }
     }
     return null;
