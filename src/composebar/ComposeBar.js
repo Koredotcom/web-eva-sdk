@@ -252,7 +252,7 @@ class ComposeBar {
         /*innerHtml should display the selected agent name and close button */
         composebarContextChipContainer.innerHTML = `
             <button class="context-chip-button">
-                <div class="composebar-context-agent-name-container">
+                <div class="composebar-context-agent-name-container ${this.selectedAgent?.agentType === "agenticApp" ? 'agenticApp' : ''}">
                     <div class="composebar-context-agent-icon">
                     ${this.selectedAgent?.agentType === "agenticApp" ? `${getIconsList({}, this.selectedAgent?.agenticAppIcons)}` : `<img src="${this.selectedAgent?.icon}" alt="agent-icon" width="16" height="16">`}                        
                     </div>

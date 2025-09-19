@@ -414,9 +414,32 @@
                                     align-items: center;
                                     gap: 0.25rem;
 
+                                    &.agenticApp {
+                                        flex-direction: row-reverse;
+                                    }
+
                                     .composebar-context-agent-icon {
                                         display: flex;
                                         align-items: center;
+
+                                        .agentBorder {
+                                            display: flex;
+                                            color: #141414;
+                                            font-family: Inter;
+                                            font-size: 0.875rem;
+                                            font-style: normal;
+                                            font-weight: 500;
+                                            line-height: inherit;
+                                            letter-spacing: 0em;
+
+                                            img, svg {
+                                                flex-shrink: 0;
+                                                width: 1rem;
+                                                max-height: 1rem;
+                                                object-fit: cover;
+                                                margin-right: 0.25rem;
+                                            }
+                                        }
                                     }
 
                                     .composebar-context-agent-name {
