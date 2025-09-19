@@ -1094,6 +1094,12 @@ class ComposeBar {
             }
         } catch (e) {
             dialog.removeAttribute('open');
+        }finally{
+            /*need to clear the entered text if any in the data-eva-agent-search-input-box*/
+            const agentSearchInputBox = this.container.querySelector('[data-eva-agent-search-input-box]');
+            if(agentSearchInputBox){
+                agentSearchInputBox.value = '';
+            }
         }
     }
 
