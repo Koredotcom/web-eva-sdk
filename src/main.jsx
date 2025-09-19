@@ -19,7 +19,8 @@ initializeSDK({
             "clientSecret": "VJNwkfbPcMZl4bOa1Qn3XtYRz6rqigwtTgOlaYX25Xs="
         },
     },
-    enableDebugging: false
+    enableDebugging: false,
+    autoRemoveWebSearchFromContext: false // this flag helps to set the context after advancedSearch
 });
 
 

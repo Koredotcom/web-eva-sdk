@@ -54,7 +54,8 @@ const initialState = {
   bookMarkedChatThreads: [],
   enableDebugging: false,
   quickActions: [],
-  announcements: {}
+  announcements: {},
+  autoRemoveWebSearchFromContext: false
 };
 
 const globalSlice = createSlice({
@@ -129,6 +130,9 @@ const globalSlice = createSlice({
     },
     setAnnouncements: (state , action) =>{
        state.announcements = action.payload;
+    },
+    setAutoRemoveWebSearchFromContext: (state, action) => {
+      state.autoRemoveWebSearchFromContext = action.payload;
     }
   },
   extraReducers: (builder) => {
@@ -250,7 +254,8 @@ export const {
   setBookMarkedChatThreads,
   setEnabledDebugging,
   setQuickActions,
-  setAnnouncements
+  setAnnouncements,
+  setAutoRemoveWebSearchFromContext
 } = globalSlice.actions;
 
 export default globalSlice;
