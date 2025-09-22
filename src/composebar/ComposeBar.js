@@ -1424,7 +1424,7 @@ class ComposeBar {
         const attachments = this.container.querySelectorAll('[data-attach-uid]');
         const itemsHtml = agents.map(agent => {
             const safeName = (agent?.name || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-            const icon = agent?.icon ? `<img src="${agent.icon}" alt="" width="18" height="18" />` : '';
+            const icon = agent?.type === "agenticApp" ? `${getIconsList(agent, [])}` : `<img src="${agent?.icon}" alt="" width="18" height="18" />`;
             const agentType = getAgentType(agent?.type);
             return `<li class="eva-agent-item" data-agent-id="${agent.id}" data-agent-type="${listType}">
             <div class="agent-icon">${icon}</div>
