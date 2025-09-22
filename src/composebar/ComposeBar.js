@@ -1431,7 +1431,7 @@ class ComposeBar {
                 <div class="agent-details">
                 <div class="agent-name">${safeName}</div>
                 <div class="agent-desc">
-                    <div style="${agent?.type === "agenticApp" ? "display:none;" : ""}">${agentType}<span>•</span></div>                    
+                    <span class="agent-type" style="${agent?.type === "agenticApp" ? "display:none;" : ""}">${agentType}<span class="agent-type-separator">•</span></span>                    
                     ${agent?.description}
                 </div>
             </div>

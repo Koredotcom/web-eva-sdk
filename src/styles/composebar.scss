@@ -765,10 +765,8 @@ sl-dialog.eva-agents-dialog {
                         overflow: hidden;
                         text-overflow: ellipsis;
                         white-space: nowrap;
-                        display: flex;
-                        align-items: center;
 
-                        span {
+                        .agent-type-separator {
                             margin-left: .25rem;
                             margin-right: .25rem;
                             font-family: Inter;
