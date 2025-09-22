@@ -21,7 +21,7 @@ const multiIntentExecutionFunc = (item) => {
         let task = _item?.executionPipeline?.[index];
         task.stepIndex = index;
 
-        const params = { cId: _item?.id, reqId : _item?.reqId, type: _item?.type, stepId: task?._id, task, currentRunningQuestion: _item}
+      const params = { cId: _item?.id, type: _item?.type, stepId: task?._id, task, currentRunningQuestion: _item, parentMsgId: _item?.reqId}
 
         const payload = {
             "question": task?.utterance,
@@ -80,7 +80,7 @@ const multiIntentExecutionFunc = (item) => {
     const saveTask = async (index, task, executionPipeline) => {
 
       let _questions = cloneDeep(state?.questions);
-      let utterance = document.getElementById(`utterance-${item?.reqId}-${index}`)?.value;
+      let utterance = document.getElementById(`utterance-${task?._id}`)?.value;
 
       let payload = {
         utterance: utterance,
@@ -131,13 +131,18 @@ const multiIntentExecutionFunc = (item) => {
       }
     }
 
-    const deleteNewTask = () => {
+    const deleteNewTask = (taskId) => {
         const _questions = cloneDeep(state?.questions);
+        /*remove type key from the savedExecutionPipeline of that particular task which is having _id as task?._id*/
+      const taskIndex = _questions[item?.reqId].savedExecutionPipeline?.findIndex(task => task?._id === taskId);
+        const {type, ...rest} = _questions[item?.reqId].savedExecutionPipeline?.[taskIndex];  
+        _questions[item?.reqId].savedExecutionPipeline[taskIndex] = rest;      
+
         const updatedQuestions = {
           ..._questions,
           [item?.reqId]: { 
             ..._questions[item?.reqId], 
-            executionPipeline: _questions[item?.reqId].savedExecutionPipeline 
+          executionPipeline: _questions[item?.reqId].savedExecutionPipeline
           }
         };
         store.dispatch(updateChatData(updatedQuestions))
@@ -184,6 +189,12 @@ const multiIntentExecutionFunc = (item) => {
       let _task = {...task, type : 'modify', step : `Step ${index+1}`}
 
       currentExecutionPipeline.splice(index, 1, _task);
+      /*need to remove the type key from other tasks which are having type key other than this index */
+      currentExecutionPipeline.forEach((task, pipeLineIndex) => {
+        if(pipeLineIndex !== index){
+          task.hasOwnProperty('type') ? delete task.type : '';
+        }
+      });
 
       const updatedQuestions = {
         ..._questions,
@@ -476,20 +487,27 @@ const multiIntentExecutionFunc = (item) => {
       const _questions = cloneDeep(state?.questions);
       let currentQuestion = cloneDeep(_questions[item?.reqId]);
       let currentExecutionPipeline = cloneDeep(currentQuestion?.executionPipeline);
-      let savedExecutionPipeline = cloneDeep(currentExecutionPipeline);
+      let savedExecutionPipeline = cloneDeep(currentExecutionPipeline); 
+      let task = currentExecutionPipeline[index];     
       currentExecutionPipeline[index].intents = currentExecutionPipeline[index]?.intents?.filter(intent => intent?.agentId !== intentToDelete?.agentId);
             
       currentQuestion.executionPipeline[index].intents = currentExecutionPipeline?.[index]?.intents || [];
       
-      
+      /*lets check whether the utterance is changed or not for the executionPipeline with this index */
+      const utteranceInput = document.getElementById(`utterance-${task?._id}`);
+      const utterance = utteranceInput.value || '';
+      const currentUtterance = currentExecutionPipeline[index]?.utterance || '';
+      if(utterance !== currentUtterance){
+        currentExecutionPipeline[index].utterance = utterance;
+        currentQuestion.executionPipeline[index].utterance = utterance;
+      }
       const updatedQuestions = {
         ..._questions,
         [item?.reqId]: { ...currentQuestion, savedExecutionPipeline }
       };
       store.dispatch(updateChatData(updatedQuestions));
       
-      // Trigger change check for Done button
-      let task = currentExecutionPipeline[index];
+      // Trigger change check for Done button      
       const doneBtn = document.getElementById(`doneBtn-${task?._id}`);
       if (doneBtn && doneBtn.checkForChanges) {
         doneBtn.checkForChanges();
@@ -736,13 +754,13 @@ const multiIntentExecutionFunc = (item) => {
          const cancelBtn = document.getElementById(`cancelBtn-${task?._id}`);
          if (cancelBtn && !cancelBtn.eventListenerAdded) {
            cancelBtn.addEventListener("click", () => {
-            deleteNewTask();
+            deleteNewTask(task?._id);
            });
            cancelBtn.eventListenerAdded = true;
          }
 
          const doneBtn = document.getElementById(`doneBtn-${task?._id}`);
-         const utteranceInput = document.getElementById(`utterance-${item?.reqId}-${index}`);
+         const utteranceInput = document.getElementById(`utterance-${task?._id}`);         
          
          // Function to check if there are changes by comparing with store values
          const checkForChanges = () => {

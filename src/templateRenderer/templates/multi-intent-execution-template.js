@@ -84,10 +84,10 @@ function render(data) {
                                             ${task?.showResponse ? `
                                                     <div class="bottomCard">
                                                         ${html?.innerHTML}
-                                                        ${index < items?.executionPipeline?.length - 1 &&
+                                                        ${index < items?.executionPipeline?.length - 1  && ['draft', 'in-progress', 'threadRunning'].includes(task?.status) ?
                                                         `<div class='continuebtn' id="continueBtn-${task?._id}">
                                                             Continue Flow 
-                                                        </div>`    
+                                                        </div>`    :''
                                                         }
                                                     </div>
                                             ` : ''}
@@ -144,7 +144,7 @@ const addNewTaskRenderer = (task, index, items) => {
             : ''}
           </div>
           <div class="addDescription">
-            <input type="text" value = "${task?.utterance}" placeholder="Add the description of step(s) which I missed!" id = "utterance-${items?.reqId}-${index}" />
+            <input type="text" value = "${task?.utterance}" placeholder="Add the description of step(s) which I missed!" id = "utterance-${task?._id}" />
 
             <div class="agentBlock">
             <span class="add-agent-label" id="addAgentLabel-${task?._id}">                

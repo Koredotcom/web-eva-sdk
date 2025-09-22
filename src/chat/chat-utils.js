@@ -39,9 +39,9 @@ export const constructQuestionInitial = (args) => {
 			loading: true,
 			type: "search",
 			isTask: true,
-			parentMsgId: args?.reqId,
+            parentMsgId: args?.parentMsgId,
 			cId: args?.stepId,
-			reqId: uniqueMsgId,
+			reqId: args?.reqId,
 			showResponse: true,
 		}
 
@@ -59,7 +59,7 @@ export const constructQuestionInitial = (args) => {
 			reqId: uniqueMsgId,
 			showResponse: true,
 			isTask: true,
-			parentMsgId: args?.reqId,
+            parentMsgId: args?.parentMsgId,
 			isMultiIntentExecution: true,
 			stepIndex: stepIndex,
 		};
@@ -266,7 +266,7 @@ export const constructQuestionPostCall = (data, qId) => {
 	} else if (data?.meta?.arg?.multiIntentExecution || question?.isMultiIntentExecution) {
 		const stepIndex = question?.stepIndex;
 		question = { ...question, ...data?.payload, showResponse: true};
-		questions[question?.parentMsgId].executingActionId = question?.id
+		questions[question?.parentMsgId].executingActionId = question?.stepId
 		if(stepIndex === 0) {
 		    questions[question?.parentMsgId].status = 'in-progress'
 		}

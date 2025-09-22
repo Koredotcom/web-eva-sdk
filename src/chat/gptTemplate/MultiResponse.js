@@ -186,7 +186,7 @@ const MultiResponse = () => {
 
                 // "MORGAN STANLEY REQUIREMENT" -> TO HANDLE CASES WHICH DOES NOT HAVE DEPENDENCY ON ID OF THE FILE UPLOADER. 
                 if (contextFieldDiv) {
-                    let ind = Object.keys(state.GptUploadedFiles).indexOf(`${contextFields?.key}-${item?.messageId}`);
+                    let ind = Object.keys(state.GptUploadedFiles || {}).indexOf(`${contextFields?.key}-${item?.messageId}`);
                     if (ind !== -1) {
                         reqdValue = Object.values(state.GptUploadedFiles)?.[ind]?.map(({ title, fileId }) => ({ title, fileId }));
                         payloadContext[contextFields?.key].value = reqdValue
@@ -392,8 +392,9 @@ const MultiResponse = () => {
         // console.log(payload)
 
         let obj = { createIssue: true, from: "gptAgent", botQuestionId: item?.id } // Corrected to use item instead of question
-        if (item?.isTask) { // Corrected to use item instead of question
-            obj.multiIntentExecution = true
+        if (item?.isTask) { // Corrected to use item instead of question               
+            obj.isTask = true
+            obj.parentMsgId = item?.parentMsgId
         }
 
         let callback = () => {
