@@ -35,7 +35,8 @@ function render(data) {
 
     let body = `
         ${items?.executionPipeline?.map((task, index) => {
-        task = { ...task, ..._questions[task?._id], isTask: true };
+        const originalTaskId = task?._id;
+        task = { ...task, ..._questions[task?._id], isTask: true, _id: originalTaskId };
         let html = TemplateRenderer.generateHTMLTemplate(task, {});
 
         if (task?.type === 'addTask' || task?.type === 'modify') {

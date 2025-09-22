@@ -283,6 +283,12 @@ export const constructQuestionPostCall = (data, qId) => {
         }
         let terminatedAnswerResponse = "I see you interrupted the answer generation. Please feel free to provide more details or let me know how can I assist you further"
         question = { ...question,  ...data?.payload?.history, answer : terminatedAnswerResponse};
+        if (question?.isTask) {
+            const stepIndex = question?.stepIndex;
+            setTimeout(() => {
+                multiIntentExecutionFunc().runNextTask(stepIndex, data?.payload?.history?.status, question)
+            }, 1000);
+        }
 	} 
     else {      
         if(data?.meta?.arg?.params?.from !== "botAgent") {

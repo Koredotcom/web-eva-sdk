@@ -5,6 +5,7 @@ import { updateChatData } from "../../redux/globalSlice";
 import { executionPipelineActions } from "../../redux/actions/global.action";
 import { tickMarkIcon } from "../icons-library.js";
 import { cancelOngoingCall } from "../utils/helper.js";
+import "./multi-intent-execution.css";
 
 const multiIntentExecutionFunc = (item) => {
 
@@ -20,6 +21,13 @@ const multiIntentExecutionFunc = (item) => {
         let _item = cloneDeep(item);
         let task = _item?.executionPipeline?.[index];
         task.stepIndex = index;
+        store.dispatch(updateChatData({
+          ...state.questions,
+          [item?.reqId]: {
+            ...item,
+            status: "in-progress"
+          }
+        }))
 
       const params = { cId: _item?.id, type: _item?.type, stepId: task?._id, task, currentRunningQuestion: _item, parentMsgId: _item?.reqId}
 
@@ -249,117 +257,91 @@ const multiIntentExecutionFunc = (item) => {
         return;
       }
 
+      // Create agent menu item HTML
+      const createAgentMenuItemHTML = (agent) => {
+        const isSelected = task?.intents?.length > 0 && task?.intents?.find(intent => intent?.agentId === agent.id);
+        const disabledAttr = isSelected ? 'disabled' : '';
+        const className = isSelected ? 'menu-item disabled' : 'menu-item';
+        
+        return `
+          <sl-menu-item 
+            value="${agent.id}" 
+            class="${className}" 
+            ${disabledAttr}
+            data-agent-id="${agent.id}"
+            data-agent-name="${agent.name}"
+            data-agent-icon="${agent.icon || ''}"
+            data-is-selected="${isSelected}"
+          >
+            <div slot="prefix" style="display: flex; align-items: center; margin-right: 8px;">
+              <img src="${agent.icon || ''}" alt="${agent.name}" style="width: 16px; height: 16px; border-radius: 2px;" onerror="this.style.display='none'" />
+            </div>
+            <span style="font-size: 14px; color: #374151;">${agent.name}</span>
+            ${isSelected ? `<div slot="suffix" style="margin-left: auto;">${tickMarkIcon({ size: 16, color: "#10b981" })}</div>` : ''}
+          </sl-menu-item>
+        `;
+      };
+
+      // Generate agents HTML
+      const generateAgentsHTML = (agentsToRender = enabledAgents) => {
+        if (agentsToRender.length === 0) {
+          return '<div class="no-results">No agents found</div>';
+        }
+        
+        return agentsToRender.map(agent => createAgentMenuItemHTML(agent)).join('');
+      };
+
+      // Create popup HTML
+      const popupHTML = `
+        <div class="popup-container">
+          <div class="popup-header">
+            <input type="text" placeholder="Search agents..." class="popup-search-input" id="popup-search-input" />
+            <button class="popup-close-button" id="popup-close-button">×</button>
+          </div>
+          <sl-menu class="popup-menu" id="popup-menu">
+            ${generateAgentsHTML()}
+          </sl-menu>
+        </div>
+      `;
+
+      // Create popup element
       const popup = document.createElement('sl-popup');
       popup.className = 'agent-selection-popup';
       popup.setAttribute('placement', 'top-start');
       popup.setAttribute('auto-size', 'vertical');
       popup.setAttribute('flip', 'true');
       popup.setAttribute('shift', 'true');
-      popup.style.cssText = `
-        z-index: 10000;
-      `;
+      popup.innerHTML = popupHTML;
 
-      
-      const container = document.createElement('div');
-      container.style.cssText = `
-        background: white;
-        border: 1px solid #e2e8f0;
-        border-radius: 6px;
-        box-shadow: 0 8px 16px rgba(0,0,0,0.15);
-        min-width: 200px;
-      `;
+      document.body.appendChild(popup);
+      popup.anchor = buttonElement;
 
-      
-      const header = document.createElement('div');
-      header.style.cssText = `
-        display: flex;
-        align-items: center;
-        padding: 8px 12px;
-        border-bottom: 1px solid #e2e8f0;
-        background: #f8fafc;
-        border-radius: 6px 6px 0 0;
-      `;
+      // Get references to elements after DOM creation
+      const searchInput = popup.querySelector('#popup-search-input');
+      const closeButton = popup.querySelector('#popup-close-button');
+      const menu = popup.querySelector('#popup-menu');
 
-      // Create search input
-      const searchInput = document.createElement('input');
-      searchInput.type = 'text';
-      searchInput.placeholder = 'Search agents...';
-      searchInput.style.cssText = `
-        flex: 1;
-        border: 1px solid #d1d5db;
-        border-radius: 4px;
-        padding: 6px 8px;
-        font-size: 12px;
-        outline: none;
-        margin-right: 8px;
-      `;
+      // Function to render agents based on search
+      const renderAgents = (agentsToRender = enabledAgents) => {
+        menu.innerHTML = generateAgentsHTML(agentsToRender);
+        attachMenuItemListeners();
+      };
 
-      // Create close button
-      const closeButton = document.createElement('button');
-      closeButton.innerHTML = '×';
-      closeButton.style.cssText = `
-        background: none;
-        border: none;
-        font-size: 16px;
-        cursor: pointer;
-        color: #6b7280;
-        padding: 2px 6px;
-        border-radius: 2px;
-        line-height: 1;
-      `;
-
-      header.appendChild(searchInput);
-      header.appendChild(closeButton);
-
-      const menu = document.createElement('sl-menu');
-      menu.style.cssText = `
-        max-height: 200px;
-        overflow-y: auto;
-        border-radius: 0 0 6px 6px;
-      `;
-
-      const createAgentMenuItem = (agent) => {
-        const menuItem = document.createElement('sl-menu-item');
-        
-        // Check if this agent is already selected
-        const isSelected = task?.intents?.length > 0 && task?.intents?.find(intent => intent?.agentId === agent.id);
-        
-        if(isSelected){
-          menuItem.setAttribute('disabled', '');
-          menuItem.style.cssText = `
-            display: flex;
-            align-items: center;
-            padding: 8px 12px;
-            cursor: not-allowed;
-            opacity: 0.6;
-            background-color: #f8fafc;
-          `;
-        } else {
-          menuItem.style.cssText = `
-            display: flex;
-            align-items: center;
-            padding: 8px 12px;
-            cursor: pointer;
-          `;
-        }
-        
-        menuItem.setAttribute('value', agent.id);
-        
-        menuItem.innerHTML = `
-          <div slot="prefix" style="display: flex; align-items: center; margin-right: 8px;">
-            <img src="${agent.icon || ''}" alt="${agent.name}" style="width: 16px; height: 16px; border-radius: 2px;" onerror="this.style.display='none'" />
-          </div>
-          <span style="font-size: 14px; color: #374151;">${agent.name}</span>
-          ${isSelected ? `<div slot="suffix" style="margin-left: auto;">${tickMarkIcon({ size: 16, color: "#10b981" })}</div>` : ''}
-        `;
-
-        // Add click handler only if not selected
-        if (!isSelected) {
+      // Attach event listeners to menu items
+      const attachMenuItemListeners = () => {
+        const menuItems = menu.querySelectorAll('sl-menu-item:not([disabled])');
+        menuItems.forEach(menuItem => {
           menuItem.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
             
-            addIntent(index, task, agent);
+            const agentData = {
+              id: menuItem.dataset.agentId,
+              name: menuItem.dataset.agentName,
+              icon: menuItem.dataset.agentIcon
+            };
+            
+            addIntent(index, task, agentData);
             
             // Trigger change check after adding agent
             const doneBtn = document.getElementById(`doneBtn-${task?._id}`);
@@ -369,37 +351,23 @@ const multiIntentExecutionFunc = (item) => {
             
             closePopupFunction();
           });
-        }
-
-        return menuItem;
-      };
-
-      // Function to render agents based on search
-      const renderAgents = (agentsToRender = enabledAgents) => {
-        // Clear existing menu items
-        menu.innerHTML = '';
-        
-        if (agentsToRender.length === 0) {
-          const noResults = document.createElement('div');
-          noResults.style.cssText = `
-            padding: 12px;
-            text-align: center;
-            color: #6b7280;
-            font-size: 12px;
-          `;
-          noResults.textContent = 'No agents found';
-          menu.appendChild(noResults);
-          return;
-        }
-        
-        agentsToRender.forEach(agent => {
-          const menuItem = createAgentMenuItem(agent);
-          menu.appendChild(menuItem);
         });
       };
 
-      // Initial render of all agents
-      renderAgents();
+      // Close popup function
+      const closePopupFunction = () => {
+        if (popup.hide) {
+          popup.hide();
+        } else {
+          popup.removeAttribute('active');
+          popup.style.display = 'none';
+        }
+        setTimeout(() => popup.remove(), 100);
+        document.removeEventListener('click', closePopup);
+      };
+
+      // Initial attach of menu item listeners
+      attachMenuItemListeners();
 
       // Add search functionality
       searchInput.addEventListener('input', (e) => {
@@ -430,18 +398,6 @@ const multiIntentExecutionFunc = (item) => {
         }
       });
 
-      // Close popup function
-      const closePopupFunction = () => {
-        if (popup.hide) {
-          popup.hide();
-        } else {
-          popup.removeAttribute('active');
-          popup.style.display = 'none';
-        }
-        setTimeout(() => popup.remove(), 100);
-        document.removeEventListener('click', closePopup);
-      };
-
       // Add close button functionality
       closeButton.addEventListener('click', (e) => {
         e.preventDefault();
@@ -449,15 +405,6 @@ const multiIntentExecutionFunc = (item) => {
         closePopupFunction();
       });
 
-      // Assemble the popup
-      container.appendChild(header);
-      container.appendChild(menu);
-
-      popup.appendChild(container);
-      document.body.appendChild(popup);
-
-      popup.anchor = buttonElement;
-      
       // Show popup with fallback
       if (popup.show) {
         popup.show();
