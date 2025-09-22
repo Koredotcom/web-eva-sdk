@@ -3,7 +3,7 @@ import store from "../../redux/store";
 import { multiIntentExecutionFunc } from "../functionality/multi-intent-execution";
 import TemplateRenderer from "../templateRenderer";
 import "./../styles/template.scss";
-import { Close, PlusIcon, DragHandleIcon, RadioButtonChecked, createDeleteIcon, EditIcon, HistoryIcon, AddStepFilledIcon, WarningStrokeCircle, tickMarkIcon, LoadingSpinner } from "../icons-library";
+import { Close, PlusIcon, DragHandleIcon, RadioButtonChecked, createDeleteIcon, EditIcon, HistoryIcon, AddStepFilledIcon, WarningStrokeCircle, tickMarkIcon, LoadingSpinner, AgenticSearchIcon } from "../icons-library";
 
 
 const assistantIconTemplate = () => {
@@ -62,7 +62,7 @@ function render(data) {
                             <div class="taskItem ${task?.showResponse ? 'loadingSkeleton' : ''}">
                                 <div class="topCard">
                                     <div class="leftBlock">                                                                            
-                                ${task?.loading ? `<span class='spinLoader'>${LoadingSpinner({ size: 16, color: "#98A2B3" })}</span>`:
+                                ${task?.loading ? `<div class="statusIcon"><span class='spinLoader'><img src="images/iconLoader.svg" width="16" height="16" alt="Loading" /></span></div>`:
                                 task?.status === "completed"
                                     ? tickMarkIcon({ size: 16, color: "#475467" }) 
                                             : task?.status === "discard"
@@ -80,17 +80,7 @@ function render(data) {
                                                 `).join('')}
                                                 </div>
                                             ` : ''}                                    
-                                            <div class="utterance">${task?.utterance}</div>
-                                            ${task?.showResponse ? `
-                                                    <div class="bottomCard">
-                                                        ${html?.innerHTML}
-                                                        ${index < items?.executionPipeline?.length - 1  && ['draft', 'in-progress', 'threadRunning'].includes(task?.status) ?
-                                                        `<div class='continuebtn' id="continueBtn-${task?._id}">
-                                                            Continue Flow 
-                                                        </div>`    :''
-                                                        }
-                                                    </div>
-                                            ` : ''}
+                                            <div class="utterance">${task?.utterance}</div>                                            
                                         </div>
                                     </div>
                                     <div class="rightBlock">
@@ -101,7 +91,17 @@ function render(data) {
                                         </div>
                                     ` : ''}
                                     </div>
-                                </div>                                
+                                </div> 
+                                ${task?.showResponse ? `
+                                    <div class="bottomCard">
+                                        ${html?.innerHTML}
+                                        ${index < items?.executionPipeline?.length - 1  && ['draft', 'in-progress', 'threadRunning'].includes(task?.status) ?
+                                        `<div class='continuebtn' id="continueBtn-${task?._id}">
+                                            Continue Flow 
+                                        </div>`    :''
+                                        }
+                                    </div>
+                            ` : ''}                               
                             </div>                    
                         </div>
                     </div>
@@ -146,7 +146,7 @@ const addNewTaskRenderer = (task, index, items) => {
           <div class="addDescription">
             <input type="text" value = "${task?.utterance}" placeholder="Add the description of step(s) which I missed!" id = "utterance-${task?._id}" />
 
-            <div class="agentBlock">
+            <div class="agentBlock ${task?.intents?.length === 0 ? 'space-between' : ''}">
             <span class="add-agent-label" id="addAgentLabel-${task?._id}">                
                 + Add Agent
               </span>              
@@ -160,16 +160,16 @@ const addNewTaskRenderer = (task, index, items) => {
                             </span>
                     </div>
                 </div>
-            `).join('') : "<div class='defaultAgentMsg'>Default Search will respond</div>"}
+            `).join('') : `<div class='agentBlock-last'>${AgenticSearchIcon({ size: 16})}<span class='defaultSearchText'>Default Search will respond</span></div>`}
           </div>
           </div>
           
           <div class="footerSec">
             <div class="btns">
                 <button class="kr-secondary-btn btn-sm cancelBtn" id = "cancelBtn-${task?._id}">Cancel</button>
-                <button class="kr-primary-btn-black btn-sm doneBtn" id = "doneBtn-${task?._id}">${task?.loading ? 'Loading...' : 'Done'}</button>
-                ${task?.intents?.length === 0 ? "<span class='relevantAgentNotFound'>Relevant agent not found</span>" : ''}
+                <button class="kr-primary-btn-black btn-sm doneBtn" id = "doneBtn-${task?._id}">${task?.loading ? 'Loading...' : 'Done'}</button>                
             </div>
+            ${task?.intents?.length === 0 ? "<span class='errorMessage'>Relevant agent not found</span>" : ''}
           </div>
         </div>
     `;

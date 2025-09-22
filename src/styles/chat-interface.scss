@@ -4462,6 +4462,15 @@ sl-dialog.gpt-form-dialog {
                             gap: 0.5rem;
                         }
                     }
+
+                    .query-response-flow {
+                        .query-response-flow-header-container {
+                            margin-bottom: 0.5rem;
+                        }
+                    }
+                    .bot-conversation-content > div:last-child {
+                        min-height: auto;
+                    }
                 }    
                 &.loadingSkeleton {
                     flex-direction: column;
@@ -4557,6 +4566,8 @@ sl-dialog.gpt-form-dialog {
                     background: $wa-gray-100;
                     border-radius: 0.5rem;
                     cursor: pointer;
+                    display: table;
+                    margin: 1rem auto;
                 }
             }
         }

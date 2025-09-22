@@ -519,3 +519,12 @@ export function LoadingSpinner({ className = '', size = config.size, color = con
     </svg>
   `;
 }
+
+export function AgenticSearchIcon({ className = '', size = config.size, color = config.color }) {
+  return `
+    <svg width="${size}" height="${size}" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" class="wa-AgenticSearchIcon ${className}">
+      <path opacity="0.12" d="M7.66667 13.3333C10.7963 13.3333 13.3333 10.7963 13.3333 7.66667C13.3333 4.53705 10.7963 2 7.66667 2C4.53705 2 2 4.53705 2 7.66667C2 10.7963 4.53705 13.3333 7.66667 13.3333Z" fill="#EAAA08" />
+      <path d="M14 14L11.6667 11.6667M13.3333 7.66667C13.3333 10.7963 10.7963 13.3333 7.66667 13.3333C4.53705 13.3333 2 10.7963 2 7.66667C2 4.53705 4.53705 2 7.66667 2C10.7963 2 13.3333 4.53705 13.3333 7.66667Z" stroke="#EAAA08" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  `;
+}
