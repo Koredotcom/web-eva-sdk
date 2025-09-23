@@ -377,20 +377,20 @@ export const getIconsList = (agent = {}, icons = []) => {
     let html = '';
     
     // Add first 3 icons
-    intentList?.slice(0, 3).forEach((intent, idx) => {
+    intentList?.slice(0, 1).forEach((intent, idx) => {
         html += `            
-                <div class="agentBorder" title="${intent?.agentMeta?.name}">
-                    <img src="${intent?.agentMeta?.icon}" size="16" alt="Agent ${idx + 1}" />
-                </div>            
+            <span class="agentBorder" title="${intent?.agentMeta?.name}">
+                <img src="${intent?.agentMeta?.icon}" size="16" alt="Agent ${idx + 1}" />
+            </span>            
         `;
     });
     
     // Add count indicator if more than 3 icons
-    if (intentList?.length > 3) {
+    if (intentList?.length > 1) {
         html += `
-            <div class = "agentBorder">
-                <div>+${intentList.length - 3}</div>
-            </div>
+            <span class="agent-count">
+                +${intentList.length - 1}
+            </span>
         `;
     }
     

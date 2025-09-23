@@ -3,7 +3,7 @@ import store from "../../redux/store";
 import InitiateChatConversationAction from "../../chat/InitiateChatConversationAction";
 import { updateChatData } from "../../redux/globalSlice";
 import { executionPipelineActions } from "../../redux/actions/global.action";
-import { tickMarkIcon } from "../icons-library.js";
+import { createCloseIcon, tickMarkIcon } from "../icons-library.js";
 import { cancelOngoingCall } from "../utils/helper.js";
 import "./multi-intent-execution.css";
 
@@ -294,9 +294,14 @@ const multiIntentExecutionFunc = (item) => {
       // Create popup HTML
       const popupHTML = `
         <div class="popup-container">
-          <div class="popup-header">
-            <input type="text" placeholder="Search agents..." class="popup-search-input" id="popup-search-input" />
-            <button class="popup-close-button" id="popup-close-button">×</button>
+          <div class="agentsTabWrapper">
+            <div class="agentsHeader">
+              <div class="agentsTabHeadingWrapper">All agents published to you</div>
+              <div class="agentSearch">
+                <input type="text" placeholder="Search" class="popup-search-input" id="popup-search-input" />
+                <div class="agentCancel popup-close-button" id="popup-close-button">${createCloseIcon({ size: 12, color: "#667085" })}</div>
+              </div>
+            </div>
           </div>
           <sl-menu class="popup-menu" id="popup-menu">
             ${generateAgentsHTML()}
