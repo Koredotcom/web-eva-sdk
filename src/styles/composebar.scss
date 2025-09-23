@@ -730,6 +730,43 @@ sl-dialog.eva-agents-dialog {
                     -moz-box-pack: center;
                     -ms-flex-pack: center;
                     justify-content: center;
+                    position: relative;
+
+                    img {
+                        flex-shrink: 0;
+                        max-width: 1rem;
+                        height: 1rem;
+                        object-fit: contain;
+                    }
+
+                    .agentBorder {
+                        display: flex;
+
+                        img, svg {
+                            width: .75rem;
+                            max-height: .75rem;
+                            object-fit: cover;
+                        }                        
+                    }
+                    .agent-count {
+                        font-family: Inter;
+                        font-size: .75rem;
+                        font-style: normal;
+                        font-weight: 500;
+                        line-height: .8125rem;
+                        letter-spacing: 0em;
+                        color: #424242;
+                        width: 1.25rem;
+                        height: 1.25rem;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        border-radius: 100%;
+                        background: #fff;
+                        position: absolute;
+                        right: -0.25rem;
+                        bottom: -0.25rem;
+                    }
                 }
 
                 .agent-details,
