@@ -2527,7 +2527,7 @@ html, body {
                         padding: 0;
                         z-index: 10000;
                         max-height: 240px;
-                        overflow: hidden;
+                        overflow: hidden;                        
                     }
 
                     sl-menu {
@@ -2562,7 +2562,7 @@ html, body {
                                 }
                             }
                         }
-                    }
+                    }                    
                 }
 
                 // Done button disabled state
@@ -4892,6 +4892,116 @@ sl-dialog.gpt-form-dialog {
                             opacity: 1;
                         }
                     }
+                }
+            }
+        }
+    }
+}
+
+/* Agent Selection Popup Styles */
+
+.agent-selection-popup {
+    z-index: 10000;
+  }
+  
+  .popup-container {
+    background: $wa-base-white;
+    border: .0625rem solid var(--Gray-300, #D0D5DD);
+    border-radius: 1rem;
+    box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+    width: 26.25rem;
+    padding: 1rem .9375rem;
+    height: 17.5rem;
+
+    .popup-menu {
+        margin-top: 1rem;
+        border: none;
+        max-height: calc(100% - 3rem);
+        @include scrollbar;
+        overflow-y: auto;
+
+        .menu-item {
+            display: inline-flex;
+            padding: 0;
+            border: .0625rem solid #d6d6d6;
+            border-radius: 6.25rem;
+            margin-bottom: 0.5rem;
+            overflow: hidden;
+
+            div {
+                &::part(base) {
+                    padding: 0.5rem 1rem;
+                }
+            }
+        }
+    }
+  }
+  
+  .no-results {
+    padding: 12px;
+    text-align: center;
+    color: #6b7280;
+    font-size: 12px;
+  }
+
+.agentsTabWrapper {
+    width: 100%;
+    @include krflexContainer($direction:column);
+    gap: 1rem;
+    .agentsHeader {
+        @include krflexContainer($items:center, $content:space-between);
+        .agentsTabHeadingWrapper {
+            @include typography-regular(0.875rem,500,1.25rem);
+            color: $wa-gray-500;
+            .agentsTabHeading {
+                display: flex;
+                padding: 0.5rem 0.75rem;
+                justify-content: center;
+                align-items: center;
+                gap: 0.5rem;
+                border-radius: 0.75rem;
+                background: var(--Gray-warm-100, #F5F5F4);
+                @include typography-regular(0.875rem,500,1.25rem);
+                color: $wa-gray-500;
+                cursor: pointer;
+                &.active, &:hover {
+                    background: $wa-base-white;
+                    box-shadow: 0rem 0.75rem 1rem -0.25rem rgba(16, 24, 40, 0.08), 0rem 0.25rem 0.375rem -0.125rem rgba(16, 24, 40, 0.03);
+                    color: $wa-gray-700;
+                }
+            }            
+        }
+        .agentSearch {
+            @include krflexContainer($items:center);
+            gap: 0.5rem;
+            .popup-search-input {
+                border-radius: 0.5rem;
+                background: $wa-base-white;
+                border: 0.0625rem solid $wa-gray-200;
+                height: 2rem;
+                max-height: 2rem;
+                width: 6.625rem;
+                padding-left: 0.5rem;
+                @include typography-regular(0.875rem,400,1.25rem);
+            }
+            .agentCancel {
+                @include krflexContainer($items:center, $content:center);
+                width: 2rem;
+                height: 2rem;
+                max-height: 2rem;
+                border-radius: 0.5rem;
+                border: 0.0625rem solid transparent;
+                cursor: pointer;
+                color: $wa-gray-500;
+                background-color: $wa-base-white;
+                border-color: $wa-gray-100;
+                &:hover {
+                    background: $wa-gray-100;
+                }
+
+                svg {
+                    width: 0.8125rem;
+                    height: 0.8125rem;
                 }
             }
         }
