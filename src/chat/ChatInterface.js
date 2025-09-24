@@ -458,12 +458,16 @@ const ChatInterface = (props) => {
     }
 
     const agentThoughts = (detail) => {
+      const state = store.getState().global
       let _questions = cloneDeep(state.questions)
+      const cQFromStore = state.currentQuestion /*this helps to understand whether the current question is a part of agentic flow using isTask flag */
       let reqId = detail?.data?.reqId
       /*when resuming the conversation from history, the history data is structured using uuid, so using redId, we can extract the question to be resumed, so need to target the id, present in question with the help of reqId */
       const isHistoryAccessed = checkHistoryAccessed(_questions)
       if(isHistoryAccessed){
         reqId = Object.entries(_questions).find(([key, value]) => value?.reqId === detail?.data?.reqId)?.[0]
+      }else if(cQFromStore?.isTask){
+        reqId = cQFromStore?.cId
       }
       let currentQuestion = _questions[reqId]
       if(detail?.entity !== "answerContext"){      
@@ -486,6 +490,7 @@ const ChatInterface = (props) => {
     } else {
       currentQuestion.agentIcon = detail?.data?.answerMeta?.agentIcon
       currentQuestion.agentName = detail?.data?.answerMeta?.agentName
+      currentQuestion.viewType  = detail?.data?.answerMeta?.viewType
     }
       
       _questions[reqId] = currentQuestion      

@@ -400,14 +400,14 @@ class ComposeBar {
         const nameElement = botWrapper.querySelector('.bot-input-header-left-text');
         
         if (iconElement) {
-            const agentIcon = this.showBotComposeBarHeader?.context?.sources?.[0]?.icon;
+            const agentIcon = this.showBotComposeBarHeader?.context?.sources?.[0]?.icon || this.showBotComposeBarHeader?.sources?.[0]?.icon;
             if (agentIcon) {
                 iconElement.src = agentIcon;
             }
         }
         
         if (nameElement) {
-            const agentName = this.showBotComposeBarHeader?.context?.sources?.[0]?.name;
+            const agentName = this.showBotComposeBarHeader?.context?.sources?.[0]?.name || this.showBotComposeBarHeader?.sources?.[0]?.title;
             if (agentName) {
                 nameElement.textContent = agentName;
             }

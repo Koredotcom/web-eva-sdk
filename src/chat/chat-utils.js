@@ -179,7 +179,25 @@ export const constructQuestionPostCall = (data, qId) => {
 					}
 				}
 			}
-		}
+		}else{
+            if(question?.viewType === "threadView"){
+                if(!question?.hasOwnProperty('botConversation')){
+                    question.botConversation = {}
+                    question = {...question, ...data?.payload}
+                }else{                
+                let currentConversation = question?.botConversation?.[data?.payload?.messageId]
+                if(currentConversation){
+                    currentConversation.status = data?.payload?.status
+                    currentConversation.answer = data?.payload?.answer
+                    question.botConversation[data?.payload?.messageId] = currentConversation
+                }
+            }
+                
+            }
+        }
+
+        /*based on question, if its viewType is threadView need to do botConversation update here */
+        
 
         /*Clearing the selected context when search results are received */
         if(data?.payload?.context?.enable === false || state?.selectedContext?.type === "agent" || state?.selectedContext?.type === "commonAgent" || state?.selectedContext?.type === "searchAgent"){
@@ -341,9 +359,9 @@ export const constructQuestionPostCall = (data, qId) => {
         // question.question = data?.res?.question
     }
 
-    if(data?.payload?.viewType === "threadView" && (!data?.payload?.hasOwnProperty('thread'))){
-        question = {...question, ...data?.payload}
-    }
+    // if(data?.payload?.viewType === "threadView" && (!data?.payload?.hasOwnProperty('thread'))){
+    //     question = {...question, ...data?.payload}
+    // }
 
     /*cancelrequest / closing the botconversation logic, check for the status as completed and viewType as threadView */
     if(data?.payload?.history?.status === msgStatus.COMPLETED && data?.payload?.history?.viewType === "threadView") {

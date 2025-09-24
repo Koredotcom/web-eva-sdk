@@ -403,6 +403,7 @@ function renderBotConversation(
 	
 	return `
 		${renderConversationAgentIcon(props)}
+		<div class="chat-widget-body-wrapper">
         <div class="bot-conversation-wrapper ${props?.status === 'completed' ? 'completed' : ''}" data-message-id="${props?.messageId} id="bot-conversation-wrapper">
 		${conversationWithThoughts ? renderThoughts(conversationWithThoughts) : ""}
 			<div class="bot-conversation-content-wrapper ${props?.status === 'completed' ? ' bot-conversation-completed' : ''}">
@@ -427,8 +428,9 @@ function renderBotConversation(
 				</div>
 			</div>		
         </div>
+	</div>
     `;
-	
+		
 }
 
 // Main function to be exported
