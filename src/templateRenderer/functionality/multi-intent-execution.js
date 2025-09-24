@@ -274,10 +274,10 @@ const multiIntentExecutionFunc = (item) => {
             data-is-selected="${isSelected}"
           >
             <div slot="prefix" style="display: flex; align-items: center; margin-right: 8px;">
-              <img src="${agent.icon || ''}" alt="${agent.name}" style="width: 16px; height: 16px; border-radius: 2px;" onerror="this.style.display='none'" />
+              <img src="${agent.icon || ''}" alt="${agent.name}" style="max-width: 1.5rem; height: 1rem; object-fit: contain;" onerror="this.style.display='none'" />
             </div>
-            <span style="font-size: 14px; color: #374151;">${agent.name}</span>
-            ${isSelected ? `<div slot="suffix" style="margin-left: auto;">${tickMarkIcon({ size: 16, color: "#10b981" })}</div>` : ''}
+            <span style="font-size: .875rem; font-weight: 500; line-height: 1.25rem; color: #424242; max-width: 16.25rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${agent.name}</span>
+            ${isSelected ? `<div slot="suffix" style="display: flex;margin-left: 0.5rem;align-items: center;">${tickMarkIcon({ size: 12, color: "#475467" })}</div>` : ''}
           </sl-menu-item>
         `;
       };
