@@ -358,6 +358,7 @@ const MultiResponse = () => {
                     }else{
                         /*need to see whether the simpleField / multiField has the value or not */
                         if(reqdValue?.length){
+                            acc[field.key].type = field?.value?.type;
                             acc[field.key].value = reqdValue;
                         }else{
                             acc[field.key].value = [];
