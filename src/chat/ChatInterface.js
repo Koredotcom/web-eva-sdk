@@ -77,7 +77,8 @@ const ChatInterface = (props) => {
 
         if(!isEmpty(selectedContext?.data)) {
           let _agents = cloneDeep(allAgents?.data?.agents)
-          _agents = [..._agents, ...commonAgents]
+          let _commonAgents = cloneDeep(commonAgents) || []
+          _agents = [..._agents, ..._commonAgents?.filter(agent => !agent.disabled)]
           let isAgentSetAsSource = _agents.find(ag => ag.id === selectedContext?.data?.sources?.[0]?.source)
           let isAgent = isAgentSetAsSource ? "agent" : null
           if(isAgent) {
