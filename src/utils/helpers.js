@@ -69,7 +69,7 @@ export const getQueryParams = (url) => {
 export const getCidByMessageId = (data, messageId) => {
     for (const key in data) {
         if (data[key].messageId === messageId) {
-            return data[key].reqId;
+            return data[key].cId;
         }
     }
     return null; // or an appropriate value if no match is found
@@ -79,16 +79,18 @@ export const getReqIdByMessageId = (messageId) => {
     let questions = cloneDeep(store.getState().global?.questions)
     for (const key in questions) {
         if (questions[key]?.messageId === messageId) {
-            return questions[key]?.historicalData ? questions[key]?.id : questions[key]?.reqId;
+            return questions[key]?.historicalData ? questions[key]?.id 
+                                                  : questions[key]?.isTask ? questions[key]?.cId 
+                                                                           : questions[key]?.reqId;
         }
     }
     return null; // or an appropriate value if no match is found
 };
 
-export const getCidByReqId = (data, reqId) => {
-    for (const key in data) {
-        if (data[key].reqId === reqId) {
-            return data[key].reqId;
+export const getCidByReqId = (questions, reqId) => {
+    for (const key in questions) {
+        if (questions[key].reqId === reqId) {
+            return questions[key].reqId;
         }
     }
     return null;
@@ -360,3 +362,37 @@ export const quickShow = (target, displayValue = 'block', enableLogging = false)
         console.warn('Element not found:', target);
     }
 };
+
+export const getIconsList = (agent = {}, icons = []) => {
+    const intentList = icons;
+    if(intentList?.length === 0) {
+    agent?.config?.executionPipeline?.map((task, index) => {
+        task?.intents?.map((intent) => {
+            if (intentList?.find((i) => i?.agentMeta?.name === intent?.agentMeta?.name)) return;
+            intentList?.push(intent)
+        })
+    });
+}
+    
+    let html = '';
+    
+    // Add first 3 icons
+    intentList?.slice(0, 1).forEach((intent, idx) => {
+        html += `            
+            <span class="agentBorder" title="${intent?.agentMeta?.name}">
+                <img src="${intent?.agentMeta?.icon}" size="16" alt="Agent ${idx + 1}" />
+            </span>            
+        `;
+    });
+    
+    // Add count indicator if more than 3 icons
+    if (intentList?.length > 1) {
+        html += `
+            <span class="agent-count">
+                +${intentList.length - 1}
+            </span>
+        `;
+    }
+    
+    return html;
+}

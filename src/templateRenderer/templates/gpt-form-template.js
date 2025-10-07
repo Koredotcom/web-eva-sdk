@@ -604,7 +604,15 @@ export function render(item) {
 				
 				const dropdownElement = document.getElementById(`dropdownValue-${field?.key}-${item?.messageId}-${index}`);
 				if (dropdownElement && dropdownElement.value) {
-					preservedValues[`dropdownValue-${field?.key}-${item?.messageId}-${index}`] = dropdownElement.value;
+					
+					if (dropdownElement.hasAttribute('multiple')) {
+						
+						const multiValues = Array.isArray(dropdownElement.value) ? dropdownElement.value : [];
+						preservedValues[`dropdownValue-${field?.key}-${item?.messageId}-${index}`] = multiValues;
+					} else {
+						
+						preservedValues[`dropdownValue-${field?.key}-${item?.messageId}-${index}`] = dropdownElement.value;
+					}
 				}
 			});
 		});
@@ -1173,7 +1181,7 @@ export function render(item) {
 				dropDownChoices.forEach((choice, choiceIndex) => {
 					const optionElement = document.createElement("sl-option");
 					// Ensure each option has a unique, non-empty value
-					const optionValue = choice?.label || choice?.value || choice?.text || choice?.id || `option-${choiceIndex}`;
+					const optionValue = choice?.id || `option-${choiceIndex}`;
 					/*shoelace option wont take space in value, so we are replacing them with % */
 					optionElement.setAttribute('value', optionValue?.replaceAll(' ', '%'))
 					optionElement.value = optionValue;
@@ -1193,26 +1201,36 @@ export function render(item) {
 				if (defaultSelectedValue) {
 					selectElement.value = defaultSelectedValue;
 				}else{
-					selectElement.setAttribute('value', dropDownChoices[0]?.label?.replaceAll(' ', '%'));
+					selectElement.setAttribute('value', dropDownChoices[0]?.id?.replaceAll(' ', '%'));
 				}
 
 				// Add event listener for dropdown selection
 				selectElement.addEventListener("sl-change", (event) => {
-					// Get the selected value
-					const selectedValue = event.target.value;
-					const selectedOption = event.target.querySelector(`sl-option[value="${selectedValue}"]`);
-					const selectedText = selectedOption ? selectedOption.textContent : '';
+					// Check if this is a multi-select dropdown
+					const isMultiSelect = event.target.hasAttribute('multiple');
 					
-					console.log('Selected value:', selectedValue);
-					console.log('Selected text:', selectedText);
+					if (isMultiSelect) {
+						// Handle multi-select dropdown
+						const selectedValues = Array.isArray(event.target.value) ? event.target.value : [event.target.value];
+						const selectedTexts = selectedValues.map(value => {
+							const option = event.target.querySelector(`sl-option[value="${value}"]`);
+							return option ? option.textContent : value;
+						});
+						
+						
 					
-					// Call updateChoice for prompts field or handle other fields as needed
-					if (field?.key === "prompts") {
-						updateChoice(event, item, index);
+						
 					} else {
-						// Handle other dropdown fields here
-						// You can access the selected value via event.target.value
-						// Store or process the selection as needed for your use case
+						
+						const selectedValue = event.target.value;
+						const selectedOption = event.target.querySelector(`sl-option[value="${selectedValue}"]`);
+						const selectedText = selectedOption ? selectedOption.textContent : '';
+						
+						if (field?.key === "prompts") {
+							updateChoice(event, item, index);
+						} else {
+							
+						}
 					}
 				});
 
@@ -1237,11 +1255,13 @@ export function render(item) {
 
 				const dropdownElement = document.createElement("sl-select");
 				dropdownElement.id = `dropdownValue-${field?.key}-${item?.messageId}-${index}`;
-				dropdownElement.multiple = true;
-				dropdownElement.placeholder = "Select Multiple Options";
-				dropdownElement.clearable = true;
+				
+				// Set multiple attribute properly for Shoelace
+				dropdownElement.setAttribute('multiple', '');
+				dropdownElement.setAttribute('placeholder', 'Select Multiple Options');
+				
 				if (field?.required || field?.value?.required) {
-					dropdownElement.required = true;
+					dropdownElement.setAttribute('required', '');
 				}
 
 				// Add options for multi dropdown
@@ -1249,14 +1269,104 @@ export function render(item) {
 				dropDownChoices.forEach((choice, choiceIndex) => {
 					const optionElement = document.createElement("sl-option");
 					// Ensure each option has a unique, non-empty value
-					const optionValue = choice?.label || choice?.text || choice?.value || choice?.id || `option-${choiceIndex}`;
+					const optionValue = choice?.id || `option-${choiceIndex}`;
 					optionElement.setAttribute('value', optionValue);
 					optionElement.textContent = choice.label || choice.text || `Option ${choiceIndex + 1}`;
 					dropdownElement.appendChild(optionElement);
 				});
 
+				
+				const preservedMultiValues = preservedValues[`dropdownValue-${field?.key}-${item?.messageId}-${index}`];
+				if (preservedMultiValues && Array.isArray(preservedMultiValues) && preservedMultiValues.length > 0) {										
+					
+					dropdownElement.value = preservedMultiValues;					
+					
+					preservedMultiValues.forEach(value => {
+						const option = dropdownElement.querySelector(`sl-option[value="${value}"]`);
+						if (option) {
+							option.setAttribute('selected', '');
+						}
+					});
+					
+					
+					dropdownElement.setAttribute('data-preserved-values', JSON.stringify(preservedMultiValues));
+				}
+				
+				const updateDropdownVisibility = (dropdown, selectedValues) => {
+					const allOptions = dropdown.querySelectorAll('sl-option');
+					
+					allOptions.forEach(option => {
+						const optionValue = option.getAttribute('value');
+						
+						if (selectedValues.includes(optionValue)) {
+							// Hide selected options
+							option.style.display = 'none';
+							option.setAttribute('hidden', '');
+						} else {
+							// Show unselected options
+							option.style.display = '';
+							option.removeAttribute('hidden');
+						}
+					});
+				};
+
+				// Add event listener for multi-select dropdown
+				dropdownElement.addEventListener("sl-change", (event) => {
+					const selectedValues = Array.isArray(event.target.value) ? event.target.value : [event.target.value].filter(Boolean);
+					const selectedTexts = selectedValues.map(value => {
+						const option = event.target.querySelector(`sl-option[value="${value}"]`);
+						return option ? option.textContent : value;
+					});
+					
+					console.log('Multi-select field changed:', field?.key);
+					console.log('Selected values:', selectedValues);
+					console.log('Selected texts:', selectedTexts);
+					
+					// Store the selected values for form submission
+					event.target.setAttribute('data-selected-values', JSON.stringify(selectedValues));
+					
+					// Hide selected options from dropdown list
+					updateDropdownVisibility(event.target, selectedValues);
+				});
+
 				grpWrapDiv.appendChild(dropdownElement);
 				grpInputDiv.appendChild(grpWrapDiv);
+
+				
+				setTimeout(() => {
+					const dropdown = document.getElementById(`dropdownValue-${field?.key}-${item?.messageId}-${index}`);
+					if (dropdown) {
+						
+						if (!dropdown.hasAttribute('multiple')) {
+							dropdown.setAttribute('multiple', '');
+						}
+						
+						
+						const currentValues = Array.isArray(dropdown.value) ? dropdown.value : [];
+						if (currentValues.length > 0) {
+							console.log('Hiding preserved selected options:', currentValues);
+							updateDropdownVisibility(dropdown, currentValues);
+						}
+						
+
+						const observer = new MutationObserver((mutations) => {
+							mutations.forEach((mutation) => {
+								if (mutation.type === 'childList' || mutation.type === 'attributes') {
+									
+									const currentValues = Array.isArray(dropdown.value) ? dropdown.value : [dropdown.value].filter(Boolean);
+									updateDropdownVisibility(dropdown, currentValues);
+								}
+							});
+						});
+						
+						observer.observe(dropdown, { 
+							childList: true, 
+							subtree: true, 
+							attributes: true,
+							attributeFilter: ['value']
+						});
+					}
+				}, 100);
 			}
 
 			if (field?.key === "prompt") {
@@ -1413,7 +1523,7 @@ export function render(item) {
 				numberElement.id = `inputValue-${field?.key}-${item?.messageId}-${index}`;
 				numberElement.setAttribute('placeholder', field?.value?.placeholder || "Enter Number...");				
 				
-				// 🔥 RESTORE PRESERVED VALUE - Use preserved value if available, otherwise use default
+					
 				const preservedNumberValue = preservedValues[`inputValue-${field?.key}-${item?.messageId}-${index}`];
 				numberElement.setAttribute('value', preservedNumberValue || field?.value?.default || "");
 				

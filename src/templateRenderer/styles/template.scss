@@ -36,18 +36,61 @@
             }
         }
         .taskItem {
-            &:hover {
-                .taskItemHeader {
-                    .optionsWrapper {
-                        visibility: visible;
+            position: relative;
+            cursor: grab;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: flex-start;
+            gap: 0.5rem;
+            
+            &[draggable="true"] {
+                &:hover {
+                    .dragHandle {
                         opacity: 1;
+                        visibility: visible;
+                    }
+                    .taskItemHeader {
+                        .optionsWrapper {
+                            visibility: visible;
+                            opacity: 1;
+                        }
                     }
                 }
+                
+                &.dragging {
+                    opacity: 0.5;
+                    transform: rotate(2deg);
+                    cursor: grabbing;
+                    z-index: 1000;
+                }
             }
+            
+            .dragHandle {
+                opacity: 0;
+                visibility: hidden;
+                padding: 0.25rem;
+                cursor: grab;
+                transition: opacity 0.2s ease;
+                margin-top: 0.25rem;
+                flex-shrink: 0;
+                
+                &:hover {
+                    opacity: 1 !important;
+                    visibility: visible !important;
+                }
+                
+                &:active {
+                    cursor: grabbing;
+                }
+            }
+            
             .taskItemHeader {
+                flex: 1;
+                
                 .optionsWrapper {
                     visibility: hidden;
                     opacity: 0;
+                    transition: all 0.2s ease;
                 }
                 .contentBlock {
                     display: flex;
@@ -66,6 +109,20 @@
                         }
                     }
                 }
+            }
+        }
+        
+        // Drop indicator styles
+        .drop-indicator {
+            height: 2px;
+            background-color: #3b82f6;
+            border-radius: 1px;
+            margin: 4px 0;
+            transition: all 0.2s ease;
+            opacity: 0;
+            
+            &.visible {
+                opacity: 1;
             }
         }
     }

@@ -402,7 +402,7 @@ function renderBotConversation(
 	const conversationWithThoughts = Object.values(botConversation || {}).find(conv => conv?.thoughts?.length > 0);
 	
 	return `
-		${renderConversationAgentIcon(props)}
+		${renderConversationAgentIcon(props)}		
         <div class="bot-conversation-wrapper ${props?.status === 'completed' ? 'completed' : ''}" data-message-id="${props?.messageId} id="bot-conversation-wrapper">
 		${conversationWithThoughts ? renderThoughts(conversationWithThoughts) : ""}
 			<div class="bot-conversation-content-wrapper ${props?.status === 'completed' ? ' bot-conversation-completed' : ''}">
@@ -426,9 +426,9 @@ function renderBotConversation(
 					${props?.answer ? MessageRenderer(props.answer) : ''}
 				</div>
 			</div>		
-        </div>
+        </div>	
     `;
-	
+		
 }
 
 // Main function to be exported

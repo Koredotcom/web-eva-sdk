@@ -188,7 +188,7 @@ const gptFormFunctionality = (formData, item, preservedValues = {}) => {
 
 				if(hasUploadedFiles){
 					fileDetails?.forEach((file, fileIndex) => {
-						const removeButton = document.getElementById(
+				const removeButton = document.getElementById(
 							`removeButton-${field?.key}-${item?.messageId}-${field?.uniqueFieldId}-${fileIndex}`
 						);
 						if(removeButton && !removeButton.eventListenerAdded){
@@ -258,7 +258,7 @@ const gptFormFunctionality = (formData, item, preservedValues = {}) => {
 				// Wait for Quill editor to be initialized
 				setTimeout(() => {
 					if (quillContainer && quillContainer.quillEditor) {
-						// 🔥 RESTORE PRESERVED VALUE - Use preserved value if available, otherwise use default
+						
 						const preservedQuillValue = preservedValues[`inputValue-${field?.key}-${item?.messageId}-${index}`];
 						const defaultValue = field?.value?.default || "";
 						const valueToSet = preservedQuillValue || defaultValue;
@@ -278,7 +278,7 @@ const gptFormFunctionality = (formData, item, preservedValues = {}) => {
 				// Wait for Quill editor to be initialized
 				setTimeout(() => {
 					if (quillContainer && quillContainer.quillEditor) {
-						// 🔥 RESTORE PRESERVED VALUE - Use preserved value if available, otherwise use default
+						
 						const preservedNestedQuillValue = preservedValues[`inputValue-${field?.key}-${item?.messageId}-${index}`];
 						const initialPromptValue = field?.value?.nested?.value || "";
 						const valueToSet = preservedNestedQuillValue || initialPromptValue;
@@ -481,8 +481,18 @@ const checkParamFields = (paramFields, messageId) => {
 						if (!hasText && paramFieldFileDetails.length === 0) return false;
 					}
 				} else {
-					const paramFieldDiv = document.getElementById(`inputValue-${field?.key}-${messageId}-${OuterIndex}`);
-					if (!paramFieldDiv?.value?.trim()?.length) return false;
+					if(field?.value?.type === "dropdown"){
+						const paramFieldDiv = document.getElementById(`dropdownValue-${field?.key}-${messageId}-${OuterIndex}`);
+						if (paramFieldDiv?.hasAttribute('multiple')) {
+							const currentValues = Array.isArray(paramFieldDiv.value) ? paramFieldDiv.value : [];
+							if (currentValues.length === 0) return false;
+						} else {
+							if (!paramFieldDiv?.value?.trim()?.length) return false;
+						}			
+					} else {
+						const paramFieldDiv = document.getElementById(`inputValue-${field?.key}-${messageId}-${OuterIndex}`);
+						if (!paramFieldDiv?.value?.trim()?.length) return false;
+					}
 				}
 			}
 		}

@@ -1,7 +1,7 @@
 import { cloneDeep, isEmpty } from "lodash";
 import {chatWindow, chatConfig} from "@koredev/kore-web-sdk"
 import store from "../../redux/store";
-import { checkHistoryAccessed, getReqIdByMessageId } from "../../utils/helpers";
+import { checkHistoryAccessed, getCidByMessageId, getReqIdByMessageId } from "../../utils/helpers";
 import { updateChatData, setBotSDKInstance, setCurrentQuestion, setEnableKoreBotSDK } from "../../redux/globalSlice";
 import { advanceSearch } from "../../redux/actions/global.action";
 import { constructQuestionPostCall } from "../chat-utils";
@@ -82,7 +82,7 @@ const BotConversation = (args) => {
                                 }
                             ]
                         }
-                        currentBotSDKInstance.chatEle = document.getElementById("chat-sec-container")
+                        currentBotSDKInstance.chatEle = document.getElementsByClassName(".bot-conversation-wrapper")[0]
                         if(state?.enableDebugging){
                             console.log("template html: ", currentBotSDKInstance.generateMessageDOM(templatePayload))
                         }
@@ -105,10 +105,19 @@ const BotConversation = (args) => {
             // }     
             if(Object.keys(questions || {}).length === 0){
                 return;
-            }            
-            question = questions[getReqIdByMessageId(detail?.message?.pId)] /*in order to update the already existing messages of botConversation, we will depend on pId */
+            }   
+            /*Identify whether to update the question which is inside agentic flow or not
+            in case of agentic flow, pId will the main id i.e agentic flow id, so in order to get the bot question we need to check with the messageId
+            */               
+            question = questions[getReqIdByMessageId(detail?.message?.pId)] /*in order to update the already existing messages of botConversation, we will depend on pId */            
             if(question){//found the question with pId, so need to update the conversation present in botConversation
-                question.botConversation[detail?.message?.messageId] = detail?.message
+                /*need to see if it is a agentic flow question or not, if it is a part of agentic flow question, using messageId fetch the key of the questions array to */
+                if(question?.executionPipeline?.length){
+                    question = questions[getCidByMessageId(questions, detail?.message?.messageId)]
+                    question = {...question, 'answer': detail?.message?.answer, 'status': detail?.message?.status, 'reqFlow': detail?.message?.reqFlow}
+                }else{
+                    question.botConversation[detail?.message?.messageId] = detail?.message
+                }                
             }else{
                 question = questions[detail?.message?.reqId] /*to update the parent message itself, */
                 if(!question){
@@ -145,8 +154,12 @@ const BotConversation = (args) => {
         //     questions[question?.id] = question
         // }else{
         //     questions[question?.reqId] = question
-        // }        
-        questions[question?.reqId] = question
+        // }       
+        if(question?.isTask) {
+            questions[question?.cId] = question
+        }else{
+            questions[question?.reqId] = question
+        }        
         store.dispatch(updateChatData(questions))        
         setupTemplates(question.botConversation);
     }

@@ -5,7 +5,7 @@ import store from "../redux/store.js";
 import { fetchAgents } from "../redux/actions/global.action.js";
 import { ActionsFlashIcon, arrowCirlceUpIcon, attachmentIcon, CheveronDownIcon, createCloseIcon, createDeleteIcon, createThumbsUpFilled, microphoneIcon, searchIcon, settingsIcon, Close, StopIcon } from "../templateRenderer/icons-library.js";
 import FileUpload from "../Attachments/fileUpload.js";
-import { getAgentType, getFileExtension, hideElementImmediately, showElementImmediately, showElementDelayed } from "../utils/helpers.js";
+import { getAgentType, getFileExtension, hideElementImmediately, showElementImmediately, showElementDelayed, getIconsList } from "../utils/helpers.js";
 import { renderRecentFiles } from "./RenderRecentAttachments.js";
 
 /**
@@ -252,9 +252,9 @@ class ComposeBar {
         /*innerHtml should display the selected agent name and close button */
         composebarContextChipContainer.innerHTML = `
             <button class="context-chip-button">
-                <div class="composebar-context-agent-name-container">
+                <div class="composebar-context-agent-name-container ${this.selectedAgent?.agentType === "agenticApp" ? 'agenticApp' : ''}">
                     <div class="composebar-context-agent-icon">
-                        <img src="${this.selectedAgent?.icon}" alt="agent-icon" width="16" height="16">
+                    ${this.selectedAgent?.agentType === "agenticApp" ? `${getIconsList({}, this.selectedAgent?.agenticAppIcons)}` : `<img src="${this.selectedAgent?.icon}" alt="agent-icon" width="16" height="16">`}                        
                     </div>
                     <div class="composebar-context-agent-name" title="${this.selectedAgent?.name}">${this.selectedAgent?.name}</div>
                 </div>
@@ -400,14 +400,14 @@ class ComposeBar {
         const nameElement = botWrapper.querySelector('.bot-input-header-left-text');
         
         if (iconElement) {
-            const agentIcon = this.showBotComposeBarHeader?.context?.sources?.[0]?.icon;
+            const agentIcon = this.showBotComposeBarHeader?.context?.sources?.[0]?.icon || this.showBotComposeBarHeader?.sources?.[0]?.icon;
             if (agentIcon) {
                 iconElement.src = agentIcon;
             }
         }
         
         if (nameElement) {
-            const agentName = this.showBotComposeBarHeader?.context?.sources?.[0]?.name;
+            const agentName = this.showBotComposeBarHeader?.context?.sources?.[0]?.name || this.showBotComposeBarHeader?.sources?.[0]?.title;
             if (agentName) {
                 nameElement.textContent = agentName;
             }
@@ -820,7 +820,7 @@ class ComposeBar {
             if (!agenticFlows) {
                 const state = store.getState();
                 const allAgents = state?.global?.allAgents?.data?.agents || [];
-                agenticFlows = allAgents.filter(agent => agent?.type === "agenticApp");
+                agenticFlows = allAgents.filter(agent => (agent?.type === "agenticApp" && agent?.enabled));
                 this.agenticFlows = agenticFlows;
             }
 
@@ -850,7 +850,7 @@ class ComposeBar {
             if (!agenticFlows) {
                 const state = store.getState();
                 const allAgents = state?.global?.allAgents?.data?.agents || [];
-                agenticFlows = allAgents.filter(agent => agent?.type === "agenticApp");
+                agenticFlows = allAgents.filter(agent => (agent?.type === "agenticApp" && agent?.enabled));
                 this.agenticFlows = agenticFlows;
             }
 
@@ -1095,6 +1095,12 @@ class ComposeBar {
             }
         } catch (e) {
             dialog.removeAttribute('open');
+        }finally{
+            /*need to clear the entered text if any in the data-eva-agent-search-input-box*/
+            const agentSearchInputBox = this.container.querySelector('[data-eva-agent-search-input-box]');
+            if(agentSearchInputBox){
+                agentSearchInputBox.value = '';
+            }
         }
     }
 
@@ -1387,7 +1393,7 @@ class ComposeBar {
             const state = store.getState();
             const allAgents = state?.global?.allAgents?.data?.agents || [];
             const recents = state?.global?.allAgents?.data?.recents || [];
-            const agenticFlows = allAgents.filter(agent => agent?.type === "agenticApp") ;
+            const agenticFlows = allAgents.filter(agent => (agent?.type === "agenticApp" && agent?.enabled)) ;
             
             // Store agenticFlows as a class property for tab switching
             this.agenticFlows = agenticFlows;
@@ -1419,14 +1425,14 @@ class ComposeBar {
         const attachments = this.container.querySelectorAll('[data-attach-uid]');
         const itemsHtml = agents.map(agent => {
             const safeName = (agent?.name || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-            const icon = agent?.icon ? `<img src="${agent.icon}" alt="" width="18" height="18" />` : '';
+            const icon = agent?.type === "agenticApp" ? `${getIconsList(agent, [])}` : `<img src="${agent?.icon}" alt="" width="18" height="18" />`;
             const agentType = getAgentType(agent?.type);
             return `<li class="eva-agent-item" data-agent-id="${agent.id}" data-agent-type="${listType}">
             <div class="agent-icon">${icon}</div>
                 <div class="agent-details">
                 <div class="agent-name">${safeName}</div>
                 <div class="agent-desc">
-                    <div style="${agent?.type === "agenticApp" ? "display:none;" : ""}">${agentType}<span>•</span></div>                    
+                    <span class="agent-type" style="${agent?.type === "agenticApp" ? "display:none;" : ""}">${agentType}<span class="agent-type-separator">•</span></span>                    
                     ${agent?.description}
                 </div>
             </div>

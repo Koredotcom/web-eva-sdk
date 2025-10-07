@@ -39,9 +39,9 @@ export const constructQuestionInitial = (args) => {
 			loading: true,
 			type: "search",
 			isTask: true,
-			parentMsgId: args?.reqId,
+            parentMsgId: args?.parentMsgId,
 			cId: args?.stepId,
-			reqId: args?.stepId,
+			reqId: args?.reqId,
 			showResponse: true,
 		}
 
@@ -59,7 +59,7 @@ export const constructQuestionInitial = (args) => {
 			reqId: uniqueMsgId,
 			showResponse: true,
 			isTask: true,
-			parentMsgId: args?.reqId,
+            parentMsgId: args?.parentMsgId,
 			isMultiIntentExecution: true,
 			stepIndex: stepIndex,
 		};
@@ -179,7 +179,25 @@ export const constructQuestionPostCall = (data, qId) => {
 					}
 				}
 			}
-		}
+		}else{
+            if(question?.viewType === "threadView"){
+                if(!question?.hasOwnProperty('botConversation')){
+                    question.botConversation = {}
+                    question = {...question, ...data?.payload}
+                }else{                
+                let currentConversation = question?.botConversation?.[data?.payload?.messageId]
+                if(currentConversation){
+                    currentConversation.status = data?.payload?.status
+                    currentConversation.answer = data?.payload?.answer
+                    question.botConversation[data?.payload?.messageId] = currentConversation
+                }
+            }
+                
+            }
+        }
+
+        /*based on question, if its viewType is threadView need to do botConversation update here */
+        
 
         /*Clearing the selected context when search results are received */
         if(data?.payload?.context?.enable === false || state?.selectedContext?.type === "agent" || state?.selectedContext?.type === "commonAgent" || state?.selectedContext?.type === "searchAgent"){
@@ -266,7 +284,7 @@ export const constructQuestionPostCall = (data, qId) => {
 	} else if (data?.meta?.arg?.multiIntentExecution || question?.isMultiIntentExecution) {
 		const stepIndex = question?.stepIndex;
 		question = { ...question, ...data?.payload, showResponse: true};
-		questions[question?.parentMsgId].executingActionId = question?.id
+		questions[question?.parentMsgId].executingActionId = question?.stepId
 		if(stepIndex === 0) {
 		    questions[question?.parentMsgId].status = 'in-progress'
 		}
@@ -283,6 +301,12 @@ export const constructQuestionPostCall = (data, qId) => {
         }
         let terminatedAnswerResponse = "I see you interrupted the answer generation. Please feel free to provide more details or let me know how can I assist you further"
         question = { ...question,  ...data?.payload?.history, answer : terminatedAnswerResponse};
+        if (question?.isTask) {
+            const stepIndex = question?.stepIndex;
+            setTimeout(() => {
+                multiIntentExecutionFunc().runNextTask(stepIndex, data?.payload?.history?.status, question)
+            }, 1000);
+        }
 	} 
     else {      
         if(data?.meta?.arg?.params?.from !== "botAgent") {
@@ -335,9 +359,9 @@ export const constructQuestionPostCall = (data, qId) => {
         // question.question = data?.res?.question
     }
 
-    if(data?.payload?.viewType === "threadView" && (!data?.payload?.hasOwnProperty('thread'))){
-        question = {...question, ...data?.payload}
-    }
+    // if(data?.payload?.viewType === "threadView" && (!data?.payload?.hasOwnProperty('thread'))){
+    //     question = {...question, ...data?.payload}
+    // }
 
     /*cancelrequest / closing the botconversation logic, check for the status as completed and viewType as threadView */
     if(data?.payload?.history?.status === msgStatus.COMPLETED && data?.payload?.history?.viewType === "threadView") {

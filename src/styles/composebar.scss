@@ -414,9 +414,32 @@
                                     align-items: center;
                                     gap: 0.25rem;
 
+                                    &.agenticApp {
+                                        flex-direction: row-reverse;
+                                    }
+
                                     .composebar-context-agent-icon {
                                         display: flex;
                                         align-items: center;
+
+                                        .agentBorder {
+                                            display: flex;
+                                            color: #141414;
+                                            font-family: Inter;
+                                            font-size: 0.875rem;
+                                            font-style: normal;
+                                            font-weight: 500;
+                                            line-height: inherit;
+                                            letter-spacing: 0em;
+
+                                            img, svg {
+                                                flex-shrink: 0;
+                                                width: 1rem;
+                                                max-height: 1rem;
+                                                object-fit: cover;
+                                                margin-right: 0.25rem;
+                                            }
+                                        }
                                     }
 
                                     .composebar-context-agent-name {
@@ -707,6 +730,43 @@ sl-dialog.eva-agents-dialog {
                     -moz-box-pack: center;
                     -ms-flex-pack: center;
                     justify-content: center;
+                    position: relative;
+
+                    img {
+                        flex-shrink: 0;
+                        max-width: 1rem;
+                        height: 1rem;
+                        object-fit: contain;
+                    }
+
+                    .agentBorder {
+                        display: flex;
+
+                        img, svg {
+                            width: .75rem;
+                            max-height: .75rem;
+                            object-fit: cover;
+                        }                        
+                    }
+                    .agent-count {
+                        font-family: Inter;
+                        font-size: .75rem;
+                        font-style: normal;
+                        font-weight: 500;
+                        line-height: .8125rem;
+                        letter-spacing: 0em;
+                        color: #424242;
+                        width: 1.25rem;
+                        height: 1.25rem;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        border-radius: 100%;
+                        background: #fff;
+                        position: absolute;
+                        right: -0.25rem;
+                        bottom: -0.25rem;
+                    }
                 }
 
                 .agent-details,
@@ -742,10 +802,8 @@ sl-dialog.eva-agents-dialog {
                         overflow: hidden;
                         text-overflow: ellipsis;
                         white-space: nowrap;
-                        display: flex;
-                        align-items: center;
 
-                        span {
+                        .agent-type-separator {
                             margin-left: .25rem;
                             margin-right: .25rem;
                             font-family: Inter;
@@ -942,6 +1000,35 @@ sl-dialog.eva-agents-dialog {
         border-radius: 6.25rem;
         background: var(--Base-White, #FFF);
         cursor: pointer;
+
+        &.agenticApp {
+            flex-direction: row-reverse;
+
+            .recent-agent-icon {
+                width: auto;
+                height: auto;
+                gap: .5rem;
+
+                .agentBorder {
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-family: Inter;
+                    font-size: .875rem;
+                    font-style: normal;
+                    font-weight: 500;
+                    line-height: 1.25rem;
+                    letter-spacing: 0em;
+                    color: #737373;
+
+                    img {
+                        width: .75rem;
+                        max-height: .75rem;
+                        object-fit: cover;
+                    }
+                }
+            }
+        }
 
         &:hover {
             background: #F5F5F5;

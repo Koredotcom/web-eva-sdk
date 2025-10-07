@@ -1,5 +1,6 @@
 import { RecentAgents } from "../agents";
 import { InvokeAgent } from "../chat";
+import { getIconsList } from "../utils/helpers";
 
 let isRecentAgentsLoading = false;
 let currentRecentAgents = [];
@@ -12,8 +13,8 @@ const constructRecentAgentsList = (recentAgents = []) => {
         if(recentAgents?.length > 0) {
             return `<div class="recent-agents-container">
                 ${recentAgents.slice(0, 6).map((agent, index) => {
-                    return `<div class="recent-agent" data-agent-index="${index}" title="${agent?.name || 'Unnamed Agent'}">
-                        <span class="recent-agent-icon"><img src="${agent?.icon || ''}" alt="${agent?.name || 'Agent'}" /></span>
+                    return `<div class="recent-agent ${agent?.type === "agenticApp" ? "agenticApp" : ""}" data-agent-index="${index}" title="${agent?.name || 'Unnamed Agent'}">
+                        <span class="recent-agent-icon">${agent?.type === "agenticApp" ? `${getIconsList(agent, [])}` : `<img src="${agent?.icon || ''}" alt="${agent?.name || 'Agent'}" />`}</span>
                         <span class="recent-agent-name">${agent?.name || 'Unnamed Agent'}</span>
                     </div>`;
                 }).join('')}

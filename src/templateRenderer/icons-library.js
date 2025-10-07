@@ -453,3 +453,78 @@ export function ToastWarningIcon({ size = config.size }) {
       </svg>
   `
 }
+
+export function DragHandleIcon({ size = config.size, color = config.color, className = '' }) {  
+  return `
+      <svg width="${size}" height="${size}" className="wa-DragHandleIcon ${className}" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M6 4C6 4.55228 5.55228 5 5 5C4.44772 5 4 4.55228 4 4C4 3.44772 4.44772 3 5 3C5.55228 3 6 3.44772 6 4Z" fill="${color}"/>
+        <path d="M12 4C12 4.55228 11.5523 5 11 5C10.4477 5 10 4.55228 10 4C10 3.44772 10.4477 3 11 3C11.5523 3 12 3.44772 12 4Z" fill="${color}"/>
+        <path d="M6 8C6 8.55228 5.55228 9 5 9C4.44772 9 4 8.55228 4 8C4 7.44772 4.44772 7 5 7C5.55228 7 6 7.44772 6 8Z" fill="${color}"/>
+        <path d="M12 8C12 8.55228 11.5523 9 11 9C10.4477 9 10 8.55228 10 8C10 7.44772 10.4477 7 11 7C11.5523 7 12 7.44772 12 8Z" fill="${color}"/>
+        <path d="M6 12C6 12.5523 5.55228 13 5 13C4.44772 13 4 12.5523 4 12C4 11.4477 4.44772 11 5 11C5.55228 11 6 11.4477 6 12Z" fill="${color}"/>
+        <path d="M12 12C12 12.5523 11.5523 13 11 13C10.4477 13 10 12.5523 10 12C10 11.4477 10.4477 11 11 11C11.5523 11 12 11.4477 12 12Z" fill="${color}"/>
+      </svg>
+  `
+}
+
+export function EditIcon({ size = config.size, color = config.color, className = '' }) {  
+  return `
+      <svg width="${size}" height="${size}" className="wa-EditIcon ${className}" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M18 10L14 6M2.49997 21.5L5.88434 21.124C6.29783 21.078 6.50457 21.055 6.69782 20.9925C6.86926 20.937 7.03242 20.8586 7.18286 20.7594C7.35242 20.6475 7.49951 20.5005 7.7937 20.2063L21 7C22.1046 5.89543 22.1046 4.10457 21 3C19.8954 1.89543 18.1046 1.89543 17 3L3.7937 16.2063C3.49952 16.5005 3.35242 16.6475 3.24061 16.8171C3.1414 16.9676 3.06298 17.1307 3.00748 17.3022C2.94493 17.4954 2.92195 17.7021 2.87601 18.1156L2.49997 21.5Z" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+      </svg>
+  `
+}
+
+export function HistoryIcon({ size = config.size, color = config.color, className = '' }) {  
+  return `
+      <svg width="${size}" height="${size}" className="wa-HistoryIcon ${className}" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M18.9166 9.58333L17.2505 11.25L15.5833 9.58333M17.4542 10.8333C17.4845 10.5597 17.5 10.2817 17.5 10C17.5 5.85786 14.1421 2.5 10 2.5C5.85786 2.5 2.5 5.85786 2.5 10C2.5 14.1421 5.85786 17.5 10 17.5C12.3561 17.5 14.4584 16.4136 15.8333 14.7144M10 5.83333V10L12.5 11.6667" stroke="${color}" stroke-width="1.66667" stroke-linecap="round" stroke-linejoin="round" />
+      </svg>
+  `
+}
+
+export function AddStepFilledIcon({ size = config.size, color = config.color, className = '' }) {  
+  return `
+      <svg width="${size}" height="${size}" className="wa-AddStepFilledIcon ${className}" viewBox="0 0 32 38" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="11.5" y="2.50879" width="16" height="16" transform="rotate(45 11.5 2.50879)" fill="#475467"/>
+            <rect x="3" width="28" height="28" rx="14" fill="#475467"/>
+            <path d="M17 10.5V17.5M13.5 14H20.5" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+  `
+}
+
+export function WarningStrokeCircle({ className = '', size = config.size, color = config.color, stroke = config.stroke || config.color, insideFill = config.insideFill || 'white' }) {
+  return `    
+      <svg className={'wa-ManageMembers' + className} width="${size}" height="${size}" viewBox="0 0 21 21" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path opacity="0.2" d="M10.7397 17.625C14.8819 17.625 18.2397 14.2671 18.2397 10.125C18.2397 5.98286 14.8819 2.625 10.7397 2.625C6.59761 2.625 3.23975 5.98286 3.23975 10.125C3.23975 14.2671 6.59761 17.625 10.7397 17.625Z" fill="black" />
+        <path d="M10.7397 17.625C14.8819 17.625 18.2397 14.2671 18.2397 10.125C18.2397 5.98286 14.8819 2.625 10.7397 2.625C6.59761 2.625 3.23975 5.98286 3.23975 10.125C3.23975 14.2671 6.59761 17.625 10.7397 17.625Z" fill="${color}" stroke="${stroke}" strokeWidth="1.33" strokeMiterlimit="10" />
+        <path d="M10.7397 6.375V10.75" stroke="${insideFill}" strokeWidth="1.33" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M10.7397 14.5C11.2575 14.5 11.6772 14.0803 11.6772 13.5625C11.6772 13.0447 11.2575 12.625 10.7397 12.625C10.222 12.625 9.80225 13.0447 9.80225 13.5625C9.80225 14.0803 10.222 14.5 10.7397 14.5Z" fill="${insideFill}" />
+      </svg>    
+  `
+}
+
+export function LoadingSpinner({ className = '', size = config.size, color = config.color }) {
+  return `
+    <svg width="${size}" height="${size}" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" class="wa-LoadingSpinner ${className}">
+      <style>
+        .spinner_qM83{animation:spinner_8HQG 1.05s infinite}
+        .spinner_oXPr{animation-delay:.1s}
+        .spinner_ZTLf{animation-delay:.2s}
+        @keyframes spinner_8HQG{0%,57.14%{animation-timing-function:cubic-bezier(0.33,.66,.66,1);transform:translate(0)}28.57%{animation-timing-function:cubic-bezier(0.33,0,.66,.33);transform:translateY(-6px)}100%{transform:translate(0)}}
+      </style>
+      <circle class="spinner_qM83" cx="4" cy="12" r="3" fill="${color}"/>
+      <circle class="spinner_qM83 spinner_oXPr" cx="12" cy="12" r="3" fill="${color}"/>
+      <circle class="spinner_qM83 spinner_ZTLf" cx="20" cy="12" r="3" fill="${color}"/>
+    </svg>
+  `;
+}
+
+export function AgenticSearchIcon({ className = '', size = config.size, color = config.color }) {
+  return `
+    <svg width="${size}" height="${size}" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" class="wa-AgenticSearchIcon ${className}">
+      <path opacity="0.12" d="M7.66667 13.3333C10.7963 13.3333 13.3333 10.7963 13.3333 7.66667C13.3333 4.53705 10.7963 2 7.66667 2C4.53705 2 2 4.53705 2 7.66667C2 10.7963 4.53705 13.3333 7.66667 13.3333Z" fill="#EAAA08" />
+      <path d="M14 14L11.6667 11.6667M13.3333 7.66667C13.3333 10.7963 10.7963 13.3333 7.66667 13.3333C4.53705 13.3333 2 10.7963 2 7.66667C2 4.53705 4.53705 2 7.66667 2C10.7963 2 13.3333 4.53705 13.3333 7.66667Z" stroke="#EAAA08" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  `;
+}
