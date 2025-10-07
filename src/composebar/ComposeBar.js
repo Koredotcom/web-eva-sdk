@@ -519,7 +519,8 @@ class ComposeBar {
                                             ${attachmentIcon({ size: 16, color: "#0F0F0F" })}
                                         </button>
                                     </sl-tooltip>
-                                    <sl-tooltip content="Search using voice">
+                                    <sl-tooltip>
+                                        <div slot="content" class="caTooltips">Search using voice</div>
                                         <button class="eva-input-action-btn voice-btn" data-eva-speech>
                                             ${microphoneIcon({ size: 16, color: "#0F0F0F" })}
                                         </button>
