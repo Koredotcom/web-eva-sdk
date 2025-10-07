@@ -4356,13 +4356,16 @@ sl-dialog.gpt-form-dialog {
                     }
                 } 
                 .intentGroup {
-                    @include krflexContainer($items:center);
+                    @extend %krflexContainer;
+                    --items: center;
                     gap: 0.5rem;
                     flex-wrap: wrap;
                     margin-top: 0.25rem;
                     margin-bottom: 0.25rem;
                     .intent {
-                        @include krflexContainer($items:center, $content:center);
+                        @extend %krflexContainer;
+                        --items: center;
+                        --content: center;
                         padding: 0.25rem 0.75rem !important;
                         gap: 0.5rem;
                         border-radius: 0.5rem;
@@ -4402,7 +4405,8 @@ sl-dialog.gpt-form-dialog {
                             background-color: $wa-gray-100;
                         }
                         .intIcon, .intSelection {
-                            @include krflexContainer($items:center);
+                            @extend %krflexContainer;
+                            --items: center;
                             position: relative;
                         }
                         .intText {
@@ -4936,10 +4940,13 @@ sl-dialog.gpt-form-dialog {
 
 .agentsTabWrapper {
     width: 100%;
-    @include krflexContainer($direction:column);
+    @extend %krflexContainer;
+    --direction: column;
     gap: 1rem;
     .agentsHeader {
-        @include krflexContainer($items:center, $content:space-between);
+        @extend %krflexContainer;
+        --items: center;
+        --content: space-between;
         .agentsTabHeadingWrapper {
             @include typography-regular(0.875rem,500,1.25rem);
             color: $wa-gray-500;
@@ -4962,7 +4969,8 @@ sl-dialog.gpt-form-dialog {
             }            
         }
         .agentSearch {
-            @include krflexContainer($items:center);
+            @extend %krflexContainer;
+            --items: center;
             gap: 0.5rem;
             .popup-search-input {
                 border-radius: 0.5rem;
@@ -4975,7 +4983,9 @@ sl-dialog.gpt-form-dialog {
                 @include typography-regular(0.875rem,400,1.25rem);
             }
             .agentCancel {
-                @include krflexContainer($items:center, $content:center);
+                @extend %krflexContainer;
+                --items: center;
+                --content: center;
                 width: 2rem;
                 height: 2rem;
                 max-height: 2rem;

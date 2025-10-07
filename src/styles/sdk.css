@@ -76,3 +76,42 @@ html, body {
     box-sizing: border-box;
     -webkit-tap-highlight-color: transparent;
 }
+
+/* Questions Container Scrollable Styles */
+#questions-container {
+    max-height: 70vh;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 16px;
+    margin-bottom: 16px;
+    border-radius: 8px;
+    background-color: #f9f9f9;
+    
+    /* Custom scrollbar styling */
+    scrollbar-width: thin;
+    scrollbar-color: #c1c1c1 #f1f1f1;
+}
+
+#questions-container::-webkit-scrollbar {
+    width: 8px;
+}
+
+#questions-container::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+#questions-container::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 4px;
+    transition: background 0.2s ease;
+}
+
+#questions-container::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+
+/* Smooth scrolling behavior */
+#questions-container {
+    scroll-behavior: smooth;
+}
