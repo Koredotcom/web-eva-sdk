@@ -54,24 +54,21 @@
 	}
 }
 
-%toggleSwitch {
-    --width: 40px;
-    --height: 20px;
-    --toggler: 12px;
-    
+@mixin toggleSwitch( $width: 40px, $height:20px, $toggler: 12px) {
     .p-inputswitch {
-      width: var(--width);
-      height: var(--height);
+      width: #{$width};
+      height: #{$height};
       .p-inputswitch-slider {
-        
+        // background-color: var(--preview-bg-color);
+        // border: 1px solid var(--preview-input-border-color);
         background-color: $wa-gray-200;
         border: 1px solid $wa-gray-200;
   
         &:before {
           background-color: $wa-base-white;
-          height: var(--toggler);
-          width: var(--toggler);
-          
+          height: $toggler;
+          width: $toggler;
+          // bottom: 3px;
           top: 50%;
           transform: translateY(-50%);
           margin-top: 0;
@@ -84,10 +81,10 @@
           &:before {
             background-color: var(--preview-bg-color);
             top: 50%;
-            transform: translate(calc(var(--height) - 6px), -50%);
+            transform: translate($height - 6px, -50%);
             @media (min-width:1800px) {
                 & {
-                    transform: translate(calc(var(--height) - 8px), -50%);
+                    transform: translate($height - 8px, -50%);
                 }
             }
           }
@@ -96,7 +93,7 @@
       &:not(.p-disabled){
         &:hover{
           .p-inputswitch-slider{
-              
+              //background-color: var(--default-white);
           }
         }
       }
@@ -113,40 +110,33 @@
     }
   }
 
-
-%krflexContainer {
+// usage: @include krflexContainer($items: value, $content: value);
+@mixin krflexContainer($items: null, $content: null, $direction: null) {
 	display: -webkit-box;
 	display: -moz-box;
 	display: -ms-flexbox;
 	display: -webkit-flex;
 	display: flex;
-	-webkit-box-align: var(--items);
-	-moz-box-align: var(--items);
-	-ms-flex-align: var(--items);
-	align-items: var(--items);
-	-webkit-box-pack: var(--content);
-	-moz-box-pack: var(--content);
-	-ms-flex-pack: var(--content);
-	justify-content: var(--content);
-	-webkit-flex-direction: var(--direction);
-	-ms-flex-direction: var(--direction);
-	flex-direction: var(--direction);
+	-webkit-box-align: #{$items};
+	-moz-box-align: #{$items};
+	-ms-flex-align: #{$items};
+	align-items: #{$items};
+	-webkit-box-pack: #{$content};
+	-moz-box-pack: #{$content};
+	-ms-flex-pack: #{$content};
+	justify-content: #{$content};
+	-webkit-flex-direction: #{$direction};
+	-ms-flex-direction: #{$direction};
+	flex-direction: #{$direction};
 }
 
-%gr-icon {
-	--bounds: 1rem;
-	--iconSize: 0.625rem;
-	--radius: 6.25rem;
-	
-	width: var(--bounds);
-	height: var(--bounds);
-	border-radius: var(--radius);
-	font-size: var(--iconSize);
+@mixin gr-icon($bounds: 1rem, $iconSize: 0.625rem, $radius: 6.25rem) {
+	width: $bounds;
+	height: $bounds;
+	border-radius: $radius;
+	font-size: $iconSize;
 	cursor: pointer;
-	
-	@extend %krflexContainer;
-	--items: center;
-	--content: center;
+	@include krflexContainer($items: center, $content: center);
 }
 
 @mixin krFadeOut {
@@ -155,13 +145,11 @@
 	transition: visibility 0s linear 125ms, opacity 125ms;
 }
 
-%krFadeIn {
-	--delay: 750ms;
-	
+@mixin krFadeIn($delay: "750ms") {
 	visibility: visible;
 	opacity: 1;
 	transition: visibility 0s linear 0s, opacity 125ms;
-	transition-delay: var(--delay);
+	transition-delay: #{$delay};
 }
 
 @mixin dropdown {
@@ -199,10 +187,12 @@
 		}
 
 		.p-dropdown-panel {
-			
+			// border-radius: 0.25rem;
 			border: none !important;
 			width: max-content;
 			overflow: hidden;
+			// box-shadow: 0rem 0.25rem 0.25rem rgba(32, 33, 36, 0.2), 0rem 0.0625rem 0.125rem rgba(32, 33, 36, 0.1) !important;
+			// -webkit-box-shadow: 0rem 0.25rem 0.25rem rgba(32, 33, 36, 0.2), 0rem 0.0625rem 0.125rem rgba(32, 33, 36, 0.1) !important;
 
 			&:hover {
 				.p-dropdown-items-wrapper {
@@ -214,11 +204,12 @@
 			.p-dropdown-items-wrapper {
 				width: 100% !important;
 
-				
+				// padding: 0.125rem;
+				// overflow: hidden;
 				.p-dropdown-items {
 					.p-dropdown-item {
 
-						
+						// border-radius: 0.125rem;
 						&:not(.p-highlight) {
 							&:not(.p-disabled) {
 								&:hover {
@@ -243,7 +234,7 @@
 }
 
 
-
+// usage : @include screen-mobile {...}
 @mixin screen-mobile {
 	@media only screen and (max-width: 47.9375rem) {
 		@content;
@@ -257,33 +248,29 @@
     &:-ms-input-placeholder      {@content}  
 }
 
-%raidioButton {
-    --width: 16px;
-    --height: 16px;
-    --circleSize: 8px;
-    
+@mixin raidioButton($width, $height, $circleSize) {
     .p-radiobutton {
         &.p-component {
-            width: var(--width);
-            height: var(--height); 
-            min-width: var(--width);
-            min-height: var(--height);
+            width: #{$width};
+            height: #{$height}; 
+            min-width: #{$width};
+            min-height: #{$height};
             position: relative;
             align-items: center;
             box-shadow: none !important;
         }
         .p-radiobutton-box {
             border: 1px solid var(--colors-border-border-primary, #D0D5DD);
-            width: var(--width);
-            height: var(--height); 
-            min-width: var(--width);
-            min-height: var(--height);
+            width: #{$width};
+            height: #{$height}; 
+            min-width: #{$width};
+            min-height: #{$height};
         }
         .p-radiobutton-box {
-            width: var(--width);
-            height: var(--height); 
-            min-width: var(--width);
-            min-height: var(--height);
+            width: #{$width};
+            height: #{$height}; 
+            min-width: #{$width};
+            min-height: #{$height};
             &:not(.p-disabled).p-focus {
                 box-shadow: none !important;
                 border-color: $wa-gray-900;
@@ -297,10 +284,10 @@
                 }                
             }
             .p-radiobutton-icon {
-                width: var(--circleSize);
-                height: var(--circleSize);
-                min-width: var(--circleSize);
-                min-height: var(--circleSize);
+                width: #{$circleSize};
+                height: #{$circleSize};
+                min-width: #{$circleSize};
+                min-height: #{$circleSize};
                 position: absolute;
                 right: 0;
                 top: 0;

@@ -56,11 +56,12 @@ const createConfig = (input, dir, name, isMainBuild = false) => ({
       minimize: true,
       use: [
         ['sass', {
-          includePaths: ['./src/styles']
+          includePaths: ['./src/styles'],
+          api: 'modern-compiler'
         }]
       ],
       plugins: [
-        postcssImport()  // This will process @import statements
+        postcssImport()  // This will process @import statements after Sass compilation
       ],
     }),
     babel({
