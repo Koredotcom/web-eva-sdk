@@ -3929,12 +3929,11 @@ sl-dialog.gpt-form-dialog {
                     input, textarea {
                         border-radius: 0.5rem;
                         border: 0.0625rem solid #D6D6D6;
-                        //background: var(--Gray-50, #F9FAFB);        
+                             
                         /* Shadow/xs */
                         box-shadow: 0rem 0.0625rem 0.125rem 0rem rgba(16, 24, 40, 0.05);
                         padding: 0.625rem 0.875rem;
-                        resize: none;
-                        // height: 9.625rem;
+                        resize: none;                        
                         overflow-y: auto;
                         font-family: Inter;
                         font-size: 0.875rem;
@@ -4057,8 +4056,7 @@ sl-dialog.gpt-form-dialog {
 .multiIntentExecution {
     padding-bottom: 1rem;
     .tasksToRun {        
-        // padding-bottom: 1rem;
-        // margin-top: 1rem;
+        
         .taskItems {
             display: flex;
             flex-direction: column;
@@ -4146,17 +4144,16 @@ sl-dialog.gpt-form-dialog {
                 }
             }
             .taskItem {
-                //padding: 0.75rem;
+                
                 min-height: 3rem;
                 border-radius: 0.625rem;
-                // border: 0.0625rem solid $wa-gray-200;
-                // background: $wa-gray-25;
+                        
                 display: flex;
                 align-items: center;                
                 position: relative;
                 cursor: pointer;
                 width: calc(100% - 1.375rem);
-                // opacity: 0.7;
+                
                 &.showCheveron {
                     opacity: 1;
                     width: 100%;
@@ -4356,7 +4353,7 @@ sl-dialog.gpt-form-dialog {
                         align-items: center;
                         left: 0;
                         top: -1.3rem;
-                        // top: -20.0313rem;
+                        
                         &:before {
                             content: '';
                             height: 0.0625rem;
@@ -4464,9 +4461,7 @@ sl-dialog.gpt-form-dialog {
                 }  
                 .bottomCard {
                     display: none;
-                    // border-top: 0.0625rem solid $wa-gray-200;
                     margin-bottom: 0.75rem;
-                    // margin-top: 0.75rem;
                     margin-left: 1.75rem;
                     width: calc(100% - 1.75rem);
                     padding: 0 0.75rem 0.75rem 0.75rem;
@@ -4493,7 +4488,7 @@ sl-dialog.gpt-form-dialog {
                     opacity: 1;
                     width: 100%;
                     &:hover {
-                        //background: transparent !important;
+                        
                         .rightBlock {
                             visibility: hidden !important;
                             opacity: 0 !important;
@@ -4602,7 +4597,6 @@ sl-dialog.gpt-form-dialog {
                         display: none;
                     }
                     &.answerGroup {
-                        // background-color: $wa-gray-25;
                         padding: 0.25rem 0;
                         gap: 0.5rem;
                         background-color: transparent;
@@ -4779,7 +4773,7 @@ sl-dialog.gpt-form-dialog {
                         color: $wa-gray-400;
                     }
                     &:focus {
-                        //border-color: $wa-base-white !important;
+                        
                         box-shadow: none !important;
                         outline: none;
                     }
