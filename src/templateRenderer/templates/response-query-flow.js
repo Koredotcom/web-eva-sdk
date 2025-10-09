@@ -3,6 +3,9 @@ import { CheveronDownIcon, cheveronRightIcon } from "../icons-library";
 import ResponseQueryFlowFunctionality from "../functionality/response-query-flow";
 
 function render(data) { 
+    if(data?.reqFlow?.length === 0){
+        return `<div></div>`;
+    }
     
     const uniqueId = `query-response-flow-${data?.messageId || data?.reqId}`;
     
