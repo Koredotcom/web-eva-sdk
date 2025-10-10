@@ -14,7 +14,7 @@ import { renderRecentFiles } from "./RenderRecentAttachments.js";
  */
 class ComposeBar {
     constructor(container, options = {}) {
-        this.container = typeof container === 'string' ? document.querySelector(container) : container;
+        this.container = typeof container === 'string' ? document.getElementById(container) : container;
         this.options = {
             placeholder: 'Ask or Search Anything...',
             showQuickActions: true,

@@ -181,20 +181,7 @@ const MultiResponse = () => {
                 console.log("Recieved Context Fields", contextFields)
             }
             // Checking the Type of Context Field and getting Input Values
-            if (contextFields?.value?.type === "file") {
-                let contextFieldDiv = document.getElementById(`fileUpload-${contextFields?.key}-${item?.messageId}`);
-
-                // "MORGAN STANLEY REQUIREMENT" -> TO HANDLE CASES WHICH DOES NOT HAVE DEPENDENCY ON ID OF THE FILE UPLOADER. 
-                if (contextFieldDiv) {
-                    let ind = Object.keys(state.GptUploadedFiles || {}).indexOf(`${contextFields?.key}-${item?.messageId}`);
-                    if (ind !== -1) {
-                        reqdValue = Object.values(state.GptUploadedFiles)?.[ind]?.map(({ title, fileId }) => ({ title, fileId }));
-                        payloadContext[contextFields?.key].value = reqdValue
-                    }
-                } else {
-                    reqdValue = ''
-                }
-            } else if (contextFields?.value?.canUploadFile) {
+             if (contextFields?.value?.canUploadFile) {
                 // "MORGAN STANLEY REQUIREMENT" -> TO HANDLE CASES WHICH DOES NOT HAVE DEPENDENCY ON ID OF THE FILE UPLOADER. 
                 // FOR CASES WITH LONGTEXT AND SIMPLETEXT AS WELL, WE HAVE TO NOT RELY ON THE KEY OF THE FILE UPLOADER.
 
@@ -217,23 +204,18 @@ const MultiResponse = () => {
                 // }
                 else {
                     // let contextFieldDiv = document.getElementById(`fileUpload-${contextFields?.key}-${item?.messageId}`);
-                    let contextFieldDiv = document.getElementById(`inputValue-${contextFields?.key}-${item?.messageId}`);
-                    reqdValue = contextFieldDiv?.value || contextFieldDiv?.textContent || '';
+                    // let contextFieldDiv = document.getElementById(`inputValue-${contextFields?.key}-${item?.messageId}`);                    
+                    payloadContext[contextFields?.key] = {
+                        type: "file",
+                        value: []
+                    }
+                    reqdValue = []
                 }
             } else {
                 let contextFieldDiv = document.getElementById(`inputValue-${contextFields?.key}-${item?.messageId}`);
                 reqdValue = contextFieldDiv?.value || contextFieldDiv?.textContent || '';
             }
-
-            // Constructing the payloadContext
-            //Latest Update :- moved this block to top
-            // payloadContext = {
-            //     [contextFields?.key]: {
-            //         type: contextFields?.value?.type,
-            //         required: !!contextFields?.value?.required,
-            //         label: contextFields?.label
-            //     }    
-            // }
+            
             if (state?.enableDebugging) {
                 console.log("Modified Payload Context", payloadContext)
             }

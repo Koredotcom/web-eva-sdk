@@ -87,7 +87,7 @@ const ChatInterfaceDemo = () => {
   // Separate useEffect for ComposeBar initialization
   useEffect(() => {
           // Initialize ComposeBar by passing the div id
-      RenderComposeBar('#eva-composebar');
+      RenderComposeBar('eva-composebar');
       renderRecentAgents('recent-agents-container');
   }, []);
 
