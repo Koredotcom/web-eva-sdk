@@ -15,13 +15,17 @@ export function renderQuestionBubble(data, userIconTemplate = false, displayTime
     if(data?.isTask) return "";
 	return `
         <div class="message-bubble question ${data?.isTask ? 'task-item' : ''}">
-            <div class="message-content">            
-                ${copyQuestion.render(data)}
-                ${userIconTemplate ? renderUserIconTemplate() : ""}
-                <div class="message-text" id="message-text-${data?.messageId || data?.reqId}">                    
-                    ${encodeHtml(question)}
+            <div class="message-content">  
+                <div class="user-content">
+                    ${userIconTemplate ? renderUserIconTemplate() : ""}
+                    ${displayTimestamp ? renderQuestionBubbleTimeStamp(timestamp) : ""}
                 </div>
-                ${displayTimestamp ? renderQuestionBubbleTimeStamp(timestamp) : ""}
+                <div class="question-content">
+                    ${copyQuestion.render(data)}                
+                    <div class="message-text" id="message-text-${data?.messageId || data?.reqId}">                    
+                        ${encodeHtml(question)}
+                    </div>
+                </div>                
             </div>
         </div>
         `;
@@ -37,7 +41,7 @@ export function renderAnswerBubble(data) {
 	const { answer, timestamp, icon, source, status } = data;
 
 	return `
-        < div class="${status || ""}" >
+        <div class="${status || ""}" >
             ${
 				icon
 					? `
