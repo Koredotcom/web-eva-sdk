@@ -171,6 +171,7 @@ const MultiResponse = () => {
             payloadContext = {
                 [contextFields?.key]: {
                     type: contextFields?.value?.type,
+                    id: contextFields?.id,
                     required: !!contextFields?.value?.required,
                     label: contextFields?.label
                 }
@@ -228,6 +229,12 @@ const MultiResponse = () => {
                     payloadContext[contextFields?.key] = Object.values(uploadedFiles)[ind];
                     reqdValue = payloadContext[contextFields?.key].value || '';
                 }
+            }
+
+            /*support for dropdown context field*/
+            if (contextFields?.value?.type === "dropdown") {
+                let contextDropdownElement = document.getElementById(`dropdownValue-${contextFields?.key}-${item?.messageId}`);
+                reqdValue = contextDropdownElement?.value || contextDropdownElement?.textContent || '';
             }
 
             // Checking if the Required Field is empty and returning an Error

@@ -586,6 +586,12 @@ export function render(item) {
 		if (contextTextArea && contextTextArea.value) {
 			preservedValues[`inputValue-${contextField?.key}-${item?.messageId}`] = contextTextArea.value;
 		}
+		
+		// Preserve contextField dropdown values
+		const contextDropdownElement = document.getElementById(`dropdownValue-${contextField?.key}-${item?.messageId}`);
+		if (contextDropdownElement && contextDropdownElement.value) {
+			preservedValues[`dropdownValue-${contextField?.key}-${item?.messageId}`] = contextDropdownElement.value;
+		}
 	}
 		
 	if (!isEmpty(formData?.fieldValues)) {
@@ -851,62 +857,53 @@ export function render(item) {
 			grpInputDiv.appendChild(grpWrapDiv);
 			
 		}
+
+		else if(contextField?.value?.type === "dropdown"){
+			/*add shoelace dropdown */
+			const grpWrapDiv = document.createElement("div");
+			grpWrapDiv.className = "grpwrap";
+			const grpNameDiv = document.createElement("div");
+			grpNameDiv.className = "grpName";
+			const nameTitleDiv = document.createElement("div");
+			nameTitleDiv.className = "nameTitle";
+			nameTitleDiv.textContent = `${contextField?.label} ${contextField?.required || contextField?.value?.required ? "*" : ""}`;
+			grpNameDiv.appendChild(nameTitleDiv);
+			grpWrapDiv.appendChild(grpNameDiv);
+			const dropdownElement = document.createElement("sl-select");
+			dropdownElement.id = `dropdownValue-${contextField?.key}-${item?.messageId}`;
+			dropdownElement.setAttribute("placeholder", contextField?.value?.placeholder || "Select an option");
+			grpWrapDiv.appendChild(dropdownElement);
+			grpInputDiv.appendChild(grpWrapDiv);
+			if(contextField?.required || contextField?.value?.required){
+				dropdownElement.setAttribute("required", "");
+			}
+			const dropDownChoices = contextField?.value?.choices || [];
+			/*Create all options first*/
+			dropDownChoices.forEach((choice, choiceIndex) => {
+				const optionElement = document.createElement("sl-option");
+				const optionValue = choice?.id || `option-${choiceIndex}`;
+				optionElement.setAttribute("value", optionValue);
+				optionElement.textContent = choice.label || choice.text || `Option ${choiceIndex + 1}`;
+				dropdownElement.appendChild(optionElement);
+			});
+			
+			/*Now set the value after options are created - if any dropdown choice has checked as true, set the value*/
+			const checkedChoice = dropDownChoices.find((choice) => choice?.checked);
+			if(checkedChoice){
+				dropdownElement.value = checkedChoice?.id;
+			}
+			
+			// Restore preserved dropdown value for contextField (this takes precedence)
+			const preservedContextDropdownValue = preservedValues[`dropdownValue-${contextField?.key}-${item?.messageId}`];
+			if (preservedContextDropdownValue) {
+				dropdownElement.value = preservedContextDropdownValue;
+			}
+			grpInputDiv.appendChild(grpWrapDiv);
+
+		}
 		
 
-		if (fileDetails && fileDetails?.length > 0) 
-		// 	{
-		// 	/*if field has allowMultipleFiles as false, need to disable the upload button */
-		// 	if (!contextField?.value?.allowMultipleFiles) {
-		// 		const contextInputFieldToDisable = document.getElementById(`fileUpload-${contextField?.key}-${item?.messageId}`);
-		// 		if (contextInputFieldToDisable) {
-		// 			contextInputFieldToDisable.disabled = true;
-		// 		}
-		// 	}
-		// 	/*once the files are uploaded, need to remove the text area of the context and these uploaded files should be displayed under content */
-		// 	const contextFieldTextAreaDiv = document.getElementById(`inputValue-${contextField?.key}-${item?.messageId}`);
-		// 	if (contextFieldTextAreaDiv) {
-		// 		contextFieldTextAreaDiv.remove();
-		// 	}
-		// 	fileDetails?.forEach((file, index) => {
-		// 		const uploadedFileDiv = document.createElement("div");
-		// 		uploadedFileDiv.className = "uploadedFileDetails";
-		// 		uploadedFileDiv.id = `uploadedFile-${contextField?.key}-${item?.messageId}-${index}`;				
-		// 		const fileImageDiv = document.createElement("div");
-		// 		fileImageDiv.className = "fileImage";
-		// 		fileImageDiv.innerHTML = `<img src="images/${getFileExtension(file?.name || file?.fileName || '')}.png" alt="${file?.title}" />`;
-		// 		uploadedFileDiv.appendChild(fileImageDiv);
-				
-		// 		const fileTitleDiv = document.createElement("div");
-		// 		fileTitleDiv.className = "fileTitle";
-		// 		fileTitleDiv.textContent = file?.title;
-		// 		uploadedFileDiv.appendChild(fileTitleDiv);
-
-		// 		/*when file is in loading state, need to append a loading div */
-		// 		if (file?.loading) {
-		// 			const loadingFileDiv = document.createElement("div");
-		// 			loadingFileDiv.className = "loadingFileDetails";
-		// 			loadingFileDiv.id = `loadingFile-${contextField?.key}-${item?.messageId}-${index}`;
-		// 			loadingFileDiv.textContent = "Loading...";
-		// 			uploadedFileDiv.appendChild(loadingFileDiv);
-		// 		}
-		// 		/*add file size div */
-		// 		const fileSizeDiv = document.createElement("div");
-		// 		fileSizeDiv.className = "fileSize";
-		// 		fileSizeDiv.textContent = (file?.size >= 1024 * 1024
-		// 			? `${(file.size / (1024 * 1024)).toFixed(2)} MB`
-		// 			: `${(file.size / 1024).toFixed(2)} KB`
-		// 		);
-		// 		uploadedFileDiv.appendChild(fileSizeDiv);
-
-		// 		const removeButton = document.createElement("button");
-		// 		removeButton.textContent = "Remove";
-		// 		removeButton.id = `removeButton-${contextField?.key}-${item?.messageId}-${index}`;
-		// 		uploadedFileDiv.appendChild(removeButton);
-
-		// 		grpInputDiv.appendChild(uploadedFileDiv);
-		// 	});
-		// }
-
+		if (fileDetails && fileDetails?.length > 0) 		
 		fileDetails?.forEach((file, index) => {
 			/*if field has allowMultipleFiles as false, need to disable the upload button */
 			if (!contextField?.value?.allowMultipleFiles) {

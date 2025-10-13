@@ -154,6 +154,48 @@ const gptFormFunctionality = (formData, item, preservedValues = {}) => {
 
 	}
 
+	// Handle contextField dropdown functionality
+	if (contextField?.value?.type === "dropdown") {
+		const contextDropdownElement = document.getElementById(`dropdownValue-${contextField?.key}-${item?.messageId}`);
+		if (contextDropdownElement && !contextDropdownElement.eventListenerAdded) {
+			contextDropdownElement.eventListenerAdded = true;
+			
+			// Initialize context dropdown value with checked items
+			setTimeout(() => {
+				const contextDropDownChoices = contextField?.value?.choices || [];
+				const preservedContextDropdownValue = preservedValues[`dropdownValue-${contextField?.key}-${item?.messageId}`];
+				
+				if (!preservedContextDropdownValue && contextDropdownElement?.value.length === 0) {
+					const checkedChoice = contextDropDownChoices.find(choice => choice?.checked);
+					if (checkedChoice) {
+						const optionValue = checkedChoice?.id || checkedChoice?.value;
+						contextDropdownElement.value = optionValue;
+					}
+				}
+			}, 100);
+			
+			contextDropdownElement.addEventListener("sl-change", (event) => {
+				console.log('Context field dropdown changed:', contextField?.key, 'New value:', event.target.value);
+				
+				// Trigger validation after dropdown change
+				setTimeout(() => {
+					const submitButton = document.getElementById(`submitGptForm-${item?.messageId}`);
+					if (submitButton) {
+						const isContextFieldValid = checkContextField(formData?.contextFields?.[0], item?.messageId);
+						const isParamFieldsValid = checkParamFields(formData?.fieldValues, item?.messageId);
+						const isFormValid = isContextFieldValid && isParamFieldsValid;
+						
+						if (isFormValid) {
+							submitButton.removeAttribute("disabled");
+						} else {
+							submitButton.setAttribute("disabled", "");
+						}
+					}
+				}, 100);
+			});
+		}
+	}
+
 	formData?.fieldValues?.forEach((parameters, index) => {
 		parameters?.forEach((field, i) => {
 			//Checking if the field has uploaded files
@@ -396,13 +438,24 @@ const setupRealTimeValidation = (formData, item) => {
 	// CONTEXT FIELD VALIDATION
 	if (formData?.contextFields?.[0]) {
 		const contextField = formData.contextFields[0];
-		const contextTextArea = document.getElementById(`inputValue-${contextField?.key}-${item?.messageId}`);
-		if (contextTextArea && !contextTextArea.validationListenerAdded) {
-			contextTextArea.validationListenerAdded = true;
-			
-			// Add input event listener for real-time validation
-			contextTextArea.addEventListener("input", updateSubmitButtonState);
-			contextTextArea.addEventListener("change", updateSubmitButtonState);
+		
+		// Handle dropdown type context field
+		if (contextField.value?.type === "dropdown") {
+			const contextDropdownElement = document.getElementById(`dropdownValue-${contextField?.key}-${item?.messageId}`);
+			if (contextDropdownElement && !contextDropdownElement.validationListenerAdded) {
+				contextDropdownElement.validationListenerAdded = true;
+				contextDropdownElement.addEventListener("sl-change", updateSubmitButtonState);
+			}
+		} else {
+			// Handle text-based context fields
+			const contextTextArea = document.getElementById(`inputValue-${contextField?.key}-${item?.messageId}`);
+			if (contextTextArea && !contextTextArea.validationListenerAdded) {
+				contextTextArea.validationListenerAdded = true;
+				
+				// Add input event listener for real-time validation
+				contextTextArea.addEventListener("input", updateSubmitButtonState);
+				contextTextArea.addEventListener("change", updateSubmitButtonState);
+			}
 		}
 	}
 
@@ -427,7 +480,7 @@ const setupRealTimeValidation = (formData, item) => {
 				const dropdownElement = document.getElementById(`dropdownValue-${field?.key}-${item?.messageId}-${index}`);
 				if (dropdownElement && !dropdownElement.validationListenerAdded) {
 					dropdownElement.validationListenerAdded = true;
-					dropdownElement.addEventListener("change", updateSubmitButtonState);
+					dropdownElement.addEventListener("sl-change", updateSubmitButtonState);
 				}
 			});
 		});
@@ -440,6 +493,16 @@ const setupRealTimeValidation = (formData, item) => {
 
 const checkContextField = (contextField, messageId) => {
 	if (!contextField || !contextField.value.required) return true;
+	
+	// Handle dropdown type context field
+	if (contextField.value?.type === "dropdown") {
+		const contextDropdownElement = document.getElementById(`dropdownValue-${contextField?.key}-${messageId}`);
+		if (contextDropdownElement) {
+			const selectedValue = contextDropdownElement.value;
+			return selectedValue && selectedValue.trim().length > 0;
+		}
+		return false;
+	}
 	
 	if (contextField.value?.canUploadFile) {
 		const uploadedFilesState = cloneDeep(store.getState().global.GptUploadedFiles);
@@ -487,7 +550,8 @@ const checkParamFields = (paramFields, messageId) => {
 							const currentValues = Array.isArray(paramFieldDiv.value) ? paramFieldDiv.value : [];
 							if (currentValues.length === 0) return false;
 						} else {
-							if (!paramFieldDiv?.value?.trim()?.length) return false;
+							const selectedValue = paramFieldDiv?.value;
+							if (!selectedValue || selectedValue.trim().length === 0) return false;
 						}			
 					} else {
 						const paramFieldDiv = document.getElementById(`inputValue-${field?.key}-${messageId}-${OuterIndex}`);
