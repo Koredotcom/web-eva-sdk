@@ -144,7 +144,7 @@ html, body {
     font-family: "Inter" !important;
     font-size: 16px;
     height: 100%;
-    overflow: hidden;
+    //overflow: hidden;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     overscroll-behavior-x: contain;
@@ -153,6 +153,8 @@ html, body {
     -webkit-text-size-adjust: 100%;
     line-height: 1.5 !important;
     font-optical-sizing: auto;
+    min-width: 56.25rem;
+    @include scrollbar;
 
     @media (min-width: 1020px) {
         font-size: 12px;
