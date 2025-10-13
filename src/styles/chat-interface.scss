@@ -168,12 +168,6 @@ html, body {
     letter-spacing: 0em;
     color: #141414;
 
-    .threadName {
-        &.maxLength {
-            
-        }
-    }
-
     .logo-icon {
         display: none !important;
     }
@@ -213,43 +207,6 @@ html, body {
             gap: 0.75rem;
             align-items: flex-end;
 
-            .user-content {
-                display: flex;
-                align-items: center;
-                gap: 0.5rem;
-
-                .profile {
-                    display: flex;
-                    align-items: center;
-                    gap: 0.5rem;
-                    flex-shrink: 0;
-
-                    .avatar {
-                        width: 1.25rem;
-                        height: 1.25rem;
-                        border-radius: 50%;
-                        background: #242424;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        color: #fff;
-                        @include typography-regular(0.75rem,600,1.25rem);
-                        flex-shrink: 0
-                    }
-
-                    .username {
-                        @include typography-regular(0.875rem,600,1.25rem);
-                        color: #242424;
-                    }                    
-                }
-                .message-timestamp {
-                    @include typography-regular(0.75rem,400,1.25rem);
-                    color: #666666;
-                    position: relative;
-                    top: .125rem;
-                }
-            }
-
             .question-content {
                 display: flex;
                 align-items: center;
@@ -282,17 +239,7 @@ html, body {
     &.answer {
         display: flex;
         align-items: flex-start;
-        gap: .5rem;
-
-        .answerCntr {
-            .answerCntr {
-                .threadName {
-                    &.maxLength {
-                        max-width: 80%;
-                    }
-                }
-            }
-        }
+        gap: .75rem;
 
         .logo-icon {
             display: flex;
@@ -305,41 +252,13 @@ html, body {
             flex-direction: column;
             gap: 0.75rem;
 
-            .profile {
-                display: flex;
-                align-items: center;
-                gap: 0.5rem;
-                margin-bottom: 0.25rem;
-
-                .avatar {
-                    width: 1.25rem;
-                    height: 1.25rem;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    flex-shrink: 0;
-                    position: relative;
-                    top: -.125rem;
-
-                    img {
-                        width: 100%;
-                        height: 100%;
-                        object-fit: contain;
+            .answerCntr {
+                .threadName {
+                    &.maxLength {
+                        max-width: 80%;
                     }
                 }
-                .username {
-                    @include typography-regular(0.875rem,600,1.25rem);
-                    color: #242424;
-                }
-                
-                .message-timestamp {
-                    @include typography-regular(0.75rem,400,1.25rem);
-                    color: #666666;
-                    position: relative;
-                    top: .125rem;
-                }
             }
-
             .search-answer-container {
                 display: flex;
                 flex-direction: column;
@@ -404,13 +323,77 @@ html, body {
         display: flex;
         align-items: center;
         gap: .75rem;
+        min-height : calc(100% - 2.25rem);
+    }
+    .question-profile {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 0.25rem;
 
-        .query-response-flow {
-            .query-response-flow-header-container {
-                
+        .avatar {
+            width: 1.25rem;
+            height: 1.25rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            position: relative;
+            top: -.125rem;
+
+            img {
+                width: 100%;
+                height: 100%;
+                object-fit: contain;
             }
         }
-         min-height : calc(100% - 2.25rem);
+        .username {
+            @include typography-regular(0.875rem,600,1.25rem);
+            color: #242424;
+        }
+        
+        .message-timestamp {
+            @include typography-regular(0.75rem,400,1.25rem);
+            color: #666666;
+            position: relative;
+            top: .125rem;
+        }
+    }
+    .user-content {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+
+        .answer-profile {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            flex-shrink: 0;
+
+            .avatar {
+                width: 1.25rem;
+                height: 1.25rem;
+                border-radius: 50%;
+                background: #242424;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: #fff;
+                @include typography-regular(0.75rem,600,1.25rem);
+                flex-shrink: 0;
+            }
+
+            .username {
+                @include typography-regular(0.875rem,600,1.25rem);
+                color: #242424;
+            }                    
+        }
+        .message-timestamp {
+            @include typography-regular(0.75rem,400,1.25rem);
+            color: #666666;            
+            position: relative;
+            top: .125rem;
+        }
     }
 }
 #intent-0, #intent-1 {

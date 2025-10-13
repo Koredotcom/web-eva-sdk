@@ -35,7 +35,9 @@ const renderQuestionsOnly = () => {
     if (questionsContainer) {
         // Generate questions HTML like ChatInterface does
         let questionsHTML = '';
-        if (questions && !isEmpty(questions)) {
+        const hasQuestions = questions && !isEmpty(questions);
+        
+        if (hasQuestions) {
             questionsHTML = Object.values(questions).map((item, index) => {
                 if (item?.isTask) return '';
                 
@@ -51,6 +53,16 @@ const renderQuestionsOnly = () => {
                 return html.outerHTML;
             }).join('');
         }
+        
+        // Add or remove class based on questions existence
+        const landingPageContainer = document.querySelector('.landing-page-container');
+        if (hasQuestions) {
+            /*append  results-page-container to the class of landing-page-container*/
+            landingPageContainer.classList.add('results-page-container');
+        } else {
+            landingPageContainer.classList.remove('results-page-container');
+        }
+        
         questionsContainer.innerHTML = questionsHTML
         
         // Auto-scroll to bottom 
@@ -60,15 +72,70 @@ const renderQuestionsOnly = () => {
 
 const constructParentComponent = () => {
     return `
-    <div id='parent-component-container'>
-        <div id='questions-container'>
-            <!-- Questions will be rendered here -->
+    <div id='parent-home-container' class='parent-home-container'>
+        <div class="sidebar-container">
+            <div class="sidebar-content">
+                <div class="border-content">
+                    Side bar container will appear here
+                </div>
+            </div>
         </div>
-        <div id='compose-bar-container'>
-            Compose Bar container will appear here
-        </div>
-        <div id='recent-agents-container'>
-            Recent agents container will appear here
+        <div class="landing-page-container">
+            <div class="landing-page-content">
+                <div class="landing-page-content-container">
+                    <div id='questions-container' class='questions-container'>
+                        <!-- Questions will be rendered here -->
+                    </div>                    
+                    <div id='compose-bar-container' class='compose-bar-container'>
+                        <div class="ComposeBarContainer">
+                            <div class="eva-composebar-parent">
+                                <div class="eva-quick-reply-container"></div>
+                                <div class="eva-composebar-area">
+                                    <div class="eva-input-container skeleton-compose-bar">
+                                        <div class="eva-attachments-container"></div>
+                                        <div class="eva-compose-textarea-container">
+                                            <sl-skeleton effect="pulse"></sl-skeleton>
+                                        </div>
+                                        <div class="eva-compose-textarea-actions">
+                                            <div class="left-actions">
+                                                <div class="common-agents-container">
+                                                    <sl-skeleton effect="pulse"></sl-skeleton>
+                                                    <sl-skeleton effect="pulse"></sl-skeleton>
+                                                    <sl-skeleton effect="pulse"></sl-skeleton>
+                                                </div>
+                                            </div>
+                                            <div class="right-actions">
+                                                <sl-skeleton effect="pulse"></sl-skeleton>
+                                                <sl-skeleton effect="pulse"></sl-skeleton>
+                                                <sl-skeleton effect="pulse"></sl-skeleton>
+                                            </div>
+                                        </div>                                        
+                                    </div>
+                                </div>
+                            </div>
+                        </div>                        
+                    </div>
+                    <div id='recent-agents-container' class='recent-agents-parent-container'>
+                        <div class="recent-agents-container">
+                            <div class="recent-agent skeleton-agent">
+                                <sl-skeleton effect="pulse"></sl-skeleton>
+                            </div>
+                            <div class="recent-agent skeleton-agent">
+                                <sl-skeleton effect="pulse"></sl-skeleton>
+                            </div>
+                            <div class="recent-agent skeleton-agent">
+                                <sl-skeleton effect="pulse"></sl-skeleton>
+                            </div>
+                            <div class="recent-agent skeleton-agent">
+                                <sl-skeleton effect="pulse"></sl-skeleton>
+                            </div>
+                            <div class="recent-agent skeleton-agent">
+                                <sl-skeleton effect="pulse"></sl-skeleton>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>    
     </div>    
     `

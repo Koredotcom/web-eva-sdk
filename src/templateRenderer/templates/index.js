@@ -97,15 +97,20 @@ export function renderLoading(
         html = `<div class="task-item-loader">Loading...</div>`
     }else{
         html = ` <div class="message-bubble question">
-                <div class="message-content"> 
-                ${userIconTemplate ? renderUserIconTemplate() : ""}               
-                    <div class="message-text">                        
-                        ${encodeHtml(data?.question)}
-                    </div>                    
-                    ${displayTimestamp ? renderQuestionBubbleTimeStamp(data?.timestamp) : ""}
-                </div>
+                    <div class="message-content"> 
+                        <div class="user-content">
+                            ${userIconTemplate ? renderUserIconTemplate() : ""}
+                            ${displayTimestamp ? renderQuestionBubbleTimeStamp(data.timestamp) : ""}
+                        </div>
+                        <div class="question-content">
+                            ${copyQuestion.render(data)}
+                            <div class="message-text">                    
+                                ${encodeHtml(data?.question)}
+                            </div> 
+                        </div> 
+                    </div>
             </div>
-            <div class="message-bubble loading" >
+            <div class="message-bubble loading">
                 ${assistantIconTemplate ? assistantIconTemplate : ""}
                 ${responseQueryFlow.render(data)}
             </div>`
@@ -171,7 +176,7 @@ export function renderError(data) {
 
 export function renderAppAvatar(appName = "AI4Work", appIcon = "https://ai4web.com/wp-content/uploads/2023/01/cropped-cropped-ai4web-logo-1-180x180.png", timestamp) {
     return `
-    <div class='profile'>
+    <div class='question-profile'>
         <div class="avatar">
             <img src="${appIcon}" alt="${appName}" />
         </div>
@@ -214,7 +219,7 @@ export const renderIcon = (icon) => {
 const renderUserIconTemplate = () => {
     const userProfile = store.getState().global.profile.data
     return `
-    <div class='profile'>
+    <div class='answer-profile'>
         <div class="avatar letter-avatar">
             ${userProfile?.fullName?.charAt(0)}
         </div>

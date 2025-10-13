@@ -27,8 +27,8 @@ const App = () => {
   
   
   return (
-    <div>
-    <div id='parent-component-container'></div> 
+    <div className='app-container'>
+      <div id='parent-component-container' className='parent-component-container'></div> 
       {/* <ChatInterfaceDemo /> */}
       {/* <ChatTestComp/> */}
       {/* <TestComp /> */}
