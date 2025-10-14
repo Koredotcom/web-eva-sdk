@@ -1,6 +1,8 @@
 import { encodeHtml } from "../utils/helper";
 import * as responseQueryFlow from "./response-query-flow";
 import * as copyQuestion from "./copy-question";
+import store from "../../redux/store";
+import { convertToTimeFormat } from "../../utils/helpers";
 // import { encodeHtml } from "../utils/helper";
 
 /**
@@ -8,14 +10,22 @@ import * as copyQuestion from "./copy-question";
  * @param {Object} data Question data
  * @returns {string} HTML string
  */
-export function renderQuestionBubble(data, userIconTemplate = false) {
+export function renderQuestionBubble(data, userIconTemplate = false, displayTimestamp = true) {
 	const { question, timestamp, icon} = data;
     if(data?.isTask) return "";
 	return `
         <div class="message-bubble question ${data?.isTask ? 'task-item' : ''}">
-            <div class="message-content">
-                ${copyQuestion.render(data)}
-                <div class="message-text" id="message-text-${data?.messageId || data?.reqId}">${encodeHtml(question)}</div>
+            <div class="message-content">  
+                <div class="user-content">
+                    ${userIconTemplate ? renderUserIconTemplate() : ""}
+                    ${displayTimestamp ? renderQuestionBubbleTimeStamp(timestamp) : ""}
+                </div>
+                <div class="question-content">
+                    ${copyQuestion.render(data)}                
+                    <div class="message-text" id="message-text-${data?.messageId || data?.reqId}">                    
+                        ${encodeHtml(question)}
+                    </div>
+                </div>                
             </div>
         </div>
         `;
@@ -31,7 +41,7 @@ export function renderAnswerBubble(data) {
 	const { answer, timestamp, icon, source, status } = data;
 
 	return `
-        < div class="${status || ""}" >
+        <div class="${status || ""}" >
             ${
 				icon
 					? `
@@ -77,7 +87,8 @@ export function renderLoading(
 	data = {},
 	assistantIconTemplate,
 	loadingText,
-	userIconTemplate
+	userIconTemplate,
+    displayTimestamp = true
 ) {
 	// const { text = "Thinking...", icon } = data;
 	const text = loadingText || "Thinking...";
@@ -86,14 +97,20 @@ export function renderLoading(
         html = `<div class="task-item-loader">Loading...</div>`
     }else{
         html = ` <div class="message-bubble question">
-                <div class="message-content">
-                    <div class="message-text">${encodeHtml(
-            data?.question
-        )}</div>
-                    ${userIconTemplate ? userIconTemplate : ""}
-                </div>
+                    <div class="message-content"> 
+                        <div class="user-content">
+                            ${userIconTemplate ? renderUserIconTemplate() : ""}
+                            ${displayTimestamp ? renderQuestionBubbleTimeStamp(data.timestamp) : ""}
+                        </div>
+                        <div class="question-content">
+                            ${copyQuestion.render(data)}
+                            <div class="message-text">                    
+                                ${encodeHtml(data?.question)}
+                            </div> 
+                        </div> 
+                    </div>
             </div>
-            <div class="message-bubble loading" >
+            <div class="message-bubble loading">
                 ${assistantIconTemplate ? assistantIconTemplate : ""}
                 ${responseQueryFlow.render(data)}
             </div>`
@@ -157,6 +174,18 @@ export function renderError(data) {
     `;
 }
 
+export function renderAppAvatar(appName = "AI4Work", appIcon = "https://ai4web.com/wp-content/uploads/2023/01/cropped-cropped-ai4web-logo-1-180x180.png", timestamp) {
+    return `
+    <div class='question-profile'>
+        <div class="avatar">
+            <img src="${appIcon}" alt="${appName}" />
+        </div>
+        <span class="username"> ${appName} </span>        
+        <span class="message-timestamp">${convertToTimeFormat(timestamp)}</span>
+    </div>
+    `
+}
+
 /**
  * Render feedback buttons
  * @param {Object} data Feedback data
@@ -187,6 +216,24 @@ export const renderIcon = (icon) => {
 	// Your icon rendering logic
 };
 
+const renderUserIconTemplate = () => {
+    const userProfile = store.getState().global.profile.data
+    return `
+    <div class='answer-profile'>
+        <div class="avatar letter-avatar">
+            ${userProfile?.fullName?.charAt(0)}
+        </div>
+        <span class="username"> ${userProfile?.fullName} </span>        
+    </div>
+    `
+}
+
+const renderQuestionBubbleTimeStamp = (timestamp) => {
+    return `
+    <div class="message-timestamp">${convertToTimeFormat(timestamp)}</div>
+    `
+}
+
 // Create default export object for backward compatibility
 const TemplateComponents = {
 	renderQuestionBubble,
@@ -195,6 +242,7 @@ const TemplateComponents = {
 	wrapTemplate,
 	renderError,
 	renderFeedback,
+    renderAppAvatar,
 };
 
 export default TemplateComponents;

@@ -39,9 +39,11 @@ const ChatInterface = (props) => {
         let cancelledQuestion;
         let currentQuestion = state.currentQuestion;
         if(currentQuestion){
-           
-                cancelledQuestion = updatedQuestions?.[currentQuestion?.reqId]
-                       
+                if(currentQuestion?.isTask){
+                  cancelledQuestion = updatedQuestions?.[currentQuestion?.cId]
+                }else{
+                  cancelledQuestion = updatedQuestions?.[currentQuestion?.reqId]
+                }                                      
         }
         else{
             cancelledQuestion = Object.values(updatedQuestions)?.find((ques) => ques?.status === 'threadRunning')
@@ -49,6 +51,9 @@ const ChatInterface = (props) => {
 
         const params = {
           id: cancelledQuestion?.reqId, "quesId": cancelledQuestion?.id , userId : state?.profile?.data?.id
+        }
+        if(cancelledQuestion?.isTask){
+          params.quesId = Object.values(cancelledQuestion?.botConversation)?.find(c => c?.status === 'in-progress')?.messageId
         }
         const payload = { boardId: state.activeBoardId }
         

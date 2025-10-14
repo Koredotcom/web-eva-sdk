@@ -8,7 +8,25 @@ let currentRecentAgents = [];
 const RecentAgentsFunc = () => {
 const constructRecentAgentsList = (recentAgents = []) => {    
     if(isRecentAgentsLoading) {
-        return `<div class="recent-agents-loading">Loading recent agents...</div>`;
+        return `<div class="recent-agents-loading">
+            <div class="recent-agents-container">
+                <div class="recent-agent skeleton-agent">
+                    <sl-skeleton effect="pulse"></sl-skeleton>
+                </div>
+                <div class="recent-agent skeleton-agent">
+                    <sl-skeleton effect="pulse"></sl-skeleton>
+                </div>
+                <div class="recent-agent skeleton-agent">
+                    <sl-skeleton effect="pulse"></sl-skeleton>
+                </div>
+                <div class="recent-agent skeleton-agent">
+                    <sl-skeleton effect="pulse"></sl-skeleton>
+                </div>
+                <div class="recent-agent skeleton-agent">
+                    <sl-skeleton effect="pulse"></sl-skeleton>
+                </div>
+            </div>
+        </div>`;
     } else {
         if(recentAgents?.length > 0) {
             return `<div class="recent-agents-container">

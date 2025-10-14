@@ -76,6 +76,11 @@ renderer.image = function (href, title, text) {
   return `<img src="${href}"${titleAttr}${altAttr} style="max-width: 100%; max-height: 400px; height: auto; object-fit: contain; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);" />`;
 };
 
+// --- Tables ---
+renderer.table = function (header, body) {
+  return `<div class="table-wrapper"><table class="markdown-table">${header}${body}</table></div>`;
+};
+
 // ✅ Use setOptions (v2 API)
 marked.setOptions({
   gfm: true,
