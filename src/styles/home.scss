@@ -7,7 +7,7 @@
     .app-container {
       width: 100%;
       height: 100%;
-      .parent-component-container {
+      .master-component {
         width: 100%;
         height: 100%;
       }
@@ -51,7 +51,8 @@
     }
     .landing-page-container {
       flex-grow: 1;
-      width: calc(100% - 300px);
+      //width: calc(100% - 300px);
+      width: 100%;
       height: 100%;
       position: relative;
       display: flex;
