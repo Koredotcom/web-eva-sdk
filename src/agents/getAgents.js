@@ -5,5 +5,4 @@ export const getAgents = async () => {
     const state = store.getState()
     const userId = state.global.profile.data.id
     store.dispatch(fetchAgents({ userId: userId }))    
-    return state.global.allAgents
 }
