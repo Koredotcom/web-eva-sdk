@@ -123,7 +123,7 @@ export function renderTemplateContent(
 				</div>`;
 	} else if (data?.status === "terminated") {
 		return `<div class="message-bubble answer"> 
-					I see you interrupted the answer generation. Please feel free to provide more details or let me know how can I assist you further
+					I see you interrupted the answer generation. Please feel free to provide more details or let me know how I can assist you further.
 				</div>`;
 	} else {
 		switch (data.templateType) {
@@ -242,7 +242,7 @@ export function renderBotConversation(data) {
 	if (data.status === "terminated") {
 		return `
             <div class="threadName">
-                I see you interrupted the answer generation. Please feel free to provide more details or let me know how can I assist you further
+                I see you interrupted the answer generation. Please feel free to provide more details or let me know how I can assist you further.
             </div>
         `;
 	}

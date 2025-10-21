@@ -263,7 +263,7 @@ export const constructQuestionPostCall = (data, qId) => {
         if(data?.payload?.history?.templateType === chatTemplateTypes.GPT_FORM_TEMPLATE){
             delete question.template_html
         }
-        let terminatedAnswerResponse = "I see you interrupted the answer generation. Please feel free to provide more details or let me know how can I assist you further"
+        let terminatedAnswerResponse = "I see you interrupted the answer generation. Please feel free to provide more details or let me know how I can assist you further."
         question = { ...question,  ...data?.payload?.history, answer : terminatedAnswerResponse};
 	} 
     else {      
