@@ -1,0 +1,207 @@
+import { cloneDeep, isEmpty } from "lodash";
+import store from "../redux/store";
+import InitiateChatConversationAction from "../chat/InitiateChatConversationAction";
+import { updateChatData } from "../redux/globalSlice";
+import { executionPipelineActions } from "../redux/actions/global.action";
+import { cancelOngoingCall } from "../templateRenderer/utils/helper";
+
+const MultiIntentExecution = (props) => {
+    let state = store.getState().global;
+
+    const runTask = (index, item, q) => {
+        state = store.getState().global;
+        const {activeBoardId} = state;  
+        if(!!q){
+            let updatedQuestion = cloneDeep(state.questions);
+            item = Object.values(updatedQuestion).find(qId => (updatedQuestion[qId?.parentMsgId]?.executingActionId ===  q?.id))
+            item = updatedQuestion[item?.parentMsgId] || updatedQuestion[q?.parentMsgId] || updatedQuestion[state?.questions[q?.id]?.parentMsgId]
+          }
+        let _item = cloneDeep(item);
+        let task = _item?.executionPipeline?.[index];
+        task.stepIndex = index;
+        store.dispatch(updateChatData({
+          ...state.questions,
+          [item?.reqId]: {
+            ...item,
+            status: "in-progress"
+          }
+        }))
+
+      const params = { cId: _item?.id, type: _item?.type, stepId: task?._id, task, currentRunningQuestion: _item, parentMsgId: _item?.reqId, isTask: true}
+
+        const payload = {
+            "question": task?.utterance,
+            "boardId": activeBoardId,
+            "parentId": _item?.messageId,
+            "context": {
+              "intentId": task?.intents?.[0]?.id,
+              "agentId": task?.intents?.[0]?.agentId,
+              "stepId": task?._id
+            }
+          }
+
+        InitiateChatConversationAction({params, payload, multiIntentExecution: true })
+    }
+
+    const runNextTask = (index, status, question, item) => {
+        const nextTaskIndex = index + 1;
+        
+        if([undefined, null, '', 'draft', 'in-progress', 'threadRunning'].includes(status)){
+            return;
+        }
+        else {
+            runTask(nextTaskIndex, item, question)
+        }
+    }
+
+    const addNewTask = (index, task, item) => {
+        state = store.getState().global;
+        const _questions = cloneDeep(state?.questions);
+        let currentExecutionPipeline = cloneDeep(_questions[item?.id]?.executionPipeline);
+        
+        if(isEmpty(_questions[item?.id]?.savedExecutionPipeline)){
+            _questions[item?.id].savedExecutionPipeline = currentExecutionPipeline;
+        } else {
+            currentExecutionPipeline = _questions[item?.id].savedExecutionPipeline;
+        }
+
+        let newTask = {
+            _id: index, // temp id, it will get replaced with backend id later
+            utterance: '',
+            headerMsg: 'Oh, it seems I have missed a step. My apologies. Please describe and add the steps.',
+            step: `Step ${index+1}`,
+            type: 'addTask' 
+        }
+
+        _questions[item?.id].executionPipeline.splice(index, 0, newTask);
+        store.dispatch(updateChatData(_questions))
+    }
+
+    const saveTask = async (index, task, executionPipeline, item, utterance) => {
+        state = store.getState().global;
+        let _questions = cloneDeep(state?.questions);
+
+        let payload = {
+            utterance: utterance,
+            action: task?.type == 'addTask' ? 'add' : 'update',
+        }
+
+        if(task?._id > 0 && task?.type === 'addTask'){
+            payload.stepId = executionPipeline[task?._id - 1]?._id;
+        } else if(task?.type === 'modify'){
+            payload.stepId = task?._id;
+        }
+
+        let params = {
+            messageId: item?.messageId,
+            boardId: state?.activeBoardId,
+        }
+
+        const response = await store.dispatch(executionPipelineActions({params, payload}))
+        
+        if(!!response?.payload){
+            _questions[item?.id].executionPipeline = response?.payload?.executionPipeline;
+            _questions[item?.id].savedExecutionPipeline = response?.payload?.executionPipeline;
+            store.dispatch(updateChatData(_questions))
+        }
+        
+        return response;
+    }
+
+    const deleteNewTask = (item) => {
+        state = store.getState().global;
+        const _questions = cloneDeep(state?.questions);
+        _questions[item?.id].executionPipeline = _questions[item?.id].savedExecutionPipeline;
+        store.dispatch(updateChatData(_questions))
+    }
+
+    const deleteExistingTask = async (index, task, item) => {
+        state = store.getState().global;
+        let _questions = cloneDeep(state?.questions);
+
+        let params = {
+            messageId: item?.messageId,
+            boardId: state?.activeBoardId,
+        }
+
+        let payload = {
+            action: "delete",
+            stepId: task?._id,
+        }
+
+        const response = await store.dispatch(executionPipelineActions({params, payload}))
+
+        if(!!response?.payload){
+            _questions[item?.id].executionPipeline = response?.payload?.executionPipeline;
+            _questions[item?.id].savedExecutionPipeline = response?.payload?.executionPipeline;
+            store.dispatch(updateChatData(_questions))
+        }
+        
+        return response;
+    }
+
+    const editTask = (index, task, item) => {
+        state = store.getState().global;
+        const _questions = cloneDeep(state?.questions);
+        let currentExecutionPipeline = cloneDeep(_questions[item?.id]?.executionPipeline);
+
+        if(isEmpty(_questions[item?.reqId]?.savedExecutionPipeline)){
+            _questions[item?.reqId].savedExecutionPipeline = currentExecutionPipeline;
+        } else {
+            currentExecutionPipeline = _questions[item?.reqId].savedExecutionPipeline;
+        }
+
+        let _task = {...task, type: 'modify', step: `Step ${index+1}`}
+
+        currentExecutionPipeline.splice(index, 1, _task);
+
+        _questions[item?.reqId].executionPipeline = currentExecutionPipeline;
+        store.dispatch(updateChatData(_questions))
+    }
+
+    const cancelTask = (task) => {
+        if (task?.error) {
+            state = store.getState().global;
+            let _questions = cloneDeep(state?.questions);
+            _questions[task?._id].skipped = true; //Adding this to the tasks that are skipped
+            store.dispatch(updateChatData(_questions))
+            // COmes into this if there is an error and wants to proceed with the next task
+            // If a task is already skipped, we cant skip it again. So adding the flag to hide the skip task button.
+            let stepIndex = task?.stepIndex + 1;
+            runTask(stepIndex, null, task)
+        } else {
+            // Skip a current task and run the next task
+            cancelOngoingCall(task?._id);
+        }
+    }
+
+    const restartExecution = (parentQuestion) => {
+        let updatedQuestions = cloneDeep(state.questions);
+        updatedQuestions = Object.fromEntries(
+            Object.entries(updatedQuestions).filter(([key, value]) => !value?.isTask)
+        );
+        let currentQuestion = updatedQuestions[parentQuestion?.reqId];
+        currentQuestion.status = 'draft';
+        updatedQuestions[parentQuestion?.reqId] = currentQuestion;
+        store.dispatch(updateChatData(updatedQuestions))
+        runTask(0, currentQuestion)
+    }
+
+    return {
+        runTask,
+        runNextTask,
+        addNewTask,
+        saveTask,
+        deleteNewTask,
+        deleteExistingTask,
+        editTask,
+        cancelTask,
+        restartExecution
+    }
+}
+
+export default MultiIntentExecution;
+export { 
+    MultiIntentExecution
+};
+

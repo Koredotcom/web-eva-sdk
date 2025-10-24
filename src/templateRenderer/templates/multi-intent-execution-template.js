@@ -34,8 +34,11 @@ function render(data) {
        
     let body = `
         ${items?.executionPipeline?.map((task, index) => {
-            task = {...task, ..._questions[task?._id], isTask: true};
-            let html = TemplateRenderer.generateHTMLTemplate(task, {});
+            const originalTaskId = task?._id;
+            task = { ...task, ..._questions[task?._id], isTask: true, _id: originalTaskId };
+            let html = TemplateRenderer.generateHTMLTemplate(task, {
+                loadingText: 'Analyzing'
+            });
            
             if(task?.type === 'addTask' || task?.type === 'modify'){
                 return addNewTaskRenderer(task, index, items);
@@ -70,6 +73,9 @@ function render(data) {
                             <div class="bottomCard">
                             ${html?.innerHTML}
                             </div>
+                        ` : ''}
+                        ${task?.loading ? `
+                            <div class="loadingState"><div class="loading-text">Analyzing</div></div>
                         ` : ''}
                     </div>
                 </div>

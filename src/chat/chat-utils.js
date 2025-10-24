@@ -10,7 +10,7 @@ import { chatTemplateTypes, msgStatus } from '../utils/constants';
 import MultiResponse from './gptTemplate/MultiResponse';
 import moment from "moment";
 import { fetchHistory } from "../redux/actions/global.action";
-import { multiIntentExecutionFunc } from "../templateRenderer/functionality/multi-intent-execution";
+import MultiIntentExecution from '../multiIntentExecution/multiIntentExecution';
 
 export const constructQuestionInitial = (args) => {
 	let uniqueMsgId = args?.reqId;
@@ -39,9 +39,9 @@ export const constructQuestionInitial = (args) => {
 			loading: true,
 			type: "search",
 			isTask: true,
-			parentMsgId: args?.reqId,
+            parentMsgId: args?.parentMsgId,
 			cId: args?.stepId,
-			reqId: args?.stepId,
+			reqId: args?.reqId,
 			showResponse: true,
 		}
 
@@ -59,7 +59,7 @@ export const constructQuestionInitial = (args) => {
 			reqId: uniqueMsgId,
 			showResponse: true,
 			isTask: true,
-			parentMsgId: args?.reqId,
+            parentMsgId: args?.parentMsgId,
 			isMultiIntentExecution: true,
 			stepIndex: stepIndex,
 		};
@@ -241,21 +241,21 @@ export const constructQuestionPostCall = (data, qId) => {
     // }
 
     if(data?.error) {
-        // question = { ...question, error: data?.error, errInfo: data?.errInfo};
-        // if(data?.errInfo?.errors[0]?.code === 'MaximumPointsExceeded'){
-        //     _limitExhausted = data?.errInfo?.errors[0]
+        // if (data?.meta?.arg?.multiIntentExecution || question?.isMultiIntentExecution) {
+        //     const stepIndex = question?.stepIndex;
+        //     question = { ...question, error : true};
         // }
 	} else if (data?.meta?.arg?.multiIntentExecution || question?.isMultiIntentExecution) {
 		const stepIndex = question?.stepIndex;
 		question = { ...question, ...data?.payload, showResponse: true};
-		questions[question?.parentMsgId].executingActionId = question?.id
+		questions[question?.parentMsgId].executingActionId = question?.stepId
 		if(stepIndex === 0) {
 		    questions[question?.parentMsgId].status = 'in-progress'
 		}
 		if(question?.isTask) {
 				const stepIndex = question?.stepIndex;
 				setTimeout(() => {
-					multiIntentExecutionFunc().runNextTask(stepIndex, data?.payload?.status , question)
+				    MultiIntentExecution().runNextTask(stepIndex, data?.payload?.status , question)
 				}, 1000);
 		}
 	}
@@ -265,6 +265,12 @@ export const constructQuestionPostCall = (data, qId) => {
         }
         let terminatedAnswerResponse = "I see you interrupted the answer generation. Please feel free to provide more details or let me know how can I assist you further"
         question = { ...question,  ...data?.payload?.history, answer : terminatedAnswerResponse};
+        if (question?.isTask) {
+            const stepIndex = question?.stepIndex;
+            setTimeout(() => {
+                MultiIntentExecution().runNextTask(stepIndex, data?.payload?.history?.status, question)
+            }, 1000);
+        }
 	} 
     else {      
         if(data?.meta?.arg?.params?.from !== "botAgent") {
@@ -340,7 +346,16 @@ export const constructQuestionPostCall = (data, qId) => {
     //         })
     //     }
     // }    
-    questions[qId] = {...question, apiSuccess: true};
+
+    if(data?.error){
+        questions[qId] = {
+            ...question,
+            error: question?.status !== 'terminated' // Terminated status is when user interrupted the answer generation. Error is when there is a server driven error.
+          };
+          
+    }else{  
+        questions[qId] = {...question, apiSuccess: true};
+    }
 
     // updateState({
     //     searchResultData: data?.res,

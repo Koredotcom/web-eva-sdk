@@ -27,7 +27,7 @@ export function render(
 ) {
 	try {
 		// Handle loading state
-		if (data?.loading) {
+		if (data?.loading && !data?.isTask) {
 			return TemplateComponents.wrapTemplate(
 				TemplateComponents.renderLoading(
 					data,
@@ -54,7 +54,7 @@ export function render(
 
 		// Add question bubble if needed
 		if (
-			data.question &&
+			data.question && !data?.isTask &&
 			shouldShowQuestion(data.templateType, data.botConversation)
 		) {
 			content += TemplateComponents.renderQuestionBubble(
