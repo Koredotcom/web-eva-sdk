@@ -351,7 +351,7 @@ const MultiResponse = () => {
                 if (field?.value?.canUploadFile) {
                     acc[field.key].type = "file"
                     let ind = Object.keys(uploadedFiles || {}).indexOf(`${field?.key}-${item?.messageId}-${index}`);
-                    if (ind !== -1) {                        
+                    if (ind !== -1 && Object.values(state.GptUploadedFiles)?.[ind]?.length > 0) {                        
                         acc[field.key].value = Object.values(state.GptUploadedFiles)?.[ind]?.map(({ title, fileId }) => ({ title, fileId }));;
                         // reqdValue = acc[field.key].value;
                         reqdValue = acc[field.key].value;
