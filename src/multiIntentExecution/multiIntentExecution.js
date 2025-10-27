@@ -8,7 +8,7 @@ import { cancelOngoingCall } from "../templateRenderer/utils/helper";
 const MultiIntentExecution = (props) => {
     let state = store.getState().global;
 
-    const runTask = (index, item, q) => {
+    const runTask = (item, index = 0, q) => {
         state = store.getState().global;
         const {activeBoardId} = state;  
         if(!!q){
@@ -50,7 +50,7 @@ const MultiIntentExecution = (props) => {
             return;
         }
         else {
-            runTask(nextTaskIndex, item, question)
+            runTask(item, nextTaskIndex, question)
         }
     }
 
@@ -168,7 +168,7 @@ const MultiIntentExecution = (props) => {
             // COmes into this if there is an error and wants to proceed with the next task
             // If a task is already skipped, we cant skip it again. So adding the flag to hide the skip task button.
             let stepIndex = task?.stepIndex + 1;
-            runTask(stepIndex, null, task)
+            runTask(null, stepIndex, task)
         } else {
             // Skip a current task and run the next task
             cancelOngoingCall(task?._id);
@@ -184,7 +184,7 @@ const MultiIntentExecution = (props) => {
         currentQuestion.status = 'draft';
         updatedQuestions[parentQuestion?.reqId] = currentQuestion;
         store.dispatch(updateChatData(updatedQuestions))
-        runTask(0, currentQuestion)
+        runTask(currentQuestion, 0)
     }
 
     return {

@@ -40,7 +40,7 @@ const MultiIntentExecutionDemo = ({ data }) => {
         <>
           <button 
             className="startBtn" 
-            onClick={() => runTask(0, items)}
+            onClick={() => runTask(items)}
           >
             {items?.templateInfo?.action}
           </button>

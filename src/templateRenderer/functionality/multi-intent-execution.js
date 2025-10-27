@@ -19,7 +19,7 @@ const multiIntentExecutionFunc = (item) => {
 
     // Wrapper functions that adapt the imported functions to work with DOM event handlers
     const runTask = (index, q) => {
-        runTaskFunc(index, item, q);
+        runTaskFunc(item, index, q);
     }
 
     const runNextTask = (index, status, question) => {
