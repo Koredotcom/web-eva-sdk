@@ -63,7 +63,9 @@ function render(data) {
                             <div class="taskItem ${task?.showResponse ? 'loadingSkeleton' : ''}">
                                 <div class="topCard">
                                     <div class="leftBlock">                                                                            
-                                ${task?.loading ? `<div class="statusIcon">${LoadingSpinner({ size: 16, color: "#475467" })}</div>`:
+                                ${task?.loading ? `<div class="statusIcon">
+                                    ${LoadingSpinner({ size: 16 })}    
+                                </div>`:
                                 task?.status === "completed"
                                     ? tickMarkIcon({ size: 16, color: "#475467" }) 
                                             : task?.status === "discard"
