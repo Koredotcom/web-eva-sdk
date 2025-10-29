@@ -27,6 +27,8 @@ function render(data, type = 'question') {
                         navigator.clipboard.write([clipboardItem])
                             .then(() => console.log('Copied with formatting!'))
                             .catch(err => console.error('Clipboard copy failed:', err));
+                    }else{
+                        navigator.clipboard.writeText(data?.answer);
                     }
                 } else {
                     const messageText = document.getElementById(messageTextId);
