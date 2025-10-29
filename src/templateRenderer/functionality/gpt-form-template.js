@@ -89,7 +89,8 @@ const gptFormFunctionality = (formData, item, preservedValues = {}) => {
 		if(inputField && !inputField.eventListenerAdded){
 			inputField.eventListenerAdded = true;
 			inputField.addEventListener("change", (event) => {
-				GptFileUpload(event, `${contextField?.key}-${item?.messageId}`, item?.reqId);				
+				const questionId = item?.isTask ? item?.cId : item?.reqId;
+				GptFileUpload(event, `${contextField?.key}-${item?.messageId}`, questionId);				
 				setTimeout(() => {
 					const submitButton = document.getElementById(`submitGptForm-${item?.messageId}`);
 					if (submitButton) {
@@ -210,7 +211,8 @@ const gptFormFunctionality = (formData, item, preservedValues = {}) => {
 				if(inputField && !inputField.eventListenerAdded){
 					inputField.eventListenerAdded = true;
 					inputField.addEventListener("change", (event) => {
-						GptFileUpload(event, `${field?.key}-${item?.messageId}-${field?.uniqueFieldId}`, item?.reqId);						
+						const questionId = item?.isTask ? item?.cId : item?.reqId;
+						GptFileUpload(event, `${field?.key}-${item?.messageId}-${field?.uniqueFieldId}`, questionId);						
 						setTimeout(() => {
 							const submitButton = document.getElementById(`submitGptForm-${item?.messageId}`);
 							if (submitButton) {
@@ -236,7 +238,8 @@ const gptFormFunctionality = (formData, item, preservedValues = {}) => {
 						if(removeButton && !removeButton.eventListenerAdded){
 							removeButton.eventListenerAdded = true;
 							removeButton.addEventListener("click", (event) => {
-								removeUploadedFile(event, `${field?.key}-${item?.messageId}-${field?.uniqueFieldId}`, item?.reqId, file?.mediaName);
+								const questionId = item?.isTask ? item?.cId : item?.reqId;
+								removeUploadedFile(event, `${field?.key}-${item?.messageId}-${field?.uniqueFieldId}`, questionId, file?.mediaName);
 								
 								setTimeout(() => {
 									const submitButton = document.getElementById(`submitGptForm-${item?.messageId}`);

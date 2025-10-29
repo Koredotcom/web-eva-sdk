@@ -72,14 +72,7 @@ const renderQuestionsOnly = () => {
 
 const constructParentComponent = () => {
     return `
-    <div id='parent-home-container' class='parent-home-container'>
-        <div class="sidebar-container">
-            <div class="sidebar-content">
-                <div class="border-content">
-                    Side bar container will appear here
-                </div>
-            </div>
-        </div>
+    <div id='parent-home-container' class='parent-home-container'>        
         <div class="landing-page-container">
             <div class="landing-page-content">
                 <div class="landing-page-content-container">
