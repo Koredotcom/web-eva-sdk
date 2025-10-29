@@ -94,7 +94,7 @@ export const advanceSearch = createAsyncThunk(
                     'kore-traceid': traceId
                 }                
             });
-            return response.data;
+            return {...response.data, 'kore-traceid': traceId};
         } catch (error) {
             handleErrorState(error, "Advance Search");
             return thunkAPI.rejectWithValue(error.response.data);
