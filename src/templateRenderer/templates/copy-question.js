@@ -19,7 +19,15 @@ function render(data, type = 'question') {
             // Add click event for copying text
             copyButton.addEventListener('click', () => {
                 if (type === 'answer') {
-                    navigator.clipboard.writeText(data?.answer);
+                    const messageDiv = document.querySelector(`#answer-${data?.messageId} .message-renderer`);
+                    if (messageDiv) {
+                        const htmlData = messageDiv.outerHTML;
+                        const blob = new Blob([htmlData], { type: 'text/html' });
+                        const clipboardItem = new ClipboardItem({ 'text/html': blob });
+                        navigator.clipboard.write([clipboardItem])
+                            .then(() => console.log('Copied with formatting!'))
+                            .catch(err => console.error('Clipboard copy failed:', err));
+                    }
                 } else {
                     const messageText = document.getElementById(messageTextId);
                     if (messageText) {
