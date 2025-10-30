@@ -8,19 +8,21 @@ export function render(data) {
 			.map((choice) => {
 				const value = choice.value || choice.name;
 				const label = choice.label || choice.name;
-				return `<option value="${value}">${label}</option>`;
+				return `<sl-option value="${value}">${label}</sl-option>`;
 			})
 			.join("");
 
 	const renderSelects = ambiguous
 		.map((el, index) => {
 			const multiple = el?.value?.multi ? "multiple" : "";
+			const checkedChoice = el?.value?.choices?.find(choice => choice.checked);
+			const checkedValue = checkedChoice ? (checkedChoice.value || checkedChoice.name) : '';
 			return `
 				<div class="drpdwnboxclass">
 					<div class="headerdropdowns" title="Tooltip for ${el.label}">${el.label}</div>
-					<select id="resolve-ambiguity-select-${data?.id}" ${multiple}>
+					<sl-select id="resolve-ambiguity-select-${data?.id}" ${multiple} value="${checkedValue}">
 						${renderOptions(el)}
-					</select>
+					</sl-select>
 				</div>
 			`;
 		})
