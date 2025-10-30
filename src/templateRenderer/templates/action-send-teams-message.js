@@ -27,6 +27,7 @@ export function render(data) {
                 </div>
                 
                 <div class="teams-recipients-section">
+                    <div class="teams-recipients-label">Channel or People</div>
                     <div class="teams-search-field">
                         <div class="teams-search-input-wrapper" id="teams-search-input-wrapper-${data?.reqId}">
                             <div class="teams-selected-recipients" id="teams-selected-recipients-${data?.reqId}">
@@ -47,16 +48,19 @@ export function render(data) {
                         </div>
                     </div>
                 </div>
-                
-                <div class="teams-message-body">
+                <div class="teams-message-section">
+                <div class="teams-recipients-label">Channel or People</div>
+                <div class="teams-message-body">                    
                     <div
                         class="teams-message-editor"
                         id="teams-message-body-${data?.reqId}"
                         contenteditable="true"
                         placeholder="Type your message here..."
+                        contenteditable="true"
                         >
                         ${data?.content?.message || ''}
                     </div>
+                </div>
                 </div>
 
                 <div class="teams-message-footer">
@@ -83,7 +87,7 @@ export function render(data) {
                     </div>
                     
                     <div class="teams-footer-right">
-                        <sl-button class="primary-button-black teams-send-btn" id="teams-send-${data?.reqId}" variant="primary">                            
+                        <sl-button class="primary-button-black teams-send-btn" id="teams-send-${data?.reqId}" variant="primary" disabled>                            
                             Send
                         </sl-button>
                     </div>
