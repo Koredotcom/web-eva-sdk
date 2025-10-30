@@ -35,8 +35,8 @@ export function render(data) {
 				<div class="maildrpbox" id="ambquityDropdown">
 					${renderSelects}
 					<div class="amb-action-box" id="resolve-ambiguity-action-box-${data?.id}">
-						<button class="amb-cancel-btn" id="resolve-ambiguity-cancel-btn-${data?.id}">Cancel</button>
-						<button class="amb-confirm-btn" id="resolve-ambiguity-confirm-btn-${data?.id}">Confirm</button>
+						<sl-button size="medium" variant="default" class="secondary-button" id="resolve-ambiguity-cancel-btn-${data?.id}">Cancel</sl-button>
+						<sl-button size="medium" variant="primary" class="primary-button-black" id="resolve-ambiguity-confirm-btn-${data?.id}">Confirm</sl-button>
 					</div>
 				</div>
 			</div>
