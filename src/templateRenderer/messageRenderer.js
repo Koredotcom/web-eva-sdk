@@ -12,6 +12,7 @@ import * as multiResponses from "./templates/multi-responses-template";
 import * as holdConversation from "./templates/hold-conversation-template";
 import * as errorMessage from "./templates/error-message-template";
 import * as genericErrorTemplate from "./templates/generic-error-template";
+import * as actionSendTeamsMessageTemplate from "./templates/action-send-teams-message";
 import * as feedbackTemplate from "./templates/feedback-template";
 import { encodeHtml, SHOELACE_ATTRS, SHOELACE_TAGS } from "./utils/helper";
 import { convertTemplateToHtml } from "../utils/helpers";
@@ -176,6 +177,10 @@ export function renderTemplateContent(
 
 			case "action_send_slack_message":
 				htmlTemplate += actionSendSlackMessage.render(data);
+				break;
+			
+			case "action_send_msteams_message":
+				htmlTemplate += actionSendTeamsMessageTemplate.render(data);
 				break;
 
 			case "connection_provider":

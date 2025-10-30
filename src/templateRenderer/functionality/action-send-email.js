@@ -3,6 +3,7 @@ import { delayedSearchCallback } from "../../utils/helpers";
 import store from "../../redux/store";
 import { updateChatData } from "../../redux/globalSlice";
 import { sendEmail, smartComposeEmail } from "../../redux/actions/global.action";
+import { Gmail, Outlookimg, Teamsimg, Slackimg } from "../icons-library";
 
 
 
@@ -12,6 +13,25 @@ const sendEmailFunctionality = (data) => {
         let state = store?.getState()?.global
         const currentData = state?.questions?.[data?.reqId];
         return { state, currentData };
+    };
+
+    // Helper function to get icon based on provider
+    const getProviderIcon = (provider) => {
+        const iconSize = 16;
+        const iconColor = "#131316";
+        
+        switch(provider?.toLowerCase()) {
+            case 'gmail':
+                return Gmail({ size: iconSize, color: iconColor });
+            case 'outlook':
+                return Outlookimg({ size: iconSize, color: iconColor });
+            case 'teams':
+                return Teamsimg({ size: iconSize, color: iconColor });
+            case 'slack':
+                return Slackimg({ size: iconSize, color: iconColor });
+            default:
+                return Gmail({ size: iconSize, color: iconColor }); // Default fallback
+        }
     };
 
     // Local reference to current question 
@@ -375,6 +395,34 @@ const sendEmailFunctionality = (data) => {
         emailBody.contentEditable = true;
     }
     
+    //connection changes event listener
+    let connectionSelect = document.getElementById(`email-connection-${data?.reqId}`);
+    if(connectionSelect && !connectionSelect?.eventListenerAdded) {
+        connectionSelect.addEventListener('sl-change', (event) => {
+            const selectedConnectionId = event.target.value;            
+            
+            // selected connection from connections list
+            const connections = localCurrentData?.templateInfo?.connections || [];
+            const selectedConnection = connections.find(conn => conn?.id === selectedConnectionId);
+            
+            if (selectedConnection) {
+                const provider = selectedConnection?.provider;                                
+                // update the icon based on provider
+                const iconContainer = document.querySelector('.connection-provider-icon');
+                if (iconContainer) {
+                    iconContainer.innerHTML = getProviderIcon(provider);
+                }
+            }
+                        
+            if (!localCurrentData.templateInfo) {
+                localCurrentData.templateInfo = {};
+            }
+            localCurrentData.templateInfo.defaultConnections = selectedConnectionId;
+                        
+            validateSendButton();
+        });
+        connectionSelect.eventListenerAdded = true;
+    }
     
 }
 

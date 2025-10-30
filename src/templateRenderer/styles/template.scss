@@ -292,3 +292,454 @@
         }
     }
 }
+
+/* Teams Message Template Styles */
+.teams-message-template {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    padding: 1rem;
+    
+    .teams-message-container {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        background: #ffffff;
+        border-radius: 0.5rem;
+        border: 0.0625rem solid #e0e0e0;
+        padding: 1rem;
+    }
+
+    .teams-header-block {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 0.0625rem solid #e5e5e5;
+
+        .connection-provider-icon {
+            display: flex;
+            align-items: center;
+        }
+
+        sl-select {
+            flex: 1;
+            min-width: 0;
+        }
+    }
+
+    .teams-recipients-section {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .teams-search-field {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        box-sizing: border-box;
+
+        .teams-search-input-wrapper {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 0.375rem;
+            width: 100%;
+            min-height: 2.5rem;
+            padding: 0.375rem 0.75rem;
+            background: #ffffff;
+            border: 0.0625rem solid #d0d5dd;
+            border-radius: 0.5rem;
+            box-sizing: border-box;
+            cursor: text;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+
+            &:focus-within {
+                outline: none;
+                border-color: #667085;
+                box-shadow: 0 0 0 0.25rem rgba(102, 112, 133, 0.1);
+            }
+
+            .teams-selected-recipients {
+                display: none;
+                flex-wrap: wrap;
+                gap: 0.375rem;
+                align-items: center;
+
+                &:not(:empty) {
+                    display: flex;
+                }
+
+                sl-tag {
+                    font-size: 0.8125rem;
+                }
+            }
+
+            .teams-search-input {
+                flex: 1;
+                min-width: 120px;
+                border: none;
+                outline: none;
+                padding: 0.25rem;
+                font-size: 0.875rem;
+                background: transparent;
+                color: #344054;
+
+                &::placeholder {
+                    color: #98a2b3;
+                }
+            }
+        }
+
+        .teams-search-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            margin-top: 0.25rem;
+            background: #ffffff;
+            border: 0.0625rem solid #d0d5dd;
+            border-radius: 0.5rem;
+            box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.1);
+            max-height: 18.75rem;
+            overflow-y: auto;
+            z-index: 10;
+
+            .teams-search-dropdown-list {
+                padding: 0.25rem;
+
+                .dropdown-item {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    padding: 0.625rem 0.75rem;
+                    cursor: pointer;
+                    border-radius: 0.375rem;
+                    transition: background-color 0.2s ease;
+
+                    &:hover {
+                        background-color: #f9fafb;
+                    }
+
+                    &.selected {
+                        background-color: #eff8ff;
+                    }
+
+                    .dropdown-item-content {
+                        display: flex;
+                        align-items: center;
+                        gap: 0.75rem;
+                        flex: 1;
+
+                        .dropdown-item-icon {
+                            font-size: 1.25rem;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            width: 2rem;
+                            height: 2rem;
+                            background: #f2f4f7;
+                            border-radius: 50%;
+                        }
+
+                        .dropdown-item-details {
+                            display: flex;
+                            flex-direction: column;
+                            gap: 0.125rem;
+
+                            .dropdown-item-name {
+                                font-size: 0.875rem;
+                                font-weight: 500;
+                                color: #344054;
+                            }
+
+                            .dropdown-item-subtitle {
+                                font-size: 0.75rem;
+                                color: #667085;
+                            }
+                        }
+                    }
+
+                    .dropdown-item-checkmark {
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        width: 1.5rem;
+                        height: 1.5rem;
+                        flex-shrink: 0;
+                        
+                        svg {
+                            width: 1rem;
+                            height: 1rem;
+                        }
+                    }
+                }
+
+                .no-results {
+                    padding: 1rem;
+                    text-align: center;
+                    color: #667085;
+                    font-size: 0.875rem;
+                }
+            }
+        }
+    }
+
+    .teams-recipients {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        width: 100%;
+
+        label {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #344054;
+            min-width: 2rem;
+        }
+
+        .teams-select-field {
+            flex: 1;
+            min-height: 2.5rem;
+            padding: 0.5rem;
+            border: 0.0625rem solid #d0d5dd;
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+            background: #ffffff;
+            
+            &:focus {
+                outline: none;
+                border-color: #667085;
+                box-shadow: 0 0 0 0.25rem rgba(102, 112, 133, 0.1);
+            }
+        }
+    }
+
+    .teams-message-body {
+        width: 100%;
+        min-height: 9.375rem;
+        border: 0.0625rem solid #d0d5dd;
+        border-radius: 0.5rem;
+        padding: 0.75rem;
+        background: #ffffff;
+        box-sizing: border-box;
+
+        .teams-message-editor {
+            min-height: 8.125rem;
+            outline: none;
+            font-size: 0.875rem;
+            line-height: 1.5;
+            color: #344054;
+
+            &:empty:before {
+                content: attr(placeholder);
+                color: #98a2b3;
+                pointer-events: none;
+            }
+
+            &:focus {
+                outline: none;
+            }
+        }
+    }
+
+    .teams-message-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+        padding-top: 0.75rem;
+        border-top: 0.0625rem solid #e5e5e5;
+
+        .teams-footer-left {
+            display: flex;
+            gap: 0.75rem;
+            align-items: center;
+        }
+
+        .teams-footer-right {
+            display: flex;
+            align-items: center;
+        }
+
+        .teams-attachment-btn,
+        .teams-smart-compose-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.375rem;
+            padding: 0.5rem 0.875rem;
+            background: #ffffff;
+            border: 0.0625rem solid #d0d5dd;
+            border-radius: 0.375rem;
+            cursor: pointer;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #344054;
+            transition: all 0.2s ease;
+
+            &:hover {
+                background: #f9fafb;
+                border-color: #98a2b3;
+            }
+
+            &:active {
+                transform: scale(0.98);
+            }
+
+            .attachment-icon,
+            .smart-compose-icon {
+                display: flex;
+                align-items: center;
+            }
+        }
+
+        .teams-send-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.625rem 1.25rem;
+            background: #131316;
+            color: #ffffff;
+            border: none;
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+
+            .send-icon {
+                display: flex;
+                align-items: center;
+            }
+
+            &:hover:not(:disabled) {
+                background: #292929;
+                transform: translateY(-0.0625rem);
+            }
+
+            &:disabled {
+                opacity: 0.5;
+                cursor: not-allowed;
+            }
+        }
+    }
+
+    .teams-attachments-preview {
+        display: none;
+        padding: 0.75rem;
+        background: #f9fafb;
+        border-radius: 0.375rem;
+        border: 0.0625rem solid #e5e5e5;
+
+        .attachments-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+
+            .attachment-item {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 0.5rem;
+                background: #ffffff;
+                border-radius: 0.25rem;
+                border: 0.0625rem solid #d0d5dd;
+
+                .attachment-name {
+                    font-size: 0.8125rem;
+                    color: #344054;
+                    flex: 1;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    white-space: nowrap;
+                }
+
+                .attachment-remove {
+                    background: none;
+                    border: none;
+                    color: #667085;
+                    font-size: 1.25rem;
+                    cursor: pointer;
+                    padding: 0 0.25rem;
+                    line-height: 1;
+                    
+                    &:hover {
+                        color: #ff0000;
+                    }
+                }
+            }
+        }
+    }
+}
+
+/* Teams Message Summary Card */
+.teams-message-small-card {
+    background: #f9fafb;
+    border: 0.0625rem solid #e5e5e5;
+    border-radius: 0.5rem;
+    padding: 1rem;
+    margin: 0.5rem 0;
+
+    .teams-summary-header {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 0.75rem;
+
+        .teams-icon {
+            display: flex;
+            align-items: center;
+        }
+
+        h3 {
+            margin: 0;
+            font-size: 0.9375rem;
+            font-weight: 600;
+            color: #131316;
+        }
+    }
+
+    .teams-summary-body {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+
+        .teams-summary-recipients {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            align-items: center;
+
+            strong {
+                font-size: 0.875rem;
+                color: #344054;
+            }
+
+            .recipient-tag {
+                display: inline-flex;
+                padding: 0.25rem 0.625rem;
+                background: #eff8ff;
+                border: 0.0625rem solid #b2ddff;
+                border-radius: 0.25rem;
+                font-size: 0.8125rem;
+                color: #175cd3;
+            }
+        }
+
+        .teams-summary-message {
+            font-size: 0.875rem;
+            color: #475467;
+            line-height: 1.5;
+        }
+
+        .teams-summary-attachments {
+            font-size: 0.8125rem;
+            color: #667085;
+
+            strong {
+                font-weight: 600;
+            }
+        }
+    }
+}
