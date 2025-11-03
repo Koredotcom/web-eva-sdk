@@ -416,8 +416,9 @@ const MultiResponse = () => {
         // console.log(payload)
 
         let obj = { createIssue: true, from: "gptAgent", botQuestionId: item?.id } // Corrected to use item instead of question
-        if (item?.isTask) { // Corrected to use item instead of question
-            obj.multiIntentExecution = true
+        if (item?.isTask) { // Corrected to use item instead of question               
+            obj.isTask = true
+            obj.parentMsgId = item?.parentMsgId
         }
 
         let callback = () => {

@@ -8,6 +8,7 @@ import History from "../history";
 import Agents from "../agents";
 import Notifications from "../Notifications";
 import { AnnouncementsInterface } from "../../Announcements";
+import MultiIntentExecutionDemo from "./MultiIntentExecutionDemo";
 
 const ChatInterfaceDemo = () => {
   const [messages, setMessages] = useState(null);
@@ -69,10 +70,16 @@ const ChatInterfaceDemo = () => {
           {messages &&
             Object.values(messages).map((item) => {
               if (item?.isTask) return;
+              
+              // Handle multi_intent_execution separately (pure React)
+              if (item?.templateType === "multi_intent_execution") {
+                return <MultiIntentExecutionDemo key={item?.id} data={item} />;
+              }
+
+              // For all other templates, use the HTML template renderer
               const assistantIconTemplate = () => {
                 return <div className="logo-icon"><img src="/public/eva-black-svg.svg" alt="AiForWork" /></div>;
               };
-
               
               let html = TemplateRenderer.generateHTMLTemplate(item, {
                 assistantIconTemplate,
@@ -81,12 +88,12 @@ const ChatInterfaceDemo = () => {
 
               return (
                 <div
+                  key={item?.id}
                   dangerouslySetInnerHTML={{
                     __html: html.innerHTML,
                   }}
                 />
               );
-
             })}
         </div>
         <Composebar 

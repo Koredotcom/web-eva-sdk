@@ -113,8 +113,9 @@ const ChatInterface = (props) => {
 
 
       const reqId = id || state.currentQuestion.reqId;
+      const questions = cloneDeep(store.getState().global.questions);
       const payload = { boardId: state.activeBoardId };
-      const currQuestion = state.questions[state.currentQuestion.reqId];
+      const currQuestion = state.currentQuestion?.isTask ? state.currentQuestion : questions[state.currentQuestion.reqId];
       if(currQuestion?.viewType === "threadView" && currQuestion?.botConversation) {
          stopBotAnswer()
         return;
@@ -125,9 +126,8 @@ const ChatInterface = (props) => {
         reqId, 
         payload 
       }));
-    
-      const questions = cloneDeep(store.getState().global.questions);
-      const reqdCId = getCidByReqId(questions, reqId);
+      
+      const reqdCId = currQuestion?.isTask ? currQuestion?.cId : getCidByReqId(questions, reqId);
     
       constructQuestionPostCall(response, reqdCId);
     };
@@ -155,6 +155,9 @@ const ChatInterface = (props) => {
           params.agentType = "gptAgent"
           params.reqId = getCidByMessageId(state.questions, payload?.messageId)
           replaceExistingQsn = true
+          if(arg?.isTask){
+            params.parentMsgId = arg?.parentMsgId
+          }
         }
       }
 
@@ -167,7 +170,7 @@ const ChatInterface = (props) => {
 
 		let qId = null;
 		if(arg?.multiIntentExecution){
-			qId = constructQuestionInitial({...arg?.params, ...arg?.payload, multiIntentExecution : true})
+			qId = constructQuestionInitial({...arg?.params, ...params, ...arg?.payload, multiIntentExecution : true})
 		}else{
 			qId = constructQuestionInitial({...params, ...payload, replaceExistingQsn})
 		}
@@ -382,6 +385,9 @@ const ChatInterface = (props) => {
     const agentThoughts = (detail) => {
       let _questions = cloneDeep(state.questions)
       let reqId = detail?.data?.reqId
+      if(isEmpty(_questions[reqId])){
+        return;
+      }
       /*when resuming the conversation from history, the history data is structured using uuid, so using redId, we can extract the question to be resumed, so need to target the id, present in question with the help of reqId */
       const isHistoryAccessed = checkHistoryAccessed(_questions)
       if(isHistoryAccessed){

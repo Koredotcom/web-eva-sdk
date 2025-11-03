@@ -9,6 +9,7 @@ import { encodeHtml } from "../utils/helper";
  */
 export function renderQuestionBubble(data, userIconTemplate = false) {
 	const { question, timestamp, icon } = data;
+    if(data?.isTask) return "";
 	return `
         <div class="message-bubble question">
             <div class="message-content">
@@ -25,8 +26,8 @@ export function renderQuestionBubble(data, userIconTemplate = false) {
  * @returns {string} HTML string
  */
 export function renderAnswerBubble(data) {
-	const { answer, timestamp, icon, source, status } = data;
-
+	const { answer, timestamp, icon, source, status, isTask } = data;
+    if(isTask) return "";
 	return `
         < div class="${status || ""}" >
             ${
