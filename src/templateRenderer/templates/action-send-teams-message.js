@@ -1,5 +1,10 @@
 import { searchIcon, attachmentIcon, ActionsFlashIcon, arrowCirlceUpIcon, Teamsimg } from "../icons-library";
 import "./../styles/template.scss";
+import FileUploader from "../../utils/FileUploader";
+import { getFileExtension, getUID, generateComponentId } from "../../utils/helpers";
+import store from "../../redux/store";
+import axios from "axios";
+import { initializeRecipientSearch } from "../../utils/searchChannelRecepients";
 
 export function render(data) {
 
@@ -49,18 +54,15 @@ export function render(data) {
                     </div>
                 </div>
                 <div class="teams-message-section">
-                <div class="teams-recipients-label">Channel or People</div>
-                <div class="teams-message-body">                    
-                    <div
-                        class="teams-message-editor"
-                        id="teams-message-body-${data?.reqId}"
-                        contenteditable="true"
-                        placeholder="Type your message here..."
-                        contenteditable="true"
-                        >
-                        ${data?.content?.message || ''}
+                    <div class="teams-message-label">Message</div>
+                    <div class="teams-message-body">
+                        <div
+                            class="teams-message-editor"
+                            id="teams-message-body-${data?.reqId}"
+                            contenteditable="true"
+                            placeholder="Type your message here..."
+                        >${data?.content?.message || ''}</div>
                     </div>
-                </div>
                 </div>
 
                 <div class="teams-message-footer">
@@ -108,7 +110,8 @@ export function render(data) {
 }
 
 const renderTeamsMessageSummary = (data) => {
-    let recipients = data?.content?.recipients || [];
+    let recipients = data?.content?.recipients || [];    
+    const tenantName = data?.content?.tenantName;
     
     let html = `
         <div class="teams-message-small-card">
@@ -116,7 +119,7 @@ const renderTeamsMessageSummary = (data) => {
                 <div class="teams-icon">
                     ${Teamsimg({ size: 20 })}
                 </div>
-                <h3>Teams Message Sent</h3>
+                <h3>${tenantName}</h3>
             </div>
             <div class="teams-summary-body">
                 <div class="teams-summary-recipients">
@@ -124,7 +127,7 @@ const renderTeamsMessageSummary = (data) => {
                     ${recipients?.map(recipient => `<span class="recipient-tag">${recipient?.name || recipient?.email}</span>`).join('')}
                 </div>
                 <div class="teams-summary-message">
-                    ${data?.content?.message}
+                    ${data?.content?.message?.msg}
                 </div>
                 ${data?.content?.attachments?.length > 0 ? `
                     <div class="teams-summary-attachments">
@@ -139,218 +142,182 @@ const renderTeamsMessageSummary = (data) => {
 }
 
 const initializeTeamsMessageFunctionality = (data) => {
+    const userId = window.sdkConfig.userId;
     const reqId = data?.reqId;
-    
-    // Initialize search functionality
-    const searchInputWrapper = document.getElementById(`teams-search-input-wrapper-${reqId}`);
-    const searchInput = document.getElementById(`teams-search-${reqId}`);
-    const searchDropdown = document.getElementById(`teams-search-dropdown-${reqId}`);
-    const searchDropdownList = document.getElementById(`teams-search-dropdown-list-${reqId}`);
-    const selectedRecipientsContainer = document.getElementById(`teams-selected-recipients-${reqId}`);
+    const connectionId = data?.connId;
+    const source = data?.provider;
     const messageBody = document.getElementById(`teams-message-body-${reqId}`);
+    const messageBodyWrapper = messageBody?.parentElement;
     const sendButton = document.getElementById(`teams-send-${reqId}`);
     const smartComposeBtn = document.getElementById(`teams-smart-compose-${reqId}`);
     const attachmentInput = document.getElementById(`teams-attachments-${reqId}`);
     const attachmentsPreview = document.getElementById(`teams-attachments-preview-${reqId}`);
 
     let attachedFiles = [];
-    let selectedRecipients = [];
     
-    // Focus input when clicking on wrapper
-    if (searchInputWrapper) {
-        searchInputWrapper.addEventListener('click', (e) => {
-            // Don't focus if clicking on a tag's remove button
-            if (!e.target.closest('sl-tag')) {
-                searchInput?.focus();
-            }
-        });
-    }
-    
-    // Static mock data for users and groups
-    const mockUsersAndGroups = [
-        { id: 'user-1', name: 'John Doe', email: 'john.doe@company.com', type: 'user' },
-        { id: 'user-2', name: 'Jane Smith', email: 'jane.smith@company.com', type: 'user' },
-        { id: 'user-3', name: 'Robert Johnson', email: 'robert.j@company.com', type: 'user' },
-        { id: 'user-4', name: 'Emily Davis', email: 'emily.davis@company.com', type: 'user' },
-        { id: 'user-5', name: 'Michael Brown', email: 'michael.b@company.com', type: 'user' },
-        { id: 'group-1', name: 'Engineering Team', type: 'group', memberCount: 15 },
-        { id: 'group-2', name: 'Marketing Team', type: 'group', memberCount: 8 },
-        { id: 'group-3', name: 'Sales Team', type: 'group', memberCount: 12 },
-        { id: 'group-4', name: 'Product Team', type: 'group', memberCount: 10 },
-        { id: 'group-5', name: 'Design Team', type: 'group', memberCount: 6 },
-    ];
-
-    // Function to search and filter users/groups
-    const searchRecipients = (query) => {
-        if (!query || query.trim() === '') {
-            return mockUsersAndGroups;
+    // Initialize Recipient Search
+    const recipientSearchManager = initializeRecipientSearch({
+        reqId,
+        connectionId,
+        userId,
+        source,
+        onRecipientsChange: (recipients) => {
+            validateForm();
         }
-        const lowerQuery = query.toLowerCase();
-        return mockUsersAndGroups.filter(item => 
-            item.name.toLowerCase().includes(lowerQuery) || 
-            (item.email && item.email.toLowerCase().includes(lowerQuery))
+    });
+
+    if (messageBody) {
+        if (messageBodyWrapper) {
+            messageBodyWrapper.addEventListener('click', () => {
+                messageBody.focus();
+            });
+        }
+
+        messageBody.setAttribute('contenteditable', 'true');
+        messageBody.style.pointerEvents = 'auto';
+        messageBody.style.userSelect = 'text';
+    }
+
+    const uploadFileInitial = (file, fileUID, onComplete) => {
+        const state = store.getState().global;
+        const localSize = file.size / Math.pow(1024, 2);
+        const allowedFileSize = Math.round(state.maxAllowedFileSize / Math.pow(1024, 2));
+        
+        if (localSize > allowedFileSize) {
+            onComplete({
+                success: false,
+                error: 'size',
+                message: `File Size has to be less than ${allowedFileSize} MB`,
+                name: file.name,
+                uID: fileUID
+            });
+            return;
+        }
+
+        const userId = window.sdkConfig.userId;
+        const userAccessToken = window.sdkConfig.accessToken;
+        const cancelSource = axios.CancelToken.source();
+        const mediaName = getUID(6);
+
+        const uploadConfig = {
+            file: file,
+            userInfoId: userId,
+            fileContext: 'knowledge',
+            userAccessToken: userAccessToken,
+            mediaName: mediaName,
+            source: cancelSource,
+            uID: fileUID
+        };
+
+        const uploader = new FileUploader(uploadConfig);
+
+        uploader.start(
+            (progress) => {
+                const fileIndex = attachedFiles.findIndex(f => f.uID === fileUID);
+                if (fileIndex >= 0) {
+                    attachedFiles[fileIndex].progress = progress;
+                    updateAttachmentsPreview();
+                }
+            },
+            (uploadedFile) => {
+                const componentId = generateComponentId();
+                const fileData = {
+                    ...uploadedFile,
+                    uID: fileUID,
+                    loading: false,
+                    uploaded: true,
+                    componentId,
+                    extName: getFileExtension(uploadedFile.fileName),
+                    source: 'attachment',
+                    title: uploadedFile.fileName,
+                    docId: uploadedFile.fileUrl?.fileId,
+                    fileId: uploadedFile.fileUrl?.fileId,
+                    name: uploadedFile.fileName,
+                    size: uploadedFile.filesize,
+                    type: uploadedFile.type,
+                    cancelSource: cancelSource
+                };
+                
+                onComplete({
+                    success: true,
+                    data: fileData
+                });
+            },
+            (errorMsg, errorData) => {
+                onComplete({
+                    success: false,
+                    error: 'type',
+                    message: `The file type is not compatible`,
+                    name: file.name,
+                    uID: fileUID
+                });
+            }
         );
     };
 
-    // Function to render search dropdown
-    const renderSearchDropdown = (results) => {
-        if (!searchDropdownList) return;
-        
-        if (results.length === 0) {
-            searchDropdownList.innerHTML = '<div class="no-results">No results found</div>';
-            return;
-        }
-
-        searchDropdownList.innerHTML = results.map(item => {
-            const isSelected = selectedRecipients.some(r => r.id === item.id);
-            const iconType = item.type === 'user' ? '👤' : '👥';
-            const subtitle = item.type === 'user' ? item.email : `${item.memberCount} members`;
-            
-            return `
-                <div class="dropdown-item ${isSelected ? 'selected' : ''}" data-id="${item.id}">
-                    <div class="dropdown-item-content">
-                        <span class="dropdown-item-icon">${iconType}</span>
-                        <div class="dropdown-item-details">
-                            <div class="dropdown-item-name">${item.name}</div>
-                            <div class="dropdown-item-subtitle">${subtitle}</div>
-                        </div>
-                    </div>
-                    ${isSelected ? `
-                        <span class="dropdown-item-checkmark">
-                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M13.3332 4L5.99984 11.3333L2.6665 8" stroke="#12B76A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                            </svg>
-                        </span>
-                    ` : ''}
-                </div>
-            `;
-        }).join('');
-
-        // Add click handlers
-        searchDropdownList.querySelectorAll('.dropdown-item').forEach(item => {
-            item.addEventListener('click', (e) => {
-                const itemId = e.currentTarget.getAttribute('data-id');
-                const recipient = mockUsersAndGroups.find(r => r.id === itemId);
-                if (recipient) {
-                    toggleRecipient(recipient);
-                }
-            });
-        });
-    };
-
-    // Function to toggle recipient selection
-    const toggleRecipient = (recipient) => {
-        const existingIndex = selectedRecipients.findIndex(r => r.id === recipient.id);
-        
-        if (existingIndex >= 0) {
-            // Remove recipient
-            selectedRecipients.splice(existingIndex, 1);
-        } else {
-            // Add recipient
-            selectedRecipients.push(recipient);
-        }
-        
-        updateSelectedRecipients();
-        renderSearchDropdown(searchRecipients(searchInput?.value || ''));
-        validateForm();
-    };
-
-    // Function to update selected recipients display
-    const updateSelectedRecipients = () => {
-        if (!selectedRecipientsContainer) return;
-        
-        if (selectedRecipients.length === 0) {
-            selectedRecipientsContainer.style.display = 'none';
-            selectedRecipientsContainer.innerHTML = '';
-            // Show placeholder
-            if (searchInput) {
-                searchInput.placeholder = 'Search user or user groups';
-            }
-            return;
-        }
-        
-        selectedRecipientsContainer.style.display = 'flex';
-        selectedRecipientsContainer.innerHTML = selectedRecipients.map(recipient => {
-            const variant = recipient.type === 'group' ? 'primary' : 'neutral';
-            return `
-                <sl-tag variant="${variant}" size="small" removable data-id="${recipient.id}">
-                    ${recipient.name}
-                </sl-tag>
-            `;
-        }).join('');
-
-        // Hide placeholder when tags are present
-        if (searchInput) {
-            searchInput.placeholder = '';
-        }
-
-        // Add remove handlers
-        selectedRecipientsContainer.querySelectorAll('sl-tag').forEach(tag => {
-            tag.addEventListener('sl-remove', (e) => {
-                const recipientId = e.target.getAttribute('data-id');
-                const recipient = selectedRecipients.find(r => r.id === recipientId);
-                if (recipient) {
-                    toggleRecipient(recipient);
-                }
-            });
-        });
-    };
-
-    // Handle search input
-    if (searchInput) {
-        searchInput.addEventListener('input', (e) => {
-            const query = e.target.value;
-            const results = searchRecipients(query);
-            renderSearchDropdown(results);
-            
-            if (searchDropdown) {
-                searchDropdown.style.display = results.length > 0 || query.trim() !== '' ? 'block' : 'none';
-            }
-        });
-
-        // Show dropdown on focus
-        searchInput.addEventListener('focus', () => {
-            const results = searchRecipients(searchInput.value || '');
-            renderSearchDropdown(results);
-            if (searchDropdown) {
-                searchDropdown.style.display = 'block';
-            }
-        });
-
-        // Close dropdown when clicking outside
-        document.addEventListener('click', (e) => {
-            if (searchDropdown && 
-                !searchInputWrapper?.contains(e.target) && 
-                !searchDropdown.contains(e.target)) {
-                searchDropdown.style.display = 'none';
-            }
-        });
-    }
-
-    // Handle attachment selection
     if (attachmentInput) {
         attachmentInput.addEventListener('change', (e) => {
             const files = Array.from(e.target.files);
-            attachedFiles = [...attachedFiles, ...files];
-            updateAttachmentsPreview();
+            
+            if (files && files.length > 0) {
+                files.forEach(file => {
+                    const fileUID = getUID(6);
+                    attachedFiles.push({
+                        name: file.name,
+                        size: file.size,
+                        loading: true,
+                        uploaded: false,
+                        uID: fileUID,
+                        progress: 0
+                    });
+                    
+                    uploadFileInitial(file, fileUID, (result) => {
+                        const fileIndex = attachedFiles.findIndex(f => f.uID === result?.data?.uID);
+                        
+                        if (fileIndex >= 0) {
+                            if (result.success) {
+                                attachedFiles[fileIndex] = result.data;
+                            } else {
+                                attachedFiles[fileIndex].loading = false;
+                                attachedFiles[fileIndex].error = result.message;
+                            }
+                        }
+                        
+                        updateAttachmentsPreview();
+                    });
+                });
+                
+                updateAttachmentsPreview();
+            }
+            
+            e.target.value = '';
         });
     }
 
-    // Update attachments preview
     const updateAttachmentsPreview = () => {
+        console.log('updateAttachmentsPreview', attachedFiles);
         if (attachmentsPreview && attachedFiles.length > 0) {
             attachmentsPreview.innerHTML = `
                 <div class="attachments-list">
                     ${attachedFiles.map((file, index) => `
-                        <div class="attachment-item">
-                            <span class="attachment-name">${file.name}</span>
-                            <button class="attachment-remove" data-index="${index}">×</button>
+                        <div class="attachment-item ${file.error ? 'error' : ''}">
+                            <div class="attachment-name" title="${file.name}">
+                                ${file?.extName ? `<img src="images/${file?.extName}.png" alt="${file?.name}" style="width:18px;height:18px;vertical-align:middle;margin-right:6px;" />` : ''}
+                                <span class="attachment-filename">${file.name}</span>
+                                <span class="attachment-filesize">
+                                    (${file.size > 1024 * 1024
+                                            ? `${(file.size / (1024 * 1024)).toFixed(2)} MB`
+                                            : `${(file.size / 1024).toFixed(2)} KB`
+                                    })
+                                </span>
+                                ${file.loading ? `<span class="attachment-loading">Uploading..</span>` : '<button class="attachment-remove" data-index="${index}" title="Remove">×</button>'}                                
+                                ${file.error ? `<span class="attachment-error">${file.error}</span>` : ''}
+                            </div>                           
                         </div>
                     `).join('')}
                 </div>
             `;
             
-            // Add remove handlers
             attachmentsPreview.querySelectorAll('.attachment-remove').forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     const index = parseInt(e.target.dataset.index);
@@ -365,32 +332,29 @@ const initializeTeamsMessageFunctionality = (data) => {
         }
     };
 
-    // Handle smart compose
     if (smartComposeBtn) {
         smartComposeBtn.addEventListener('click', () => {
-            // Trigger smart compose functionality
             console.log('Smart compose triggered');
-            // You can add your AI-powered composition logic here
         });
     }
 
-    // Handle send button
     if (sendButton) {
         sendButton.addEventListener('click', () => {
             const message = messageBody?.innerHTML || '';
+            const uploadedAttachments = attachedFiles.filter(file => file.uploaded && !file.error);
+            const selectedRecipients = recipientSearchManager.getSelectedRecipients();
             
             console.log('Sending Teams message:', {
                 recipients: selectedRecipients,
                 message,
-                attachments: attachedFiles
+                attachments: uploadedAttachments,
+                fileIds: uploadedAttachments.map(f => f.fileId)
             });
-            
-            // Add your send logic here
         });
     }
 
-    // Enable/disable send button based on content
     const validateForm = () => {
+        const selectedRecipients = recipientSearchManager.getSelectedRecipients();
         const hasRecipients = selectedRecipients.length > 0;
         const hasMessage = messageBody?.textContent?.trim().length > 0;
         
@@ -399,12 +363,10 @@ const initializeTeamsMessageFunctionality = (data) => {
         }
     };
 
-    // Add validation listeners
     if (messageBody) {
         messageBody.addEventListener('input', validateForm);
     }
 
-    // Initial validation
     validateForm();
 };
 
