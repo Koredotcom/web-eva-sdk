@@ -104,7 +104,7 @@ export const constructQuestionPostCall = (data, qId) => {
 
     // data.payload = contains api response
     // data.meta.arg = contains passed params and payload
-    if(data?.payload?.cancelled) {
+    if(data?.payload?.cancelled || Object.keys(questions).length === 0) {
         return;
     }
 
