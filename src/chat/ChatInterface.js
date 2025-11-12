@@ -288,6 +288,9 @@ const ChatInterface = (props) => {
 
       // questionsRef.current - because questions state updates not coming in eventBuzz
       const questions = cloneDeep(state.questions);
+      if(Object.keys(questions).length === 0) {
+        return;
+      }
       /*when resuming the conversation from history, the history data is structured using uuid, so using redId, we can extract the question to be resumed, so need to target the id, present in question with the help of reqId */
       /*function to check the questions are from history */
       const isHistoryAccessed = checkHistoryAccessed(questions)

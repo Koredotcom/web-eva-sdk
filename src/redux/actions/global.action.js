@@ -1,4 +1,5 @@
 import { createAsyncThunk  } from "@reduxjs/toolkit";
+import axios from 'axios';
 import axiosInstance from "../../api/axiosInstance";
 import { handleErrorState } from "../../utils/helpers";
 import { v4 as uuidv4 } from 'uuid';
@@ -81,6 +82,14 @@ export const fetchAgents = createAsyncThunk(
 
 
 let controller;
+
+export const abortAdvanceSearch = () => {
+    if (controller) {
+        controller?.abort();
+        controller = null;
+    }
+};
+
 export const advanceSearch = createAsyncThunk(
     'global/advanceSearch',
     async (arg, thunkAPI) => {
@@ -96,6 +105,10 @@ export const advanceSearch = createAsyncThunk(
             });
             return {...response.data, 'kore-traceid': traceId};
         } catch (error) {
+            // Check whether api is cancelled
+            if (axios.isCancel(error) || error.name === 'CanceledError') {                
+                return thunkAPI.rejectWithValue({ cancelled: true });
+            }
             handleErrorState(error, "Advance Search");
             return thunkAPI.rejectWithValue(error.response.data);
         }

@@ -68,7 +68,7 @@ const ChatInterfaceDemo = () => {
       <div className="chatInterfaceSec">
         <div className="chatSec">
           {messages &&
-            Object.values(messages).map((item) => {
+            Object.values(messages).map((item, index) => {
               if (item?.isTask) return;
               
               // Handle multi_intent_execution separately (pure React)
@@ -78,7 +78,7 @@ const ChatInterfaceDemo = () => {
 
               // For all other templates, use the HTML template renderer
               const assistantIconTemplate = () => {
-                return <div className="logo-icon"><img src="/public/eva-black-svg.svg" alt="AiForWork" /></div>;
+                return <div className="logo-icon" key={index}><img src="/public/eva-black-svg.svg" alt="AiForWork" /></div>;
               };
               
               let html = TemplateRenderer.generateHTMLTemplate(item, {
