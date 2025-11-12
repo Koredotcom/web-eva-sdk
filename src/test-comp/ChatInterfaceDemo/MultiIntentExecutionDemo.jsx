@@ -12,7 +12,8 @@ const MultiIntentExecutionDemo = ({ data }) => {
   const initialState = items?.status === "draft";
   
   // Initialize MultiIntentExecution instance
-  const { runTask, cancelTask, restartExecution } = MultiIntentExecution();
+  const { runTask, cancelTask, restartExecution, fetchHistoricalTask } = MultiIntentExecution();
+  
   
   // Get questions from Redux store and keep them synced with store updates
   const [questions, setQuestions] = useState(() => store.getState().global.questions);
@@ -29,6 +30,11 @@ const MultiIntentExecutionDemo = ({ data }) => {
       unsubscribe();
     };
   }, []);
+
+  // Toggle task expansion
+  const toggleTaskExpansion = (mergedTask) => {
+    fetchHistoricalTask(items, mergedTask);
+  };
 
   return (
     <div className={`multiIntentExecution ${items?.status} ${items?.executionPipeline?.length === 0 ? 'd-none' : ''}`}>
@@ -77,6 +83,17 @@ const MultiIntentExecutionDemo = ({ data }) => {
                   )}
                   <div className="utterance">{task?.utterance}</div>
                 </div>
+                {(mergedTask?.status === "completed" || mergedTask?.status === "discard" || mergedTask?.status === "terminated") && (
+                  <button 
+                    className="chevronBtn"
+                    onClick={() => toggleTaskExpansion(mergedTask)}
+                    aria-label="Toggle task details"
+                  >
+                      <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                        <path d="M12 10l-4-4-4 4" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                  </button>
+                )}
                 {mergedTask?.loading && (
                   <>
                   <div className="loadingState"><div class="loading-text">Analyzing</div></div>

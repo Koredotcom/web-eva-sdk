@@ -2,7 +2,7 @@ import { cloneDeep, isEmpty } from "lodash";
 import store from "../redux/store";
 import InitiateChatConversationAction from "../chat/InitiateChatConversationAction";
 import { updateChatData } from "../redux/globalSlice";
-import { executionPipelineActions } from "../redux/actions/global.action";
+import { executionPipelineActions, getSearchHistory } from "../redux/actions/global.action";
 import { cancelOngoingCall } from "../templateRenderer/utils/helper";
 
 const MultiIntentExecution = (props) => {
@@ -187,6 +187,50 @@ const MultiIntentExecution = (props) => {
         runTask(currentQuestion, 0)
     }
 
+    const fetchHistoricalTask = async (item, task) => {
+        state = store.getState().global;
+        const { activeBoardId, questions } = state;
+        let mockQuestions = cloneDeep(questions)
+        if ((task?.hasOwnProperty('hasData') && task?.hasData) || (task?.externalIntegrationAction && task?.status === "completed") || task?.responseFetched) {
+            mockQuestions[task?.stepId || task?.id] = { ...task, showResponse: !task?.showResponse }
+            store.dispatch(updateChatData(mockQuestions))
+        }
+        else {
+            const params = { pId: item?.messageId, msgId: task?.msgId || task?.messageId, showdata: true }
+            const response = await store.dispatch(getSearchHistory({ boardId: activeBoardId, params }))
+
+            if (response?.payload?.history) {
+                let executionPipeLineIds = item?.executionPipeline?.map(pipelineItem => pipelineItem?._id);
+
+                response.payload.history.map(historyTask => {
+                    if (historyTask?.templateType === "action_send_msteams_message") {
+                        historyTask.externalIntegrationAction = true;
+                    }
+
+                    if (executionPipeLineIds?.includes(historyTask?.stepId)) {
+                        mockQuestions[historyTask?.stepId] = {
+                            ...historyTask,
+                            showData: true,
+                            utterance: historyTask?.question,
+                            parentMsgId: item?.reqId,
+                            type: 'search',
+                            showResponse: historyTask?.showResponse == true
+                                ? false
+                                : mockQuestions[historyTask?.stepId]?.showResponse == true
+                                    ? false
+                                    : true,
+                            isTask: true,
+                            responseFetched: true,
+                        };
+                    }
+                });
+
+                store.dispatch(updateChatData(mockQuestions));
+            }
+        }
+    }
+
+
     return {
         runTask,
         runNextTask,
@@ -196,7 +240,8 @@ const MultiIntentExecution = (props) => {
         deleteExistingTask,
         editTask,
         cancelTask,
-        restartExecution
+        restartExecution,
+        fetchHistoricalTask
     }
 }
 
