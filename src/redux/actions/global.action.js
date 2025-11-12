@@ -81,6 +81,15 @@ export const fetchAgents = createAsyncThunk(
 
 
 let controller;
+
+// Helper function to abort any in-progress advance search request
+export const abortAdvanceSearch = () => {
+    if(controller) {
+        controller?.abort();
+        controller = null;
+    }
+};
+
 export const advanceSearch = createAsyncThunk(
     'global/advanceSearch',
     async (arg, thunkAPI) => {
