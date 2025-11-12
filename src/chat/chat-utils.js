@@ -104,6 +104,9 @@ export const constructQuestionPostCall = (data, qId) => {
 
     // data.payload = contains api response
     // data.meta.arg = contains passed params and payload
+    if(data?.payload?.cancelled) {
+        return;
+    }
 
     const state = store.getState().global
     const questions = cloneDeep(state.questions)
