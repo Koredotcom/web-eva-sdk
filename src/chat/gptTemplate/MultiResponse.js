@@ -166,6 +166,7 @@ const MultiResponse = () => {
         // Constructing contextFields
         let contextFields = item?.gpt_forms?.contextFields?.[0];
         let payloadContext = [];
+        let contextFieldDiv;
         if (!isEmpty(contextFields)) {
 
             payloadContext = {
@@ -181,8 +182,21 @@ const MultiResponse = () => {
             if (state?.enableDebugging) {
                 console.log("Recieved Context Fields", contextFields)
             }
-            // Checking the Type of Context Field and getting Input Values
-             if (contextFields?.value?.canUploadFile) {
+            if (contextFields?.value?.type === "file") {
+                contextFieldDiv = document.getElementById(`fileUpload-${contextFields?.key}-${item?.messageId}`);
+
+                // "MORGAN STANLEY REQUIREMENT" -> TO HANDLE CASES WHICH DOES NOT HAVE DEPENDENCY ON ID OF THE FILE UPLOADER. 
+                if (contextFieldDiv) {
+                    let ind = Object.keys(state.GptUploadedFiles).indexOf(`${contextFields?.key}-${item?.messageId}`);
+                    if (ind !== -1) {
+                        reqdValue = Object.values(state.GptUploadedFiles)?.[ind]?.map(({ title, fileId }) => ({ title, fileId }));
+                        payloadContext[contextFields?.key].value = reqdValue
+                    }
+                } else {
+                    reqdValue = []
+                }
+            }
+             else if (contextFields?.value?.canUploadFile) {
                 // "MORGAN STANLEY REQUIREMENT" -> TO HANDLE CASES WHICH DOES NOT HAVE DEPENDENCY ON ID OF THE FILE UPLOADER. 
                 // FOR CASES WITH LONGTEXT AND SIMPLETEXT AS WELL, WE HAVE TO NOT RELY ON THE KEY OF THE FILE UPLOADER.
 
@@ -200,19 +214,19 @@ const MultiResponse = () => {
                         }
                     }
                 }
-                // if(contextFieldDiv){
-                //     reqdValue = contextFieldDiv?.value || '';
-                // }
                 else {
-                    // let contextFieldDiv = document.getElementById(`fileUpload-${contextFields?.key}-${item?.messageId}`);
-                    // let contextFieldDiv = document.getElementById(`inputValue-${contextFields?.key}-${item?.messageId}`);                    
-                    payloadContext[contextFields?.key] = {
-                        type: "file",
-                        value: []
-                    }
-                    reqdValue = []
+                    contextFieldDiv = document.getElementById(`inputValue-${contextFields?.key}-${item?.messageId}`);
+                    reqdValue = contextFieldDiv?.value || contextFieldDiv?.textContent || '';
                 }
-            } else {
+                                
+            }
+            /*support for dropdown context field*/
+            else if (contextFields?.value?.type === "dropdown") {
+                let contextDropdownElement = document.getElementById(`dropdownValue-${contextFields?.key}-${item?.messageId}`);
+                reqdValue = contextDropdownElement?.value || contextDropdownElement?.textContent || '';
+            }
+            
+            else {
                 let contextFieldDiv = document.getElementById(`inputValue-${contextFields?.key}-${item?.messageId}`);
                 reqdValue = contextFieldDiv?.value || contextFieldDiv?.textContent || '';
             }
@@ -230,12 +244,7 @@ const MultiResponse = () => {
                     reqdValue = payloadContext[contextFields?.key].value || '';
                 }
             }
-
-            /*support for dropdown context field*/
-            if (contextFields?.value?.type === "dropdown") {
-                let contextDropdownElement = document.getElementById(`dropdownValue-${contextFields?.key}-${item?.messageId}`);
-                reqdValue = contextDropdownElement?.value || contextDropdownElement?.textContent || '';
-            }
+            
 
             // Checking if the Required Field is empty and returning an Error
             if (reqdValue?.length === 0 && contextFields?.value?.required) {
