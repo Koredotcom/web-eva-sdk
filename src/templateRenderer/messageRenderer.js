@@ -134,7 +134,7 @@ export function renderTemplateContent(
 	const appMetaData = store.getState().global.appMetaData;
 	let htmlTemplate = "";
 	htmlTemplate = responseQueryFlow.render(data);
-	htmlTemplate += TemplateComponents.renderAppAvatar(appMetaData.appName, appMetaData.appIcon, data.timestamp);
+	// htmlTemplate += TemplateComponents.renderAppAvatar(appMetaData.appName, appMetaData.appIcon, data.timestamp);
 	if (data.viewType === "threadView" || data.botConversation) {
 		htmlTemplate += botConversation.render(
 			data,
