@@ -230,9 +230,7 @@ const globalSlice = createSlice({
         state.questions = questions
       });
       handleAsyncActions(builder, presenceStart, 'presenceStart');
-      handleAsyncActions(builder, getAllAnnouncements, 'announcements', (state, action)=> {
-        state.announcements= action.payload             
-      });
+      handleAsyncActions(builder, getAllAnnouncements, 'announcements')
     }
 });
 
