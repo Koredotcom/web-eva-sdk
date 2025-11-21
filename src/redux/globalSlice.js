@@ -128,6 +128,9 @@ const globalSlice = createSlice({
       setQuickActions: (state, action) => {
         state.quickActions = action.payload;
       },
+      setAnnouncements: (state, action) => {
+        state.announcements = action.payload;
+      },
       setAppMetaData: (state, action) => {
         state.appMetaData = action.payload;
       }
@@ -257,6 +260,7 @@ export const {
   setBookMarkedChatThreads,
   setEnabledDebugging,
 	setQuickActions,
+  setAnnouncements,
 	setAppMetaData
 } = globalSlice.actions;
 
