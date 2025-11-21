@@ -14,7 +14,7 @@ import { renderRecentFiles } from "./RenderRecentAttachments.js";
  */
 class ComposeBar {
     constructor(container, options = {}) {
-        this.container = typeof container === 'string' ? document.querySelector(container) : container;
+        this.container = typeof container === 'string' ? document.getElementById(container) : container;
         this.options = {
             placeholder: 'Ask or Search Anything...',
             showQuickActions: true,
@@ -138,7 +138,7 @@ class ComposeBar {
                 console.log("fileUploaderInterface subscribe", sources, sessionId, quickActions, error, apiResp);
                 try {                    
                     const filesOnly = Array.isArray(sources)
-                        ? sources.filter(source => !source?.hasOwnProperty('isAgent'))
+                        ? sources.filter(source => source.type === "attachment")
                         : [];                          
                     this.attachments = filesOnly;
                     this.quickActions = quickActions || [];                                    
@@ -286,7 +286,7 @@ class ComposeBar {
             .replace(/"/g, '&quot;')
             .replace(/'/g, '&#39;');
 
-        const attachmentHtml = this.attachments.map(file => {
+        const attachmentHtml = this.attachments?.map(file => {
             const name = file?.title || file?.fileName || file?.mediaName || 'Attachment';
             const uid = file?.uID || file?.componentId || file?.docId || name;
             const fileExtension = getFileExtension(name);

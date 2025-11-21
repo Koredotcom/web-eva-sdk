@@ -1,6 +1,7 @@
 import { createAsyncThunk  } from "@reduxjs/toolkit";
 import axiosInstance from "../../api/axiosInstance";
 import { handleErrorState } from "../../utils/helpers";
+import { v4 as uuidv4 } from 'uuid';
 
 // Asynchronous actions (thunks)
 export const fetchConfigData = createAsyncThunk(
@@ -80,16 +81,29 @@ export const fetchAgents = createAsyncThunk(
 
 
 let controller;
+
+// Helper function to abort any in-progress advance search request
+export const abortAdvanceSearch = () => {
+    if(controller) {
+        controller?.abort();
+        controller = null;
+    }
+};
+
 export const advanceSearch = createAsyncThunk(
     'global/advanceSearch',
     async (arg, thunkAPI) => {
         controller = new AbortController();
+        const traceId = uuidv4();
         try {            
             const response = await axiosInstance.post(`1.1/kora/users/${arg.userId}/advancedsearch`, arg.payload, {
                 params: arg?.params,
                 signal: controller.signal,
+                headers: {
+                    'kore-traceid': traceId
+                }
             });
-            return response.data;
+            return { ...response.data, 'kore-traceid': traceId};
         } catch (error) {
             handleErrorState(error, "Advance Search");
             return thunkAPI.rejectWithValue(error.response.data);
@@ -481,3 +495,16 @@ export const getUserDetails = createAsyncThunk(
     }
 );
 
+
+export const getChannelRecepients = createAsyncThunk(
+    'global/getChannelRecepients',
+    async (arg, { rejectWithValue }) => {
+        try {
+            const response = await axiosInstance.post(`/1.1/ka/users/${arg?.userId}/connectors/${arg?.source}/actions/send_message/resolveFields`, arg?.payload);
+            return response.data;
+        } catch (error) {
+            handleErrorState(error, "Get Channel Recepients");
+            return rejectWithValue(error.response.data);
+        }
+    }
+);

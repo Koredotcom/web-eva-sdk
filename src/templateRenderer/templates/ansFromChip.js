@@ -327,6 +327,9 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 			}
 
 			Object.keys(parameter?.fields).forEach((data) => {
+				if(data.toLowerCase() === "content") {
+					return;
+				}
 				let totalKeys = [];
 				item?.content?.formFields?.paramFields?.forEach((param) =>
 					totalKeys.push(param)
@@ -670,7 +673,10 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 		}
 		
 		// Add three dot menu
-		actionChipsHTML += threeDotMenu();
+		const checkAvailableActions = getAvailableActions();
+		if(checkAvailableActions?.length > 0) {
+			actionChipsHTML += threeDotMenu();
+		}
 		
 		actionChipsHTML += `</div>`;
 

@@ -1,5 +1,6 @@
 import sendEmailFunctionality from "../functionality/action-send-email";
 import { encodeHtml } from "../utils/helper";
+import { Gmail, Outlookimg } from "../icons-library";
 import "./../styles/template.scss";
 
 export function render(data) {
@@ -10,11 +11,14 @@ export function render(data) {
 
     let emailList = data?.templateInfo?.connections;
     let defaultConnectionId = data?.templateInfo?.defaultConnections;
-
+    const defaultConnectionProvider = data?.templateInfo?.connections?.find(email => email?.id === defaultConnectionId)?.provider;
     let html = `
         <div class="email-template">
             <div class='email-selection-field'>
                 <div class="email-field email-header-block">
+                    <div class='connection-provider-icon'>                            
+                            ${defaultConnectionProvider === 'gmail' ? Gmail({ size: 16, color: "#131316" }) : Outlookimg({ size: 16, color: "#131316" })}
+                        </div>
                     <sl-select id="email-connection-${data?.reqId}" value="${defaultConnectionId || ''}">
                         ${emailList?.map((email, index) =>
         `

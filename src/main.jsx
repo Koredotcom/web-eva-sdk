@@ -5,7 +5,7 @@ import { initializeSDK} from './index'; // Adjust the import according to your S
 
 
 
-const getAccessToken = 'k4dk3i2IQqsdAr6jH4VnTg-rjCuUPAwImIh5fM3H_VjKRTqkLSoA1aQHId2DoZwN'; 
+const getAccessToken = 'uayMn6U5kZC8Q0Zq_3h09If28ILqSInh9nlYFeQOiEBhZ0eE3za9AMlkX7G0k4Zs'; 
 initializeSDK({
     accessToken: getAccessToken,
     api_url: 'https://eva-qa.kore.ai/api/',
@@ -19,7 +19,11 @@ initializeSDK({
             "clientSecret": "VJNwkfbPcMZl4bOa1Qn3XtYRz6rqigwtTgOlaYX25Xs="
         },
     },
-    enableDebugging: false
+    enableDebugging: false,
+    appMetaData: {
+        appName: "AI4Work",
+        appIcon: "https://ai4web.com/wp-content/uploads/2023/01/cropped-cropped-ai4web-logo-1-180x180.png"
+    }
 });
 
 

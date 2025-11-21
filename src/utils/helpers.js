@@ -90,7 +90,7 @@ export const getReqIdByMessageId = (messageId) => {
 export const getCidByReqId = (questions, reqId) => {
     for (const key in questions) {
         if (questions[key].reqId === reqId) {
-            return questions[key].reqId;
+            return questions[key].cId;
         }
     }
     return null;
@@ -395,4 +395,9 @@ export const getIconsList = (agent = {}, icons = []) => {
     }
     
     return html;
+}
+
+export const convertToTimeFormat = (isoDate) => {
+    if(!isoDate) return moment().local().format("hh:mm A");
+    return moment().utc(isoDate).local().format("hh:mm A");
 }

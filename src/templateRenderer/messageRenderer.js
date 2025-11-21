@@ -12,6 +12,7 @@ import * as multiResponses from "./templates/multi-responses-template";
 import * as holdConversation from "./templates/hold-conversation-template";
 import * as errorMessage from "./templates/error-message-template";
 import * as genericErrorTemplate from "./templates/generic-error-template";
+import * as actionSendTeamsMessageTemplate from "./templates/action-send-teams-message";
 import * as feedbackTemplate from "./templates/feedback-template";
 import { encodeHtml, SHOELACE_ATTRS, SHOELACE_TAGS } from "./utils/helper";
 import { convertTemplateToHtml } from "../utils/helpers";
@@ -21,10 +22,11 @@ import * as itemsAmbiguityTemplate from "./templates/items-ambiguity-template";
 import * as responseQueryFlow from "./templates/response-query-flow";
 import AnsFromChip from "./templates/ansFromChip";
 import DOMPurify from "dompurify";
+import store from "../redux/store";
 
 export function render(
 	data,
-	{ assistantIconTemplate, userIconTemplate, loadingText }
+	{ assistantIconTemplate, userIconTemplate, loadingText, displayTimestamp }
 ) {
 	try {
 		// Handle loading state
@@ -34,7 +36,8 @@ export function render(
 					data,
 					assistantIconTemplate,
 					loadingText,
-					userIconTemplate
+					userIconTemplate = true,
+					displayTimestamp = true
 				),
 				{ type: "loading", id: data.id }
 			);
@@ -61,7 +64,8 @@ export function render(
 		) {
 			content += TemplateComponents.renderQuestionBubble(
 				data,
-				userIconTemplate
+				userIconTemplate = true,
+				displayTimestamp = true
 			);
 		}
 
@@ -126,9 +130,11 @@ export function renderTemplateContent(
 	assistantIconTemplate,
 	userIconTemplate,
 	loadingText
-) {
+) {	
+	const appMetaData = store.getState().global.appMetaData;
 	let htmlTemplate = "";
 	htmlTemplate = responseQueryFlow.render(data);
+	// htmlTemplate += TemplateComponents.renderAppAvatar(appMetaData.appName, appMetaData.appIcon, data.timestamp);
 	if (data.viewType === "threadView" || data.botConversation) {
 		htmlTemplate += botConversation.render(
 			data,
@@ -171,6 +177,10 @@ export function renderTemplateContent(
 
 			case "action_send_slack_message":
 				htmlTemplate += actionSendSlackMessage.render(data);
+				break;
+			
+			case "action_send_msteams_message":
+				htmlTemplate += actionSendTeamsMessageTemplate.render(data);
 				break;
 
 			case "connection_provider":
