@@ -13,6 +13,9 @@ import Notifications from './Notifications'
 import { FileUpload } from '../Attachments'
 import { cloneDeep } from 'lodash'
 import BotAgentTestComponent from './BotAgentTestComponent'
+import { AnnouncementsInterface } from '../Announcements'
+import { getAgents } from '../agents'
+
 // import { submitUserFeedback } from '../Feedback'
 
 
@@ -25,13 +28,20 @@ const ChatTestComp = (props) => {
     const [errorStates, setErrorStates] = useState([])
     const chatInterface = useRef()
     const followupInstance = useRef()
+    const announcementsRef = useRef()
+    
     useEffect(() => {
         // Create an instance of ChatInterface
         followupInstance.current = FileUpload()
-        chatInterface.current = ChatInterface();        
+        chatInterface.current = ChatInterface();     
+        announcementsRef.current = AnnouncementsInterface()
+        announcementsRef.current.subscribe((announcements) => {
+            console.log('Received data from announcements API:', announcements)
+        })
         chatInterface.current.options({contentStreaming: true})
         // Show the input bar in a specific DOM element
         // chatInterface.current.showComposeBar('composeBar');
+        
 
         // Subscribe to updates
         const unsubscribe = chatInterface.current.subscribe((question, searchResponse, moreAvailable, errorStates) => {
@@ -41,7 +51,7 @@ const ChatTestComp = (props) => {
             setErrorStates(errorStates)
         });
 
-        chatInterface.current.enableCustomTemplate({gpt_form_template: true})
+        chatInterface.current.enableCustomTemplate({gpt_form_template: true})        
 
         // Installing custom templates for BOT Agent
         let botInstance = BotConversation()
@@ -75,6 +85,10 @@ const ChatTestComp = (props) => {
         }
     }
 
+    const fetchAgents = async () => {
+        await getAgents()
+    }
+
     const handleClick = (label) => {
         setSelectedItem(label)
     }
@@ -82,6 +96,7 @@ const ChatTestComp = (props) => {
     return (
         <div id="chatTestComp">
             <div>
+            <button onClick={() => fetchAgents()}>Fetch Agents</button>
                 <div>
                     {questions && Object.values(questions).map(item => {
                         if (item?.templateType === 'agent_welcome_template') {

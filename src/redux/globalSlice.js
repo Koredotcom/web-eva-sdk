@@ -128,6 +128,9 @@ const globalSlice = createSlice({
       setQuickActions: (state, action) => {
         state.quickActions = action.payload;
       },
+      setAnnouncements: (state, action) => {
+        state.announcements = action.payload;
+      },
       setAppMetaData: (state, action) => {
         state.appMetaData = action.payload;
       }
@@ -227,9 +230,7 @@ const globalSlice = createSlice({
         state.questions = questions
       });
       handleAsyncActions(builder, presenceStart, 'presenceStart');
-      handleAsyncActions(builder, getAllAnnouncements, 'announcements', (state, action)=> {
-        state.announcements= action.payload             
-      });
+      handleAsyncActions(builder, getAllAnnouncements, 'announcements')
     }
 });
 
@@ -257,6 +258,7 @@ export const {
   setBookMarkedChatThreads,
   setEnabledDebugging,
 	setQuickActions,
+  setAnnouncements,
 	setAppMetaData
 } = globalSlice.actions;
 
