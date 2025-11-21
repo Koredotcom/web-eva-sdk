@@ -13,6 +13,8 @@ import Notifications from './Notifications'
 import { FileUpload } from '../Attachments'
 import { cloneDeep } from 'lodash'
 import BotAgentTestComponent from './BotAgentTestComponent'
+import { AnnouncementsInterface } from '../Announcements'
+
 // import { submitUserFeedback } from '../Feedback'
 
 
@@ -25,10 +27,16 @@ const ChatTestComp = (props) => {
     const [errorStates, setErrorStates] = useState([])
     const chatInterface = useRef()
     const followupInstance = useRef()
+    const announcementsRef = useRef()
+    
     useEffect(() => {
         // Create an instance of ChatInterface
         followupInstance.current = FileUpload()
-        chatInterface.current = ChatInterface();        
+        chatInterface.current = ChatInterface();     
+        announcementsRef.current = AnnouncementsInterface()
+        announcementsRef.current.subscribe((announcements) => {
+            console.log('Received data from announcements API:', announcements)
+        })
         chatInterface.current.options({contentStreaming: true})
         // Show the input bar in a specific DOM element
         // chatInterface.current.showComposeBar('composeBar');
