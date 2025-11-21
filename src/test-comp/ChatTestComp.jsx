@@ -14,6 +14,7 @@ import { FileUpload } from '../Attachments'
 import { cloneDeep } from 'lodash'
 import BotAgentTestComponent from './BotAgentTestComponent'
 import { AnnouncementsInterface } from '../Announcements'
+import { getAgents } from '../agents'
 
 // import { submitUserFeedback } from '../Feedback'
 
@@ -40,6 +41,7 @@ const ChatTestComp = (props) => {
         chatInterface.current.options({contentStreaming: true})
         // Show the input bar in a specific DOM element
         // chatInterface.current.showComposeBar('composeBar');
+        
 
         // Subscribe to updates
         const unsubscribe = chatInterface.current.subscribe((question, searchResponse, moreAvailable, errorStates) => {
@@ -49,7 +51,7 @@ const ChatTestComp = (props) => {
             setErrorStates(errorStates)
         });
 
-        chatInterface.current.enableCustomTemplate({gpt_form_template: true})
+        chatInterface.current.enableCustomTemplate({gpt_form_template: true})        
 
         // Installing custom templates for BOT Agent
         let botInstance = BotConversation()
@@ -83,6 +85,10 @@ const ChatTestComp = (props) => {
         }
     }
 
+    const fetchAgents = async () => {
+        await getAgents()
+    }
+
     const handleClick = (label) => {
         setSelectedItem(label)
     }
@@ -90,6 +96,7 @@ const ChatTestComp = (props) => {
     return (
         <div id="chatTestComp">
             <div>
+            <button onClick={() => fetchAgents()}>Fetch Agents</button>
                 <div>
                     {questions && Object.values(questions).map(item => {
                         if (item?.templateType === 'agent_welcome_template') {
