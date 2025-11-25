@@ -124,6 +124,9 @@ const AnsFromChipFunctionality = ({ item }) => {
 			let state = store.getState()?.global;
 			let _questions = cloneDeep(state?.questions);
 			let constId = item?.reqId || item?.id;
+			if(item?.isTask){
+				constId = item?.stepId;
+			}
 			let showGPTDialog = !!_questions[constId]?.showGPTDialog;
 			_questions[constId].showGPTDialog = !showGPTDialog;
 			store.dispatch(updateChatData(_questions));

@@ -5,11 +5,13 @@ import { updateChatData } from "../../redux/globalSlice";
 import { executionPipelineActions } from "../../redux/actions/global.action";
 import { createCloseIcon, tickMarkIcon } from "../icons-library.js";
 import { cancelOngoingCall } from "../utils/helper.js";
+import MultiIntentExecution from "../../multiIntentExecution/multiIntentExecution.js";
 import "./multi-intent-execution.css";
 
 const multiIntentExecutionFunc = (item) => {
 
     let state = store.getState().global;
+    const { fetchHistoricalTask } = MultiIntentExecution();
 
     const runTask = (index, q) => {
         const {activeBoardId} = state;  
@@ -700,6 +702,22 @@ const multiIntentExecutionFunc = (item) => {
                 editTask(index, task);
             });
             editBtn.eventListenerAdded = true;
+        }
+
+        const historyBtn = document.getElementById(`historyBtn-${task?._id}`);
+        let _questions = cloneDeep(state?.questions);
+        if(historyBtn && !historyBtn.eventListenerAdded){
+            historyBtn.addEventListener("click", async () => {
+                if(_questions?.hasOwnProperty(task?._id) && _questions[task?._id]?.hasOwnProperty('showResponse')){                    
+                    /*update the task in the store after the toggle*/
+                    _questions[task?._id].showResponse = !_questions[task?._id].showResponse;
+                    store.dispatch(updateChatData(_questions));
+                }else{
+                    /*fetch the historical data*/
+                    await fetchHistoricalTask(item, task);
+                }                
+            });
+            historyBtn.eventListenerAdded = true;
         }
 
        if (task?.type === 'addTask' || task?.type === 'modify') {

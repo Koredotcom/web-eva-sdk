@@ -65,7 +65,7 @@ const ChatInterfaceDemo = () => {
         })
     botInstance.enableEVABotSdk(true)
 
-    fetchAnnouncementData()   
+    // fetchAnnouncementData()   
 
     // Subscribe to updates
     const unsubscribe = chatInterface.current.subscribe(
