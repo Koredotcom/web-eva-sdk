@@ -5672,3 +5672,33 @@ sl-dialog.gpt-form-dialog {
         }
     }
 }
+
+.multi-responses-template {
+    .multiResponseWrapper {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+
+        .responseWrapper {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+
+            .multiResponseHeader {
+                @include typography-regular(1rem,600,1.5rem);
+                color: $wa-gray-900;
+            }
+
+            &:last-child {
+                .lineBreak {
+                    display: none;
+                }
+            }
+        }
+
+        .lineBreak {
+            border-bottom: .0625rem solid $wa-gray-300;
+            width: 100%;
+        }
+    }
+}
