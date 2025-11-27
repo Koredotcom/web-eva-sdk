@@ -10,7 +10,7 @@ function render(data) {
             ${renderAnswer(data)}
             
             ${showSources ? `
-                <div class="sources-button-container" style="margin-top: 15px;">
+                <div class="sources-button-container" style="display:none">
                     <button 
                         class="sources-btn" 
                         onclick="openSourcesDrawer('${drawerId}')"
