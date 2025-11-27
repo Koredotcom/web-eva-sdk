@@ -154,7 +154,7 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
                         ${icon}
                     </div>
                     <span class="krSpecName">${htmlDecode(
-						source?.title || "No subject"
+						source?.source?.[0]?.toUpperCase() + source?.source?.slice(1) || "No subject"
 					)}</span>                    
                 </span>
 				${
@@ -227,7 +227,7 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 			(!!item?.data?.length || item?.hasData) &&
 			!item?.citationAnswers?.length
 		) {
-			body += `<div class="leftWrapperBlockCntr"><span class="ansFrom">Data:</span>`;
+			body += `<div class="leftWrapperBlockCntr"><span class="ansFrom">Answer from:</span>`;
 		} else {
 			body += ansFromChip();
 		}
