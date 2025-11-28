@@ -123,7 +123,8 @@ class ComposeBar {
                             this.placeholder = 'Ask or Search Anything...';
                             this.updatePlaceholder();
                             this.botEndConversationLoader = false;
-                        }, 0);                     
+                        }, 0);    
+                        this.questions = {};                 
                     }
                 });
             }
