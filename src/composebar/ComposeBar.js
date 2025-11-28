@@ -85,7 +85,7 @@ class ComposeBar {
                         this.showBotComposeBarHeader = Object.values(questions)?.find(question => question?.status === 'threadRunning');
                         if(this.showBotComposeBarHeader){
                             console.log("showBotComposeBarHeader", this.showBotComposeBarHeader);
-                            this.placeholder = `Chat with ${this.showBotComposeBarHeader?.context?.sources?.[0]?.name}`;
+                            this.placeholder = `Chat with ${this.showBotComposeBarHeader?.context?.sources?.[0]?.name || this.showBotComposeBarHeader?.sources?.[0]?.title}`;
                             
                             
                             const botWrapper = this.container.querySelector('.composebar-bot-input-wrapper');
