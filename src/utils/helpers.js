@@ -41,7 +41,7 @@ export const getFileExtension = (fileName) => {
     if (parts?.length > 1 && parts[parts?.length - 1].trim() !== '') {
         return parts[parts?.length - 1].toLowerCase();
     } else {
-        return '';
+        return 'default';
     }
 }
 
