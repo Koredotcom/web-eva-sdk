@@ -134,7 +134,8 @@ export function renderTemplateContent(
 	const appMetaData = store.getState().global.appMetaData;
 	let htmlTemplate = "";
 	htmlTemplate = responseQueryFlow.render(data);
-	if(!data?.hasOwnProperty("sources") || data?.sources?.[0]?.source === "llm"){
+	/*customQNAAPI is for ms */
+	if(data?.sources?.[0]?.source === "llm" || data?.sources?.[0]?.source === "customQnAAPI"){
 		htmlTemplate += TemplateComponents.renderAppAvatar(appMetaData.appName, appMetaData.appIcon, data.timestamp);
 	}
 	if (data.viewType === "threadView" || data.botConversation) {
