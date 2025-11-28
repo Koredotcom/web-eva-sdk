@@ -39,11 +39,16 @@ export const getUID = function (len) {
 export const getFileExtension = (fileName) => {
     const parts = fileName?.split('.');
     if (parts?.length > 1 && parts[parts?.length - 1].trim() !== '') {
-        return parts[parts?.length - 1].toLowerCase();
+        if(supportedImagesOfFileUpload.includes(parts[parts?.length - 1].toLowerCase())) {
+            return parts[parts?.length - 1].toLowerCase()
+        }
+        return 'default';
     } else {
         return 'default';
     }
 }
+
+export const supportedImagesOfFileUpload = ['csv', 'ppt', 'txt', 'pdf', 'doc', 'docx', 'text', 'txt', 'xls', 'xlsx']
 
 export const generateComponentId = () => {
     let cId = Math.random().toString(36).slice(2);
