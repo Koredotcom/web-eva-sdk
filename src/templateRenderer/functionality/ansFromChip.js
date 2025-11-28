@@ -468,41 +468,58 @@ const AnsFromChipFunctionality = ({ item }) => {
 		}
 
 		if (item?.showData) {
-			item?.data?.map((data, i) => {
-				let listItem = document.getElementById(
-					`listItem-${item?.id}-${data?.docId}`
-				);
-				let newTabIcon = document.getElementById(
-					`openInNewTabIcon-${item?.id}-${data?.docId}`
-				);
-				let askFollowupButton = document.getElementById(
-					`askFollowupButton-${item?.id}-${data?.docId}`
-				);
-				if (listItem && !listItem.eventListenerAdded) {
-					listItem.addEventListener("click", () => {
-						openInNewTab(data);
-					});
-					listItem.eventListenerAdded = true;
-				}
-				if (newTabIcon && !newTabIcon.eventListenerAdded) {
-					newTabIcon.addEventListener("click", () => {
-						openInNewTab(data);
-					});
-					newTabIcon.eventListenerAdded = true;
-				}
-				if (
-					askFollowupButton &&
-					!askFollowupButton.eventListenerAdded
-				) {
-					askFollowupButton.addEventListener("click", (e) => {
-						e?.preventDefault();
-						e?.stopPropagation();
-						onSetAsSource(e, data);
-					});
-					askFollowupButton.eventListenerAdded = true;
-				}
-			});
+			/*for morgan stanley customQnAAPI */
+			if (item?.sources?.[0]?.source === "customQnAAPI") {
+				item?.content?.payload?.text?.body?.content_links_for_answer?.map((data, i) => {
+					let listItem = document.getElementById(
+						`openInNewTabIcon-${item?.id}-${data?.content_id}`
+					);
+					if (listItem && !listItem.eventListenerAdded) {
+						listItem.addEventListener("click", () => {
+							openInNewTab({ ...data, redirectUrl: { dweb: data?.content_url } });
+						});
+						listItem.eventListenerAdded = true;
+					}
+				});
+			}
+			else{
+				item?.data?.map((data, i) => {
+					let listItem = document.getElementById(
+						`listItem-${item?.id}-${data?.docId}`
+					);
+					let newTabIcon = document.getElementById(
+						`openInNewTabIcon-${item?.id}-${data?.docId}`
+					);
+					let askFollowupButton = document.getElementById(
+						`askFollowupButton-${item?.id}-${data?.docId}`
+					);
+					if (listItem && !listItem.eventListenerAdded) {
+						listItem.addEventListener("click", () => {
+							openInNewTab(data);
+						});
+						listItem.eventListenerAdded = true;
+					}
+					if (newTabIcon && !newTabIcon.eventListenerAdded) {
+						newTabIcon.addEventListener("click", () => {
+							openInNewTab(data);
+						});
+						newTabIcon.eventListenerAdded = true;
+					}
+					if (
+						askFollowupButton &&
+						!askFollowupButton.eventListenerAdded
+					) {
+						askFollowupButton.addEventListener("click", (e) => {
+							e?.preventDefault();
+							e?.stopPropagation();
+							onSetAsSource(e, data);
+						});
+						askFollowupButton.eventListenerAdded = true;
+					}
+				});
+			}
 		}
+		
 		
 
 		// Add copy answer button event listener
