@@ -64,7 +64,7 @@ export function render(
 		) {
 			content += TemplateComponents.renderQuestionBubble(
 				data,
-				userIconTemplate = true,
+				userIconTemplate = null,
 				displayTimestamp = true
 			);
 		}
@@ -101,7 +101,7 @@ export function render(
 				ADD_ATTR: SHOELACE_ATTRS,
 			});
 		}
-		if (!!data?.sources?.length && data?.templateType === "search_answer" && data?.status === "completed") {
+		if (!!data?.sources?.length && supportsFeedback(data.templateType) && data?.status === "completed") {
 			let chip = AnsFromChip({ item: data });
 			content += DOMPurify.sanitize(chip, {
 				ADD_TAGS: SHOELACE_TAGS,
@@ -134,7 +134,10 @@ export function renderTemplateContent(
 	const appMetaData = store.getState().global.appMetaData;
 	let htmlTemplate = "";
 	htmlTemplate = responseQueryFlow.render(data);
-	// htmlTemplate += TemplateComponents.renderAppAvatar(appMetaData.appName, appMetaData.appIcon, data.timestamp);
+	/*customQNAAPI is for ms */
+	if(data?.sources?.[0]?.source === "llm" || data?.sources?.[0]?.source === "customQnAAPI"){
+		htmlTemplate += TemplateComponents.renderAppAvatar(appMetaData.appName, appMetaData.appIcon, data.timestamp);
+	}
 	if (data.viewType === "threadView" || data.botConversation) {
 		htmlTemplate += botConversation.render(
 			data,

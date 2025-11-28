@@ -18,8 +18,8 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
                 <span class="koraSpecDr">
                     <div class="contextIcon"></div>
                     <span class="krSpecName">${htmlDecode(
-						item?.title || "No subject"
-					)}</span>
+			item?.title || "No subject"
+		)}</span>
                 </span>
             </div>
         `;
@@ -60,9 +60,7 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 			let relevantQuestions = item?.altQuestions?.questions
 				?.map((question, i) => {
 					return `
-                    <div class="relevantQuestionsItem" id = "relevantQuestionsItem-${
-						item?.id
-					}-${i}">
+                    <div class="relevantQuestionsItem" id="relevantQuestionsItem-${item?.id}-${i}">
                         ${highlightQuotedText(question)}
                     </div>
                 `;
@@ -87,15 +85,14 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 
 		body += `
             <div class="tableChipRenderer" id = "ansFromChip-${item?.id}">
-                <span class="datachip">${
-					item?.sources?.length > 1 ? "Data:" : "Answer From:"
-				}</span>
+                <span class="datachip">${item?.sources?.length > 1 ? "Data:" : "Answer From:"
+			}</span>
                 <div class="contextIcon${attachment ? " attachment" : ""}">
                     ${icon}
                 </div>
                 <span class="krSpecName">${htmlDecode(
-					source.title || ""
-				)}</span>
+				source.title || ""
+			)}</span>
             </div>
         `;
 
@@ -147,21 +144,19 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 
 		return `
             <div class="leftWrapperBlock">
-                <span class="koraSpecDr${
-					warning ? " fromWarning" : ""
-				}" id = "ansFromChip-${item?.id}">
+                <span class="koraSpecDr${warning ? " fromWarning" : ""
+			}" id = "ansFromChip-${item?.id}">
                     <div class="contextIcon">
                         ${icon}
                     </div>
                     <span class="krSpecName">${htmlDecode(
-						source?.title || "No subject"
-					)}</span>                    
+				source?.source?.[0]?.toUpperCase() + source?.source?.slice(1) || "No subject"
+			)}</span>                    
                 </span>
-				${
-					warning
-						? `<div class="warningText">${warning}</div>`
-						: ""
-				}
+				${warning
+				? `<div class="warningText">${warning}</div>`
+				: ""
+			}
             </div>            
         `;
 	};
@@ -173,39 +168,73 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 
 		let body = `<div class="chatFilterGroup">`;
 		body += `<div class="threadListGroup">`;
-		item?.data?.map((data, i) => {
-			body += `<div class="threadListItem" key="${i}">
+		if (item?.sources?.[0]?.source === "customQnAAPI") {
+			item?.content?.payload?.text?.body?.content_links_for_answer?.map((data, i) => {
+				body += `<div class="threadListItem" key="${i}">
+	<div class="rightCol">
+		<div class="leftDetails">
+			<div class="nameGroup">
+				<div class="name" id="listItem-${item?.id}-${data?.content_id}">
+					${data?.app_name?.toUpperCase()} - ${data?.content_title}
+				</div>
+			</div>
+
+			<div class="details">
+				<span class="dtName">
+					Sent by:
+					${data?.fromEmail},
+					${getTimeline(data?.content_published_date, "dayDateAndTime")}
+				</span>
+			</div>
+		</div>
+
+		<div class="rightDetails">
+			<div class="openInNewTabIcon" id="openInNewTabIcon-${item?.id}-${data?.content_id}">
+				<span>
+					<svg class="wa-ChangeLog" xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+						viewBox="0 0 20 20" fill="none">
+						<path d="M5.83333 14.1667L14.1667 5.83334M14.1667 5.83334H5.83333M14.1667 5.83334V14.1667"
+							stroke="#667085" stroke-width="1.33" stroke-linecap="round"
+							stroke-linejoin="round"></path>
+					</svg>
+				</span>
+			</div>
+		</div>
+	</div>
+</div>
+					       
+						`;
+			});
+		}
+		else {
+			item?.data?.map((data, i) => {
+				body += `<div class="threadListItem" key="${i}">
                                 <div class='leftCol'>
                                 ${renderIcons(data?.source, null)?.outerHTML}
                             </div>
                             <div class="rightCol">
                                 <div class="leftDetails">
                                     <div class="namgeGroup">
-                                        <div class="name" id = "listItem-${
-											item?.id
-										}-${data?.docId}">${data?.title}</div>
+                                        <div class="name" id="listItem-${item?.id}-${data?.docId}">${data?.title}</div>
                                     </div>
                                     <div class='details'>
                                         <span class='dtName'>Sent by: 
                                             ${data?.fromEmail}, ${getTimeline(
-								data?.date,
-								"dayDateAndTime"
-							)}
+						data?.date,
+						"dayDateAndTime"
+					)}
                                         </span>
                                     </div>
                                 </div>
                                 <div class="rightDetails">
-                                    <div class="listView setContextDr">
-                                        <div class="subText">
-                                            <span class="dtText askFollowupButton"  id = "askFollowupButton-${
-												item?.id
-											}-${data?.docId}">Ask Followup
+                                    ${data?.canSetAsSourceContext ? `
+								<div class="listView setContextDr">									
+									<div class="subText">
+                                            <span class="dtText askFollowupButton" id="askFollowupButton-${item?.id}-${data?.docId}">Ask Followup
                                             </span>
                                         </div>
-                                    </div> 
-                                   <div class="openInNewTabIcon" id="openInNewTabIcon-${
-										item?.id
-									}-${data?.docId}">
+                                    </div>` : ""}                                        
+                                   <div class="openInNewTabIcon" id="openInNewTabIcon-${item?.id}-${data?.docId}">
                                         <span>
                                             <svg class="wa-ChangeLog" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 20 20" fill="none"><path d="M5.83333 14.1667L14.1667 5.83334M14.1667 5.83334H5.83333M14.1667 5.83334V14.1667" stroke="#667085" stroke-width="1.33" stroke-linecap="round" stroke-linejoin="round"></path></svg>
                                         </span>
@@ -213,7 +242,8 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
                                 </div>
                             </div>
                         </div>`;
-		});
+			});
+		}
 		body += `</div>`;
 		body += `</div>`;
 
@@ -227,7 +257,7 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 			(!!item?.data?.length || item?.hasData) &&
 			!item?.citationAnswers?.length
 		) {
-			body += `<div class="leftWrapperBlockCntr"><span class="ansFrom">Data:</span>`;
+			body += `<div class="leftWrapperBlockCntr"><span class="ansFrom">Answer from10 :</span>`;
 		} else {
 			body += ansFromChip();
 		}
@@ -301,9 +331,9 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 		const responseLength = item?.content?.formData?.requestParams?.length;
 
 		const contextValue =
-			item?.content?.formData?.contextFields?.[contextKey]?.type === "file" 
-											? item?.content?.formData?.contextFields?.[contextKey]?.value?.[0]?.title 
-											: item?.content?.formData?.contextFields?.[contextKey]?.value || "";
+			item?.content?.formData?.contextFields?.[contextKey]?.type === "file"
+				? item?.content?.formData?.contextFields?.[contextKey]?.value?.[0]?.title
+				: item?.content?.formData?.contextFields?.[contextKey]?.value || "";
 		if (
 			Object.keys(item?.content?.formData?.contextFields || {}).length > 0
 		) {
@@ -327,7 +357,7 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 			}
 
 			Object.keys(parameter?.fields).forEach((data) => {
-				if(data.toLowerCase() === "content") {
+				if (data.toLowerCase() === "content") {
 					return;
 				}
 				let totalKeys = [];
@@ -351,14 +381,13 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
                                 <div class='uploadedFile'>
                                     <div class='uploadedChip'>
                                         <div class='upImg'><img src="${getExtIcon(
-											getFileExtension(
-												parameter?.fields?.[data]?.title
-											)
-										)}" alt='' /></div>
-                                        <div class='upText'>${
-											parameter?.fields?.[data]?.title ||
-											"file"
-										}</div>
+							getFileExtension(
+								parameter?.fields?.[data]?.title
+							)
+						)}" alt='' /></div>
+                                        <div class='upText'>${parameter?.fields?.[data]?.title ||
+							"file"
+							}</div>
                                         <div class='downloadImg'>
                                             <img src="${getDownloadIcon()}" alt='' width="16"/>
                                         </div>
@@ -391,9 +420,9 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 						const field = parameter?.fields?.[data];
 						const fieldValue =
 							field?.type === "file"
-								? field?.value?.length > 0 
-											? field?.value?.[0]?.title 
-											: ""
+								? field?.value?.length > 0
+									? field?.value?.[0]?.title
+									: ""
 								: field?.title || field?.value;
 
 						if (field?.type === "simpleText") {
@@ -401,15 +430,15 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 						} else if (field?.type === "dropdown") {
 							let dropdownValue = Array.isArray(field?.value)
 								? getMultiDataValueForMultiAnswer(
-										field?.value,
-										data,
-										i
-								  )
+									field?.value,
+									data,
+									i
+								)
 								: getDataValueforMultiAnswer(
-										field?.value,
-										data,
-										i
-								  );
+									field?.value,
+									data,
+									i
+								);
 							html += `<div class='grpInput answerFromChip'><input type="text" readonly value="${dropdownValue}" /></div>`;
 						} else {
 							html += `<div class='grpInput answerFromChip'><input type="text" readonly value="${fieldValue}" /></div>`;
@@ -435,20 +464,20 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 			</div>
 		`;
 	}
-/*feedbackTemplate */
+	/*feedbackTemplate */
 	const feedbackChip = () => {
 		return `
 			<div class="feedbackChip">
-			    ${item?.feedback === "like" ? 
-					`<div class="feedbackLikeButton ${item?.feedback === "like" ? "active" : ""}" id="feedbackLikeButton-${item?.messageId}" title="Helpful">${createThumbsUpFilled({ size: 16, color: "#12B76A" })}</div>` 
-					:
-					`<div class="feedbackLikeButton" id="feedbackLikeButton-${item?.messageId}" title="Helpful">${createThumbsUp({ size: 16, color: "#667085" })}</div>`
-				}
-				${item?.feedback === "dislike" ? 
-					`<div class="feedbackDislikeButton ${item?.feedback === "dislike" ? "active" : ""}" id="feedbackDislikeButton-${item?.messageId}" title="Not Helpful">${createThumbsDownFilled({ size: 16, color: "#F04438" })}</div>` 
-					: 
-					`<div class="feedbackDislikeButton" id="feedbackDislikeButton-${item?.messageId}" title="Not Helpful">${createThumbsDown({ size: 16, color: "#667085" })}</div>`
-				}
+			    ${item?.feedback === "like" ?
+				`<div class="feedbackLikeButton ${item?.feedback === "like" ? "active" : ""}" id="feedbackLikeButton-${item?.messageId}" title="Helpful">${createThumbsUpFilled({ size: 16, color: "#12B76A" })}</div>`
+				:
+				`<div class="feedbackLikeButton" id="feedbackLikeButton-${item?.messageId}" title="Helpful">${createThumbsUp({ size: 16, color: "#667085" })}</div>`
+			}
+				${item?.feedback === "dislike" ?
+				`<div class="feedbackDislikeButton ${item?.feedback === "dislike" ? "active" : ""}" id="feedbackDislikeButton-${item?.messageId}" title="Not Helpful">${createThumbsDownFilled({ size: 16, color: "#F04438" })}</div>`
+				:
+				`<div class="feedbackDislikeButton" id="feedbackDislikeButton-${item?.messageId}" title="Not Helpful">${createThumbsDown({ size: 16, color: "#667085" })}</div>`
+			}
 				${renderFeedbackForm()}
 			</div>
 		`;
@@ -477,7 +506,7 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 		];
 
 		// Generate Shoelace button tags for feedback options
-		const feedbackOptionsHtml = feedbackOptions.map(option => 
+		const feedbackOptionsHtml = feedbackOptions.map(option =>
 			`<button 
 				class="feedbackChip ${option.active ? 'selectedChip' : ''}" 
 				data-feedback-id="${option.id}" 
@@ -513,7 +542,7 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
                             </div>
 							<div class='submitfeedbackwrap'>
 								<div class="feedbacksuccesstext" style="display: none;">
-									<div class='radiocheckbtn'>${RadioButtonChecked({ size: 18})}</div>
+									<div class='radiocheckbtn'>${RadioButtonChecked({ size: 18 })}</div>
 									<div class='recievedfeedbacktext'>Thanks for your feedback</div>
 								</div>
 								<button
@@ -588,9 +617,7 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 					const title = htmlDecode(source?.title || item?.title || "No subject");
 					
 					let html = `
-	                    <sl-dialog class="gpt-form-dialog" id="gptDialog-${
-							item?.id
-						}" label="">
+	                    <sl-dialog class="gpt-form-dialog" id="gptDialog-${item?.id}" label="">
 							<div class="gpt-form-dialog-header">
 								<div class="left-section">
 									<div class="gpt-form-dialog-header-icon">
@@ -647,9 +674,9 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 							if (document.body.contains(dialog)) {
 								document.body.removeChild(dialog);
 							}
-						}, 300); 
+						}, 300);
 					});
-				} else {					
+				} else {
 					existingDialog.show();
 				}
 			}
@@ -664,20 +691,20 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 		if (item?.answer) {
 			actionChipsHTML += exportWordChip();
 		}
-		if(item?.sources?.[0]?.canSetAsSourceContext !== false) {
+		if (item?.sources?.[0]?.canSetAsSourceContext !== false) {
 			actionChipsHTML += setContextChip();
 		}
 
-		if(!item?.disableFeedback) {
-			actionChipsHTML += feedbackChip();			
+		if (!item?.disableFeedback) {
+			actionChipsHTML += feedbackChip();
 		}
-		
+
 		// Add three dot menu
 		const checkAvailableActions = getAvailableActions();
-		if(checkAvailableActions?.length > 0) {
+		if (checkAvailableActions?.length > 0) {
 			actionChipsHTML += threeDotMenu();
 		}
-		
+
 		actionChipsHTML += `</div>`;
 
 		// Insert action chips inside .ansFromChip if present

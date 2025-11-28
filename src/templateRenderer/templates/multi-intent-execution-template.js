@@ -27,8 +27,10 @@ function render(data) {
         </div>
 
         ${items?.status === 'draft' ? items?.executionPipeline?.length > 0 ? `
-            <button class="kr-primary-btn-black btn-lg startBtn" id = "startBtn-${items?.reqId}">${items?.templateInfo?.action}</button>
-            <button class="kr-secondary-btn btn-lg editFlowBtn" id = "editFlowBtn-${items?.reqId}">Edit</button>
+        <div class="btnWrapper">
+                <button class="kr-primary-btn-black btn-lg startBtn" id = "startBtn-${items?.reqId}">${items?.templateInfo?.action}</button>
+                <button class="kr-secondary-btn btn-lg editFlowBtn" id = "editFlowBtn-${items?.reqId}">Edit</button>
+            </div>
         ` : '' : ''}
         `;
 
