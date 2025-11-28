@@ -153,9 +153,9 @@ export function arrowCirlceUpIcon({ size = config.size, color = config.color, cl
   `;
 }
 
-export function CheveronDownIcon({ size = config.size, color = config.color, className = "" } = {}) {
+export function CheveronDownIcon({ size = config.size, color = config.color, className = "", rotation = 0 } = {}) {
   return `
-    <svg width="${size}" height="${size}" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg" class="wa-CheveronDownIcon ${className}">
+    <svg width="${size}" height="${size}" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg" class="wa-CheveronDownIcon ${className}" style="transform: rotate(${rotation}deg); transition: transform 0.3s ease;">
       <path d="M1.18311 1L5.18311 5L9.18311 1" stroke="${color}" stroke-width="1.33" stroke-linecap="round" stroke-linejoin="round" />
     </svg>
   `;

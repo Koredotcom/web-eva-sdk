@@ -412,7 +412,8 @@ export const constructQuestionPostCall = (data, qId) => {
             store.dispatch(setActiveBoardId(data?.payload?.boardId))
         } 
     }
-    if (data?.payload?.followUpContext && state.enableContextByFollowupContext) {
+    /*MS is having the concept of followupContext which updates the selectedContext, In agenticflow also it is happening once the 1st task is executed, so to prevent this we are checking for the existence of stepId, if exists followupcontext cant be set */
+    if (data?.payload?.followUpContext && state.enableContextByFollowupContext && !data?.payload?.hasOwnProperty('stepId')) {
         // console.log("data?.payload?.followUpContext", { ...data?.payload?.followUpContext, messageId: data?.payload?.messageId })
         let context = {
             context: data?.payload?.followUpContext,

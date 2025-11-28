@@ -3,7 +3,7 @@ import store from "../../redux/store";
 import { multiIntentExecutionFunc } from "../functionality/multi-intent-execution";
 import TemplateRenderer from "../templateRenderer";
 import "./../styles/template.scss";
-import { Close, PlusIcon, DragHandleIcon, RadioButtonChecked, createDeleteIcon, EditIcon, HistoryIcon, AddStepFilledIcon, WarningStrokeCircle, tickMarkIcon, LoadingSpinner, AgenticSearchIcon } from "../icons-library";
+import { Close, PlusIcon, DragHandleIcon, RadioButtonChecked, createDeleteIcon, EditIcon, HistoryIcon, AddStepFilledIcon, WarningStrokeCircle, tickMarkIcon, LoadingSpinner, AgenticSearchIcon, CheveronDownIcon, cheveronRightIcon } from "../icons-library";
 
 
 const assistantIconTemplate = () => {
@@ -27,8 +27,10 @@ function render(data) {
         </div>
 
         ${items?.status === 'draft' ? items?.executionPipeline?.length > 0 ? `
-            <button class="kr-primary-btn-black btn-lg startBtn" id = "startBtn-${items?.reqId}">${items?.templateInfo?.action}</button>
-            <button class="kr-secondary-btn btn-lg editFlowBtn" id = "editFlowBtn-${items?.reqId}">Edit</button>
+        <div class="btnWrapper">
+                <button class="kr-primary-btn-black btn-lg startBtn" id = "startBtn-${items?.reqId}">${items?.templateInfo?.action}</button>
+                <button class="kr-secondary-btn btn-lg editFlowBtn" id = "editFlowBtn-${items?.reqId}">Edit</button>
+            </div>
         ` : '' : ''}
         `;
 
@@ -92,8 +94,15 @@ function render(data) {
                                             <div class="opItem" id="editBtn-${task?._id}">${EditIcon({ size: 14, color: "#667085" })}</div>
                                             <div class="opItem" id="deleteBtn-${task?._id}">${createDeleteIcon({ size: 14, color: "#667085" })}</div>
                                         </div>
-                                    ` : ''}
+                                    ` : ''}                                    
                                     </div>
+                                    ${((task?.status === "completed" || task.status === "terminated") && items?.historicalData) ? `
+                                        <div class="opItem" id="historyBtn-${task?._id}">${task?.showResponse ? `
+                                            ${CheveronDownIcon({ size: 14, color: "#667085", rotation: 180 })}
+                                        ` : `
+                                            ${CheveronDownIcon({ size: 14, color: "#667085"})}
+                                        `}</div>
+                                    ` : ''}
                                 </div> 
                                 ${task?.showResponse ? `
                                     <div class="bottomCard">
