@@ -455,15 +455,52 @@ const AnsFromChipFunctionality = ({ item }) => {
 			});
 		}
 
+		// if (item?.sources?.length === 1) {
+		// 	let chip = document.getElementById(`ansFromChip-${item?.id}`);
+		// 	if (chip && !chip.eventListenerAdded) {
+		// 		chip.addEventListener("click", (e) => {
+		// 			e?.preventDefault();
+		// 			e?.stopPropagation();
+		// 			showDataAction();
+		// 		});
+		// 		chip.eventListenerAdded = true;
+		// 	}
+		// }
+
 		if (item?.sources?.length === 1) {
 			let chip = document.getElementById(`ansFromChip-${item?.id}`);
+
 			if (chip && !chip.eventListenerAdded) {
+				// Add listener to the chip element (capture phase to catch event early)
 				chip.addEventListener("click", (e) => {
 					e?.preventDefault();
 					e?.stopPropagation();
 					showDataAction();
+				}, true);
+
+				// Add listener to all child elements (icon, text span, etc.)				
+				const childElements = chip.querySelectorAll('*');
+				childElements.forEach((child) => {
+					child.addEventListener("click", (e) => {
+						e?.stopPropagation();
+						e?.preventDefault();
+						showDataAction();
+					}, true);
 				});
-				chip.eventListenerAdded = true;
+
+				// Add listener to parent element
+				const parent = chip.parentElement;
+				if (parent && !parent.eventListenerAdded) {
+					parent.addEventListener("click", (e) => {
+						e?.preventDefault();
+						e?.stopPropagation();
+						showDataAction();
+					}, true);
+					parent.eventListenerAdded = true;
+					parent.style.cursor = 'pointer';
+				}
+
+				chip.eventListenerAdded = true;				
 			}
 		}
 

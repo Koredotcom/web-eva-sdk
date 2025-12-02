@@ -135,7 +135,7 @@ export function renderTemplateContent(
 	let htmlTemplate = "";
 	htmlTemplate = responseQueryFlow.render(data);
 	/*customQNAAPI is for ms */
-	if(data?.sources?.[0]?.source === "llm" || data?.sources?.[0]?.source === "customQnAAPI"){
+	if(data?.sources?.[0]?.source === "llm" || data?.sources?.[0]?.source === "customQnAAPI" || !data?.hasOwnProperty("sources")){
 		htmlTemplate += TemplateComponents.renderAppAvatar(appMetaData.appName, appMetaData.appIcon, data.timestamp);
 	}
 	if (data.viewType === "threadView" || data.botConversation) {

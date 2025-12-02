@@ -55,7 +55,14 @@ const initialState = {
   enableDebugging: false,
   quickActions: [],
   announcements: {},
-  appMetaData:{}
+  appMetaData:{},
+  ansFromChipElements: {
+    'disableSetAsContext': false,
+    'disableCopyAnswer': false,    
+    'disableExporttoWordDoc': false,
+    'disableFeedback': false,
+    'disableThreeDotMenu': false,
+  }
 };
 
 const globalSlice = createSlice({
@@ -133,6 +140,9 @@ const globalSlice = createSlice({
       },
       setAppMetaData: (state, action) => {
         state.appMetaData = action.payload;
+      },
+      setAnsFromChipElements: (state, action) => {
+        state.ansFromChipElements = {...state.ansFromChipElements, ...action.payload};
       }
     },
     extraReducers: (builder) => {
@@ -259,7 +269,8 @@ export const {
   setEnabledDebugging,
 	setQuickActions,
   setAnnouncements,
-	setAppMetaData
+	setAppMetaData,
+	setAnsFromChipElements
 } = globalSlice.actions;
 
 export default globalSlice;

@@ -142,6 +142,8 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 			source.providerIcon || source.icon
 		).outerHTML;
 
+		const chipTitle = source?.title?.[0]?.toUpperCase() + source?.title?.slice(1) || source?.source || "No subject";
+
 		return `
             <div class="leftWrapperBlock">
                 <span class="koraSpecDr${warning ? " fromWarning" : ""
@@ -150,7 +152,7 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
                         ${icon}
                     </div>
                     <span class="krSpecName">${htmlDecode(
-				source?.source?.[0]?.toUpperCase() + source?.source?.slice(1) || "No subject"
+				 chipTitle || "No subject"
 			)}</span>                    
                 </span>
 				${warning
@@ -162,7 +164,7 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 	};
 
 	const chatFilterGroupRenderer = () => {
-		if (!item?.showData || item?.sources?.length !== 1 || !item?.data) {
+		if (!item?.showData) {
 			return '';
 		}
 
@@ -596,8 +598,9 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 	
 
 	const renderChip = () => {
-		let chipHTML = "";
-
+		let state = store.getState()?.global;
+		let chipHTML = "";		
+		let chatFilterGroupHTML = "";
 		if (regeneratingAnswer) {
 			chipHTML = regeneratingChipRenderer();
 		} else if (item?.viewType === "table") {
@@ -655,8 +658,7 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 					
 					dialog.addEventListener('sl-hide', () => {
 						// Update state to set showGPTDialog = false
-						try {
-							let state = store.getState()?.global;
+						try {							
 							let _questions = cloneDeep(state?.questions);
 							let constId = item?.reqId || item?.id;
 							
@@ -688,20 +690,20 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 		}
 
 		// Add export to Word chip if answer exists
-		if (item?.answer) {
+		if (item?.answer && !state?.ansFromChipElements?.disableExporttoWordDoc) {
 			actionChipsHTML += exportWordChip();
 		}
-		if (item?.sources?.[0]?.canSetAsSourceContext !== false) {
+		if (item?.sources?.[0]?.canSetAsSourceContext !== false && !state?.ansFromChipElements?.disableSetAsContext) {
 			actionChipsHTML += setContextChip();
 		}
 
-		if (!item?.disableFeedback) {
+		if (!item?.disableFeedback && !state?.ansFromChipElements?.disableFeedback) {
 			actionChipsHTML += feedbackChip();
 		}
 
 		// Add three dot menu
 		const checkAvailableActions = getAvailableActions();
-		if (checkAvailableActions?.length > 0) {
+		if (checkAvailableActions?.length > 0 && !state?.ansFromChipElements?.disableThreeDotMenu) {
 			actionChipsHTML += threeDotMenu();
 		}
 
@@ -721,7 +723,9 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 		}
 
 		// Generate the chat filter group content 
-		const chatFilterGroupHTML = chatFilterGroupRenderer();
+		if(item?.hasData || item?.sources?.[0]?.source === "customQnAAPI") {
+			chatFilterGroupHTML = chatFilterGroupRenderer();
+		}
 		
 		// Add chatFilterGroup inside answerFromChipDiv but outside chipHTML
 		const chatFilterGroupWrapper = chatFilterGroupHTML ? `<div>${chatFilterGroupHTML}</div>` : '';

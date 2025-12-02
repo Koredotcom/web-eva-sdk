@@ -1,5 +1,5 @@
 import { advanceSearch, cancelAdvancedSearch, stopResponseGeneration } from "../redux/actions/global.action";
-import { setChatInterfaceOptions, setCurrentQuestion, setCustomData, setEnableContextByFollowupContext, setEnabledCustomTemplates, setErrorState } from "../redux/globalSlice"
+import { setChatInterfaceOptions, setCurrentQuestion, setCustomData, setEnableContextByFollowupContext, setEnabledCustomTemplates, setErrorState, setAnsFromChipElements } from "../redux/globalSlice"
 import { updateChatData } from "../redux/globalSlice";
 import store from "../redux/store";
 import { v4 as uuid } from 'uuid';
@@ -467,6 +467,15 @@ const ChatInterface = (props) => {
       let _questions = cloneDeep(state.questions)
       const cQFromStore = state.currentQuestion /*this helps to understand whether the current question is a part of agentic flow using isTask flag */
       let reqId = detail?.data?.reqId
+      /*if the user terminates the questions, thoughts stearming should be stopped and update the questions */
+      if(_questions[reqId]?.status === "completed"){
+        let currentBotConversation = _questions[reqId]?.botConversation
+        if(currentBotConversation){
+          currentBotConversation[detail?.data?.answerMeta?.outputMessageId].status = "completed"
+        }        
+        store.dispatch(updateChatData(_questions))
+        return;
+      }
       /*when resuming the conversation from history, the history data is structured using uuid, so using redId, we can extract the question to be resumed, so need to target the id, present in question with the help of reqId */
       const isHistoryAccessed = checkHistoryAccessed(_questions)
       if(isHistoryAccessed){
@@ -548,6 +557,10 @@ const ChatInterface = (props) => {
       }
     }
 
+    const configureAnsFromChipElements = (payload) => {
+      store.dispatch(setAnsFromChipElements(payload))
+    }
+
     const setAgentContext = (agent) => {
       const agentDetails = {
 			name: agent?.name,
@@ -583,7 +596,8 @@ const ChatInterface = (props) => {
         sendMessage,
         setAgentContext,
         stopBotAnswer,
-      responseFlowGeneration
+        configureAnsFromChipElements,
+        responseFlowGeneration
     }
 }
 
