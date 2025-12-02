@@ -596,8 +596,8 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 	
 
 	const renderChip = () => {
-		let chipHTML = "";
-
+		let state = store.getState()?.global;
+		let chipHTML = "";		
 		if (regeneratingAnswer) {
 			chipHTML = regeneratingChipRenderer();
 		} else if (item?.viewType === "table") {
@@ -655,8 +655,7 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 					
 					dialog.addEventListener('sl-hide', () => {
 						// Update state to set showGPTDialog = false
-						try {
-							let state = store.getState()?.global;
+						try {							
 							let _questions = cloneDeep(state?.questions);
 							let constId = item?.reqId || item?.id;
 							
@@ -688,20 +687,20 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 		}
 
 		// Add export to Word chip if answer exists
-		if (item?.answer) {
+		if (item?.answer && !state?.ansFromChipElements?.disableExporttoWordDoc) {
 			actionChipsHTML += exportWordChip();
 		}
-		if (item?.sources?.[0]?.canSetAsSourceContext !== false) {
+		if (item?.sources?.[0]?.canSetAsSourceContext !== false && !state?.ansFromChipElements?.disableSetAsContext) {
 			actionChipsHTML += setContextChip();
 		}
 
-		if (!item?.disableFeedback) {
+		if (!item?.disableFeedback && !state?.ansFromChipElements?.disableFeedback) {
 			actionChipsHTML += feedbackChip();
 		}
 
 		// Add three dot menu
 		const checkAvailableActions = getAvailableActions();
-		if (checkAvailableActions?.length > 0) {
+		if (checkAvailableActions?.length > 0 && !state?.ansFromChipElements?.disableThreeDotMenu) {
 			actionChipsHTML += threeDotMenu();
 		}
 
