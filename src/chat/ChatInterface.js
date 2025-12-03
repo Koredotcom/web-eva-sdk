@@ -1,4 +1,4 @@
-import { advanceSearch, cancelAdvancedSearch, stopResponseGeneration } from "../redux/actions/global.action";
+import { abortAdvanceSearch, advanceSearch, cancelAdvancedSearch, stopResponseGeneration } from "../redux/actions/global.action";
 import { setChatInterfaceOptions, setCurrentQuestion, setCustomData, setEnableContextByFollowupContext, setEnabledCustomTemplates, setErrorState, setAnsFromChipElements } from "../redux/globalSlice"
 import { updateChatData } from "../redux/globalSlice";
 import store from "../redux/store";
@@ -34,7 +34,7 @@ const ChatInterface = (props) => {
     };
 
     const stopBotAnswer = async()=>{
-     
+      abortAdvanceSearch()
         let updatedQuestions = state.questions;
         let cancelledQuestion;
         let currentQuestion = state.currentQuestion;
@@ -409,6 +409,9 @@ const ChatInterface = (props) => {
           /*adding streaming for autonomous agent */
           if(question?.viewType === "threadView" || question?.hasOwnProperty('botConversation')){
             /*while autonomous agent is streaming, need to add the chunked data to the outputId present in botConversation */
+            if(question.status === "completed"){
+              return;
+            }
             if(!question?.botConversation) {
               question.botConversation = {}
             }
