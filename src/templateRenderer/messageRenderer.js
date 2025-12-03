@@ -131,12 +131,17 @@ export function renderTemplateContent(
 	userIconTemplate,
 	loadingText
 ) {	
-	const appMetaData = store.getState().global.appMetaData;
+	const state = store.getState().global;
 	let htmlTemplate = "";
 	htmlTemplate = responseQueryFlow.render(data);
 	/*customQNAAPI is for ms */
-	if(data?.sources?.[0]?.source === "llm" || data?.sources?.[0]?.source === "customQnAAPI" || !data?.hasOwnProperty("sources")){
-		htmlTemplate += TemplateComponents.renderAppAvatar(appMetaData.appName, appMetaData.appIcon, data.timestamp);
+	if(state.chatInterfaceElements.enableAppAvatar){
+		if(data?.context?.agentType === "gptAgent"){
+			htmlTemplate += TemplateComponents.renderAppAvatar(data?.context?.title, data?.context?.sources?.[0]?.icon || data?.sources?.[0]?.icon, data.timestamp);
+		}
+		else{
+			htmlTemplate += TemplateComponents.renderAppAvatar(state.appMetaData.appName, state.appMetaData.appIcon, data.timestamp);
+		}
 	}
 	if (data.viewType === "threadView" || data.botConversation) {
 		htmlTemplate += botConversation.render(

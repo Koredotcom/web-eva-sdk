@@ -564,6 +564,10 @@ const ChatInterface = (props) => {
       store.dispatch(setAnsFromChipElements(payload))
     }
 
+    const configureChatInterfaceElements = (payload) => {
+      store.dispatch(setChatInterfaceElements(payload))
+    }
+
     const setAgentContext = (agent) => {
       const agentDetails = {
 			name: agent?.name,
@@ -600,7 +604,8 @@ const ChatInterface = (props) => {
         setAgentContext,
         stopBotAnswer,
         configureAnsFromChipElements,
-        responseFlowGeneration
+        responseFlowGeneration,
+        configureChatInterfaceElements
     }
 }
 
