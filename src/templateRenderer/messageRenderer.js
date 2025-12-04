@@ -64,7 +64,7 @@ export function render(
 		) {
 			content += TemplateComponents.renderQuestionBubble(
 				data,
-				userIconTemplate = null,
+				userIconTemplate = true,
 				displayTimestamp = true
 			);
 		}
@@ -135,7 +135,7 @@ export function renderTemplateContent(
 	let htmlTemplate = "";
 	htmlTemplate = responseQueryFlow.render(data);
 	/*customQNAAPI is for ms */
-	if(state.chatInterfaceElements.enableAppAvatar){
+	if(!state.chatInterfaceElements.disableAppAvatar){
 		if(data?.context?.agentType === "gptAgent"){
 			htmlTemplate += TemplateComponents.renderAppAvatar(data?.context?.title, data?.context?.sources?.[0]?.icon || data?.sources?.[0]?.icon, data.timestamp);
 		}

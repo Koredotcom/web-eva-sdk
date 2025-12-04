@@ -57,15 +57,16 @@ const initialState = {
   announcements: {},
   appMetaData:{},
   ansFromChipElements: {
-    'disableSetAsContext': false,
+    'disableSetAsContext': true,
     'disableCopyAnswer': false,    
-    'disableExporttoWordDoc': false,
+    'disableExporttoWordDoc': true,
     'disableFeedback': false,
     'disableThreeDotMenu': false,
   },
   chatInterfaceElements:{
-    enableAppAvatar: false,
-  }
+    disableAppAvatar: false,
+  },
+  env: 'MS'
 };
 
 const globalSlice = createSlice({
