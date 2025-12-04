@@ -410,9 +410,9 @@ function renderBotConversation(
 				<div class="top-header">
 					<div class="bot-conversation-icon-block">
 						<span class="icon-block">
-							<img src="${props?.sources?.[0]?.icon}" alt="">
+							<img src="${props?.sources?.[0]?.icon || props?.agentIcon}" alt="">
 						</span>
-						<span class="bot-agent-name">${props?.sources?.[0]?.title}</span>
+						<span class="bot-agent-name">${props?.sources?.[0]?.title || props?.agentName}</span>
 					</div>
 					<div class="expandAreaBlock" data-message-id="${props?.messageId}" data-collapsed="false">
 						${MinimizeIcon({ size: 16, color: "#667085" })}
@@ -423,7 +423,7 @@ function renderBotConversation(
 					${conversationsHTML}
 				</div>
 				<div class="bot-conversation-summary" data-message-id="${props?.messageId}" style="display: none;">
-					${props?.answer ? MessageRenderer(props.answer) : ''}
+					${props?.answer ? MessageRenderer(props?.answer) : ''}
 				</div>
 			</div>		
         </div>	

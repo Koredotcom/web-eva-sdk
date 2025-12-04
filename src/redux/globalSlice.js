@@ -62,6 +62,9 @@ const initialState = {
     'disableExporttoWordDoc': false,
     'disableFeedback': false,
     'disableThreeDotMenu': false,
+  },
+  chatInterfaceElements:{
+    enableAppAvatar: false,
   }
 };
 
@@ -143,6 +146,9 @@ const globalSlice = createSlice({
       },
       setAnsFromChipElements: (state, action) => {
         state.ansFromChipElements = {...state.ansFromChipElements, ...action.payload};
+      },
+      setChatInterfaceElements: (state, action) => {
+        state.chatInterfaceElements = {...state.chatInterfaceElements, ...action.payload};
       }
     },
     extraReducers: (builder) => {
@@ -270,7 +276,8 @@ export const {
 	setQuickActions,
   setAnnouncements,
 	setAppMetaData,
-	setAnsFromChipElements
+	setAnsFromChipElements,
+	setChatInterfaceElements
 } = globalSlice.actions;
 
 export default globalSlice;

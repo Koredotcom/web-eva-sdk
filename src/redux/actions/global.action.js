@@ -115,6 +115,12 @@ export const cancelAdvancedSearch = createAsyncThunk(
     'global/cancelAdvancedSearch',
     async (arg, thunkAPI) => { 
         
+        // Abort the in-flight request immediately before making the cancel API call
+        if (controller) {
+            controller.abort();
+            controller = null;
+        }
+        
         try {   
             let reqdQuestionId = encodeURIComponent(arg.reqId)
 
@@ -123,9 +129,6 @@ export const cancelAdvancedSearch = createAsyncThunk(
                 method: 'POST',
                 data: arg.payload
             });
-
-            controller?.abort();
-            controller = null;
             
             return response.data;
         } catch (error) {
