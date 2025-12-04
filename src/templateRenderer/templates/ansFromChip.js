@@ -4,6 +4,30 @@ import { getTimeline, highlightQuotedText } from "../utils/helper";
 import htmlTableRenderer from "./htmlTableRenderer";
 import { createCopyIcon, createExport, createThumbsDown, createThumbsDownFilled, createThumbsUp, createThumbsUpFilled, setContextIcon, EllipsisVertical, Gmail, Outlookimg, Slackimg, Teamsimg, JiraCommentsIcon, RadioButtonChecked, tickMarkIcon, Close } from "../icons-library";
 import store from "../../redux/store";
+
+// Helper functions for MS environment icons
+const isMSEnv = () => store.getState()?.global?.env === 'MS';
+
+const getThumbsUpIcon = (filled = false) => {
+    if (isMSEnv()) {
+        return `<img src="images/MS-Icons/thumbs-up-ms.svg" alt="Thumbs Up" width="16" height="16" />`;
+    }
+    return filled ? createThumbsUpFilled({ size: 16, color: "#12B76A" }) : createThumbsUp({ size: 16, color: "#667085" });
+};
+
+const getThumbsDownIcon = (filled = false) => {
+    if (isMSEnv()) {
+        return `<img src="images/MS-Icons/thumbs-down-ms.svg" alt="Thumbs Down" width="16" height="16" />`;
+    }
+    return filled ? createThumbsDownFilled({ size: 16, color: "#F04438" }) : createThumbsDown({ size: 16, color: "#667085" });
+};
+
+const getThreeDotIcon = () => {
+    if (isMSEnv()) {
+        return `<img src="images/MS-Icons/dots-vertical.svg" alt="More options" width="16" height="16" />`;
+    }
+    return EllipsisVertical({ size: 16, color: "#667085" });
+};
 import { updateChatData } from "../../redux/globalSlice";
 import { cloneDeep } from "lodash";
 import * as feedbackTemplate from "./feedback-template";
@@ -135,12 +159,18 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 
 	const singleSourceChipRenderer = (source) => {
 		// const attachment = source?.source === 'attachment';
-		const warning = source?.warning;
-		const icon = renderIcons(
+
+		const warning = source?.warning;				
+		let icon = renderIcons(
 			source.source,
 			source.extIcon || source.iconUrl,
 			source.providerIcon || source.icon
 		).outerHTML;
+		if(isMSEnv()){
+			if(source?.source === 'llm' || source?.source === 'customQnAAPI' || source?.source === 'web') {
+				icon = `<img src="images/MS-Icons/aims-favicon.svg" alt="AIMS" width="16" height="16" />`;
+			}
+		}
 
 		const chipTitle = source?.title?.[0]?.toUpperCase() + source?.title?.slice(1) || source?.source || "No subject";
 
@@ -471,14 +501,14 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 		return `
 			<div class="feedbackChip">
 			    ${item?.feedback === "like" ?
-				`<div class="feedbackLikeButton ${item?.feedback === "like" ? "active" : ""}" id="feedbackLikeButton-${item?.messageId}" title="Helpful">${createThumbsUpFilled({ size: 16, color: "#12B76A" })}</div>`
+				`<div class="feedbackLikeButton ${item?.feedback === "like" ? "active" : ""}" id="feedbackLikeButton-${item?.messageId}" title="Helpful">${getThumbsUpIcon(true)}</div>`
 				:
-				`<div class="feedbackLikeButton" id="feedbackLikeButton-${item?.messageId}" title="Helpful">${createThumbsUp({ size: 16, color: "#667085" })}</div>`
+				`<div class="feedbackLikeButton" id="feedbackLikeButton-${item?.messageId}" title="Helpful">${getThumbsUpIcon(false)}</div>`
 			}
 				${item?.feedback === "dislike" ?
-				`<div class="feedbackDislikeButton ${item?.feedback === "dislike" ? "active" : ""}" id="feedbackDislikeButton-${item?.messageId}" title="Not Helpful">${createThumbsDownFilled({ size: 16, color: "#F04438" })}</div>`
+				`<div class="feedbackDislikeButton ${item?.feedback === "dislike" ? "active" : ""}" id="feedbackDislikeButton-${item?.messageId}" title="Not Helpful">${getThumbsDownIcon(true)}</div>`
 				:
-				`<div class="feedbackDislikeButton" id="feedbackDislikeButton-${item?.messageId}" title="Not Helpful">${createThumbsDown({ size: 16, color: "#667085" })}</div>`
+				`<div class="feedbackDislikeButton" id="feedbackDislikeButton-${item?.messageId}" title="Not Helpful">${getThumbsDownIcon(false)}</div>`
 			}
 				${renderFeedbackForm()}
 			</div>
@@ -587,7 +617,7 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 		return `
 			<div class="three-dot-menu-container">
 				<sl-dropdown>
-					<button class="three-dot-trigger" data-three-dot-trigger="${messageId}" title="More options" slot="trigger">${EllipsisVertical({ size: 16, color: "#667085" })}</button>				
+					<button class="three-dot-trigger" data-three-dot-trigger="${messageId}" title="More options" slot="trigger">${getThreeDotIcon()}</button>				
 					<sl-menu class="three-dot-dropdown" data-three-dot-dropdown="${messageId}">
 						${integrationMenuItems}
 					</sl-menu>
