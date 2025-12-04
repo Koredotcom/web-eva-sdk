@@ -1,5 +1,14 @@
 import { CheckCircle, createCopyIcon } from "../icons-library";
 import { toast } from "../../chat";
+import store from "../../redux/store";
+
+const getCopyIcon = () => {
+    const env = store.getState()?.global?.env;
+    if (env === 'MS') {
+        return `<img src="images/MS-Icons/copy-ms.svg" alt="Copy" width="16" height="16" />`;
+    }
+    return createCopyIcon({ size: 16, color: '#666', className: 'questcopy-icon' });
+};
 
 function render(data, type = 'question') {
     let messageTextId = '', copyButtonId = '', messageDivId = '';
@@ -81,7 +90,7 @@ function render(data, type = 'question') {
     return `
     <sl-tooltip content="Copy Response" placement="bottom">
         <div class='questcopy' id='${copyButtonId}'>
-            ${createCopyIcon({ size: 16, color: '#666', className: 'questcopy-icon' })}
+            ${getCopyIcon()}
         </div>
     </sl-tooltip>
     <div id='${messageDivId}' class='copy-message wa-dropdown-enter-anim'>        

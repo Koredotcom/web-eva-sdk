@@ -57,12 +57,16 @@ const initialState = {
   announcements: {},
   appMetaData:{},
   ansFromChipElements: {
-    'disableSetAsContext': false,
+    'disableSetAsContext': true,
     'disableCopyAnswer': false,    
-    'disableExporttoWordDoc': false,
+    'disableExporttoWordDoc': true,
     'disableFeedback': false,
     'disableThreeDotMenu': false,
-  }
+  },
+  chatInterfaceElements:{
+    disableAppAvatar: false,
+  },
+  env: 'MS'
 };
 
 const globalSlice = createSlice({
@@ -143,6 +147,9 @@ const globalSlice = createSlice({
       },
       setAnsFromChipElements: (state, action) => {
         state.ansFromChipElements = {...state.ansFromChipElements, ...action.payload};
+      },
+      setChatInterfaceElements: (state, action) => {
+        state.chatInterfaceElements = {...state.chatInterfaceElements, ...action.payload};
       }
     },
     extraReducers: (builder) => {
@@ -270,7 +277,8 @@ export const {
 	setQuickActions,
   setAnnouncements,
 	setAppMetaData,
-	setAnsFromChipElements
+	setAnsFromChipElements,
+	setChatInterfaceElements
 } = globalSlice.actions;
 
 export default globalSlice;

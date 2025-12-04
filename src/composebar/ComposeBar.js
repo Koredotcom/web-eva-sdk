@@ -433,6 +433,28 @@ class ComposeBar {
         }
     }
 
+    
+    getSendButtonIcon() {
+        const env = store.getState()?.global?.env;
+        if (env === 'MS') {
+            return `<img src="images/MS-Icons/send-ms.svg" alt="Send" width="20" height="20" />`;
+        }
+        return arrowCirlceUpIcon({ size: 16, color: "#101828" });
+    }
+
+    
+    getAttachmentButtonIcon() {
+        const env = store.getState()?.global?.env;
+        if (env === 'MS') {
+            return `<img src="images/MS-Icons/attachment-ms.svg" alt="Attach" width="20" height="20" />`;
+        }
+        return attachmentIcon({ size: 16, color: "#0F0F0F" });
+    }
+    
+    isMSEnv() {
+        return store.getState()?.global?.env === 'MS';
+    }
+
     handleEndConversation() {
         this.botEndConversationLoader = true;
         
@@ -517,17 +539,17 @@ class ComposeBar {
                                     <sl-tooltip>
                                         <div slot="content" class="caTooltips">5 attachments, max 10MB each. <br/>PDF, XLS, DOC, CSV, TXT formats.</div>
                                         <button class="eva-input-action-btn attachment-btn" data-eva-attachment>
-                                            ${attachmentIcon({ size: 16, color: "#0F0F0F" })}
+                                            ${this.getAttachmentButtonIcon()}
                                         </button>
                                     </sl-tooltip>
-                                    <sl-tooltip>
+                                    ${!this.isMSEnv() ? `<sl-tooltip>
                                         <div slot="content" class="caTooltips">Search using voice</div>
                                         <button class="eva-input-action-btn voice-btn" data-eva-speech>
                                             ${microphoneIcon({ size: 16, color: "#0F0F0F" })}
                                         </button>
-                                    </sl-tooltip>
+                                    </sl-tooltip>` : ''}
                                     <button class="eva-input-action-btn send-btn" data-eva-send title="Send">
-                                        ${arrowCirlceUpIcon({ size: 16, color: "#101828" })}
+                                        ${this.getSendButtonIcon()}
                                     </button>
                                 </div>
                             </div>
@@ -877,9 +899,11 @@ class ComposeBar {
      * Update microphone button based on input length
      */
     updateMicrophoneButton() {
+        // Skip if MS env (mic button is hidden)
+        if (this.isMSEnv()) return;
+        
         const micButton = this.container.querySelector('[data-eva-speech]');
         if (!micButton) {
-            console.log('micButton not found!');
             return;
         }
 
@@ -1526,7 +1550,7 @@ class ComposeBar {
                 sendBtn.title = 'Stop';
                 sendBtn.classList.add('stop-btn');
             } else {
-                sendBtn.innerHTML = arrowCirlceUpIcon({ size: 16, color: "#101828" });
+                sendBtn.innerHTML = this.getSendButtonIcon();
                 sendBtn.title = 'Send';
                 sendBtn.classList.remove('stop-btn');                                    
                 if(this.currentAnswerResponse?.status === 'completed' || this.currentAnswerResponse?.status === 'terminated'){
