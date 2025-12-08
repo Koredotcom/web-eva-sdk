@@ -785,7 +785,7 @@ const AnsFromChipFunctionality = ({ item }) => {
 							if (typeof feedbackPopup.hide === 'function') {
 								feedbackPopup.hide();
 							} else {
-								feedbackPopup.removeAttribute('active');
+								feedbackPopup.setAttribute('active', true);
 								feedbackPopup.style.display = 'none';
 							}
 						}, 2000);

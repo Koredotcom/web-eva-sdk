@@ -15,6 +15,13 @@ const getThumbsUpIcon = (filled = false) => {
     return filled ? createThumbsUpFilled({ size: 16, color: "#12B76A" }) : createThumbsUp({ size: 16, color: "#667085" });
 };
 
+const getExportWordIcon = () => {
+    if (isMSEnv()) {
+        return `<img src="images/MS-Icons/share-ms.svg" alt="Export doc" width="16" height="16" />`;
+    }
+    return createExport({ size: 16, color: "#667085" });
+};
+
 const getThumbsDownIcon = (filled = false) => {
     if (isMSEnv()) {
         return `<img src="images/MS-Icons/thumbs-down-ms.svg" alt="Thumbs Down" width="16" height="16" />`;
@@ -517,7 +524,7 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 
 	const exportWordChip = () => {
 		return `
-			<div class="exportWordButton" id="exportWordButton-${item?.messageId}" title="Export Response">${createExport({ size: 16, color: "#667085" })}</div>
+			<div class="exportWordButton" id="exportWordButton-${item?.messageId}" title="Export Response">${getExportWordIcon()}</div>
 		`;
 	}
 

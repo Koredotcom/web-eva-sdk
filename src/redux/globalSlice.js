@@ -59,7 +59,7 @@ const initialState = {
   ansFromChipElements: {
     'disableSetAsContext': true,
     'disableCopyAnswer': false,    
-    'disableExporttoWordDoc': true,
+    'disableExporttoWordDoc': false,
     'disableFeedback': false,
     'disableThreeDotMenu': false,
   },

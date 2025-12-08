@@ -80,6 +80,10 @@ export const getCidByMessageId = (data, messageId) => {
     return null; // or an appropriate value if no match is found
 };
 
+export const isMSEnv = () => {
+    return store.getState().global?.env === 'MS';
+}
+
 export const getReqIdByMessageId = (messageId) => {
     let questions = cloneDeep(store.getState().global?.questions)
     for (const key in questions) {
