@@ -898,7 +898,7 @@ class ComposeBar {
      */
     updateMicrophoneButton() {
         // Skip if MS env (mic button is hidden)
-        if (this.isMSEnv()) return;
+        if (this.isMSEnv) return;
         
         const micButton = this.container.querySelector('[data-eva-speech]');
         if (!micButton) {
