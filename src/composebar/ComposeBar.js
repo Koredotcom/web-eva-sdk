@@ -7,6 +7,7 @@ import { ActionsFlashIcon, arrowCirlceUpIcon, attachmentIcon, CheveronDownIcon, 
 import FileUpload from "../Attachments/fileUpload.js";
 import { getAgentType, getFileExtension, hideElementImmediately, showElementImmediately, showElementDelayed, getIconsList } from "../utils/helpers.js";
 import { renderRecentFiles } from "./RenderRecentAttachments.js";
+import { isMSEnv } from "../utils/helpers.js";
 
 /**
  * ComposeBar - A standalone compose bar component in plain JavaScript
@@ -44,6 +45,7 @@ class ComposeBar {
         this.showBotComposeBarHeader = false;
         this.botEndConversationLoader = false;
         this.endConversationHandler = this.handleEndConversation.bind(this);       
+        this.isMSEnv = isMSEnv();
         this.callbacks = {
             onSend: null,
             onNewChat: null,
@@ -215,7 +217,7 @@ class ComposeBar {
 
         commonAgentsContainer.innerHTML = this.commonAgents.map(agent => {            
             return `<button class="agents-action-item ${this.selectedCommonAgent?.id === agent.id ? 'active' : ''}" data-eva-common-agents-action data-agent-id="${agent.id}">
-                <img src="${agent.icon}" alt="" width="18" height="18" />
+                <img src="${(this.isMSEnv && agent.id === 'webSearch') ? `images/MS-Icons/web-ms.svg` : agent.icon}" alt="" width="18" height="18" />
                 <span class='agent-name'>${agent?.name}</span>
             </button>`;
         }).join('');
@@ -451,10 +453,6 @@ class ComposeBar {
         return attachmentIcon({ size: 16, color: "#0F0F0F" });
     }
     
-    isMSEnv() {
-        return store.getState()?.global?.env === 'MS';
-    }
-
     handleEndConversation() {
         this.botEndConversationLoader = true;
         
@@ -528,8 +526,8 @@ class ComposeBar {
                                 <div class='left-actions'>
                                 <div class='common-agents-container'>
                                     <button class="agents-action-item" data-eva-agents-action data-eva-open-dialog>
-                                        ${ActionsFlashIcon({ size: 18, color: "#0F0F0F" })}
-                                        ${CheveronDownIcon({ size: 14, color: "#0F0F0F" })}
+                                        ${this.isMSEnv ? `<img src="images/MS-Icons/flash-ms.svg" alt="Agents" width="18" height="18" />` : ActionsFlashIcon({ size: 18, color: "#0F0F0F" })}
+                                        ${this.isMSEnv ? CheveronDownIcon({ size: 14, color: "#1773b0" }) : CheveronDownIcon({ size: 14, color: "#0F0F0F" })}                                        
                                     </button>                                
                                     <div data-eva-common-agents style="display: inline-flex; gap: 8px;"></div>
                                 </div>
@@ -542,7 +540,7 @@ class ComposeBar {
                                             ${this.getAttachmentButtonIcon()}
                                         </button>
                                     </sl-tooltip>
-                                    ${!this.isMSEnv() ? `<sl-tooltip>
+                                    ${!this.isMSEnv ? `<sl-tooltip>
                                         <div slot="content" class="caTooltips">Search using voice</div>
                                         <button class="eva-input-action-btn voice-btn" data-eva-speech>
                                             ${microphoneIcon({ size: 16, color: "#0F0F0F" })}
@@ -900,7 +898,7 @@ class ComposeBar {
      */
     updateMicrophoneButton() {
         // Skip if MS env (mic button is hidden)
-        if (this.isMSEnv()) return;
+        if (this.isMSEnv) return;
         
         const micButton = this.container.querySelector('[data-eva-speech]');
         if (!micButton) {

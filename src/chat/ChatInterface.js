@@ -383,7 +383,7 @@ const ChatInterface = (props) => {
 
       if (question?.apiSuccess && question?.viewType !== "threadView") return; // Means adv search call success now no need to take socket updates, added condition for threadView
 
-      if (detail?.data?.status === 'in-progress') {
+      if (detail?.data?.status === 'in-progress' || detail?.data?.status === 'threadRunning') {
 
         if (detail?.data?.templateType === 'multi_responses') {
           const resIndex = detail?.data?.respId
@@ -423,6 +423,8 @@ const ChatInterface = (props) => {
                 question.botConversation[detail?.data?.outputMessageId] = {                    
                         question: (question?.botConversation?.[detail?.data?.outputMessageId]?.question || "").concat(detail?.data?.chunk),
                         status: detail?.data?.status,
+                        references: detail?.data?.references || [],
+                        chunkMeta: detail?.data?.chunkMeta || {},
                         templateType: detail?.data?.templateType,
                         "thoughts": question.botConversation[detail?.data?.outputMessageId]?.thoughts || [],
                     }
