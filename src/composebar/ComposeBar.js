@@ -3,11 +3,12 @@ import ChatInterface from "../chat/ChatInterface.js";
 import InvokeAgent from "../chat/invokeAgent.js";
 import store from "../redux/store.js";
 import { fetchAgents } from "../redux/actions/global.action.js";
-import { ActionsFlashIcon, arrowCirlceUpIcon, attachmentIcon, CheveronDownIcon, createCloseIcon, createDeleteIcon, createThumbsUpFilled, microphoneIcon, searchIcon, settingsIcon, Close, StopIcon } from "../templateRenderer/icons-library.js";
+import { ActionsFlashIcon, arrowCirlceUpIcon, attachmentIcon, CheveronDownIcon, createCloseIcon, createDeleteIcon, createThumbsUpFilled, microphoneIcon, searchIcon, settingsIcon, Close, StopIcon, CurvedArrowForPreview } from "../templateRenderer/icons-library.js";
 import FileUpload from "../Attachments/fileUpload.js";
-import { getAgentType, getFileExtension, hideElementImmediately, showElementImmediately, showElementDelayed, getIconsList } from "../utils/helpers.js";
+import { getAgentType, getFileExtension, hideElementImmediately, showElementImmediately, showElementDelayed, getIconsList, markdownToPlainText } from "../utils/helpers.js";
 import { renderRecentFiles } from "./RenderRecentAttachments.js";
 import { isMSEnv } from "../utils/helpers.js";
+import { set } from "lodash";
 
 /**
  * ComposeBar - A standalone compose bar component in plain JavaScript
@@ -20,13 +21,14 @@ class ComposeBar {
             placeholder: 'Ask or Search Anything...',
             showQuickActions: true,
             showNewButton: true,
-            showStopButton: true, 
+            showStopButton: true,
             showCommonAgents: true,
             showAgentsDialog: true,
             ...options
         };
 
         this.input = '';
+        this.contextChipData = null
         this.isLoading = false;
         this.isRecording = false;
         this.recognition = null;
@@ -41,10 +43,10 @@ class ComposeBar {
         this.attachments = [];
         this.quickActions = [];
         this.selectedCommonAgent = null;
-        this.currentAnswerResponse=null;
+        this.currentAnswerResponse = null;
         this.showBotComposeBarHeader = false;
         this.botEndConversationLoader = false;
-        this.endConversationHandler = this.handleEndConversation.bind(this);       
+        this.endConversationHandler = this.handleEndConversation.bind(this);
         this.isMSEnv = isMSEnv();
         this.callbacks = {
             onSend: null,
@@ -76,57 +78,57 @@ class ComposeBar {
                 this.unsubscribe = this.chatInterface.subscribe((questions, searchResponse, moreAvailable, errorStates, quickActions) => {
                     // Toggle loading state based on async status
                     const isLoading = searchResponse?.status === 'loading';
-                    if(Object.values(questions)?.some(question => question?.loading)){
+                    if (Object.values(questions)?.some(question => question?.loading)) {
                         this.currentAnswerResponse = null;
-                    }else{
+                    } else {
                         this.currentAnswerResponse = searchResponse?.data;
                     }
                     this.setLoading(!!isLoading);
                     if (Object.keys(questions).length > 0) {
                         this.questions = questions;
-                        this.showBotComposeBarHeader = Object.values(questions)?.find(question => question?.status === 'threadRunning');
-                        if(this.showBotComposeBarHeader){
-                            console.log("showBotComposeBarHeader", this.showBotComposeBarHeader);
-                            this.placeholder = `Chat with ${this.showBotComposeBarHeader?.context?.sources?.[0]?.name || this.showBotComposeBarHeader?.sources?.[0]?.title}`;
-                            
-                            
-                            const botWrapper = this.container.querySelector('.composebar-bot-input-wrapper');
-                            if (botWrapper) {
-                                showElementDelayed(botWrapper, 100, 'block', true);
-                                // Update content after the delay
-                                setTimeout(() => {
-                                    this.updateBotHeaderContent(); 
-                                    this.updatePlaceholder();
-                                }, 100);
-                            }
-                            
-                        }else{
-                            console.log("no threaded conversations available - hide bot wrapper");    
-                            this.input = '';                        
-                            
-                            this.botEndConversationLoader = false;
-                            const botWrapper = this.container.querySelector('.composebar-bot-input-wrapper');
-                            if (botWrapper) {
-                                hideElementImmediately(botWrapper, { enableLogging: true });
-                            }
-                            this.placeholder = 'Ask or Search Anything...';
-                            this.updatePlaceholder(); 
-                        }
-                    }else{                                                
+                        // this.showBotComposeBarHeader = Object.values(questions)?.find(question => question?.status === 'threadRunning');
+                        // if(this.showBotComposeBarHeader){
+                        //     console.log("showBotComposeBarHeader", this.showBotComposeBarHeader);
+                        //     this.placeholder = `Chat with ${this.showBotComposeBarHeader?.context?.sources?.[0]?.name || this.showBotComposeBarHeader?.sources?.[0]?.title}`;
+
+
+                        //     const botWrapper = this.container.querySelector('.composebar-bot-input-wrapper');
+                        //     if (botWrapper) {
+                        //         showElementDelayed(botWrapper, 100, 'block', true);
+                        //         // Update content after the delay
+                        //         setTimeout(() => {
+                        //             this.updateBotHeaderContent(); 
+                        //             this.updatePlaceholder();
+                        //         }, 100);
+                        //     }
+
+                        // }else{
+                        //     console.log("no threaded conversations available - hide bot wrapper");    
+                        //     this.input = '';                        
+
+                        //     this.botEndConversationLoader = false;
+                        //     const botWrapper = this.container.querySelector('.composebar-bot-input-wrapper');
+                        //     if (botWrapper) {
+                        //         hideElementImmediately(botWrapper, { enableLogging: true });
+                        //     }
+                        //     this.placeholder = 'Ask or Search Anything...';
+                        //     this.updatePlaceholder(); 
+                        // }
+                    } else {
                         /*clean up block */
                         const ifBotHeaderPresent = this.container.querySelector('.composebar-bot-input-wrapper');
-                        if(ifBotHeaderPresent){
+                        if (ifBotHeaderPresent) {
                             hideElementImmediately(ifBotHeaderPresent, { enableLogging: true });
-                        }                                                   
+                        }
                         setTimeout(() => {
-                            if(this.selectedAgent){
-                                this.handleRemoveSelectedContext();
-                            }                                      
+                            // if (this.selectedAgent) {
+                            //     this.handleRemoveSelectedContext();
+                            // }
                             this.placeholder = 'Ask or Search Anything...';
                             this.updatePlaceholder();
                             this.botEndConversationLoader = false;
-                        }, 0);    
-                        this.questions = {};                 
+                        }, 0);
+                        this.questions = {};
                     }
                 });
             }
@@ -139,23 +141,50 @@ class ComposeBar {
             this.fileUploaderInterface = FileUpload();
             this.fileUploaderInterface.subscribe((sources, sessionId, quickActions, error, apiResp) => {
                 console.log("fileUploaderInterface subscribe", sources, sessionId, quickActions, error, apiResp);
-                try {                    
-                    const filesOnly = Array.isArray(sources)
-                        ? sources.filter(source => source.type === "attachment")
-                        : [];                          
-                    this.attachments = filesOnly;
-                    this.quickActions = quickActions || [];                                    
-                    // Always render to handle both adding and clearing attachments
-                    setTimeout(() => { 
-                        if (Array.isArray(sources) && sources?.some(source => source?.isAgent && source?.hasOwnProperty('agentType'))){
-                            this.selectedAgent = sources?.find(source => source?.isAgent);
-                            this.renderContextChipInComposeBar(); 
-                        }                                              
-                        this.renderAttachments();
+                if (sources) {
+                    try {
+                        const filesOnly = Array.isArray(sources)
+                            ? sources.filter(source => source.type === "attachment")
+                            : [];
+                        this.attachments = filesOnly;
+                        this.quickActions = quickActions || [];
+                        // Always render to handle both adding and clearing attachments       
+                        if (this.attachments?.length > 0) {
+                            this.renderAttachments();
+                        } else {
+                            if (sources?.length > 0) {
+                                /*check whether it is an agent */
+                                if (sources?.[0]?.isAgent) {
+                                    this.selectedAgent = sources?.[0];
+                                    this.contextChipData = sources?.[0];
+                                } else {
+                                    this.contextChipData = sources?.[0];
+                                    /*check whether it is an answer of gptForm */
+                                }
+                            }
+                        }
+                        console.log("this.contextChipData 166", this.contextChipData);
+                        if (this.contextChipData) {
+                            console.log("this.contextChipData 168", this.contextChipData);
+                            setTimeout(() => {
+                                const contextChipOnComposebarDiv = this.container.querySelector('.composebar-bot-input-wrapper');
+                                if (contextChipOnComposebarDiv) {
+                                    showElementDelayed(contextChipOnComposebarDiv, 100, 'block', true);
+                                    // Update content after the delay
+                                    setTimeout(() => {
+                                        this.updateBotHeaderContent(this.contextChipData);
+                                        this.updatePlaceholder();
+                                    }, 0);
+                                }
+                            }, 100);
+                            // this.renderContextChipInComposeBar();
+                        }
                         this.renderQuickReplies();
-                    }, 0);
-                } catch (err) {
-                    console.warn('Failed processing file upload subscribe payload:', err);
+                    } catch (err) {
+                        console.warn('Failed processing file upload subscribe payload:', err);
+                    }
+                }else{                                  
+                    this.contextChipData = null;
                 }
 
             });
@@ -166,19 +195,19 @@ class ComposeBar {
         this.initSpeechRecognition();
         await this.getAgents();
         this.setCommonAgents();
-        this.render();        
+        this.render();
         this.renderCommonAgents();
         this.renderAttachments(); // Render any initial attachments
         this.renderQuickReplies(); // Render any initial quick replies
         this.attachEventListeners();
         this.updateMicrophoneButton(); // Set initial button state
-    }    
+    }
 
-    setCommonAgents() {                        
-        const selectedContext = store.getState()?.global?.selectedContext;                
+    setCommonAgents() {
+        const selectedContext = store.getState()?.global?.selectedContext;
 
-        if(Object.keys(selectedContext).length > 0) {            
-            this.commonAgents = [];            
+        if (Object.keys(selectedContext).length > 0) {
+            this.commonAgents = [];
         } else {
             try {
                 const state = store.getState();
@@ -196,26 +225,26 @@ class ComposeBar {
             }
         }
         return;
-        
+
     }
 
     /*need to render the common agents list, and on click of it invoke setAgentContext of ChatInterface*/
     renderCommonAgents() {
         /*make composebarcontextcontainer hidden */
-        const composebarContextChipContainer = this.container.querySelector('.composebar-context-container'); 
-        if(composebarContextChipContainer){
+        const composebarContextChipContainer = this.container.querySelector('.composebar-context-container');
+        if (composebarContextChipContainer) {
             hideElementImmediately(composebarContextChipContainer);
         }
         /*make commonagentscontainer visible */
-        const commonAgentsContainerDiv = this.container.querySelector('.common-agents-container'); 
-        if(commonAgentsContainerDiv){
+        const commonAgentsContainerDiv = this.container.querySelector('.common-agents-container');
+        if (commonAgentsContainerDiv) {
             showElementImmediately(commonAgentsContainerDiv, 'flex');
         }
-        
+
         const commonAgentsContainer = this.container.querySelector('[data-eva-common-agents]');
         if (!commonAgentsContainer) return;
 
-        commonAgentsContainer.innerHTML = this.commonAgents.map(agent => {            
+        commonAgentsContainer.innerHTML = this.commonAgents.map(agent => {
             return `<button class="agents-action-item ${this.selectedCommonAgent?.id === agent.id ? 'active' : ''}" data-eva-common-agents-action data-agent-id="${agent.id}">
                 <img src="${(this.isMSEnv && agent.id === 'webSearch') ? `images/MS-Icons/web-ms.svg` : agent.icon}" alt="" width="18" height="18" />
                 <span class='agent-name'>${agent?.name}</span>
@@ -227,30 +256,30 @@ class ComposeBar {
             item.addEventListener('click', () => {
                 const agentId = item.getAttribute('data-agent-id');
                 const agent = this.commonAgents.find(a => String(a.id) === String(agentId));
-                if(!agent) return;
-                if(this.selectedCommonAgent?.id === agentId) {
+                if (!agent) return;
+                if (this.selectedCommonAgent?.id === agentId) {
                     this.selectedCommonAgent = null;
                     if (this.chatInterface && this.chatInterface.setAgentContext) {
                         this.chatInterface.setAgentContext(null);
-                    }                    
-                }else{
-                    this.selectedCommonAgent = agent;   
+                    }
+                } else {
+                    this.selectedCommonAgent = agent;
                     if (this.chatInterface && this.chatInterface.setAgentContext) {
                         this.chatInterface.setAgentContext(agent);
-                    }                                        
+                    }
                 }
                 this.renderCommonAgents();
             });
         });
     }
 
-    renderContextChipInComposeBar() {        
-        const commonAgentsContainer = this.container.querySelector('.common-agents-container'); 
-        if(commonAgentsContainer){
+    renderContextChipInComposeBar() {
+        const commonAgentsContainer = this.container.querySelector('.common-agents-container');
+        if (commonAgentsContainer) {
             hideElementImmediately(commonAgentsContainer);
         }
-        const composebarContextChipContainer = this.container.querySelector('.composebar-context-container'); 
-        if (!composebarContextChipContainer) return;        
+        const composebarContextChipContainer = this.container.querySelector('.composebar-context-container');
+        if (!composebarContextChipContainer) return;
         showElementImmediately(composebarContextChipContainer, 'flex');
         /*innerHtml should display the selected agent name and close button */
         composebarContextChipContainer.innerHTML = `
@@ -268,7 +297,7 @@ class ComposeBar {
         /*change the placeholder to the selected agent name */
         this.placeholder = `Interact with ${this.selectedAgent?.name}`;
         this.updatePlaceholder();
-        
+
         const removeSelectedContextInComposeBarBtn = this.container.querySelector('.composebar-context-close-button');
         if (removeSelectedContextInComposeBarBtn) {
             removeSelectedContextInComposeBarBtn.addEventListener('click', (e) => this.handleRemoveSelectedContext());
@@ -277,11 +306,11 @@ class ComposeBar {
 
     renderAttachments() {
         const attachmentsContainer = this.container.querySelector('[data-eva-attachments]');
-        
+
         if (!attachmentsContainer) {
             return;
         }
-        
+
         const escapeHtml = (str) => String(str || '')
             .replace(/&/g, '&amp;')
             .replace(/</g, '&lt;')
@@ -293,23 +322,23 @@ class ComposeBar {
             const name = file?.title || file?.fileName || file?.mediaName || 'Attachment';
             const uid = file?.uID || file?.componentId || file?.docId || name;
             const fileExtension = getFileExtension(name);
-            
+
             return `<div class="eva-attachment-pill" data-attach-uid="${escapeHtml(uid)}" title="${escapeHtml(name)}">
                 <div class="attachment-icon"><img src="images/${fileExtension}.png" alt=''/></div>
                 <div class="eva-attachment-name">${escapeHtml(name)}</div>
-                ${file?.loading ? `<div class="waloader"></div>` : 
-                `<button type="button" class="eva-attachment-remove" data-remove-uid="${escapeHtml(uid)}" aria-label="Remove">&times;</button>`}
+                ${file?.loading ? `<div class="waloader"></div>` :
+                    `<button type="button" class="eva-attachment-remove" data-remove-uid="${escapeHtml(uid)}" aria-label="Remove">&times;</button>`}
             </div>`;
         }).join('');
-        
+
         attachmentsContainer.innerHTML = attachmentHtml;
-        
+
         // Reattach event listeners for remove buttons
         this.attachAttachmentEventListeners();
     }
 
     renderQuickReplies() {
-        const quickRepliesContainer = this.container.querySelector('[data-eva-quick-replies]');                
+        const quickRepliesContainer = this.container.querySelector('[data-eva-quick-replies]');
         if (!quickRepliesContainer) {
             return;
         }
@@ -317,8 +346,8 @@ class ComposeBar {
         const quickRepliesHtml = this.quickActions.map(action => {
             return `<div class="eva-quick-reply-chip" data-action-id="${action.id}">${action.label}</div>`;
         }).join('');
-        
-        quickRepliesContainer.innerHTML = quickRepliesHtml;        
+
+        quickRepliesContainer.innerHTML = quickRepliesHtml;
         // Attach event listeners for quick reply clicks
         this.attachQuickReplyEventListeners();
     }
@@ -329,7 +358,7 @@ class ComposeBar {
             chip.addEventListener('click', (e) => this.handleQuickAction(e));
         });
     }
-    
+
     attachAttachmentEventListeners() {
         // Attachment remove button events
         const removeButtons = this.container.querySelectorAll('.eva-attachment-remove');
@@ -395,37 +424,88 @@ class ComposeBar {
     /**
      * Update the bot header content dynamically
      */
-    updateBotHeaderContent() {
-        const botWrapper = this.container.querySelector('.composebar-bot-input-wrapper');
-        if (!botWrapper) return;
-        
-        const iconElement = botWrapper.querySelector('.icon-image img');
-        const nameElement = botWrapper.querySelector('.bot-input-header-left-text');
-        
-        if (iconElement) {
-            const agentIcon = this.showBotComposeBarHeader?.context?.sources?.[0]?.icon || this.showBotComposeBarHeader?.sources?.[0]?.icon;
-            if (agentIcon) {
-                iconElement.src = agentIcon;
-            }
+    updateBotHeaderContent(contextChipData) {
+        console.log("contextChipData in updateBotHeaderContent", contextChipData);
+        const composeBarWrapperDiv = this.container.querySelector('.composebar-bot-input-wrapper');  
+        const botInputHeaderDiv = composeBarWrapperDiv.querySelector('.bot-input-header'); 
+        const answerContextChipContainer = composeBarWrapperDiv.querySelector('.answer-context-chip-container');     
+        if (!composeBarWrapperDiv) return;
+        if(!contextChipData){            
+            hideElementImmediately(composeBarWrapperDiv);
+            return;
         }
-        
-        if (nameElement) {
-            const agentName = this.showBotComposeBarHeader?.context?.sources?.[0]?.name || this.showBotComposeBarHeader?.sources?.[0]?.title;
-            if (agentName) {
-                nameElement.textContent = agentName;
+
+        /*check whether contextChipData is holding agent or answer */
+        const iconElement = composeBarWrapperDiv.querySelector('.icon-image img');
+        const nameElement = composeBarWrapperDiv.querySelector('.bot-input-header-left-text');
+        if (contextChipData?.isAgent) {  
+            if(botInputHeaderDiv){
+                showElementImmediately(botInputHeaderDiv, 'flex');
+            }          
+            if(answerContextChipContainer){
+                hideElementImmediately(answerContextChipContainer);
+            }                       
+            if (iconElement) {
+                const agentIcon = contextChipData?.icon;
+                if (agentIcon) {
+                    iconElement.src = agentIcon;
+                }
             }
+
+            if (nameElement) {
+                const agentName = contextChipData?.name;
+                if (agentName) {
+                    nameElement.textContent = agentName;
+                }
+            }
+        } else {                        
+            if (botInputHeaderDiv) {
+                hideElementImmediately(botInputHeaderDiv);
+            }                        
+            if(answerContextChipContainer){
+                showElementImmediately(answerContextChipContainer, 'flex');                
+                    /*set answer inside answer-context-chip-container */
+                    const answerContextChipText = composeBarWrapperDiv.querySelector('.answer-context-chip-text');  
+                    const currentQuestionsLength = Object.values(this.questions)?.length;
+                    const currentAnswer = Object.values(this.questions)?.[currentQuestionsLength - 1]?.answer || 'Answer Context';
+                    answerContextChipText.innerText = markdownToPlainText(currentAnswer);
+                    // answerContextChipText.innerHTML = this.answerContextHTML(markdownToPlainText(currentAnswer));
+                
+            }            
+            // composeBarWrapperDiv.innerHTML = this.answerContextHTML(markdownToPlainText(currentAnswer));
+            const answerContextCloseBtn = composeBarWrapperDiv.querySelector('.answer-context-chip-close-button');
+            if (answerContextCloseBtn) {
+                if (!answerContextCloseBtn.eventListenerAdded) {
+                    answerContextCloseBtn.addEventListener('click', () => {
+                        this.fileUploaderInterface.clearContext({});
+                        hideElementImmediately(composeBarWrapperDiv);
+                        answerContextCloseBtn.eventListenerAdded = true;
+                    });
+                }
+            }
+
+            // if (iconElement) {
+            //     iconElement.src = CurvedArrowForPreview({ size: 12 });
+            // }
+            // if (nameElement) {
+            //     nameElement.textContent = markdownToPlainText(currentAnswer);
+            // }
         }
-        
-        const endConversationBtn = botWrapper.querySelector('.bot-input-header-right-text');
+
+        const endConversationBtn = composeBarWrapperDiv.querySelector('.bot-input-header-right-text');
+        const agentDetailsBtn = composeBarWrapperDiv.querySelector('.details-section');
+        if (!agentDetailsBtn) return;
+
+        // Ensure the inner text element exists and set default label
+        // const agentDetailsInner = agentDetailsBtn.querySelector('.bot-input-header-right-text') || agentDetailsBtn;
+        // agentDetailsInner.textContent = 'Show Details';
+
         if (endConversationBtn) {
-            
-            endConversationBtn.innerHTML = this.botEndConversationLoader ? '<div class="waloader"></div>' : 'End Conversation';
-            
-            
+            endConversationBtn.innerHTML = this.botEndConversationLoader ? '<div class="waloader"></div>' : 'X';
             endConversationBtn.removeEventListener('click', this.endConversationHandler);
-            
             endConversationBtn.addEventListener('click', this.endConversationHandler);
         }
+
     }
 
     updatePlaceholder() {
@@ -435,7 +515,15 @@ class ComposeBar {
         }
     }
 
-    
+    answerContextHTML(answerContext) {
+        return `<div class="answer-context-chip-container">
+            <div class='arrow-down-icon'>${CurvedArrowForPreview({ size: 12 })}</div>
+            <button class="answer-context-chip-close-button">${createCloseIcon({ size: 10, color: "#667085" })}</button>
+            <div class="answer-context-chip-text"></div>
+        </div>`
+    }
+
+
     getSendButtonIcon() {
         const env = store.getState()?.global?.env;
         if (env === 'MS') {
@@ -444,7 +532,7 @@ class ComposeBar {
         return arrowCirlceUpIcon({ size: 16, color: "#101828" });
     }
 
-    
+
     getAttachmentButtonIcon() {
         const env = store.getState()?.global?.env;
         if (env === 'MS') {
@@ -452,23 +540,27 @@ class ComposeBar {
         }
         return attachmentIcon({ size: 16, color: "#0F0F0F" });
     }
-    
+
     handleEndConversation() {
-        this.botEndConversationLoader = true;
-        
-        const endConversationBtn = this.container.querySelector('.bot-input-header-right-text');
-        if (endConversationBtn) {
-            endConversationBtn.innerHTML = '<div class="waloader"></div>';
+        if (this.selectedAgent?.agentType === 'botAgent') {
+            this.botEndConversationLoader = true;
+
+            const endConversationBtn = this.container.querySelector('.bot-input-header-right-text');
+            if (endConversationBtn) {
+                endConversationBtn.innerHTML = '<div class="waloader"></div>';
+            }
+
+            this.chatInterface.stopBotAnswer();
+        } else {
+            this.fileUploaderInterface.clearContext();
         }
-        
-        this.chatInterface.stopBotAnswer();
     }
 
 
     /**
      * Render the compose bar HTML
      */
-    render() {        
+    render() {
         const escapeHtml = (str) => String(str || '')
             .replace(/&/g, '&amp;')
             .replace(/</g, '&lt;')
@@ -476,7 +568,7 @@ class ComposeBar {
             .replace(/"/g, '&quot;')
             .replace(/'/g, '&#39;');
 
-        
+
         this.container.innerHTML = `
             <div class="ComposeBarContainer">
                 <div class="eva-composebar-parent">     
@@ -498,20 +590,26 @@ class ComposeBar {
                         <div class="composebar-bot-input-wrapper" style= "display: none;">
                             <div class="bot-input-header">
                                 <div class="bot-input-header-left">
-                                    <div class="bot-input-header-left-icon">
-                                        <span class="icon-text">Talking to</span>
+                                    <div class="bot-input-header-left-icon">                                        
                                         <span class="icon-image"><img src="" alt="bot-icon" width="24px" height="24px"></span>                            
                                     </div>  
                                     <div class="bot-input-header-left-text">                                                                                
                                     </div>
                                 </div>
                                 <div class="bot-input-header-right">
-                                    <div class="bot-input-header-right-text">
-                                        ${this.botEndConversationLoader ? '<div class="waloader"></div>' : 'End Conversation'}
-                                    </div>
+                                    <button class="details-section hidden" title="Show Details">
+                                        <div class="bot-input-header-right-text">
+                                            ${this.botEndConversationLoader ? '<div class="waloader"></div>' : 'End Conversation'}
+                                        </div>
+                                    </button>
                                 </div>
-                            </div>
-                        </div>
+                            </div> 
+                            <div class="answer-context-chip-container" style="display: none;">
+                                <div class='arrow-down-icon'>${CurvedArrowForPreview({ size: 12 })}</div>
+                                <button class="answer-context-chip-close-button">${createCloseIcon({ size: 10, color: "#667085" })}</button>
+                                <div class="answer-context-chip-text"></div>
+                        </div>                           
+                        </div>                        
                         <div class="eva-input-container">
                             <div class="eva-attachments-container" data-eva-attachments></div>
                             <div class="eva-compose-textarea-container">
@@ -695,7 +793,7 @@ class ComposeBar {
             attachmentBtn.addEventListener('click', () => this.handleAttachment());
         }
 
-        if(uploadFileBtn) {
+        if (uploadFileBtn) {
             uploadFileBtn.addEventListener('click', () => this.handleFileUpload());
         }
 
@@ -706,14 +804,14 @@ class ComposeBar {
                         this.fileUploaderInterface.uploadFile(e);
                     }
                 }
-                catch(e){
+                catch (e) {
                     console.error('Error uploading file:', e);
                 }
                 finally {
                     // reset so selecting the same file again still triggers change
                     /*once the file is uploaded we need to close the attachment dialog */
                     const attachmentDialog = this.container.querySelector('[data-eva-attachment-dialog]');
-                    if(attachmentDialog){
+                    if (attachmentDialog) {
                         attachmentDialog.hide();
                     }
                     fileInput.value = '';
@@ -761,9 +859,9 @@ class ComposeBar {
     }
 
     handleRemoveSelectedContext() {
-        if(this.fileUploaderInterface && typeof this.fileUploaderInterface.clearContext === 'function') {
+        if (this.fileUploaderInterface && typeof this.fileUploaderInterface.clearContext === 'function') {
             this.fileUploaderInterface.clearContext();
-        }        
+        }
         this.selectedAgent = null;
         this.setCommonAgents();
         this.renderCommonAgents();
@@ -777,7 +875,7 @@ class ComposeBar {
      */
     handleInputChange(event) {
         this.input = event.target.value;
-        if(this.quickActions?.length > 0) {
+        if (this.quickActions?.length > 0) {
             this.quickActions = [];
             setTimeout(() => {
                 this.renderQuickReplies();
@@ -797,20 +895,20 @@ class ComposeBar {
     handleTabSwitch(event) {
         const clickedTab = event.target;
         const tabText = clickedTab.textContent.trim();
-        
+
         // Get all tab headings
         const allTabs = this.container.querySelectorAll('.agentsTabHeading');
-        
+
         // Remove active class from all tabs
         allTabs.forEach(tab => tab.classList.remove('active'));
-        
+
         // Add active class to clicked tab
         clickedTab.classList.add('active');
-        
+
         // Get content containers
         const agentsContainer = this.container.querySelector('[data-eva-agents-content]');
         const flowsContainer = this.container.querySelector('[data-eva-flows-content]');
-        
+
         // Show/hide content based on selected tab
         if (tabText === 'Agents') {
             if (agentsContainer) agentsContainer.style.display = 'block';
@@ -818,7 +916,7 @@ class ComposeBar {
         } else if (tabText === 'Flows') {
             if (agentsContainer) agentsContainer.style.display = 'none';
             if (flowsContainer) flowsContainer.style.display = 'block';
-            
+
             // Render agenticFlows when Flows tab is selected
             this.renderFlows();
         }
@@ -837,7 +935,7 @@ class ComposeBar {
         try {
             // Use the stored agenticFlows or get them from store if not available
             let agenticFlows = this.agenticFlows;
-            
+
             if (!agenticFlows) {
                 const state = store.getState();
                 const allAgents = state?.global?.allAgents?.data?.agents || [];
@@ -867,7 +965,7 @@ class ComposeBar {
         try {
             // Use the stored agenticFlows or get them from store if not available
             let agenticFlows = this.agenticFlows;
-            
+
             if (!agenticFlows) {
                 const state = store.getState();
                 const allAgents = state?.global?.allAgents?.data?.agents || [];
@@ -878,7 +976,7 @@ class ComposeBar {
             // Filter flows by search term if provided
             let filteredFlows = agenticFlows;
             if (searchTerm?.length > 0) {
-                filteredFlows = agenticFlows.filter(flow => 
+                filteredFlows = agenticFlows.filter(flow =>
                     flow?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                     flow?.description?.toLowerCase().includes(searchTerm.toLowerCase())
                 );
@@ -899,17 +997,17 @@ class ComposeBar {
     updateMicrophoneButton() {
         // Skip if MS env (mic button is hidden)
         if (this.isMSEnv) return;
-        
+
         const micButton = this.container.querySelector('[data-eva-speech]');
         if (!micButton) {
             return;
         }
 
-        
+
 
         if (this.input?.length > 0) {
             micButton.innerHTML = Close({ size: 12, color: "#0F0F0F" });
-            micButton.title = "Clear input";            
+            micButton.title = "Clear input";
         } else {
             micButton.innerHTML = microphoneIcon({ size: 16, color: "#0F0F0F" });
             micButton.title = "Search using voice";
@@ -919,7 +1017,7 @@ class ComposeBar {
     /**
      * Handle key down events
      */
-    handleKeyDown(event) {        
+    handleKeyDown(event) {
         if (event.key === 'Enter' && !event.shiftKey) {
             event.preventDefault();
             this.handleSend();
@@ -930,7 +1028,7 @@ class ComposeBar {
      * Handle paste events
      */
     handlePaste(event) {
-        
+
         setTimeout(() => {
             this.autoResize(event.target);
         }, 0);
@@ -952,12 +1050,12 @@ class ComposeBar {
 
         // Default internal handling
         try {
-            const currentQuestion = Object.values(this.questions)?.[Object.values(this.questions)?.length - 1];            
+            const currentQuestion = Object.values(this.questions)?.[Object.values(this.questions)?.length - 1];
             this.chatInterface.sendMessage(this.input.trim(), currentQuestion);
         } catch (e) {
             console.error('Error sending message from ComposeBar:', e);
         }
-        
+
         if (this.callbacks.onSend) {
             this.callbacks.onSend(this.input.trim());
         }
@@ -978,11 +1076,11 @@ class ComposeBar {
     handleStop() {
         // Default internal handling
         try {
-            this.chatInterface.cancelMessageReqAction();    
+            this.chatInterface.cancelMessageReqAction();
         } catch (e) {
             console.error('Error stopping message from ComposeBar:', e);
         }
-        
+
     }
 
     /**
@@ -992,11 +1090,11 @@ class ComposeBar {
         const actionId = event.target.getAttribute('data-action-id');
         const action = this.quickActions.find(a => a.id === actionId);
 
-       
+
         if (action) {
             try {
                 if (this.chatInterface && typeof this.chatInterface.askQuickActions === 'function') {
-                    this.chatInterface.askQuickActions(action);                    
+                    this.chatInterface.askQuickActions(action);
                     setTimeout(() => {
                         this.quickActions = [];
                         this.renderQuickReplies();
@@ -1007,7 +1105,7 @@ class ComposeBar {
             }
         }
 
-       
+
         if (action && this.callbacks.onQuickAction) {
             this.callbacks.onQuickAction(action);
         }
@@ -1020,9 +1118,9 @@ class ComposeBar {
         this.handleOpenAttachmentDialog();
     }
 
-    handleFileUpload(){
+    handleFileUpload() {
         const fileInput = this.container.querySelector('[data-eva-file-input]');
-        if(fileInput){
+        if (fileInput) {
             fileInput.click();
         }
     }
@@ -1031,11 +1129,11 @@ class ComposeBar {
      * Handle speech to text button click or clear input
      */
     handleSpeechToText() {
-        
+
         const textarea = this.container.querySelector('[data-eva-input]');
         const actualValue = textarea ? textarea.value : '';
 
-        
+
         const hasInput = actualValue.length > 0;
 
         if (hasInput) {
@@ -1043,17 +1141,17 @@ class ComposeBar {
             return;
         }
 
-       
+
         if (!this.recognition) {
             alert('Speech recognition is not supported in this browser');
             return;
         }
 
         if (this.isRecording) {
-            
+
             this.recognition.stop();
         } else {
-            
+
             this.isRecording = true;
             this.updateSpeechButton();
             try {
@@ -1075,7 +1173,7 @@ class ComposeBar {
      */
     clearInput() {
         const textarea = this.container.querySelector('[data-eva-input]');
-        if (textarea) {            
+        if (textarea) {
             textarea.value = '';
             this.input = '';
             this.autoResize(textarea);
@@ -1088,7 +1186,7 @@ class ComposeBar {
     /**
      * Open Shoelace dialog
      */
-    handleOpenDialog() {        
+    handleOpenDialog() {
         const dialog = this.container.querySelector('[data-eva-dialog]');
         if (!dialog) return;
         try {
@@ -1100,7 +1198,7 @@ class ComposeBar {
         } catch (e) {
             dialog.setAttribute('open', '');
         }
-        
+
         this.loadAndRenderAgents('');
     }
 
@@ -1118,10 +1216,10 @@ class ComposeBar {
             }
         } catch (e) {
             dialog.removeAttribute('open');
-        }finally{
+        } finally {
             /*need to clear the entered text if any in the data-eva-agent-search-input-box*/
             const agentSearchInputBox = this.container.querySelector('[data-eva-agent-search-input-box]');
-            if(agentSearchInputBox){
+            if (agentSearchInputBox) {
                 agentSearchInputBox.value = '';
             }
         }
@@ -1130,7 +1228,7 @@ class ComposeBar {
     /**
      * Open attachment dialog
      */
-    handleOpenAttachmentDialog() {        
+    handleOpenAttachmentDialog() {
         const attachmentDialog = this.container.querySelector('[data-eva-attachment-dialog]');
         if (!attachmentDialog) return;
         try {
@@ -1142,7 +1240,7 @@ class ComposeBar {
         } catch (e) {
             attachmentDialog.setAttribute('open', '');
         }
-        
+
         this.loadAndRenderRecentFiles();
     }
 
@@ -1195,10 +1293,10 @@ class ComposeBar {
     handleFileAttachFromRecent(file) {
         try {
             console.log('Attaching recent file:', file);
-            
+
             // Close the attachment dialog
             this.handleCloseAttachmentDialog();
-            
+
             // Call fileUploaderInterface.uploadFile just like in file input change event
             if (this.fileUploaderInterface && typeof this.fileUploaderInterface.uploadFile === 'function') {
                 // Create a synthetic event object with the recent file
@@ -1221,7 +1319,7 @@ class ComposeBar {
     handleFileRemoveFromRecent(file) {
         try {
             console.log('Removing file from recent:', file);
-            
+
             // Here you can add logic to remove file from recent files store
             // This could dispatch a Redux action to remove from AllrecentFiles
             const event = new CustomEvent('eva-recent-file-remove', {
@@ -1350,11 +1448,11 @@ class ComposeBar {
 
     handleAgentSearch(event) {
         const searchValue = event.target.value;
-        
+
         // Check which tab is currently active
         const activeTab = this.container.querySelector('.agentsTabHeading.active');
         const activeTabText = activeTab ? activeTab.textContent.trim() : 'Agents';
-        
+
         if (activeTabText === 'Flows') {
             this.searchAndRenderFlows(searchValue);
         } else {
@@ -1416,20 +1514,20 @@ class ComposeBar {
             const state = store.getState();
             const allAgents = state?.global?.allAgents?.data?.agents || [];
             const recents = state?.global?.allAgents?.data?.recents || [];
-            const agenticFlows = allAgents.filter(agent => (agent?.type === "agenticApp" && agent?.enabled)) ;
-            
+            const agenticFlows = allAgents.filter(agent => (agent?.type === "agenticApp" && agent?.enabled));
+
             // Store agenticFlows as a class property for tab switching
             this.agenticFlows = agenticFlows;
-            
+
             let enabledAgents = Array.isArray(allAgents)
                 ? allAgents.filter(agent => agent?.enabled)
-                : [];   
+                : [];
             enabledAgents = enabledAgents.filter(agent => agent?.type !== "agenticApp");
-            if(searchTerm?.length > 0) {
+            if (searchTerm?.length > 0) {
                 enabledAgents = enabledAgents.filter(agent => agent?.name?.toLowerCase().includes(searchTerm.toLowerCase()));
             }
             this.renderAgentsList(allListEl, enabledAgents, 'recent');
-            
+
 
         } catch (e) {
             allListEl.innerHTML = `<li>Failed to load agents</li>`;
@@ -1475,7 +1573,7 @@ class ComposeBar {
                     // Store the agent for later invocation after user confirms
                     // this.pendingAgentInvocation = agent;
                     this.showOverRideModal = true;
-                    this.renderWithStatePreservation(); 
+                    this.renderWithStatePreservation();
                     this.setupOverrideModalEvents(); // Set up event listeners for modal buttons
                 } else {
                     this.commonAgents = [];
@@ -1550,13 +1648,13 @@ class ComposeBar {
             } else {
                 sendBtn.innerHTML = this.getSendButtonIcon();
                 sendBtn.title = 'Send';
-                sendBtn.classList.remove('stop-btn');                                    
-                if(this.currentAnswerResponse?.status === 'completed' || this.currentAnswerResponse?.status === 'terminated'){
-                    if(activeCommonAgent){
-                        activeCommonAgent.classList.remove('active');                        
-                    }   
+                sendBtn.classList.remove('stop-btn');
+                if (this.currentAnswerResponse?.status === 'completed' || this.currentAnswerResponse?.status === 'terminated') {
+                    if (activeCommonAgent) {
+                        activeCommonAgent.classList.remove('active');
+                    }
                     this.currentAnswerResponse = null;
-                }                
+                }
             }
         }
 
@@ -1567,7 +1665,7 @@ class ComposeBar {
         return this;
     }
 
-    
+
 
     /**
      * Remove an attachment by UID using FileUpload interface
@@ -1581,15 +1679,15 @@ class ComposeBar {
         }
         try {
             console.log('Removing file:', file);
-            
+
             // Add safety check for consistency
             if (this.fileUploaderInterface && typeof this.fileUploaderInterface.removeContext === 'function') {
                 this.fileUploaderInterface.removeContext(file);
             }
-                        
+
             this.attachments = this.attachments.filter(f => String(f?.uID || f?.componentId || f?.docId) !== String(uid));
             this.renderAttachments();
-            
+
         } catch (err) {
             console.warn('Failed to remove attachment:', err);
         }
@@ -1637,14 +1735,14 @@ class ComposeBar {
     /**
      * Clean up ComposeBar resources
      */
-    cleanup() {        
+    cleanup() {
         console.log('🧹 ComposeBar cleanup completed');
     }
 
     destroy() {
         // Clean up timers and observers first
         this.cleanup();
-        
+
         if (this.container) {
             this.container.innerHTML = '';
         }

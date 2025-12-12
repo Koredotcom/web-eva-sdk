@@ -44,7 +44,8 @@ export const sessionItemHandler = (args) => {
         viewType, // it will contain the question type whether its knowledge or data
         override, // it will be true only when comes from overridemsgmodal
         invokeAgent,
-        type
+        type,
+        invokeFrom
     } = args;
 
     const state = store.getState().global;
@@ -181,7 +182,7 @@ export const sessionItemHandler = (args) => {
             // isAgent - it will come here because previously setted context was agent and now it should replace with new agent 
             action = "add"
             payload = _selectedContext?.sources;
-            if (!payload[0].hasOwnProperty('ext')) {
+            if (!payload[0].hasOwnProperty('ext') && _selectedContext?.sources?.[0]?.hasOwnProperty('ext')) {
                 payload[0].ext = addedItem?.sources?.[0]?.ext
             }
             if (!payload[0].hasOwnProperty('docId')) {
@@ -193,6 +194,13 @@ export const sessionItemHandler = (args) => {
             payload = [addedItem];
         }
     }
+
+    if(invokeFrom === "gptAgent"){
+        _selectedContext.setViaGptAgent = true;
+        args.setViaGptAgent = true;
+    }
+
+    // store.dispatch(setSelectedContext({selectedContext: _selectedContext}));
 
     // let selectedContextData = {};
     // selectedContextData.data = {};

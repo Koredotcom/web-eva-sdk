@@ -11,6 +11,7 @@ import MultiResponse from './gptTemplate/MultiResponse';
 import moment from "moment";
 import { fetchHistory } from "../redux/actions/global.action";
 import { multiIntentExecutionFunc } from "../templateRenderer/functionality/multi-intent-execution";
+import { sessionItemHandler } from '../Attachments/createContext';
 
 export const constructQuestionInitial = (args) => {
 	let uniqueMsgId = args?.reqId;
@@ -425,6 +426,22 @@ export const constructQuestionPostCall = (data, qId) => {
             sessionId: data?.payload?.followUpContext?.sessionId
         }
         store.dispatch(setSelectedContext({data: context}))
+    }
+
+    /*once we get the response for the gpt form template, need to set the context with the response generated */
+    if(data.payload.templateType === chatTemplateTypes.SEARCH_ANSWER && data.payload.context.agentType ==="gptAgent" ) {
+        /*need to make searchSession call, so will depend on sessionItemHandler */
+        const obj ={
+            boardId: data.payload.boardId,
+            messageId: data.payload.messageId,
+            item: data.payload.sources[0],
+            type: "agent",
+            invokeFrom: "gptAgent",
+            duplicateErr: true,
+            discardPrevSession: true
+            
+        }
+        sessionItemHandler(obj)
     }
     store.dispatch(updateChatData(questions))
 

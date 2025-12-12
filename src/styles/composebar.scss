@@ -1242,7 +1242,7 @@ sl-dialog.eva-agents-dialog {
                 font-weight: 500;
                 line-height: 1.25rem;
                 letter-spacing: 0em;
-                color: #d92d20;
+                color: black;
 
                 .waloader {
                     position: relative;
@@ -1255,6 +1255,23 @@ sl-dialog.eva-agents-dialog {
             }
         }
     }
+    
+    &:hover {
+        .details-section {
+            display: block !important;
+        }
+    }
+}
+
+/* Details button visibility helpers */
+.details-section {
+    display: inline-block;
+}
+.details-section.hidden {
+    display: none;
+}
+.composebar-bot-input-wrapper:hover .details-section.hidden {
+    display: inline-block;
 }
 
 sl-dialog.eva-attachments-dialog {
