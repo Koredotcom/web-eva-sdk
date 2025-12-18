@@ -211,6 +211,7 @@ const globalSlice = createSlice({
         let AllrecentFiles = cloneDeep(state.AllrecentFiles?.data?.files)
         AllrecentFiles = uniqBy(concat(AllrecentFiles, state.recentFilesRes?.data?.files), 'id')
         state.AllrecentFiles.data.files = AllrecentFiles
+        state.AllrecentFiles.data.moreAvailable = action?.payload?.moreAvailable
         state.AllrecentFiles.status = state.recentFilesRes.status
         state.AllrecentFiles.error = state.recentFilesRes.error
       }

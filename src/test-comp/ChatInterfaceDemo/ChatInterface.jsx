@@ -7,6 +7,7 @@ import "./ChatInterface.scss"
 import History from "../history";
 import Agents from "../agents";
 import Notifications from "../Notifications";
+import RecentFilesDemo from "../recentFiles";
 import { AnnouncementsInterface } from "../../Announcements";
 import MultiIntentExecutionDemo from "./MultiIntentExecutionDemo";
 
@@ -62,8 +63,9 @@ const ChatInterfaceDemo = () => {
     <div className="chatInterfaceDemo">
       <div className="historySec">
         <History />
-        <Notifications />
-        <Agents />
+        {/* <RecentFilesDemo /> */}
+        {/* <Notifications /> */}
+        {/* <Agents /> */}
       </div>
       <div className="chatInterfaceSec">
         <div className="chatSec">
