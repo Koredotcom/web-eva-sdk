@@ -341,7 +341,7 @@ export const constructQuestionPostCall = (data, qId) => {
             question.botConversation = {}
             question.parentMessage = data.payload.res
             data?.payload?.thread?.messages?.map(message => {
-                question.botConversation[message?.messageId] = message
+                question.botConversation[message?.messageId] = { ...message, "chunkMeta": question?.chunkMeta || {} }
             })                        
         }
         if (data?.payload?.thread && data?.payload?.thread?.nextMessages && data?.payload?.thread?.nextMessages?.length) {    
@@ -349,7 +349,7 @@ export const constructQuestionPostCall = (data, qId) => {
             question.botConversation[data?.payload?.messageId].status = data?.payload?.status
             question.botConversation[data?.payload?.messageId].answer = data?.payload?.answer
             data?.payload?.thread?.nextMessages?.map(message => {
-                question.botConversation[message?.messageId] = message
+                question.botConversation[message?.messageId] = { ...message, "chunkMeta": question?.chunkMeta || {} }
             })
             if (data?.payload?.thread?.parentMessage?.status === "completed") {
                 question.status = "completed"                
