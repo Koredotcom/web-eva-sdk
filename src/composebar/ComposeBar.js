@@ -428,7 +428,7 @@ class ComposeBar {
         console.log("contextChipData in updateBotHeaderContent", contextChipData);
         const composeBarWrapperDiv = this.container.querySelector('.composebar-bot-input-wrapper');  
         const botInputHeaderDiv = composeBarWrapperDiv.querySelector('.bot-input-header'); 
-        const answerContextChipContainer = composeBarWrapperDiv.querySelector('.answer-context-chip-container');     
+        const answerContextChipContainer = this.container.querySelector('.response-as-context-truncated-text');     
         if (!composeBarWrapperDiv) return;
         if(!contextChipData){            
             hideElementImmediately(composeBarWrapperDiv);
@@ -463,9 +463,11 @@ class ComposeBar {
                 hideElementImmediately(botInputHeaderDiv);
             }                        
             if(answerContextChipContainer){
-                showElementImmediately(answerContextChipContainer, 'flex');                
-                    /*set answer inside answer-context-chip-container */
-                    const answerContextChipText = composeBarWrapperDiv.querySelector('.answer-context-chip-text');  
+                showElementImmediately(answerContextChipContainer, 'flex');
+                // Hide the bot input wrapper when response context is shown
+                hideElementImmediately(composeBarWrapperDiv);
+                    /*set answer inside response-as-context-truncated-text */
+                    const answerContextChipText = this.container.querySelector('.answer-context-chip-text');  
                     const currentQuestionsLength = Object.values(this.questions)?.length;
                     const currentAnswer = Object.values(this.questions)?.[currentQuestionsLength - 1]?.answer || 'Answer Context';
                     answerContextChipText.innerText = markdownToPlainText(currentAnswer);
@@ -473,11 +475,13 @@ class ComposeBar {
                 
             }            
             // composeBarWrapperDiv.innerHTML = this.answerContextHTML(markdownToPlainText(currentAnswer));
-            const answerContextCloseBtn = composeBarWrapperDiv.querySelector('.answer-context-chip-close-button');
+            const answerContextCloseBtn = this.container.querySelector('.srCicon');
             if (answerContextCloseBtn) {
                 if (!answerContextCloseBtn.eventListenerAdded) {
                     answerContextCloseBtn.addEventListener('click', () => {
                         this.fileUploaderInterface.clearContext({});
+                        hideElementImmediately(answerContextChipContainer);
+                        // Hide the bot input wrapper as well when response context is closed
                         hideElementImmediately(composeBarWrapperDiv);
                         answerContextCloseBtn.eventListenerAdded = true;
                     });
@@ -494,14 +498,12 @@ class ComposeBar {
 
         const endConversationBtn = composeBarWrapperDiv.querySelector('.bot-input-header-right-text');
         const agentDetailsBtn = composeBarWrapperDiv.querySelector('.details-section');
+        
         if (!agentDetailsBtn) return;
 
-        // Ensure the inner text element exists and set default label
-        // const agentDetailsInner = agentDetailsBtn.querySelector('.bot-input-header-right-text') || agentDetailsBtn;
-        // agentDetailsInner.textContent = 'Show Details';
 
         if (endConversationBtn) {
-            endConversationBtn.innerHTML = this.botEndConversationLoader ? '<div class="waloader"></div>' : 'X';
+            endConversationBtn.innerHTML = this.botEndConversationLoader ? '<div class="waloader"></div>' : `${createCloseIcon({ size: 10, color: "#667085" })}`;
             endConversationBtn.removeEventListener('click', this.endConversationHandler);
             endConversationBtn.addEventListener('click', this.endConversationHandler);
         }
@@ -516,7 +518,7 @@ class ComposeBar {
     }
 
     answerContextHTML(answerContext) {
-        return `<div class="answer-context-chip-container">
+        return `<div class="response-as-context-truncated-text">
             <div class='arrow-down-icon'>${CurvedArrowForPreview({ size: 12 })}</div>
             <button class="answer-context-chip-close-button">${createCloseIcon({ size: 10, color: "#667085" })}</button>
             <div class="answer-context-chip-text"></div>
@@ -556,6 +558,58 @@ class ComposeBar {
         }
     }
 
+    /**
+     * Handle details toggle functionality
+     */
+    handleDetailsToggle() {
+        const composeBarWrapper = this.container.querySelector('.composebar-bot-input-wrapper');
+        if (!composeBarWrapper) return;
+
+        const detailsContent = composeBarWrapper.querySelector('.details-content');
+        const moreDetailsText = composeBarWrapper.querySelector('.more-details-text');
+        
+        if (!detailsContent || !moreDetailsText) return;
+
+        // Check if details are currently visible
+        const isDetailsVisible = detailsContent.style.display !== 'none';
+        
+        if (isDetailsVisible) {
+            // Currently showing details, user wants to hide them
+            detailsContent.style.display = 'none';
+            moreDetailsText.textContent = 'Show Details';
+            composeBarWrapper.classList.add('details-hidden');
+            // Don't hide wrapper - keep it visible so user can access "Show Details" button
+        } else {
+            // Currently hiding details, user wants to show them
+            detailsContent.style.display = 'block';
+            moreDetailsText.textContent = 'Hide Details';
+            composeBarWrapper.classList.remove('details-hidden');
+            // Ensure wrapper is visible when showing details
+            showElementImmediately(composeBarWrapper, 'block');
+        }
+    }
+
+    /**
+     * Set up details toggle functionality
+     */
+    setupDetailsToggle() {
+        const composeBarWrapper = this.container.querySelector('.composebar-bot-input-wrapper');
+        if (!composeBarWrapper) return;
+
+        const infoDetailsDiv = composeBarWrapper.querySelector('.info-details');
+        if (infoDetailsDiv) {
+            infoDetailsDiv.removeEventListener('click', this.handleDetailsToggle);
+            infoDetailsDiv.addEventListener('click', this.handleDetailsToggle.bind(this));
+            
+            // Ensure details content starts hidden and add corresponding class
+            const detailsContent = composeBarWrapper.querySelector('.details-content');
+            if (detailsContent) {
+                detailsContent.style.display = 'none';
+                composeBarWrapper.classList.add('details-hidden');
+                // Note: Don't hide wrapper initially - it needs to be visible for user to access "Show Details"
+            }
+        }
+    }
 
     /**
      * Render the compose bar HTML
@@ -597,20 +651,24 @@ class ComposeBar {
                                     </div>
                                 </div>
                                 <div class="bot-input-header-right">
-                                    <button class="details-section hidden" title="Show Details">
+                                    <div class="info-details"><span class="more-details-text">Show Details</span></div>                                    
+                                    <button class="details-section" title="Show Details">
                                         <div class="bot-input-header-right-text">
-                                            ${this.botEndConversationLoader ? '<div class="waloader"></div>' : 'End Conversation'}
+                                            
                                         </div>
                                     </button>
                                 </div>
                             </div> 
-                            <div class="answer-context-chip-container" style="display: none;">
-                                <div class='arrow-down-icon'>${CurvedArrowForPreview({ size: 12 })}</div>
-                                <button class="answer-context-chip-close-button">${createCloseIcon({ size: 10, color: "#667085" })}</button>
-                                <div class="answer-context-chip-text"></div>
-                        </div>                           
+                            <div class="details-content">lorem ipsum dolor sit amet</div>
+                                              
                         </div>                        
+                        
                         <div class="eva-input-container">
+                            <div class="response-as-context-truncated-text" style="display: none;">
+                                <div class='arrow-down-icon'>${CurvedArrowForPreview({ size: 12, color: "#101828" })}</div>                                
+                                <div class="answer-context-chip-text response-as-context-question-text"></div>
+                                <button class="srCicon">${createCloseIcon({ size: 10, color: "#667085" })}</button>
+                            </div>         
                             <div class="eva-attachments-container" data-eva-attachments></div>
                             <div class="eva-compose-textarea-container">
                                 <textarea 
@@ -856,6 +914,9 @@ class ComposeBar {
                 tab.addEventListener('click', (e) => this.handleTabSwitch(e));
             });
         }
+
+        // Set up info details toggle functionality
+        this.setupDetailsToggle();
     }
 
     handleRemoveSelectedContext() {
