@@ -429,12 +429,12 @@ export const constructQuestionPostCall = (data, qId) => {
     }
 
     /*once we get the response for the gpt form template, need to set the context with the response generated */
-    if(data?.payload?.templateType === chatTemplateTypes.SEARCH_ANSWER && data?.payload?.context?.agentType ==="gptAgent" ) {
+    if(data?.payload?.templateType === chatTemplateTypes.SEARCH_ANSWER && data?.payload?.context?.agentType ==="gptAgent" && data?.payload?.sources?.length) {
         /*need to make searchSession call, so will depend on sessionItemHandler */
         const obj ={
             boardId: data?.payload?.boardId,
             messageId: data?.payload?.messageId,
-            item: data?.payload?.sources?.[0],
+            item: data?.payload?.sources[0],
             type: "agent",
             invokeFrom: "gptAgent",
             duplicateErr: true,

@@ -33,6 +33,7 @@ class ComposeBar {
         this.isRecording = false;
         this.recognition = null;
         this.unsubscribe = null;
+        this.fileUploaderUnsubscribe = null;
         this.chatInterface = null;
         this.fileUploaderInterface = null;
         this.questions = {};
@@ -140,7 +141,7 @@ class ComposeBar {
         // Initialize file uploader     
         try {
             this.fileUploaderInterface = FileUpload();
-            this.fileUploaderInterface.subscribe((sources, sessionId, quickActions, error, apiResp) => {
+            this.fileUploaderUnsubscribe = this.fileUploaderInterface.subscribe((sources, sessionId, quickActions, error, apiResp) => {
                 console.log("fileUploaderInterface subscribe", sources, sessionId, quickActions, error, apiResp);
                 if (sources) {
                     try {
@@ -1811,6 +1812,10 @@ class ComposeBar {
         if (typeof this.unsubscribe === 'function') {
             try { this.unsubscribe(); } catch (e) { }
             this.unsubscribe = null;
+        }
+        if (typeof this.fileUploaderUnsubscribe === 'function') {
+            try { this.fileUploaderUnsubscribe(); } catch (e) { }
+            this.fileUploaderUnsubscribe = null;
         }
     }
 }
