@@ -1,3 +1,4 @@
+import { deleteAnnouncementAction } from "../redux/actions/global.action";
 import { setAnnouncements } from "../redux/globalSlice";
 import store from "../redux/store";
 
@@ -65,10 +66,20 @@ const AnnouncementsInterface = (props) => {
 	
     }
 
+    const deleteAnnouncement = async (announcementId) => {
+        const currentAnnouncements = store.getState().global.announcements?.data;
+        const response = await store.dispatch(deleteAnnouncementAction({ userId: store?.getState()?.global?.profile?.data?.id, announcementId: announcementId }))
+        if(response?.meta?.arg?.announcementId === announcementId) {
+            const newAnnouncements = currentAnnouncements?.filter(el => el?.announcementId !== announcementId)
+            store.dispatch(setAnnouncements({ data: newAnnouncements, status: 'success', error: null }))
+        }
+    }
+
     return {
         subscribe,
         getData,
-        setNewAnnouncements
+        setNewAnnouncements,
+        deleteAnnouncement
     };
 };
 

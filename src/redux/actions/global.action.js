@@ -525,3 +525,16 @@ export const bookmarkAgentAction = createAsyncThunk(
         }
     }
 );
+
+export const deleteAnnouncementAction = createAsyncThunk(
+    'global/deleteAnnouncementAction',
+    async (arg, { rejectWithValue }) => {
+        try {
+            const response = await axiosInstance.delete(`/1.1/users/${arg?.userId}/announcements/${arg?.announcementId}`);
+            return response.data;
+        } catch (error) {
+            handleErrorState(error, "Delete Announcement");
+            return rejectWithValue(error.response.data);
+        }
+    }
+);

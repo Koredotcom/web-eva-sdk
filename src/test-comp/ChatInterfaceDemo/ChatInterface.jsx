@@ -1,15 +1,33 @@
 import React, { useEffect, useRef, useState } from "react";
 import { TemplateRenderer } from "../../templateRenderer";
 import { BotConversation, ChatInterface } from "../../chat";
-import Composebar from "./Composebar";
 
 import "./ChatInterface.scss"
-import History from "../history";
-import Agents from "../agents";
-import Notifications from "../Notifications";
-import RecentFilesDemo from "../recentFiles";
+
+import Announcements from "../announcements";
+import Composebar from "./Composebar";
 import { AnnouncementsInterface } from "../../Announcements";
-import MultiIntentExecutionDemo from "./MultiIntentExecutionDemo";
+
+
+
+// function ShoelaceWrapper({ html }) {
+//   const ref = useRef(null);
+
+//   useEffect(() => {
+//     if (!ref.current || !html) return;
+
+//     ref.current.innerHTML = '';
+
+//     const fragment = html instanceof Node ? html : document.createRange().createContextualFragment(html);
+//     ref.current.appendChild(fragment);
+
+//     // Ensure Shoelace components are defined before any upgrade
+//     TemplateRenderer.upgradeCustomElements(ref.current);
+
+//   }, [html]);
+
+//   return <div ref={ref} />;
+// }
 
 const ChatInterfaceDemo = () => {
   const [messages, setMessages] = useState(null);
@@ -76,7 +94,8 @@ const ChatInterfaceDemo = () => {
           </div>
           {/* <History /> */}
           {/* <Notifications /> */}
-          <Agents /> 
+          {/* <Agents />  */}
+          <Announcements />
         </div>
       </div>
       <div className="chatInterfaceSec">
