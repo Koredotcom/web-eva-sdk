@@ -341,7 +341,7 @@ export const constructQuestionPostCall = (data, qId) => {
             question.botConversation = {}
             question.parentMessage = data.payload.res
             data?.payload?.thread?.messages?.map(message => {
-                question.botConversation[message?.messageId] = { ...message, "chunkMeta": question?.chunkMeta || {} }
+                question.botConversation[message?.messageId] = { ...message, "chunkMeta": question.botConversation[message?.messageId]?.chunkMeta || {} }
             })                        
         }
         if (data?.payload?.thread && data?.payload?.thread?.nextMessages && data?.payload?.thread?.nextMessages?.length) {    
@@ -349,7 +349,7 @@ export const constructQuestionPostCall = (data, qId) => {
             question.botConversation[data?.payload?.messageId].status = data?.payload?.status
             question.botConversation[data?.payload?.messageId].answer = data?.payload?.answer
             data?.payload?.thread?.nextMessages?.map(message => {
-                question.botConversation[message?.messageId] = { ...message, "chunkMeta": question?.chunkMeta || {} }
+                question.botConversation[message?.messageId] = { ...message, "chunkMeta": question.botConversation[message?.messageId]?.chunkMeta || message?.chunkMeta || {} }
             })
             if (data?.payload?.thread?.parentMessage?.status === "completed") {
                 question.status = "completed"                
@@ -429,12 +429,12 @@ export const constructQuestionPostCall = (data, qId) => {
     }
 
     /*once we get the response for the gpt form template, need to set the context with the response generated */
-    if(data.payload.templateType === chatTemplateTypes.SEARCH_ANSWER && data.payload.context.agentType ==="gptAgent" ) {
+    if(data?.payload?.templateType === chatTemplateTypes.SEARCH_ANSWER && data?.payload?.context?.agentType ==="gptAgent" ) {
         /*need to make searchSession call, so will depend on sessionItemHandler */
         const obj ={
-            boardId: data.payload.boardId,
-            messageId: data.payload.messageId,
-            item: data.payload.sources[0],
+            boardId: data?.payload?.boardId,
+            messageId: data?.payload?.messageId,
+            item: data?.payload?.sources?.[0],
             type: "agent",
             invokeFrom: "gptAgent",
             duplicateErr: true,

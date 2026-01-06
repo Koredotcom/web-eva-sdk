@@ -66,7 +66,7 @@ const initialState = {
   chatInterfaceElements:{
     disableAppAvatar: false,
   },
-  env: 'Kore'
+  env: 'MS'
 };
 
 const globalSlice = createSlice({

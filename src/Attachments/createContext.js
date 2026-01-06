@@ -182,7 +182,7 @@ export const sessionItemHandler = (args) => {
             // isAgent - it will come here because previously setted context was agent and now it should replace with new agent 
             action = "add"
             payload = _selectedContext?.sources;
-            if (!payload[0].hasOwnProperty('ext') && _selectedContext?.sources?.[0]?.hasOwnProperty('ext')) {
+            if (_selectedContext?.sources?.[0]?.hasOwnProperty('ext')) {
                 payload[0].ext = addedItem?.sources?.[0]?.ext
             }
             if (!payload[0].hasOwnProperty('docId')) {

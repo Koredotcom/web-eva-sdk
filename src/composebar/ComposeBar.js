@@ -47,6 +47,7 @@ class ComposeBar {
         this.showBotComposeBarHeader = false;
         this.botEndConversationLoader = false;
         this.endConversationHandler = this.handleEndConversation.bind(this);
+        this.detailsToggleHandler = this.handleDetailsToggle.bind(this);
         this.isMSEnv = isMSEnv();
         this.callbacks = {
             onSend: null,
@@ -427,9 +428,9 @@ class ComposeBar {
     updateBotHeaderContent(contextChipData) {
         console.log("contextChipData in updateBotHeaderContent", contextChipData);
         const composeBarWrapperDiv = this.container.querySelector('.composebar-bot-input-wrapper');  
-        const botInputHeaderDiv = composeBarWrapperDiv.querySelector('.bot-input-header'); 
-        const answerContextChipContainer = this.container.querySelector('.response-as-context-truncated-text');     
         if (!composeBarWrapperDiv) return;
+        const botInputHeaderDiv = composeBarWrapperDiv.querySelector('.bot-input-header'); 
+        const answerContextChipContainer = this.container.querySelector('.response-as-context-truncated-text');
         if(!contextChipData){            
             hideElementImmediately(composeBarWrapperDiv);
             return;
@@ -483,8 +484,8 @@ class ComposeBar {
                         hideElementImmediately(answerContextChipContainer);
                         // Hide the bot input wrapper as well when response context is closed
                         hideElementImmediately(composeBarWrapperDiv);
-                        answerContextCloseBtn.eventListenerAdded = true;
                     });
+                    answerContextCloseBtn.eventListenerAdded = true;
                 }
             }
 
@@ -598,8 +599,8 @@ class ComposeBar {
 
         const infoDetailsDiv = composeBarWrapper.querySelector('.info-details');
         if (infoDetailsDiv) {
-            infoDetailsDiv.removeEventListener('click', this.handleDetailsToggle);
-            infoDetailsDiv.addEventListener('click', this.handleDetailsToggle.bind(this));
+            infoDetailsDiv.removeEventListener('click', this.detailsToggleHandler);
+            infoDetailsDiv.addEventListener('click', this.detailsToggleHandler);
             
             // Ensure details content starts hidden and add corresponding class
             const detailsContent = composeBarWrapper.querySelector('.details-content');
