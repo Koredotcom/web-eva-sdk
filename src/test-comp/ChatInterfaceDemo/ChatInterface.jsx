@@ -61,11 +61,23 @@ const ChatInterfaceDemo = () => {
 
   return (
     <div className="chatInterfaceDemo">
-      <div className="historySec">
-        <History />
-        {/* <RecentFilesDemo /> */}
-        {/* <Notifications /> */}
-        {/* <Agents /> */}
+      <div className="sidebar">
+        <div className="historySec">
+          <div className="sidebar-header">
+            <div className="sidebar-title">AI for Work</div>
+            <div className="new-btn" title="New" onClick={() => {
+              unHideRecentAgentsDiv('recent-agents-container');
+              NewChat()
+              const botHeaderContainer = document.querySelector('.composebar-bot-input-wrapper');
+              if(botHeaderContainer){
+                botHeaderContainer.style.display = 'none';
+              }
+            }}>+</div>
+          </div>
+          {/* <History /> */}
+          {/* <Notifications /> */}
+          <Agents /> 
+        </div>
       </div>
       <div className="chatInterfaceSec">
         <div className="chatSec">
