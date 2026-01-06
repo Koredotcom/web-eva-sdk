@@ -156,9 +156,9 @@ const ChatInterfaceDemo = () => {
               }
             }}>+</div>
           </div>
-          <History />
-          {/* <Notifications />
-          <Agents /> */}
+          {/* <History /> */}
+          {/* <Notifications /> */}
+          <Agents /> 
         </div>
       </div>
       
