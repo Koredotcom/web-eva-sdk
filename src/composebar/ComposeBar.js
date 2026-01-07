@@ -163,6 +163,8 @@ class ComposeBar {
                                     this.contextChipData = sources?.[0];
                                     /*check whether it is an answer of gptForm */
                                 }
+                            } else {
+                                this.contextChipData = null;
                             }
                         }
                         console.log("this.contextChipData 166", this.contextChipData);

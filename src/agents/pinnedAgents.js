@@ -6,12 +6,12 @@ const pinnedAgents = () => {
         const state = store.getState()
         const { status, data } = state.global.allAgents
 
-        if(status === 'success') {
-            resolve(data?.pinnedAgents)
-            return
-        }
-        if(status === 'error') {
-            resolve({error: "Failed to fetch pinned agents"})
+        if(status !== 'loading') {
+            if(status === 'success') {
+                resolve(data?.pinnedAgents)
+            } else {
+                resolve({error: "Failed to fetch pinned agents"})
+            }
             return
         }
 
@@ -19,13 +19,13 @@ const pinnedAgents = () => {
         const unsubscribe = store.subscribe(() => {
             const state = store.getState()
             const { status, data } = state.global.allAgents
-            if(status === 'success') {
+            if(status !== 'loading') {
                 unsubscribe()
-                resolve(data?.pinnedAgents)
-            }
-            if(status === 'error'){
-                unsubscribe()
-                resolve({error: "Failed to fetch pinned agents"})
+                if(status === 'success') {
+                    resolve(data?.pinnedAgents)
+                } else {
+                    resolve({error: "Failed to fetch pinned agents"})
+                }
             }
         })
     })
