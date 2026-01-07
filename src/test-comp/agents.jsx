@@ -7,17 +7,26 @@ import { ChatInterface, InvokeAgent } from '../chat'
 import { fetchAgents } from '../redux/actions/global.action'
 import store from '../redux/store'
 import CommonAgents from '../agents/CommonAgents'
+import { bookmarkAgent } from '../agents/actionsOnAgents'
+import pinnedAgents from '../agents/pinnedAgents'
 
 const Agents = () => {
     const [agents, setAgents] = useState(null)  
     const [commonAgents, setCommonAgents] = useState(null)
+    const [pinnedAgentsList, setPinnedAgentsList] = useState(null)
 
     useEffect(() => {
         fetchRecentAgentsData()
         fetchEnabledAgentsData()
         fetchAllAgentsData()
         fetchCommonAgentsData()
+        fetchPinnedAgentsData()
     }, [])
+
+    const fetchPinnedAgentsData = async () => {
+        const res = await pinnedAgents()
+        setPinnedAgentsList(res)
+    }
 
     const fetchRecentAgentsData = async () => {
         const res = await recentAgents()
@@ -39,6 +48,13 @@ const Agents = () => {
         setCommonAgents(res?.data)
     }
 
+    const bookmarkAgentHandler = async (agentId, value) => {
+        const res = await bookmarkAgent(agentId, value)
+        if(res) {
+            setPinnedAgentsList(res)
+        }
+    }
+
     const agentHandler = (agent) => {
         const payload = {
             intent: "welcome",
@@ -53,7 +69,10 @@ const Agents = () => {
             <ul>
                 {agents && agents.data.map(agent => {
                     return (
-                        <li key={agent.id} onClick={() => InvokeAgent(agent)}>{agent.name}</li>
+                        <div>
+                            <li key={agent.id} onClick={() => InvokeAgent(agent)}>{agent.name}</li>
+                            {pinnedAgentsList?.includes(agent.id) ? <button onClick={() => bookmarkAgentHandler(agent.id, {pinned: false})}>Unbookmark</button> : <button onClick={() => bookmarkAgentHandler(agent.id, {pinned: true})}>Bookmark</button>}
+                        </div>                        
                     )
                 })}
             </ul>
@@ -61,7 +80,11 @@ const Agents = () => {
             <ul>
                 {commonAgents?.length > 0 && commonAgents?.map(agent => {
                     return (
-                        <li key={agent.id} onClick={() => ChatInterface().setAgentContext(agent)}>{agent.name}</li>
+                        <div>
+                            <li key={agent.id} onClick={() => ChatInterface().setAgentContext(agent)}>{agent.name}</li>
+                            {pinnedAgentsList?.includes(agent.id) ? <button onClick={() => bookmarkAgentHandler(agent.id, {pinned: false})}>Unbookmark</button> : <button onClick={() => bookmarkAgentHandler(agent.id, {pinned: true})}>Bookmark</button>}
+                        </div>
+                        
                     )
                 })}
             </ul>

@@ -11,6 +11,7 @@ import MultiResponse from './gptTemplate/MultiResponse';
 import moment from "moment";
 import { fetchHistory } from "../redux/actions/global.action";
 import { multiIntentExecutionFunc } from "../templateRenderer/functionality/multi-intent-execution";
+import { sessionItemHandler } from '../Attachments/createContext';
 
 export const constructQuestionInitial = (args) => {
 	let uniqueMsgId = args?.reqId;
@@ -340,7 +341,7 @@ export const constructQuestionPostCall = (data, qId) => {
             question.botConversation = {}
             question.parentMessage = data.payload.res
             data?.payload?.thread?.messages?.map(message => {
-                question.botConversation[message?.messageId] = message
+                question.botConversation[message?.messageId] = { ...message, "chunkMeta": question.botConversation[message?.messageId]?.chunkMeta || {} }
             })                        
         }
         if (data?.payload?.thread && data?.payload?.thread?.nextMessages && data?.payload?.thread?.nextMessages?.length) {    
@@ -348,7 +349,7 @@ export const constructQuestionPostCall = (data, qId) => {
             question.botConversation[data?.payload?.messageId].status = data?.payload?.status
             question.botConversation[data?.payload?.messageId].answer = data?.payload?.answer
             data?.payload?.thread?.nextMessages?.map(message => {
-                question.botConversation[message?.messageId] = message
+                question.botConversation[message?.messageId] = { ...message, "chunkMeta": question.botConversation[message?.messageId]?.chunkMeta || message?.chunkMeta || {} }
             })
             if (data?.payload?.thread?.parentMessage?.status === "completed") {
                 question.status = "completed"                
@@ -425,6 +426,22 @@ export const constructQuestionPostCall = (data, qId) => {
             sessionId: data?.payload?.followUpContext?.sessionId
         }
         store.dispatch(setSelectedContext({data: context}))
+    }
+
+    /*once we get the response for the gpt form template, need to set the context with the response generated */
+    if(data?.payload?.templateType === chatTemplateTypes.SEARCH_ANSWER && data?.payload?.context?.agentType ==="gptAgent" && data?.payload?.sources?.length) {
+        /*need to make searchSession call, so will depend on sessionItemHandler */
+        const obj ={
+            boardId: data?.payload?.boardId,
+            messageId: data?.payload?.messageId,
+            item: data?.payload?.sources[0],
+            type: "agent",
+            invokeFrom: "gptAgent",
+            duplicateErr: true,
+            discardPrevSession: true
+            
+        }
+        sessionItemHandler(obj)
     }
     store.dispatch(updateChatData(questions))
 

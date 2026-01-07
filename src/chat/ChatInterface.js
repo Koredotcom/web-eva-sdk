@@ -417,8 +417,11 @@ const ChatInterface = (props) => {
             }
             if(detail?.data?.outputMessageId) {
               if(Object.values(question.botConversation)?.find(conv => conv?.outputMessageId === detail?.data?.outputMessageId)){
-                delete question?.botConversation?.[detail?.data?.outputMessageId]  
-                                              
+                const id=Object.values(question.botConversation)?.find(conv => conv?.outputMessageId === detail?.data?.outputMessageId)?.messageId
+                if(id){
+                  question.botConversation[id].chunkMeta = detail?.data?.chunkMeta || {}
+                  delete question?.botConversation?.[detail?.data?.outputMessageId]  
+                }
               }else{
                 question.botConversation[detail?.data?.outputMessageId] = {                    
                         question: (question?.botConversation?.[detail?.data?.outputMessageId]?.question || "").concat(detail?.data?.chunk),

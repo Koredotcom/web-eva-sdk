@@ -410,3 +410,67 @@ export const convertToTimeFormat = (isoDate) => {
     if(!isoDate) return moment().local().format("hh:mm A");
     return moment().utc(isoDate).local().format("hh:mm A");
 }
+
+export function markdownToPlainText(md) {
+    if (!md || typeof md !== 'string') return '';
+    let text = md;
+
+    // Extract code blocks and replace with a unique placeholder
+    // We'll keep a map of placeholders to code content
+    const codeBlocks = [];
+    text = text.replace(/```([\w-]*)\n?([\s\S]*?)```/g, (match, lang, code) => {
+        // Instead of using a placeholder like __CODE_BLOCK_0__, use 'CODEBLOCK0', 'CODEBLOCK1', etc.
+        const placeholder = `CODEBLOCK${codeBlocks.length}`;
+        codeBlocks.push(code.replace(/\r\n/g, '\n')); // normalize line endings
+        return `\n${placeholder}\n`;
+    });
+
+    // Remove inline code backticks but preserve content
+    text = text.replace(/`([^`]+)`/g, '$1');
+    // Replace bold/italic/strikethrough
+    text = text.replace(/(\*\*|__)(.*?)\1/g, '$2');
+    text = text.replace(/(\*|_)(.*?)\1/g, '$2');
+    text = text.replace(/~~(.*?)~~/g, '$1');
+    // Remove images ![alt](url)
+    text = text.replace(/!\[.*?\]\(.*?\)/g, '');
+    // Replace links [text](url) with just text (or text + url)
+    text = text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (match, p1, p2) => {
+        if (!p2) return p1;
+        if (p1 === p2) return p1;
+        return `${p1} (${p2})`;
+    });
+    // Remove headings (allow for leading/trailing spaces)
+    text = text.replace(/^\s*#{1,6}\s+/gm, '');
+    // Remove blockquotes
+    text = text.replace(/^\s*>+\s?/gm, '');
+    // Remove unordered list markers
+    text = text.replace(/^\s*[-*+]\s+/gm, '');
+    // Remove ordered list markers
+    text = text.replace(/^\s*\d+\.\s+/gm, '');
+    // Remove horizontal rules (allow for spaces)
+    text = text.replace(/^\s*([-*_]\s*){3,}$/gm, '');
+
+    // Remove HTML tags, but NOT inside code blocks (we'll restore code blocks later)
+    text = text.replace(/<[^>]+>/g, '');
+
+    // Replace multiple newlines with two
+    text = text.replace(/\n{3,}/g, '\n\n');
+    // Remove leading/trailing whitespace on each line
+    text = text.split('\n').map(line => line.trimEnd()).join('\n');
+    // Collapse multiple spaces (but not indentation at line start)
+    text = text.replace(/([^\S\r\n]{2,})/g, ' ');
+
+    // Restore code blocks (with original indentation and HTML tags preserved)
+    // Now look for CODEBLOCK0, CODEBLOCK1, etc.
+    text = text.replace(/CODEBLOCK(\d+)/g, (_, idx) => {
+        let code = codeBlocks[Number(idx)] || '';
+        code = code.replace(/^\n+/, '').replace(/\n+$/, '');
+        return code ? code : '';
+    });
+
+    // Final trim
+    return trimWithEllipsis(text).trim();
+}
+
+const trimWithEllipsis = (str, max=100) =>
+  str.length > max ? str.slice(0, max) + "..." : str;

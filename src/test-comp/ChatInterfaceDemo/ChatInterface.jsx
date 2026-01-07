@@ -15,6 +15,7 @@ import { RenderComposeBar } from "../../composebar";
 import RecentAgentsFunc from "../../LandingPageRecentAgents/RecentAgents";
 import { isUserNearBottom } from "../../utils/helpers";
 import { RightArrow } from "../../templateRenderer/icons-library";
+import Announcements from "../announcements";
 const {renderRecentAgents, unHideRecentAgentsDiv} = RecentAgentsFunc();
 
 
@@ -156,9 +157,10 @@ const ChatInterfaceDemo = () => {
               }
             }}>+</div>
           </div>
-          <History />
-          {/* <Notifications />
-          <Agents /> */}
+          {/* <History /> */}
+          {/* <Notifications /> */}
+          {/* <Agents />  */}
+          <Announcements />
         </div>
       </div>
       
