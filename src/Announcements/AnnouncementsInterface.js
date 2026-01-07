@@ -69,7 +69,8 @@ const AnnouncementsInterface = (props) => {
     const deleteAnnouncement = async (announcementId) => {
         const currentAnnouncements = store.getState().global.announcements?.data?.announcements;
         const response = await store.dispatch(deleteAnnouncementAction({ accountId: store?.getState()?.global?.profile?.data?.accountId, announcementId: announcementId }))
-        if(response?.payload?.id === announcementId) {
+        const deletedAnnouncementId = response?.payload?.id || response?.payload?.announcementId;
+        if(deletedAnnouncementId === announcementId) {
             const newAnnouncements = currentAnnouncements?.filter(el => el?.announcementId !== announcementId)
             store.dispatch(setAnnouncements({ data: {'announcements': newAnnouncements}, status: 'success', error: null }))
         }

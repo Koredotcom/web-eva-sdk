@@ -8,7 +8,6 @@ import FileUpload from "../Attachments/fileUpload.js";
 import { getAgentType, getFileExtension, hideElementImmediately, showElementImmediately, showElementDelayed, getIconsList, markdownToPlainText } from "../utils/helpers.js";
 import { renderRecentFiles } from "./RenderRecentAttachments.js";
 import { isMSEnv } from "../utils/helpers.js";
-import { set } from "lodash";
 
 /**
  * ComposeBar - A standalone compose bar component in plain JavaScript
@@ -166,10 +165,8 @@ class ComposeBar {
                             } else {
                                 this.contextChipData = null;
                             }
-                        }
-                        console.log("this.contextChipData 166", this.contextChipData);
-                        if (this.contextChipData) {
-                            console.log("this.contextChipData 168", this.contextChipData);
+                        }                        
+                        if (this.contextChipData) {                            
                             setTimeout(() => {
                                 const contextChipOnComposebarDiv = this.container.querySelector('.composebar-bot-input-wrapper');
                                 if (contextChipOnComposebarDiv) {
@@ -663,7 +660,7 @@ class ComposeBar {
                                     </button>
                                 </div>
                             </div> 
-                            <div class="details-content">lorem ipsum dolor sit amet</div>
+                            <div class="details-content"></div>
                                               
                         </div>                        
                         
