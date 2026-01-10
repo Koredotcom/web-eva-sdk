@@ -13,18 +13,39 @@ const constructRecents = (enabledAgents, recentAgents) => {
 
 const recentAgents = () => {
     return new Promise((resolve) => {
-        const unsubscribe = store.subscribe(()=> {
+        // Helper to check state and resolve if ready
+        const checkAndResolve = () => {
             const state = store.getState()
             const {status, error, data} = state.global.allAgents
             const enabledAgents = state.global.enabledAgents
-            const recentAgents = state.global.recentAgents
-            if(status !== 'loading') {
+            const recentAgentIds = state.global.recentAgents
+            
+            if (status !== 'loading') {
+                return {
+                    ready: true,
+                    result: {
+                        status,
+                        error,
+                        data: constructRecents(data?.agents, recentAgentIds)
+                    }
+                }
+            }
+            return { ready: false }
+        }
+        
+        // Check current state first (in case already loaded)
+        const initial = checkAndResolve()
+        if (initial.ready) {
+            resolve(initial.result)
+            return
+        }
+        
+        // Otherwise, subscribe and wait for changes
+        const unsubscribe = store.subscribe(() => {
+            const check = checkAndResolve()
+            if (check.ready) {
                 unsubscribe()
-                resolve({
-                    status,
-                    error,
-                    data : constructRecents(data?.agents, recentAgents)
-                })
+                resolve(check.result)
             }
         })
     })

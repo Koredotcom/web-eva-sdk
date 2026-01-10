@@ -141,7 +141,7 @@ class ComposeBar {
         try {
             this.fileUploaderInterface = FileUpload();
             this.fileUploaderUnsubscribe = this.fileUploaderInterface.subscribe((sources, sessionId, quickActions, error, apiResp) => {
-                console.log("fileUploaderInterface subscribe", sources, sessionId, quickActions, error, apiResp);
+                // console.log("fileUploaderInterface subscribe", sources, sessionId, quickActions, error, apiResp);
                 if (sources) {
                     try {
                         const filesOnly = Array.isArray(sources)

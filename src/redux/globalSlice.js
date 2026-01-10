@@ -57,16 +57,16 @@ const initialState = {
   announcements: {},
   appMetaData:{},
   ansFromChipElements: {
-    'disableSetAsContext': true,
+    'disableSetAsContext': false,
     'disableCopyAnswer': false,    
     'disableExporttoWordDoc': false,
     'disableFeedback': false,
     'disableThreeDotMenu': false,
   },
   chatInterfaceElements:{
-    disableAppAvatar: false,
+    disableAppAvatar: true,
   },
-  env: 'MS'
+  env: 'Kore'
 };
 
 const globalSlice = createSlice({

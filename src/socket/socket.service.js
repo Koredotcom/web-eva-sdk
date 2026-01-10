@@ -23,15 +23,7 @@ class WebSocketClient {
             transports: ["websocket"],
             reconnection: true,
             reconnectionAttempts: 1000,
-            reconnectionDelay: 1000,
-            auth: (cb) => {
-                // This function is called on every connection attempt (including reconnects)
-                cb({
-                    ...(options?.query || {}),
-                    sToken: store.getState().global?.presenceStart?.data?.sToken,
-                    rnd: new Date().getTime(),
-                });
-            },
+            reconnectionDelay: 1000,            
             ...options,
         };
     }

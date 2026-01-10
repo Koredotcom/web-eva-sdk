@@ -298,7 +298,7 @@ export const hideElementImmediately = (element, options = {}) => {
     element.setAttribute('aria-hidden', 'true');
     
     if (enableLogging) {
-        console.log('Element hidden:', element);
+        // console.log('Element hidden:', element);
     }
 };
 

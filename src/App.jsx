@@ -14,7 +14,7 @@ const App = () => {
   useEffect(() => {
     fetchHistoryWidgetData()
     fetchPossiblitiesWidgetData()
-    // renderParentComponent('master-component')
+    renderParentComponent('master-component')
   }, [])
 
   const fetchHistoryWidgetData = async () => {
@@ -27,9 +27,9 @@ const App = () => {
   
   
   return (
-    <div className='app-container'>
-      {/* <div id='master-component' className='master-component'></div>  */}
-      <ChatInterfaceDemo />
+    <div className='app-container'>      
+      <div id='master-component' className='master-component'></div> 
+      {/* <ChatInterfaceDemo /> */}
       {/* <ChatTestComp/> */}
       {/* <TestComp /> */}
       {/* <Agents /> */}

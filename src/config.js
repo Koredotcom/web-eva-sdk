@@ -24,9 +24,9 @@ export const initializeSDK = async (config) => {
   // Set the SDK config globally
   window.sdkConfig = config;
 
-  // making foundation api call once sdk initialized properly
-  store.dispatch(fetchConfigData(config.userId))
+  if(config?.userId){
   store.dispatch(fetchProfileData(config.userId))
+  store.dispatch(fetchConfigData(config.userId))
   store.dispatch(fetchAgents({userId: config.userId}))
   store.dispatch(fetchHistory({onload: true, params: {limit: initialHistoryLimit}}))
   store.dispatch(fetchRecentFiles({onload: true, userId: config.userId, params: {limit: 10}}))
@@ -52,8 +52,5 @@ export const initializeSDK = async (config) => {
     },
   });
   WebSocketService.connect();
-  // WebSocketService.on("live", (data) => {
-  //   console.log('sadfafafs')
-  // })
-
+}
 };

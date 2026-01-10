@@ -4,6 +4,19 @@ import { handleErrorState } from "../../utils/helpers";
 import { v4 as uuidv4 } from 'uuid';
 
 // Asynchronous actions (thunks)
+export const ssoLogin = createAsyncThunk(
+    'global/ssoLogin',
+    async (arg, { rejectWithValue }) => {
+        try {
+            const response = await axiosInstance.post(`1.1/sso/login`, arg?.payload);
+            return response.data;
+        } catch (error) {
+            handleErrorState(error, "SSO Login");
+            return rejectWithValue(error.response.data);
+        }
+    }
+);
+
 export const fetchConfigData = createAsyncThunk(
     'global/fetchConfigData',
     async (userId, { rejectWithValue }) => {
