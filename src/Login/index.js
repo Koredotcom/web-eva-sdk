@@ -58,29 +58,37 @@ const handleSSOCallback = async () => {
 // API base URL for SSO login (must be set before SDK initialization)
 const SSO_API_URL = 'https://eva-dev.kore.ai/api/';
 
-const ssoResult = await handleSSOCallback();
-if (ssoResult.success) {   
-   if (!window.sdkConfig) {
-       window.sdkConfig = { api_url: SSO_API_URL };
-   }
-   
-   const loginResponse = await store.dispatch(ssoLogin({ payload: { id_token: ssoResult.idToken, emailId: ssoResult.emailId } }));
-   localStorage.setItem('userId', loginResponse?.payload?.userInfo?.id);
-   localStorage.setItem('expiresDate', loginResponse?.payload?.authorization?.expiresDate);
-   localStorage.setItem('accessToken', loginResponse?.payload?.authorization?.accessToken);
-   await initializeSDK({ 
-       api_url: SSO_API_URL, 
-       presence_url: SSO_API_URL, 
-       userId: loginResponse?.payload?.userInfo?.id, 
-       accessToken: loginResponse?.payload?.authorization?.accessToken 
-   });
-}
+// Initialize SSO callback handling
+const initSSOCallback = async () => {
+    const ssoResult = await handleSSOCallback();
+    if (ssoResult.success) {   
+        if (!window.sdkConfig) {
+            window.sdkConfig = { api_url: SSO_API_URL };
+        }
+        
+        const loginResponse = await store.dispatch(ssoLogin({ payload: { id_token: ssoResult.idToken, emailId: ssoResult.emailId } }));
+        localStorage.setItem('userId', loginResponse?.payload?.userInfo?.id);
+        localStorage.setItem('expiresDate', loginResponse?.payload?.authorization?.expiresDate);
+        localStorage.setItem('accessToken', loginResponse?.payload?.authorization?.accessToken);
+        await initializeSDK({ 
+            api_url: SSO_API_URL, 
+            presence_url: SSO_API_URL, 
+            userId: loginResponse?.payload?.userInfo?.id, 
+            accessToken: loginResponse?.payload?.authorization?.accessToken 
+        });
+        return ssoResult;
+    }
+    return ssoResult;
+};
+
+// Execute SSO callback on module load
+initSSOCallback();
 
 // Build SSO URL
 const baseUrl = window.location.origin;
 const redirectURL = encodeURIComponent(`${baseUrl}/app`);
 const scopes = encodeURIComponent('openid email profile https://www.googleapis.com/auth/contacts.readonly https://www.googleapis.com/auth/admin.directory.user.readonly https://www.googleapis.com/auth/directory.readonly https://www.googleapis.com/auth/contacts.other.readonly https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive');
-const ssoUrl = `https://work-dev.kore.ai/api/sso/login?connection=google&redirect_url=${redirectURL}&scope=${scopes}`;
+const ssoUrl = `https://eva-dev.kore.ai/api/sso/login?connection=google&redirect_url=${redirectURL}&scope=${scopes}`;
 
 // Using event delegation to handle the login button click
 document.addEventListener('click', (event) => {
@@ -89,4 +97,4 @@ document.addEventListener('click', (event) => {
         window.location.href = ssoUrl;
     }
 });
-export { constructLoginButton, handleSSOCallback, ssoResult };
+export { constructLoginButton, handleSSOCallback, initSSOCallback };

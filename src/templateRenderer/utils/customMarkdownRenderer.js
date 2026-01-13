@@ -1,16 +1,14 @@
-import marked from "marked";
+import { marked } from "marked";
 import { encodeHtml } from "../../utils/helpers"; // optional, if you still need it
 import DOMPurify from "dompurify";
 import { SHOELACE_ATTRS, SHOELACE_TAGS } from "./helper";
 
 
 
-// Set marked config
+// Set marked config (v4+ compatible)
 marked.setOptions({
     gfm: true,
     breaks: true, // Enables line breaks with single newline
-    smartLists: true, // Fixes weird list formatting
-    smartypants: false, // Disables curly quotes, etc.
 });
 
 const customMarkdownRenderer = (text) => {

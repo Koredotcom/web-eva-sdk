@@ -24,7 +24,7 @@ export const initializeSDK = async (config) => {
   // Set the SDK config globally
   window.sdkConfig = config;
 
-  if(config?.userId){
+  
   store.dispatch(fetchProfileData(config.userId))
   store.dispatch(fetchConfigData(config.userId))
   store.dispatch(fetchAgents({userId: config.userId}))
@@ -52,5 +52,5 @@ export const initializeSDK = async (config) => {
     },
   });
   WebSocketService.connect();
-}
+
 };

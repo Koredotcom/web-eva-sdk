@@ -1,4 +1,4 @@
-import marked from "marked";
+import { marked } from "marked";
 
 // ✅ JSON check helper
 function isJson(text) {
@@ -34,7 +34,7 @@ function formatContent(content) {
 
 const renderer = new marked.Renderer();
 
-// --- Code blocks (with JSON handling) ---
+// --- Code blocks (with JSON handling) --- (v4 uses positional args)
 renderer.code = function (code, language) {
   if (language === "json" || isJson(code)) {
     try {
@@ -46,12 +46,12 @@ renderer.code = function (code, language) {
   return `<pre><code>${code}</code></pre>`;
 };
 
-// --- Inline code ---
+// --- Inline code --- (v4 uses positional args)
 renderer.codespan = function (code) {
   return `<code>${code}</code>`;
 };
 
-// --- UL / OL ---
+// --- UL / OL --- (v4 uses positional args)
 renderer.list = function (body, ordered) {
   if (ordered) {
     return `<ol style="padding:0px 0px 0px 20px; list-style:decimal;">${body}</ol>`;
@@ -59,34 +59,32 @@ renderer.list = function (body, ordered) {
   return `<ul style="padding:0px 0px 0px 20px; list-style:disc;">${body}</ul>`;
 };
 
-// --- LI ---
+// --- LI --- (v4 uses positional args)
 renderer.listitem = function (text) {
   return `<li style="list-style:inherit; margin-bottom:0.5rem;">${text}</li>`;
 };
 
-// --- Links ---
+// --- Links --- (v4 uses positional args)
 renderer.link = function (href, title, text) {
   return `<a href="${href}" target="_blank" rel="noopener noreferrer" onclick="event.preventDefault(); window.open('${href}','_blank');">${text}</a>`;
 };
 
-// --- Images ---
+// --- Images --- (v4 uses positional args)
 renderer.image = function (href, title, text) {
   const titleAttr = title ? ` title="${title}"` : '';
   const altAttr = text ? ` alt="${text}"` : '';
   return `<img src="${href}"${titleAttr}${altAttr} style="max-width: 100%; max-height: 400px; height: auto; object-fit: contain; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);" />`;
 };
 
-// --- Tables ---
+// --- Tables --- (v4 uses positional args)
 renderer.table = function (header, body) {
   return `<div class="table-wrapper"><table class="markdown-table">${header}${body}</table></div>`;
 };
 
-// ✅ Use setOptions (v2 API)
+// ✅ Use setOptions (v4+ compatible)
 marked.setOptions({
   gfm: true,
   breaks: true,
-  smartLists: true,
-  smartypants: false,
   renderer,
 });
 

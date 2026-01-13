@@ -4136,9 +4136,9 @@ html, body {
     }
 }
 
-.bot-conversation-content > div:last-child{
-    min-height: 100dvh;
-}
+// .bot-conversation-content > div:last-child{
+//     min-height: 100dvh;
+// }
 .bot-conversation-completed .bot-conversation-content > div:last-child{
     min-height: unset;
 }

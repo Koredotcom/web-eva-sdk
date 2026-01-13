@@ -13,39 +13,36 @@ const constructRecents = (enabledAgents, recentAgents) => {
 
 const recentAgents = () => {
     return new Promise((resolve) => {
-        // Helper to check state and resolve if ready
-        const checkAndResolve = () => {
+        // Helper to check state and build result
+        const getResult = () => {
             const state = store.getState()
             const {status, error, data} = state.global.allAgents
             const enabledAgents = state.global.enabledAgents
             const recentAgentIds = state.global.recentAgents
-            
-            if (status !== 'loading') {
-                return {
-                    ready: true,
-                    result: {
-                        status,
-                        error,
-                        data: constructRecents(data?.agents, recentAgentIds)
-                    }
-                }
-            }
-            return { ready: false }
+            return { status, error, enabledAgents, recentAgentIds }
         }
-        
-        // Check current state first (in case already loaded)
-        const initial = checkAndResolve()
-        if (initial.ready) {
-            resolve(initial.result)
+
+        // below function is to check if the data is already loaded and if not then subscribe for future updates        
+        const current = getResult()
+        if (current.status === 'success' || current.status === 'failed') {
+            resolve({
+                status: current.status,
+                error: current.error,
+                data: constructRecents(current.enabledAgents, current.recentAgentIds)
+            })
             return
         }
-        
-        // Otherwise, subscribe and wait for changes
+
+        // subscribe for future updates or any other
         const unsubscribe = store.subscribe(() => {
-            const check = checkAndResolve()
-            if (check.ready) {
+            const result = getResult()
+            if (result.status === 'success' || result.status === 'failed') {
                 unsubscribe()
-                resolve(check.result)
+                resolve({
+                    status: result.status,
+                    error: result.error,
+                    data: constructRecents(result.enabledAgents, result.recentAgentIds)
+                })
             }
         })
     })

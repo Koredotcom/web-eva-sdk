@@ -85,9 +85,7 @@ const sendEmailFunctionality = (data) => {
     };
 
     const insertEmail = (email, type) => {
-        
         if (isSyncing) return;
-        
         
         if (!localCurrentData.content) localCurrentData.content = {};
         if (!localCurrentData.content[type]) localCurrentData.content[type] = [];
@@ -96,27 +94,20 @@ const sendEmailFunctionality = (data) => {
         existingEmails.push(email);
         localCurrentData.content[type] = existingEmails;
 
-        
         let values = preserveEmailContent();
         localCurrentData.content.subject = values?.subject;
         localCurrentData.content.body = values?.body;
 
-        
         if (localCurrentData[`${type}Choices`]) {
             delete localCurrentData[`${type}Choices`];
         }
 
-        
-        clearTomSelectSearchState(type);
-
-        
-        setTimeout(()=>validateSendButton(), 100);
+        // Validate send button after a short delay
+        setTimeout(() => validateSendButton(), 50);
     }
 
     const removePerson = (email, type) => {
-        
         if (isSyncing) return;
-        
         
         if (localCurrentData.content && localCurrentData.content[type]) {
             let existingEmails = [...localCurrentData.content[type]];
@@ -124,16 +115,12 @@ const sendEmailFunctionality = (data) => {
             localCurrentData.content[type] = existingEmails;
         }
 
-        
         let values = preserveEmailContent();
         localCurrentData.content.subject = values?.subject;
         localCurrentData.content.body = values?.body;
 
-        
-        clearTomSelectSearchState(type);
-
-        
-        setTimeout(()=>validateSendButton(), 100);
+        // Validate send button after a short delay
+        setTimeout(() => validateSendButton(), 50);
     }
 
     
@@ -144,23 +131,14 @@ const sendEmailFunctionality = (data) => {
         const tomInstance = tomSelectInstances[type];
         if (!tomInstance) return;
         
+        // Only clear input text, don't clear options or close
         tomInstance.control_input.value = '';
         
-        
-        tomInstance.close();
-        
-        
-        tomInstance.clearOptions();
-        
-        // Re-add only the selected items as options
-        const selectedItems = localCurrentData?.content?.[type] || [];
-        selectedItems.forEach(item => {
-            if (!tomInstance.options[item.id]) {
-                tomInstance.addOption({
-                    value: item.id,
-                    text: item.id,
-                    raw: item
-                });
+        // Clear non-selected options only (keep selected items)
+        const selectedValues = new Set(tomInstance.items);
+        Object.keys(tomInstance.options).forEach(key => {
+            if (!selectedValues.has(key)) {
+                tomInstance.removeOption(key, true); // silent = true to prevent flicker
             }
         });
     };

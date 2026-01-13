@@ -382,8 +382,12 @@ export const thirdPartySSO = createAsyncThunk(
     'global/thirdPartySSO',
     async (arg, thunkAPI) => {
         try {
-            const response = await axiosInstance.post(`/users/${arg?.userId}/connections`, arg?.payload);
-            return response.data;
+            let payload;
+            if(arg?.payload?.config){
+                payload = {"allowedCapabilities": arg?.payload?.config?.allowedCapabilities, "label": arg?.payload?.config?.label, "id_token": arg?.payload?.id_token};
+            }
+            const response = await axiosInstance.post(`/users/${arg?.userId}/connections`, payload);
+            return {...response.data, status: response.status};
         } catch (error) {
             handleErrorState(error, "Third Party SSO");
             return thunkAPI.rejectWithValue(error.response.data);
@@ -530,7 +534,7 @@ export const bookmarkAgentAction = createAsyncThunk(
     async (arg, { rejectWithValue }) => {
         try {
             const response = await axiosInstance.patch(`/1.1/users/${arg?.userId}/agents/${arg?.agentId}`, arg?.payload);
-            return response.data;
+            return {...response.data, status: response.status};
         } catch (error) {
             handleErrorState(error, "Bookmark Agent");
             return rejectWithValue(error.response.data);

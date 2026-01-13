@@ -9,7 +9,7 @@ import { cloneDeep, isEmpty } from "lodash";
 import BotConversation from "./botAgent/getBotConversation";
 import { current } from "@reduxjs/toolkit";
 import { sessionItemHandler } from "../Attachments/createContext";
-import RecentAgentsFunc from "../LandingPageRecentAgents/RecentAgents";
+import RecentAgentsFunc from "../UIComponents/RecentAgents/RecentAgents";
 const {hideRecentAgentsDiv} = RecentAgentsFunc();
 
 const ChatInterface = (props) => {

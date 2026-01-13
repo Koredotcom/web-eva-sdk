@@ -228,7 +228,13 @@ export const formatToDDMMYY = (dateStr) => {
             }
         }
         const response = await store.dispatch(getSuggestedContactListNew({params, payload}))
-        return response?.payload?.choices;
+        console.log('delayedSearchCallback: Full API response:', response);
+        console.log('delayedSearchCallback: response.payload:', response?.payload);
+        console.log('delayedSearchCallback: choices:', response?.payload?.choices);
+        
+        // Handle different response structures
+        const choices = response?.payload?.choices || response?.payload?.data || response?.payload || [];
+        return choices;
     }
 }
 export const checkHistoryAccessed = (questions) => {

@@ -164,6 +164,12 @@ class ComposeBar {
                                 }
                             } else {
                                 this.contextChipData = null;
+                                // Hide wrapper when context is cleared
+                                const botInputWrapper = this.container.querySelector('.composebar-bot-input-wrapper');
+                                if (botInputWrapper) {
+                                    botInputWrapper.style.display = 'none';
+                                    botInputWrapper.classList.remove('show-details');
+                                }
                             }
                         }                        
                         if (this.contextChipData) {                            
@@ -171,6 +177,8 @@ class ComposeBar {
                                 const contextChipOnComposebarDiv = this.container.querySelector('.composebar-bot-input-wrapper');
                                 if (contextChipOnComposebarDiv) {
                                     showElementDelayed(contextChipOnComposebarDiv, 100, 'block', true);
+                                    // Add show-details class when wrapper is enabled
+                                    contextChipOnComposebarDiv.classList.add('show-details');
                                     // Update content after the delay
                                     setTimeout(() => {
                                         this.updateBotHeaderContent(this.contextChipData);
@@ -186,6 +194,12 @@ class ComposeBar {
                     }
                 }else{                                  
                     this.contextChipData = null;
+                    // Hide wrapper when context is cleared
+                    const botInputWrapper = this.container.querySelector('.composebar-bot-input-wrapper');
+                    if (botInputWrapper) {
+                        botInputWrapper.style.display = 'none';
+                        botInputWrapper.classList.remove('show-details');
+                    }
                 }
 
             });
@@ -464,6 +478,9 @@ class ComposeBar {
                 hideElementImmediately(botInputHeaderDiv);
             }                        
             if(answerContextChipContainer){
+                /*add a check whether all questions status are in completed state or not, then only do the below operation */
+                const allQuestionsCompleted = Object.values(this.questions)?.every(question => question?.status === 'completed');
+                if (allQuestionsCompleted) {
                 showElementImmediately(answerContextChipContainer, 'flex');
                 // Hide the bot input wrapper when response context is shown
                 hideElementImmediately(composeBarWrapperDiv);
@@ -472,6 +489,7 @@ class ComposeBar {
                     const currentQuestionsLength = Object.values(this.questions)?.length;
                     const currentAnswer = Object.values(this.questions)?.[currentQuestionsLength - 1]?.answer || 'Answer Context';
                     answerContextChipText.innerText = markdownToPlainText(currentAnswer);
+                    }
                     // answerContextChipText.innerHTML = this.answerContextHTML(markdownToPlainText(currentAnswer));
                 
             }            
@@ -582,6 +600,20 @@ class ComposeBar {
             // Don't hide wrapper - keep it visible so user can access "Show Details" button
         } else {
             // Currently hiding details, user wants to show them
+            // Populate details content with agent description
+            if (this.selectedAgent?.docId) {
+                const state = store.getState();
+                const allAgents = state?.global?.allAgents?.data?.agents || [];
+                const commonAgents = state?.global?.allAgents?.data?.commonAgents || [];
+                const matchedAgent = [...allAgents, ...commonAgents].find(agent => agent.id === this.selectedAgent.docId);
+                if (matchedAgent) {
+                    detailsContent.innerHTML = `<p class="agent-description">${matchedAgent.description}</p>`;
+                } else {
+                    detailsContent.innerHTML = `<p class="agent-description">No description available.</p>`;
+                }                
+            } else {
+                detailsContent.innerHTML = `<p class="agent-description">No description available.</p>`;
+            }
             detailsContent.style.display = 'block';
             moreDetailsText.textContent = 'Hide Details';
             composeBarWrapper.classList.remove('details-hidden');
@@ -930,6 +962,13 @@ class ComposeBar {
         /*update the placeholder name to default */
         this.placeholder = this.options.placeholder;
         this.updatePlaceholder();
+        
+        // Hide the bot input wrapper when context is removed
+        const botInputWrapper = this.container.querySelector('.composebar-bot-input-wrapper');
+        if (botInputWrapper) {
+            botInputWrapper.style.display = 'none';
+            botInputWrapper.classList.remove('show-details');
+        }
     }
 
     /**
@@ -1630,7 +1669,7 @@ class ComposeBar {
                 const agent = agents.find(a => String(a.id) === String(agentId));
                 if (!agent) return;
                 this.selectedAgent = agent;
-                this.renderContextChipInComposeBar(); //setting selected agent as context chip in compose bar
+                // this.renderContextChipInComposeBar(); //setting selected agent as context chip in compose bar
                 if (attachments?.length > 0) {
                     // Store the agent for later invocation after user confirms
                     // this.pendingAgentInvocation = agent;

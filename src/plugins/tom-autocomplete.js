@@ -95,21 +95,43 @@ window.setupTomSelect = function setupTomSelect({
     load: function(query, callback) {
       if (!query.length) return callback();
       
-      // Set loading state
-      this.loading = true;
+      const self = this;
       
       fetchSuggestions(query, type)
         .then(results => {
-          this.loading = false;
-          if (results && results.length > 0) {
-            callback(results.map(e => ({ value: e.id, text: e.id, raw: e })));
+          console.log('TomSelect: API results received:', results);
+          
+          if (results && Array.isArray(results) && results.length > 0) {
+            const mappedResults = results.map(e => {
+              // Handle different response formats
+              const id = e.id || e.email || e.value;
+              const displayText = e.name || e.label || e.email || e.id || id;
+              return { 
+                value: id, 
+                text: displayText, 
+                raw: e 
+              };
+            });
+            console.log('TomSelect: Mapped results:', mappedResults);
+            
+            // Add options and refresh dropdown
+            mappedResults.forEach(item => {
+              if (!self.options[item.value]) {
+                self.addOption(item);
+              }
+            });
+            
+            // Refresh and ensure dropdown stays open
+            self.refreshOptions(false);
+            
+            callback(mappedResults);
           } else {
+            console.log('TomSelect: No results or empty array');
             callback([]);
           }
         })
         .catch(error => {
-          this.loading = false;
-          console.error('Error fetching suggestions:', error);
+          console.error('TomSelect: Error fetching suggestions:', error);
           callback([]);
         });
     },

@@ -12,7 +12,7 @@ import Agents from "../agents";
 import Notifications from "../Notifications";
 import AnnouncementData from "../../Announcements/AnnouncementData";
 import { RenderComposeBar } from "../../composebar";
-import RecentAgentsFunc from "../../LandingPageRecentAgents/RecentAgents";
+import RecentAgentsFunc from "../../UIComponents/RecentAgents/RecentAgents";
 import { isUserNearBottom } from "../../utils/helpers";
 import { RightArrow } from "../../templateRenderer/icons-library";
 import Announcements from "../announcements";

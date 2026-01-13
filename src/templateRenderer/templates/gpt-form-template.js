@@ -231,6 +231,11 @@ const initializeQuillForContainer = (container, field, item, promptDropdownWords
 			// Get editor and cursor position
 			const editor = quillEditor.getQuill();
 			
+			// Don't show dropdown if editor is read-only (contenteditable=false)
+			if (!editor.isEnabled()) {
+				return;
+			}
+			
 			// Small delay to ensure selection is updated
 			setTimeout(() => {
 				const selection = editor.getSelection();
@@ -307,8 +312,8 @@ const initializeQuillForContainer = (container, field, item, promptDropdownWords
 				}
 				
 				const editor = quillEditor.getQuill();
-				if (!editor) {
-					return; // Editor not ready
+				if (!editor || !editor.isEnabled()) {
+					return; // Editor not ready or read-only
 				}
 				
 				const selection = editor.getSelection();
@@ -405,8 +410,8 @@ const initializeQuillForContainer = (container, field, item, promptDropdownWords
 				}
 				
 				const editor = quillEditor.getQuill();
-				if (!editor) {
-					return; // Editor not ready
+				if (!editor || !editor.isEnabled()) {
+					return; // Editor not ready or read-only
 				}
 				
 				const selection = editor.getSelection();
@@ -1399,7 +1404,8 @@ export function render(item) {
 				// This will run after the HTML is rendered to the page
 				setTimeout(() => {
 					const container = document.getElementById(`inputValue-${field?.key}-${item?.messageId}-${index}`);
-					if (container) {
+					// Only initialize if container exists and not already initialized
+					if (container && container.getAttribute('data-quill-init') !== 'completed') {
 						initializeQuillForContainer(container, field, item, promptDropdownWords, index);
 					}
 				}, 1500); 
@@ -1432,7 +1438,8 @@ export function render(item) {
 				// Initialize nested prompt with timeout approach 
 				setTimeout(() => {
 					const container = document.getElementById(`inputValue-${field?.key}-${item?.messageId}-${index}`);
-					if (container) {
+					// Only initialize if container exists and not already initialized
+					if (container && container.getAttribute('data-quill-init') !== 'completed') {
 						try {
 							const quillEditor = new QuillEditor(container, {
 								placeholder: field?.value?.placeholder || "Enter your prompt...",

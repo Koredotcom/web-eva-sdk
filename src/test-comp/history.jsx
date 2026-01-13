@@ -7,7 +7,7 @@ import { LoadMoreRecentFiles, RecentFiles } from "../files"
 import getBookMarkedChatThreads from "../history/getBookMarkedChatThreads"
 import bookMarkChatThread from "../history/bookMarkChatThread"
 import loadMoreBookMarkedChatThreads from "../history/loadMoreBookMarkedChatThreads"
-import RecentAgentsFunc from "../LandingPageRecentAgents/RecentAgents"
+import RecentAgentsFunc from "../UIComponents/RecentAgents/RecentAgents"
 const {hideRecentAgentsDiv} = RecentAgentsFunc();
 import store from "../redux/store"
 

@@ -15,7 +15,8 @@ export * from './Feedback'
 export * from "./templateRenderer";
 export * from "./Announcements";
 export { RenderComposeBar } from './composebar';
-export { renderRecentAgents, hideRecentAgentsDiv, unHideRecentAgentsDiv, RecentAgentsFunc } from './LandingPageRecentAgents';
+export { renderRecentAgents, hideRecentAgentsDiv, unHideRecentAgentsDiv, RecentAgentsFunc } from './UIComponents/RecentAgents';
+export { renderHistory, hideHistoryDiv, unHideHistoryDiv, HistoryComponentFunc } from './UIComponents/History';
 export { renderParentComponent } from './master-component/ParentComponent';
 
 // Redux store exports

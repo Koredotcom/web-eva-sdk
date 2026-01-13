@@ -66,8 +66,14 @@ const createConfig = (input, dir, name, isMainBuild = false) => ({
     }),
     babel({
       babelHelpers: 'bundled',
-      exclude: 'node_modules/**',
-      presets: ['@babel/preset-react']
+      // Exclude node_modules EXCEPT marked (which uses modern syntax in v4+)
+      exclude: /node_modules\/(?!marked)/,
+      presets: ['@babel/preset-react'],
+      plugins: [
+        '@babel/plugin-transform-private-methods',
+        '@babel/plugin-transform-class-properties',
+        '@babel/plugin-transform-private-property-in-object'
+      ]
     }),
     commonjs(),
     json(),

@@ -1,12 +1,11 @@
 import { isEmpty } from "lodash";
 import { ChatInterface } from "../chat";
 import RenderComposeBar from "../composebar/RenderComposeBar";
-import RecentAgentsFunc from "../LandingPageRecentAgents/RecentAgents";
+import RecentAgentsFunc from "../UIComponents/RecentAgents/RecentAgents";
+import HistoryDrawerFunc from "../UIComponents/History/HistoryDrawer";
 import { TemplateRenderer } from "../templateRenderer";
-import { constructLoginButton } from "../Login";
-import store from "../redux/store";
-import { initializeSDK } from "../config";
 const { renderRecentAgents } = RecentAgentsFunc();
+const { renderHistoryDrawer } = HistoryDrawerFunc();
 
 
 let questions = {}
@@ -15,38 +14,12 @@ let errorStates = []
 let searchResponse = null
 let moreAvailable = false
 let currentDivId = null  // Store the div ID for re-rendering
-let isUserAuthorized = false;
-let previousProfileStatus = null  // Track profile status changes
 
 // Subscribe to ChatInterface for questions updates
 const unsubscribe = ChatInterface().subscribe((questionsData, searchResponse, moreAvailable, errorStates, quickActions) => {
     questions = questionsData
     console.log(questions, searchResponse, moreAvailable, errorStates, quickActions)    
     renderQuestionsOnly()
-})
-
-// Subscribe to Redux store for profile changes
-const unsubscribeProfile = store.subscribe(() => {
-    const currentProfileStatus = store.getState().global.profile?.status
-    
-    if (currentProfileStatus !== previousProfileStatus) {
-        previousProfileStatus = currentProfileStatus
-        isUserAuthorized = currentProfileStatus === 'success'
-                
-        if (currentDivId) {
-            const parentComponentDiv = document.getElementById(currentDivId)
-            if (parentComponentDiv) {
-                if (isUserAuthorized) {
-                    parentComponentDiv.innerHTML = constructParentComponent()
-                    RenderComposeBar(document.getElementById('compose-bar-container'))
-                    setTimeout(() => {
-                        renderRecentAgents('recent-agents-container')
-                        renderQuestionsOnly()
-                    }, 1000)
-                }
-            }
-        }
-    }
 })
 
 const scrollToBottom = () => {
@@ -100,58 +73,64 @@ const renderQuestionsOnly = () => {
 
 const constructParentComponent = () => {
     return `
-    <div id='parent-home-container' class='parent-home-container'>        
-        <div class="landing-page-container">
-            <div class="landing-page-content">
-                <div class="landing-page-content-container">
-                    <div id='questions-container' class='questions-container'>
-                        <!-- Questions will be rendered here -->
-                    </div>                    
-                    <div id='compose-bar-container' class='compose-bar-container'>
-                        <div class="ComposeBarContainer">
-                            <div class="eva-composebar-parent">
-                                <div class="eva-quick-reply-container"></div>
-                                <div class="eva-composebar-area">
-                                    <div class="eva-input-container skeleton-compose-bar">
-                                        <div class="eva-attachments-container"></div>
-                                        <div class="eva-compose-textarea-container">
-                                            <sl-skeleton effect="pulse"></sl-skeleton>
-                                        </div>
-                                        <div class="eva-compose-textarea-actions">
-                                            <div class="left-actions">
-                                                <div class="common-agents-container">
+    <div id='parent-home-container' class='parent-home-container'>
+        <!-- History Drawer Container (Left Side) -->
+        <div id='history-drawer-container' class='history-drawer-container'></div>
+        
+        <!-- Main Content (Right Side) -->
+        <div class="main-content-wrapper">
+            <div class="landing-page-container">
+                <div class="landing-page-content">
+                    <div class="landing-page-content-container">
+                        <div id='questions-container' class='questions-container'>
+                            <!-- Questions will be rendered here -->
+                        </div>                    
+                        <div id='compose-bar-container' class='compose-bar-container'>
+                            <div class="ComposeBarContainer">
+                                <div class="eva-composebar-parent">
+                                    <div class="eva-quick-reply-container"></div>
+                                    <div class="eva-composebar-area">
+                                        <div class="eva-input-container skeleton-compose-bar">
+                                            <div class="eva-attachments-container"></div>
+                                            <div class="eva-compose-textarea-container">
+                                                <sl-skeleton effect="pulse"></sl-skeleton>
+                                            </div>
+                                            <div class="eva-compose-textarea-actions">
+                                                <div class="left-actions">
+                                                    <div class="common-agents-container">
+                                                        <sl-skeleton effect="pulse"></sl-skeleton>
+                                                        <sl-skeleton effect="pulse"></sl-skeleton>
+                                                        <sl-skeleton effect="pulse"></sl-skeleton>
+                                                    </div>
+                                                </div>
+                                                <div class="right-actions">
                                                     <sl-skeleton effect="pulse"></sl-skeleton>
                                                     <sl-skeleton effect="pulse"></sl-skeleton>
                                                     <sl-skeleton effect="pulse"></sl-skeleton>
                                                 </div>
-                                            </div>
-                                            <div class="right-actions">
-                                                <sl-skeleton effect="pulse"></sl-skeleton>
-                                                <sl-skeleton effect="pulse"></sl-skeleton>
-                                                <sl-skeleton effect="pulse"></sl-skeleton>
-                                            </div>
-                                        </div>                                        
+                                            </div>                                        
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        </div>                        
-                    </div>
-                    <div id='recent-agents-container' class='recent-agents-parent-container'>
-                        <div class="recent-agents-container">
-                            <div class="recent-agent skeleton-agent">
-                                <sl-skeleton effect="pulse"></sl-skeleton>
-                            </div>
-                            <div class="recent-agent skeleton-agent">
-                                <sl-skeleton effect="pulse"></sl-skeleton>
-                            </div>
-                            <div class="recent-agent skeleton-agent">
-                                <sl-skeleton effect="pulse"></sl-skeleton>
-                            </div>
-                            <div class="recent-agent skeleton-agent">
-                                <sl-skeleton effect="pulse"></sl-skeleton>
-                            </div>
-                            <div class="recent-agent skeleton-agent">
-                                <sl-skeleton effect="pulse"></sl-skeleton>
+                            </div>                        
+                        </div>
+                        <div id='recent-agents-container' class='recent-agents-parent-container'>
+                            <div class="recent-agents-container">
+                                <div class="recent-agent skeleton-agent">
+                                    <sl-skeleton effect="pulse"></sl-skeleton>
+                                </div>
+                                <div class="recent-agent skeleton-agent">
+                                    <sl-skeleton effect="pulse"></sl-skeleton>
+                                </div>
+                                <div class="recent-agent skeleton-agent">
+                                    <sl-skeleton effect="pulse"></sl-skeleton>
+                                </div>
+                                <div class="recent-agent skeleton-agent">
+                                    <sl-skeleton effect="pulse"></sl-skeleton>
+                                </div>
+                                <div class="recent-agent skeleton-agent">
+                                    <sl-skeleton effect="pulse"></sl-skeleton>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -159,14 +138,6 @@ const constructParentComponent = () => {
             </div>
         </div>
     </div>    
-    `
-}
-
-export const constructLoginComponent = () => {
-    return `
-    <div id='login-container' class='login-container'>
-        ${constructLoginButton()}
-    </div>
     `
 }
 
@@ -179,31 +150,25 @@ export const renderParentComponent = (divId) => {
     
     currentDivId = divId
     
-    const userId = localStorage.getItem('userId')
-    const accessToken = localStorage.getItem('accessToken')
-    const tokenExpiryDate = localStorage.getItem('expiresDate')
+    // Render the parent component
+    parentComponentDiv.innerHTML = constructParentComponent()
     
-    const hasSessionData = userId && accessToken && tokenExpiryDate
-    const isTokenValid = hasSessionData && new Date() < new Date(tokenExpiryDate)
+    // Render History Drawer (left side)
+    if (document.getElementById('history-drawer-container')) {
+        renderHistoryDrawer('history-drawer-container')
+    }
     
-    if (!hasSessionData || !isTokenValid) {
-        // No session or expired token - show login
-        if (!hasSessionData) {
-            console.log('No session data found, need to show login')
-        } else {            
-            localStorage.removeItem('userId')
-            localStorage.removeItem('accessToken')
-            localStorage.removeItem('expiresDate')
-        }
-        parentComponentDiv.innerHTML = constructLoginComponent()
-    } else {
-        console.log('Valid session found, initializing SDK...')
-        initializeSDK({
-            userId: userId,
-            accessToken: accessToken,
-            api_url: "https://eva-dev.kore.ai/api/",
-            presence_url: "https://eva-dev.kore.ai/",
-        })
+    // Render Compose Bar
+    RenderComposeBar(document.getElementById('compose-bar-container'))
+    
+    // Render Recent Agents
+    if (document.getElementById('recent-agents-container')) {
+        renderRecentAgents('recent-agents-container')
+    }
+    
+    // Render Questions
+    if (document.getElementById('questions-container')) {
+        renderQuestionsOnly()
     }
 }
 

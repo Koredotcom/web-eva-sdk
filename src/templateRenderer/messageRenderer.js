@@ -64,8 +64,8 @@ export function render(
 		) {
 			content += TemplateComponents.renderQuestionBubble(
 				data,
-				userIconTemplate = true,
-				displayTimestamp = true
+				userIconTemplate = false,
+				displayTimestamp = false
 			);
 		}
 

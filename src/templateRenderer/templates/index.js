@@ -10,7 +10,7 @@ import { convertToTimeFormat } from "../../utils/helpers";
  * @param {Object} data Question data
  * @returns {string} HTML string
  */
-export function renderQuestionBubble(data, userIconTemplate = false, displayTimestamp = true) {
+export function renderQuestionBubble(data, userIconTemplate = false, displayTimestamp = false) {
 	const { question, timestamp, icon} = data;
     if(data?.isTask) return "";
 	return `
@@ -87,8 +87,8 @@ export function renderLoading(
 	data = {},
 	assistantIconTemplate,
 	loadingText,
-	userIconTemplate,
-    displayTimestamp = true
+	userIconTemplate = false,
+    displayTimestamp = false
 ) {
 	// const { text = "Thinking...", icon } = data;
 	const text = loadingText || "Thinking...";
@@ -97,11 +97,7 @@ export function renderLoading(
         html = `<div class="task-item-loader">Loading...</div>`
     }else{
         html = ` <div class="message-bubble question">
-                    <div class="message-content"> 
-                        <div class="user-content">
-                            ${userIconTemplate ? renderUserIconTemplate() : ""}
-                            ${displayTimestamp ? renderQuestionBubbleTimeStamp(data.timestamp) : ""}
-                        </div>
+                    <div class="message-content">                         
                         <div class="question-content">
                             ${copyQuestion.render(data)}
                             <div class="message-text">                    

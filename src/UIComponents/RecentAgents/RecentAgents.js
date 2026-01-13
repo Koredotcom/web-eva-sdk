@@ -1,6 +1,6 @@
-import { RecentAgents } from "../agents";
-import { InvokeAgent } from "../chat";
-import { getIconsList } from "../utils/helpers";
+import { RecentAgents } from "../../agents";
+import { InvokeAgent } from "../../chat";
+import { getIconsList } from "../../utils/helpers";
 
 let isRecentAgentsLoading = false;
 let currentRecentAgents = [];
@@ -134,9 +134,5 @@ return {
     renderRecentAgents
 }
 }
-
-
-
-
 
 export default RecentAgentsFunc;
