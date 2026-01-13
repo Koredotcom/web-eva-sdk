@@ -529,8 +529,8 @@ export const deleteAnnouncementAction = createAsyncThunk(
     'global/deleteAnnouncementAction',
     async (arg, { rejectWithValue }) => {
         try {
-            const response = await axiosInstance.delete(`/1.1/accounts/${arg?.accountId}/announcements/${arg?.announcementId}`);
-            return response.data;
+            const response = await axiosInstance.delete(`/1.1/users/${arg?.userId}/announcements/${arg?.announcementId}`);
+            return {data: response.data, status: response.status};
         } catch (error) {
             handleErrorState(error, "Delete Announcement");
             return rejectWithValue(error.response.data);
