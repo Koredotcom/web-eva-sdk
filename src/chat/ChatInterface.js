@@ -1,5 +1,5 @@
-import { abortAdvanceSearch, advanceSearch, cancelAdvancedSearch, stopResponseGeneration } from "../redux/actions/global.action";
-import { setChatInterfaceOptions, setCurrentQuestion, setCustomData, setEnableContextByFollowupContext, setEnabledCustomTemplates, setErrorState, setAnsFromChipElements } from "../redux/globalSlice"
+import { abortAdvanceSearch, advanceSearch, cancelAdvancedSearch, resolveAgentAction, stopResponseGeneration } from "../redux/actions/global.action";
+import { setChatInterfaceOptions, setCurrentQuestion, setCustomData, setEnableContextByFollowupContext, setEnabledCustomTemplates, setErrorState, setAnsFromChipElements, setChatInterfaceElements } from "../redux/globalSlice"
 import { updateChatData } from "../redux/globalSlice";
 import store from "../redux/store";
 import { v4 as uuid } from 'uuid';
@@ -589,6 +589,28 @@ const ChatInterface = (props) => {
       })
     }
 
+    const resolveAgent = async(agentIdArray) => {
+      const apiResponse = await store.dispatch(resolveAgentAction({payload: agentIdArray}));
+      if(apiResponse?.meta?.requestStatus === 'fulfilled'){        
+        if(apiResponse?.payload?.[0]?.isDeleted){
+          return {...apiResponse?.payload?.[0], hasAccess: false, success: true};
+        }
+        const userAccess = checkUserAccessToAgent(apiResponse?.payload?.[0]?.id);        
+        return {...apiResponse?.payload?.[0], ...userAccess, success: true};
+      } else {        
+        return {success: false, error: apiResponse?.payload};
+      }
+    }
+
+    const checkUserAccessToAgent = (agentId) => {      
+      const currentAgent = store.getState().global?.allAgents?.data?.agents?.find(agent => agent?.id === agentId);
+      const userAccess = {hasAccess: true}
+      if(!currentAgent){
+        userAccess.hasAccess = false;
+      }
+      return userAccess;
+    }
+
 
     return {
         subscribe,
@@ -610,7 +632,8 @@ const ChatInterface = (props) => {
         stopBotAnswer,
         configureAnsFromChipElements,
         responseFlowGeneration,
-        configureChatInterfaceElements
+        configureChatInterfaceElements,
+        resolveAgent
     }
 }
 
