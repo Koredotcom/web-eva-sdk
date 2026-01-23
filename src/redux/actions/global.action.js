@@ -554,3 +554,16 @@ export const deleteAnnouncementAction = createAsyncThunk(
         }
     }
 );
+
+export const resolveAgentAction = createAsyncThunk(
+    'global/resolveAgent',
+    async (arg, { rejectWithValue }) => {
+        try {
+            const response = await axiosInstance.post(`/1.1/_resolve/agent`,{id: arg?.payload});            
+            return response.data;
+        } catch (error) {
+            handleErrorState(error, "Resolve Agent");
+            return rejectWithValue(error.response.data);
+        }
+    }
+);
