@@ -10,20 +10,20 @@
   padding: 12px 16px;
   border-radius: 999px;
   border: 1px solid rgba(0, 0, 0, 0.08);
-  background: #1e6bff;
-  color: #fff;
+  background: #fdfeff;
+  color: #000;
   font-size: 14px;
   line-height: 1;
   cursor: pointer;
-  box-shadow: 0 10px 24px rgba(30, 107, 255, 0.28);
+  box-shadow: 0 10px 24px rgb(185 185 185 / 28%);
 }
 
 .eva-sdk-chatbot-button:hover {
-  background: #0f5bf0;
+  background: #f5f5f5;
 }
 
 .eva-sdk-chatbot-button:focus-visible {
-  outline: 3px solid rgba(41, 112, 255, 0.4);
+  outline: 3px solid rgb(185 185 185 / 40%);
   outline-offset: 2px;
 }
 
@@ -40,7 +40,7 @@
   right: 24px;
   bottom: 90px;
   z-index: 9998;
-  width: 380px;
+  width: 560px;
   height: 560px;
   background: #ffffff;
   border-radius: 16px;
@@ -51,6 +51,45 @@
   transform: translateY(12px);
   pointer-events: none;
   transition: opacity 0.2s ease, transform 0.2s ease;
+  border: 1px solid #eeeeee;
+
+  .landing-page-content {
+    .landing-page-content-container {
+      .compose-bar-container, .recent-agents-parent-container {
+        width: 95%;
+      }
+    }
+  }
+
+  .parent-home-container {
+    .landing-page-container.results-page-container {
+      .landing-page-content #questions-container {
+        .message-container {
+          width: 95%;
+        }
+      }
+    }
+  }
+
+  .answerFromChipDiv {
+    .ansFromChip {
+      flex-wrap: wrap;
+    }
+  }
+  .message-bubble.answer .answerCntr .search-answer-container .message-renderer {
+    max-width: 100%;
+  }
+  .table-wrapper {
+    overflow-x: auto;
+    max-width: 100%;
+  }
+  .message-bubble.answer {
+    .answerCntr {
+      .search-answer-container {
+        word-break: break-word;
+      }
+    }
+  }
 }
 
 .eva-sdk-chatbot-panel--open {
