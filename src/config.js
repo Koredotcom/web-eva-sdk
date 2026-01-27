@@ -8,10 +8,9 @@ import { WebSocketService } from "./socket/socket.service";
 import { initializeSDKRuntime } from "./sdkRuntime";
 export const initializeSDK = async (config) => {
 
-  // 1️⃣ Guard FIRST
-  if (typeof window !== 'undefined' && window.__EVA_SDK_INITIALIZED__) {
+  if (typeof window !== "undefined" && window.__EVA_SDK_INITIALIZED__) {
     console.warn(
-      "EvaSDK is already initialized. Use EvaSDK.reinitialize() instead."
+      "EvaSDK already initialized. Ignoring duplicate initialization."
     );
     return;
   }
@@ -31,8 +30,11 @@ export const initializeSDK = async (config) => {
   // if(misConfig) return;
   if (typeof window !== 'undefined' && typeof document !== 'undefined' && misConfig) return;
 
-  // Set the SDK config globally
-  window.sdkConfig = config;
+  if (typeof window !== "undefined") {
+    window.__EVA_SDK_INITIALIZED__ = true;
+    // Set the SDK config globally
+    window.sdkConfig = config;
+  }
 
   const chatInterface = initializeSDKRuntime({
     containerId: config?.containerId,
