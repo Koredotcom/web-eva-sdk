@@ -1,4 +1,5 @@
 import { initializeSDKRuntime } from "../sdkRuntime";
+import { initializeSDK } from "../config";
 
 const DEFAULT_CONTAINER_ID = "eva-sdk-chatbot-container";
 const DEFAULT_TITLE = "Eva Assistant";
@@ -140,11 +141,19 @@ export const init = (config = {}) => {
   }
 
   const containerId = config?.containerId || DEFAULT_CONTAINER_ID;
+  const sdkAlreadyInitialized =
+    typeof window !== "undefined" && window.__EVA_SDK_INITIALIZED__;
 
   ensureElements(config);
   ensureChatContainer(containerId);
 
-  initializeSDKRuntime({ containerId });
+  initializeSDK({
+    ...config,
+    containerId,
+  });
+  if (sdkAlreadyInitialized) {
+    initializeSDKRuntime({ containerId });
+  }
 
   if (config?.autoOpen) {
     state.isOpen = true;
