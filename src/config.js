@@ -5,7 +5,17 @@ import { fetchAgents, fetchConfigData, fetchProfileData, fetchHistory, fetchRece
 import { setEnabledDebugging, setAppMetaData } from "./redux/globalSlice";
 import store from "./redux/store";
 import { WebSocketService } from "./socket/socket.service";
+import { initializeSDKRuntime } from "./sdkRuntime";
 export const initializeSDK = async (config) => {
+
+  // 1️⃣ Guard FIRST
+  if (typeof window !== 'undefined' && window.__EVA_SDK_INITIALIZED__) {
+    console.warn(
+      "EvaSDK is already initialized. Use EvaSDK.reinitialize() instead."
+    );
+    return;
+  }
+
   const requiredKeys = ['accessToken', 'api_url', 'userId']
   let initialHistoryLimit = config?.initialHistoryLimit || 10;
 
@@ -23,6 +33,13 @@ export const initializeSDK = async (config) => {
 
   // Set the SDK config globally
   window.sdkConfig = config;
+
+  const chatInterface = initializeSDKRuntime({
+    containerId: config?.containerId,
+  });
+  if (config?.chatInterface) {
+    chatInterface.configureChatInterfaceElements(config.chatInterface);
+  }
 
   // making foundation api call once sdk initialized properly
   store.dispatch(fetchConfigData(config.userId))
@@ -55,5 +72,4 @@ export const initializeSDK = async (config) => {
   // WebSocketService.on("live", (data) => {
   //   console.log('sadfafafs')
   // })
-
 };

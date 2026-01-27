@@ -17,13 +17,13 @@ import postcssImport from 'postcss-import';
 const globals_var = {
   react: 'React',
   'react-dom': 'ReactDOM',
-  '@reduxjs/toolkit': 'RTK',
-  'redux-thunk': 'ReduxThunk',
+  // '@reduxjs/toolkit': 'RTK',
+  // 'redux-thunk': 'ReduxThunk',
+  // 'socket.io-client': 'io',
 };
 
-const createConfig = (input, dir, name, isMainBuild = false) => ({
-  input,
-  output: [
+const createConfig = (input, dir, name, isMainBuild = false) => {
+  const output = [
     {
       dir: `dist/${dir}`,
       format: 'cjs',
@@ -35,13 +35,28 @@ const createConfig = (input, dir, name, isMainBuild = false) => ({
       format: 'esm',
       entryFileNames: '[name].esm.js',
     }
-  ],
-  external: [
-    ...Object.keys(globals_var),
-    'window',
-    'document'
-  ],
-  plugins: [
+  ];
+
+  if (isMainBuild) {
+    output.push({
+      file: 'dist/eva-web-sdk.umd.js',
+      format: 'umd',
+      name: 'EvaSDK',
+      globals: globals_var,
+      exports: 'named',
+    });
+  }
+
+  return {
+    input,
+    output,
+    external: Object.keys(globals_var),
+    // external: [
+    //   ...Object.keys(globals_var),
+    //   'window',
+    //   'document'
+    // ],
+    plugins: [
     replace({
       'process.env.NODE_ENV': JSON.stringify('production'),
       preventAssignment: true,
@@ -87,8 +102,9 @@ const createConfig = (input, dir, name, isMainBuild = false) => ({
       })
     ] : []),
     terser()
-  ]
-});
+    ]
+  };
+};
 
 export default [
   createConfig('src/index.jsx', '.', 'EvaUIReact', true), // Main build - copy static assets (includes unified CSS)

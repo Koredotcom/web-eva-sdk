@@ -1,0 +1,135 @@
+/* Floating chatbot UI only */
+.eva-sdk-chatbot-button {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 9999;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  border-radius: 999px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  background: #1e6bff;
+  color: #fff;
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 10px 24px rgba(30, 107, 255, 0.28);
+}
+
+.eva-sdk-chatbot-button:hover {
+  background: #0f5bf0;
+}
+
+.eva-sdk-chatbot-button:focus-visible {
+  outline: 3px solid rgba(41, 112, 255, 0.4);
+  outline-offset: 2px;
+}
+
+.eva-sdk-chatbot-button-icon {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.85);
+  display: inline-block;
+}
+
+.eva-sdk-chatbot-panel {
+  position: fixed;
+  right: 24px;
+  bottom: 90px;
+  z-index: 9998;
+  width: 380px;
+  height: 560px;
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.16);
+  display: flex;
+  flex-direction: column;
+  opacity: 0;
+  transform: translateY(12px);
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.eva-sdk-chatbot-panel--open {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.eva-sdk-chatbot-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  background: #f8f9fb;
+  border-radius: 16px 16px 0 0;
+}
+
+.eva-sdk-chatbot-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.eva-sdk-chatbot-close {
+  border: none;
+  background: transparent;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  color: #111827;
+}
+
+.eva-sdk-chatbot-close:hover {
+  color: #0f5bf0;
+}
+
+.eva-sdk-chatbot-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+}
+
+.eva-sdk-chatbot-content {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+}
+
+.eva-sdk-chatbot-container {
+  flex: 1;
+  min-height: 0;
+}
+
+@media (max-width: 768px) {
+  .eva-sdk-chatbot-button {
+    right: 16px;
+    bottom: 16px;
+  }
+
+  .eva-sdk-chatbot-panel {
+    right: 16px;
+    left: 16px;
+    bottom: 80px;
+    width: auto;
+    height: min(70vh, 560px);
+  }
+}
+
+@media (max-width: 480px) {
+  .eva-sdk-chatbot-panel {
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 100vh;
+    border-radius: 0;
+  }
+
+  .eva-sdk-chatbot-header {
+    border-radius: 0;
+  }
+}
