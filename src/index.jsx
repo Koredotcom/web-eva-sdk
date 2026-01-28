@@ -1,3 +1,6 @@
+// Initialize Shoelace runtime (must be first - idempotent)
+import './runtime/shoelace-runtime.js';
+
 // Import the CSS file
 import './styles/sdk.scss';
 import './styles/tom-select.css';
@@ -16,6 +19,7 @@ export * from "./templateRenderer";
 export * from "./Announcements";
 export { RenderComposeBar } from './composebar';
 export { renderRecentAgents, hideRecentAgentsDiv, unHideRecentAgentsDiv, RecentAgentsFunc } from './LandingPageRecentAgents';
+export { renderParentComponent } from './master-component/ParentComponent';
 
 // Redux store exports
 export { default as store } from './redux/store';

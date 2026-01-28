@@ -1,3 +1,6 @@
+// Initialize Shoelace runtime (must be first - idempotent)
+import '../runtime/shoelace-runtime.js';
+
 export { default as ChatInterface } from './ChatInterface.js';
 export { default as NewChat } from './NewChat.js';
 export { default as InitiateChatConversationAction } from './InitiateChatConversationAction.js';

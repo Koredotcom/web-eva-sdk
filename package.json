@@ -1,6 +1,6 @@
 {
   "name": "eva-web-sdk",
-  "version": "1.1.80",
+  "version": "1.1.84",
   "description": "",
   "main": "dist/index.cjs.js",
   "style": "dist/sdk-styles.css",
@@ -10,6 +10,7 @@
     "build": "rollup -c"
   },
   "dependencies": {
+    "@shoelace-style/shoelace": "^2.19.1",
     "@codemirror/lang-cpp": "^6.0.3",
     "@codemirror/lang-css": "^6.3.1",
     "@codemirror/lang-html": "^6.4.9",

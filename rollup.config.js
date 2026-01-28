@@ -36,11 +36,20 @@ const createConfig = (input, dir, name, isMainBuild = false) => ({
       entryFileNames: '[name].esm.js',
     }
   ],
-  external: [
-    ...Object.keys(globals_var),
-    'window',
-    'document'
-  ],
+  external: (id) => {
+    // Never externalize Shoelace - it must be bundled
+    if (id.includes('@shoelace-style/shoelace')) {
+      return false;
+    }
+    // Externalize React ecosystem and globals
+    if (Object.keys(globals_var).includes(id)) {
+      return true;
+    }
+    if (id === 'window' || id === 'document') {
+      return true;
+    }
+    return false;
+  },
   plugins: [
     replace({
       'process.env.NODE_ENV': JSON.stringify('production'),
@@ -49,11 +58,21 @@ const createConfig = (input, dir, name, isMainBuild = false) => ({
     resolve({
       preferBuiltins: false,
       browser: true,
-      extensions: ['js', 'jsx']
+      extensions: ['.js', '.jsx', '.css']
     }),
+    // Combined CSS handling - injects Shoelace CSS, extracts SDK CSS
     postcss({
       extract: 'sdk-styles.css',
       minimize: true,
+      // Inject Shoelace CSS directly, extract all other CSS
+      inject: (cssVariableName, fileId) => {
+        // Shoelace CSS gets injected into <head> at runtime
+        if (fileId.includes('@shoelace-style') || fileId.includes('shoelace')) {
+          return `(function(css){if(typeof document !== 'undefined'){var style=document.createElement('style');style.textContent=css;document.head.appendChild(style);}})(${cssVariableName});`;
+        }
+        // Other CSS is extracted to sdk-styles.css (return false = don't inject)
+        return false;
+      },
       use: [
         ['sass', {
           includePaths: ['./src/styles'],
@@ -72,7 +91,11 @@ const createConfig = (input, dir, name, isMainBuild = false) => ({
     commonjs(),
     json(),
     builtins(),
-    globals(),
+    globals({
+      // Exclude Shoelace and its dependencies (lit-html, lit, lit-element, etc.) from processing
+      // These use modern JS syntax that the plugin's old acorn parser can't handle
+      exclude: ['node_modules/@shoelace-style/**', 'node_modules/lit-html/**', 'node_modules/lit/**', 'node_modules/@lit/**', 'node_modules/lit-element/**']
+    }),
     alias({
       entries: [
         { find: 'util', replacement: './util-polyfill.js' }
