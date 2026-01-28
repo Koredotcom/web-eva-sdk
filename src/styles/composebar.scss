@@ -319,7 +319,7 @@
                 position: relative;
                 z-index: 1;
                 border: .0625rem solid #e5e5e5;
-                background-color: #fff;
+                // background-color: #fff;
                 padding: 1rem;
                 border-radius: 1.5rem;
                 transition-property: all;
@@ -1210,9 +1210,18 @@ sl-dialog.eva-agents-dialog {
     //width: 100%;
     //border-radius: 1.5rem;
     //background: linear-gradient(180deg, #F8F7F7 8.93%, #EDEDED 88.57%);
-    padding: 1rem;
-    position: relative;
+    position: absolute;
+    bottom: 100%;
+    z-index: 1;
+    gap: .75rem;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    padding: .75rem 1rem;
+    left: 0;
+    right: 0;
     border-radius: 1.5rem 1.5rem 0 0;
+    cursor: pointer;
     &:after {
         content: '';
         width: 100%;
