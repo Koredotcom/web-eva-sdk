@@ -182,6 +182,53 @@
   border-bottom: 1px solid rgba(0, 0, 0, 0.08);
   background: #f8f9fb;
   border-radius: 16px 16px 0 0;
+
+  .eva-sdk-chatbot-header-buttons {
+    display: flex;
+    align-items: center;
+    gap: 8px;    
+    
+    .sdk-chatbot-newchat {
+      font-size: 14px;
+      font-weight: 500;
+      color: #111827;
+      background: #fff;
+      border: 1px solid #d0d5dd;
+      border-radius: 8px;
+      padding: 8px 16px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      &:hover {
+        background: #f9fafb;
+        border-color: #d0d5dd;
+        color: #1d2939;
+        box-shadow: 0 .0625rem .125rem rgba(16, 24, 40, .05);
+      }
+      &:active {
+        background: #f2f4f7;  
+        border-color: #d0d5dd;  
+      }
+    }
+
+    .eva-sdk-chatbot-close {
+      border: 1px solid #d0d5dd;
+      background: #fff;
+      font-size: 20px;
+      line-height: 1;
+      cursor: pointer;
+      color: #111827;
+      transition: all 0.2s ease;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 100%;
+      &:hover {
+        color: #0f5bf0;
+      }
+    }
+  }
 }
 
 .eva-sdk-chatbot-title {
@@ -189,20 +236,6 @@
   font-weight: 600;
   color: #111827;
 }
-
-.eva-sdk-chatbot-close {
-  border: none;
-  background: transparent;
-  font-size: 20px;
-  line-height: 1;
-  cursor: pointer;
-  color: #111827;
-}
-
-.eva-sdk-chatbot-close:hover {
-  color: #0f5bf0;
-}
-
 .eva-sdk-chatbot-body {
   flex: 1;
   min-height: 0;
