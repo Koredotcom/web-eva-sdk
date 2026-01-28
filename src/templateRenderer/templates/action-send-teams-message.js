@@ -1,7 +1,7 @@
 import { searchIcon, attachmentIcon, ActionsFlashIcon, arrowCirlceUpIcon, Teamsimg } from "../icons-library";
 import "./../styles/template.scss";
 import FileUploader from "../../utils/FileUploader";
-import { getFileExtension, getUID, generateComponentId } from "../../utils/helpers";
+import { getFileExtension, getUID, generateComponentId, resolveSdkAssetPath } from "../../utils/helpers";
 import store from "../../redux/store";
 import axios from "axios";
 import { initializeRecipientSearch } from "../../utils/searchChannelRecepients";
@@ -302,7 +302,7 @@ const initializeTeamsMessageFunctionality = (data) => {
                     ${attachedFiles.map((file, index) => `
                         <div class="attachment-item ${file.error ? 'error' : ''}">
                             <div class="attachment-name" title="${file.name}">
-                                ${file?.extName ? `<img src="images/${file?.extName}.png" alt="${file?.name}" style="width:18px;height:18px;vertical-align:middle;margin-right:6px;" />` : ''}
+                                ${file?.extName ? `<img src="${resolveSdkAssetPath(`images/${file?.extName}.png`)}" alt="${file?.name}" style="width:18px;height:18px;vertical-align:middle;margin-right:6px;" />` : ''}
                                 <span class="attachment-filename">${file.name}</span>
                                 <span class="attachment-filesize">
                                     (${file.size > 1024 * 1024

@@ -1,4 +1,4 @@
-import { htmlDecode, renderIcons, getFileExtension, getExtIcon, getDownloadIcon, encodeHtml } from "../../utils/helpers";
+import { htmlDecode, renderIcons, getFileExtension, getExtIcon, getDownloadIcon, encodeHtml, resolveSdkAssetPath } from "../../utils/helpers";
 import AnsFromChipFunctionality from "../functionality/ansFromChip";
 import { getTimeline, highlightQuotedText } from "../utils/helper";
 import htmlTableRenderer from "./htmlTableRenderer";
@@ -10,28 +10,28 @@ const isMSEnv = () => store.getState()?.global?.env === 'MS';
 
 const getThumbsUpIcon = (filled = false) => {
     if (isMSEnv()) {
-        return `<img src="images/MS-Icons/thumbs-up-ms.svg" alt="Thumbs Up" width="16" height="16" />`;
+        return `<img src="${resolveSdkAssetPath("images/MS-Icons/thumbs-up-ms.svg")}" alt="Thumbs Up" width="16" height="16" />`;
     }
     return filled ? createThumbsUpFilled({ size: 16, color: "#12B76A" }) : createThumbsUp({ size: 16, color: "#667085" });
 };
 
 const getExportWordIcon = () => {
     if (isMSEnv()) {
-        return `<img src="images/MS-Icons/share-ms.svg" alt="Export doc" width="16" height="16" />`;
+        return `<img src="${resolveSdkAssetPath("images/MS-Icons/share-ms.svg")}" alt="Export doc" width="16" height="16" />`;
     }
     return createExport({ size: 16, color: "#667085" });
 };
 
 const getThumbsDownIcon = (filled = false) => {
     if (isMSEnv()) {
-        return `<img src="images/MS-Icons/thumbs-down-ms.svg" alt="Thumbs Down" width="16" height="16" />`;
+        return `<img src="${resolveSdkAssetPath("images/MS-Icons/thumbs-down-ms.svg")}" alt="Thumbs Down" width="16" height="16" />`;
     }
     return filled ? createThumbsDownFilled({ size: 16, color: "#F04438" }) : createThumbsDown({ size: 16, color: "#667085" });
 };
 
 const getThreeDotIcon = () => {
     if (isMSEnv()) {
-        return `<img src="images/MS-Icons/dots-vertical.svg" alt="More options" width="16" height="16" />`;
+        return `<img src="${resolveSdkAssetPath("images/MS-Icons/dots-vertical.svg")}" alt="More options" width="16" height="16" />`;
     }
     return EllipsisVertical({ size: 16, color: "#667085" });
 };
@@ -175,7 +175,7 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 		).outerHTML;
 		if(isMSEnv()){
 			if(source?.source === 'llm' || source?.source === 'customQnAAPI' || source?.source === 'web') {
-				icon = `<img src="images/MS-Icons/aims-favicon.svg" alt="AIMS" width="16" height="16" />`;
+				icon = `<img src="${resolveSdkAssetPath("images/MS-Icons/aims-favicon.svg")}" alt="AIMS" width="16" height="16" />`;
 			}
 		}
 

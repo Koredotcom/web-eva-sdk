@@ -26,7 +26,7 @@ const createButton = (label) => {
   button.className = "eva-sdk-chatbot-button";
   button.setAttribute("aria-label", label);
   button.innerHTML =
-    '<span class="eva-sdk-chatbot-button-icon" aria-hidden="true"></span>' +
+    '<span class="eva-sdk-chatbot-button-icon" aria-hidden="true"><img src="https://staticqa2-workassist.kore.ai/KoraQA/images/eva-black-svg.svg" width="16" height="16" /></span>' +
     `<span class="eva-sdk-chatbot-button-text">${label}</span>`;
   return button;
 };

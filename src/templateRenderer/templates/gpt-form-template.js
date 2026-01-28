@@ -1,5 +1,5 @@
 import { cloneDeep, isEmpty } from "lodash";
-import { getCurrentQuestion, getFileExtension } from "../../utils/helpers";
+import { getCurrentQuestion, getFileExtension, resolveSdkAssetPath } from "../../utils/helpers";
 import UpdateGPTPromptValue from "../../chat/gptTemplate/updateGPTPromptValue";
 import MultiResponse from "../../chat/gptTemplate/MultiResponse";
 import gptFormFunctionality from "../functionality/gpt-form-template";
@@ -923,7 +923,7 @@ export function render(item) {
 
 			const fileImageDiv = document.createElement("div");
 			fileImageDiv.className = "fileImage";
-			fileImageDiv.innerHTML = `<img src="images/${getFileExtension(file?.name || file?.fileName || '')}.png" alt="${file?.title}" />`;
+			fileImageDiv.innerHTML = `<img src="${resolveSdkAssetPath(`images/${getFileExtension(file?.name || file?.fileName || '')}.png`)}" alt="${file?.title}" />`;
 			uploadedFileDiv.appendChild(fileImageDiv);
 
 			const fileTitleDiv = document.createElement("div");
@@ -1583,7 +1583,7 @@ export function render(item) {
 
 					const fileImageDiv = document.createElement("div");
 					fileImageDiv.className = "fileImage";
-					fileImageDiv.innerHTML = `<img src="images/${getFileExtension(file?.name || file?.fileName || '')}.png" alt="${file?.title}" />`;
+					fileImageDiv.innerHTML = `<img src="${resolveSdkAssetPath(`images/${getFileExtension(file?.name || file?.fileName || '')}.png`)}" alt="${file?.title}" />`;
 					uploadedFileDiv.appendChild(fileImageDiv);
 
 					const fileTitleDiv = document.createElement("div");

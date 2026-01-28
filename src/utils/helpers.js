@@ -84,6 +84,28 @@ export const isMSEnv = () => {
     return store.getState().global?.env === 'MS';
 }
 
+export const getSdkAssetBase = () => {
+    if (typeof window === "undefined") {
+        return "";
+    }
+    return window.__EVA_SDK_ASSET_BASE__ || "";
+};
+
+export const resolveSdkAssetPath = (assetPath = "") => {
+    if (!assetPath) {
+        return assetPath;
+    }
+    const base = getSdkAssetBase();
+    if (!base) {
+        return assetPath;
+    }
+    if (/^(data:|https?:)?\/\//.test(assetPath)) {
+        return assetPath;
+    }
+    const normalizedPath = assetPath.startsWith("/") ? assetPath.slice(1) : assetPath;
+    return `${base}/${normalizedPath}`;
+};
+
 export const getReqIdByMessageId = (messageId) => {
     let questions = cloneDeep(store.getState().global?.questions)
     for (const key in questions) {

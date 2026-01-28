@@ -2,7 +2,7 @@ import { cloneDeep } from "lodash";
 import { default as fileUpload } from "../Attachments/fileUpload.js";
 import store from "../redux/store.js";
 import { attachmentIcon, createDeleteIcon } from "../templateRenderer/icons-library.js";
-import { getFileExtension } from "../utils/helpers.js";
+import { getFileExtension, resolveSdkAssetPath } from "../utils/helpers.js";
 
 
 const formatFileSize = (bytes) => {
@@ -66,7 +66,7 @@ const renderRecentFilesList = (targetEl, files, listType = 'recent', options = {
         const lastModified = formatDate(file?.lastModified || file?.updatedAt);
 
         return `<li class="eva-file-item" data-file-id="${file.id || file.fileId}" data-file-type="${listType}">
-            <div class="file-icon"><img src="images/${fileExtension}.png" alt=''/></div>
+            <div class="file-icon"><img src="${resolveSdkAssetPath(`images/${fileExtension}.png`)}" alt=''/></div>
             <div class="file-details">
                 <div class="file-name" title="${safeName}">${safeName}</div>
                 <div class="file-meta">

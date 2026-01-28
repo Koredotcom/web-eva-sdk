@@ -3,6 +3,7 @@ import { ChatInterface } from "../chat";
 import RenderComposeBar from "../composebar/RenderComposeBar";
 import RecentAgentsFunc from "../LandingPageRecentAgents/RecentAgents";
 import { TemplateRenderer } from "../templateRenderer";
+import { resolveSdkAssetPath } from "../utils/helpers";
 const {renderRecentAgents} = RecentAgentsFunc();
 
 let questions = {}
@@ -42,7 +43,7 @@ const renderQuestionsOnly = () => {
                 if (item?.isTask) return '';
                 
                 const assistantIconTemplate = () => {
-                    return `<div class="logo-icon"><img src="/images/eva-black-svg.svg" alt="AiForWork" /></div>`;
+                    return `<div class="logo-icon"><img src="${resolveSdkAssetPath("images/eva-black-svg.svg")}" alt="AiForWork" /></div>`;
                 };
 
                 let html = TemplateRenderer.generateHTMLTemplate(item, {

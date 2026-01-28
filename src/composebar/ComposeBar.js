@@ -5,7 +5,7 @@ import store from "../redux/store.js";
 import { fetchAgents } from "../redux/actions/global.action.js";
 import { ActionsFlashIcon, arrowCirlceUpIcon, attachmentIcon, CheveronDownIcon, createCloseIcon, createDeleteIcon, createThumbsUpFilled, microphoneIcon, searchIcon, settingsIcon, Close, StopIcon, CurvedArrowForPreview } from "../templateRenderer/icons-library.js";
 import FileUpload from "../Attachments/fileUpload.js";
-import { getAgentType, getFileExtension, hideElementImmediately, showElementImmediately, showElementDelayed, getIconsList, markdownToPlainText } from "../utils/helpers.js";
+import { getAgentType, getFileExtension, hideElementImmediately, showElementImmediately, showElementDelayed, getIconsList, markdownToPlainText, resolveSdkAssetPath } from "../utils/helpers.js";
 import { renderRecentFiles } from "./RenderRecentAttachments.js";
 import { isMSEnv } from "../utils/helpers.js";
 
@@ -247,7 +247,7 @@ class ComposeBar {
 
         commonAgentsContainer.innerHTML = this.commonAgents.map(agent => {
             return `<button class="agents-action-item ${this.selectedCommonAgent?.id === agent.id ? 'active' : ''}" data-eva-common-agents-action data-agent-id="${agent.id}">
-                <img src="${(this.isMSEnv && agent.id === 'webSearch') ? `images/MS-Icons/web-ms.svg` : agent.icon}" alt="" width="18" height="18" />
+                <img src="${(this.isMSEnv && agent.id === 'webSearch') ? resolveSdkAssetPath('images/MS-Icons/web-ms.svg') : agent.icon}" alt="" width="18" height="18" />
                 <span class='agent-name'>${agent?.name}</span>
             </button>`;
         }).join('');
@@ -325,7 +325,7 @@ class ComposeBar {
             const fileExtension = getFileExtension(name);
 
             return `<div class="eva-attachment-pill" data-attach-uid="${escapeHtml(uid)}" title="${escapeHtml(name)}">
-                <div class="attachment-icon"><img src="images/${fileExtension}.png" alt=''/></div>
+                <div class="attachment-icon"><img src="${resolveSdkAssetPath(`images/${fileExtension}.png`)}" alt=''/></div>
                 <div class="eva-attachment-name">${escapeHtml(name)}</div>
                 ${file?.loading ? `<div class="waloader"></div>` :
                     `<button type="button" class="eva-attachment-remove" data-remove-uid="${escapeHtml(uid)}" aria-label="Remove">&times;</button>`}
@@ -530,7 +530,7 @@ class ComposeBar {
     getSendButtonIcon() {
         const env = store.getState()?.global?.env;
         if (env === 'MS') {
-            return `<img src="images/MS-Icons/send-ms.svg" alt="Send" width="20" height="20" />`;
+            return `<img src="${resolveSdkAssetPath("images/MS-Icons/send-ms.svg")}" alt="Send" width="20" height="20" />`;
         }
         return arrowCirlceUpIcon({ size: 16, color: "#101828" });
     }
@@ -539,7 +539,7 @@ class ComposeBar {
     getAttachmentButtonIcon() {
         const env = store.getState()?.global?.env;
         if (env === 'MS') {
-            return `<img src="images/MS-Icons/attachment-ms.svg" alt="Attach" width="20" height="20" />`;
+            return `<img src="${resolveSdkAssetPath("images/MS-Icons/attachment-ms.svg")}" alt="Attach" width="20" height="20" />`;
         }
         return attachmentIcon({ size: 16, color: "#0F0F0F" });
     }
@@ -683,7 +683,7 @@ class ComposeBar {
                                 <div class='left-actions'>
                                 <div class='common-agents-container'>
                                     <button class="agents-action-item" data-eva-agents-action data-eva-open-dialog>
-                                        ${this.isMSEnv ? `<img src="images/MS-Icons/flash-ms.svg" alt="Agents" width="18" height="18" />` : ActionsFlashIcon({ size: 18, color: "#0F0F0F" })}
+                                        ${this.isMSEnv ? `<img src="${resolveSdkAssetPath("images/MS-Icons/flash-ms.svg")}" alt="Agents" width="18" height="18" />` : ActionsFlashIcon({ size: 18, color: "#0F0F0F" })}
                                         ${this.isMSEnv ? CheveronDownIcon({ size: 14, color: "#1773b0" }) : CheveronDownIcon({ size: 14, color: "#0F0F0F" })}                                        
                                     </button>                                
                                     <div data-eva-common-agents style="display: inline-flex; gap: 8px;"></div>
