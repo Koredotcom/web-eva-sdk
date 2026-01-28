@@ -691,13 +691,13 @@ class ComposeBar {
                                     <div class="composebar-context-container" style="display: none;"></div>
                                 </div>
                                 <div class="right-actions">
-                                    <sl-tooltip>
+                                    <sl-tooltip trigger="hover">
                                         <div slot="content" class="caTooltips">5 attachments, max 10MB each. <br/>PDF, XLS, DOC, CSV, TXT formats.</div>
                                         <button class="eva-input-action-btn attachment-btn" data-eva-attachment>
                                             ${this.getAttachmentButtonIcon()}
                                         </button>
                                     </sl-tooltip>
-                                    ${!this.isMSEnv ? `<sl-tooltip>
+                                    ${!this.isMSEnv ? `<sl-tooltip trigger="hover">
                                         <div slot="content" class="caTooltips">Search using voice</div>
                                         <button class="eva-input-action-btn voice-btn" data-eva-speech>
                                             ${microphoneIcon({ size: 16, color: "#0F0F0F" })}
@@ -1320,6 +1320,12 @@ class ComposeBar {
             }
         } catch (e) {
             attachmentDialog.removeAttribute('open');
+        } finally {
+            // Prevent Shoelace tooltip from re-opening on focus restoration
+            const attachmentBtn = this.container.querySelector('[data-eva-attachment]');
+            if (attachmentBtn && typeof attachmentBtn.blur === 'function') {
+                attachmentBtn.blur();
+            }
         }
     }
 
