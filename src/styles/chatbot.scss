@@ -44,7 +44,7 @@
   right: 24px;
   bottom: 90px;
   z-index: 9998;
-  width: 560px;
+  width: 600px;
   height: 560px;
   background: #ffffff;
   border-radius: 16px;
@@ -139,6 +139,25 @@
       .taskItems {
         .addNewLineWrapper {
           width: calc(100% - 1rem);
+        }
+      }
+    }
+  }
+  .ComposeBarContainer {
+    .eva-composebar-parent {
+      .eva-composebar-area {
+        .eva-input-container {
+          .eva-compose-textarea-actions {
+            .left-actions {
+              .agents-action-item {
+                img, .wa-ActionsFlashIcon  {
+                  width: 14px;
+                  height: 14px;
+                  object-fit: contain;
+                }
+              }
+            }
+          }
         }
       }
     }
