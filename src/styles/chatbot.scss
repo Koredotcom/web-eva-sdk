@@ -1,3 +1,7 @@
+* {
+  font-family: Inter;
+}
+
 /* Floating chatbot UI only */
 .eva-sdk-chatbot-button {
   position: fixed;
@@ -75,6 +79,29 @@
     .ansFromChip {
       flex-wrap: wrap;
     }
+    .chatFilterGroup {
+      .threadListGroup {
+        .threadListItem {
+          .rightCol {
+            .leftDetails {
+              .name {
+                font-size: 14px;
+              }
+            }
+            .rightDetails {
+              .setContextDr {
+                .subText {
+                  .dtText {
+                    font-size: 14px;
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+   
   }
   .message-bubble.answer .answerCntr .search-answer-container .message-renderer {
     max-width: 100%;
@@ -87,6 +114,32 @@
     .answerCntr {
       .search-answer-container {
         word-break: break-word;
+      }
+    }
+  }
+  .recent-agents-container {
+    margin-top: 1.25rem;
+  }
+  .message-bubble.answer {
+    .answerCntr {
+      .answerCntr {
+        .threadName {
+          &.maxLength {
+            max-width: 100%;
+          }
+        }
+      }
+    }
+  }
+  .dialog__overlay {
+    border-radius: 16px;
+  }
+  .multiIntentExecution {
+    .tasksToRun {
+      .taskItems {
+        .addNewLineWrapper {
+          width: calc(100% - 1rem);
+        }
       }
     }
   }
