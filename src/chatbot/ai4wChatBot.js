@@ -1,5 +1,6 @@
 import { initializeSDKRuntime } from "../sdkRuntime";
 import { initializeSDK } from "../config";
+import NewChat from "../chat/NewChat";
 
 const DEFAULT_CONTAINER_ID = "eva-sdk-chatbot-container";
 const DEFAULT_TITLE = "Eva Assistant";
@@ -51,8 +52,21 @@ const createPanel = (titleText) => {
   closeButton.setAttribute("aria-label", "Close chat");
   closeButton.innerHTML = "×";
 
+  const newChatButton = document.createElement("button");
+  newChatButton.className = "sdk-chatbot-newchat";
+  newChatButton.textContent = "New Chat";
+
+  newChatButton.addEventListener("click", () => {
+    NewChat()
+  });
+
+  const headerButtonContainer = document.createElement("div");
+  headerButtonContainer.className = "eva-sdk-chatbot-header-buttons";
+  headerButtonContainer.appendChild(newChatButton);
+  headerButtonContainer.appendChild(closeButton);
+
   header.appendChild(title);
-  header.appendChild(closeButton);
+  header.appendChild(headerButtonContainer);
 
   const body = document.createElement("div");
   body.className = "eva-sdk-chatbot-body";

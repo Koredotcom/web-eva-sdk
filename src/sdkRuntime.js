@@ -56,3 +56,12 @@ export const destroySDKRuntime = () => {
   parentRendered = false;
   initialized = false;
 };
+
+export const startNewChat = () => {
+  const instance = getChatInterfaceInstance();
+  if (!instance.startNewChat) {
+    console.warn("startNewChat is not available");
+    return;
+  }
+  instance.startNewChat();
+};

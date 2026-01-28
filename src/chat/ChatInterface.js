@@ -10,6 +10,7 @@ import BotConversation from "./botAgent/getBotConversation";
 import { current } from "@reduxjs/toolkit";
 import { sessionItemHandler } from "../Attachments/createContext";
 import RecentAgentsFunc from "../LandingPageRecentAgents/RecentAgents";
+import NewChat from "./NewChat";
 const {hideRecentAgentsDiv} = RecentAgentsFunc();
 
 const ChatInterface = (props) => {
@@ -611,6 +612,10 @@ const ChatInterface = (props) => {
       return userAccess;
     }
 
+    const startNewChatSession = () => {
+      NewChat(); // reuse EXACT logic
+    };
+
 
     return {
         subscribe,
@@ -633,7 +638,8 @@ const ChatInterface = (props) => {
         configureAnsFromChipElements,
         responseFlowGeneration,
         configureChatInterfaceElements,
-        resolveAgent
+        resolveAgent,
+        startNewChat: startNewChatSession
     }
 }
 
