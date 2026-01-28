@@ -1,7 +1,3 @@
-* {
-  font-family: Inter;
-}
-
 /* Floating chatbot UI only */
 .eva-sdk-chatbot-button {
   position: fixed;
@@ -56,6 +52,7 @@
   pointer-events: none;
   transition: opacity 0.2s ease, transform 0.2s ease;
   border: 1px solid #eeeeee;
+  font-family: Inter;
 
   .landing-page-content {
     .landing-page-content-container {
@@ -131,8 +128,15 @@
       }
     }
   }
-  .dialog__overlay {
-    border-radius: 16px;
+
+  sl-dialog {
+    &::part(panel) {
+      border-radius: 16px;
+      overflow: hidden;
+    }
+    &::part(overlay) {
+      border-radius: 16px;
+    }
   }
   .multiIntentExecution {
     .tasksToRun {
