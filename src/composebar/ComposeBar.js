@@ -614,7 +614,7 @@ class ComposeBar {
                     </div>` : ''}
 
                     <div class="eva-composebar-area">
-                        <div class="composebar-bot-input-wrapper">
+                        <div class="composebar-bot-input-wrapper" style="display: none;">
                             <div class="bot-input-header">
                                 <div class="bot-input-header-left">
                                     <div class="bot-input-header-left-icon">                                        
@@ -714,7 +714,6 @@ class ComposeBar {
                                             />
                                         </div>
                                         <button class="agentSettings" style="display: none;">${settingsIcon({ size: 13, color: "#667085" })}</button>
-                                        <!-- <button class="agentSettings" data-eva-dialog-close>${createCloseIcon({ size: 12, color: "#667085" })}</button> -->
                                     </div>
                                 </div>
                             </div>
@@ -1309,12 +1308,8 @@ class ComposeBar {
      */
     attachCommonAgentsEventListeners(container) {
         container.querySelectorAll('[data-eva-common-agents-action]').forEach(item => {
-            // Remove any existing listeners by cloning
-            const newItem = item.cloneNode(true);
-            item.parentNode.replaceChild(newItem, item);
-            
-            newItem.addEventListener('click', () => {
-                const agentId = newItem.getAttribute('data-agent-id');
+            item.addEventListener('click', () => {
+                const agentId = item.getAttribute('data-agent-id');
                 const agent = this.commonAgents.find(a => String(a.id) === String(agentId));
                 if (!agent) return;
                 if (this.selectedCommonAgent?.id === agentId) {
@@ -1329,6 +1324,7 @@ class ComposeBar {
                     }
                 }
                 this.renderCommonAgents();
+                this.handleCloseDialog();
             });
         });
     }
