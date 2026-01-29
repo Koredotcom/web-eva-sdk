@@ -65,6 +65,7 @@
   .parent-home-container {
     .landing-page-container.results-page-container {
       .landing-page-content #questions-container {
+        overscroll-behavior: contain;
         .message-container {
           width: 95%;
         }
