@@ -246,36 +246,36 @@ class ComposeBar {
         this.updateCommonAgentsInDialog();
     }
 
-    renderContextChipInComposeBar() {
-        const commonAgentsContainer = this.container.querySelector('.common-agents-container');
-        if (commonAgentsContainer) {
-            hideElementImmediately(commonAgentsContainer);
-        }
-        const composebarContextChipContainer = this.container.querySelector('.composebar-context-container');
-        if (!composebarContextChipContainer) return;
-        showElementImmediately(composebarContextChipContainer, 'flex');
-        /*innerHtml should display the selected agent name and close button */
-        composebarContextChipContainer.innerHTML = `
-            <button class="context-chip-button">
-                <div class="composebar-context-agent-name-container ${this.selectedAgent?.agentType === "agenticApp" ? 'agenticApp' : ''}">
-                    <div class="composebar-context-agent-icon">
-                    ${this.selectedAgent?.agentType === "agenticApp" ? `${getIconsList({}, this.selectedAgent?.agenticAppIcons)}` : `<img src="${this.selectedAgent?.icon}" alt="agent-icon" width="16" height="16">`}                        
-                    </div>
-                    <div class="composebar-context-agent-name" title="${this.selectedAgent?.name}">${this.selectedAgent?.name}</div>
-                </div>
-                <div class="composebar-context-close-button">${createCloseIcon({ size: 10, color: "#667085" })}</div>                
-            </button>
-        `;
+    // renderContextChipInComposeBar() {
+    //     const commonAgentsContainer = this.container.querySelector('.common-agents-container');
+    //     if (commonAgentsContainer) {
+    //         hideElementImmediately(commonAgentsContainer);
+    //     }
+    //     const composebarContextChipContainer = this.container.querySelector('.composebar-context-container');
+    //     if (!composebarContextChipContainer) return;
+    //     showElementImmediately(composebarContextChipContainer, 'flex');
+    //     /*innerHtml should display the selected agent name and close button */
+    //     composebarContextChipContainer.innerHTML = `
+    //         <button class="context-chip-button">
+    //             <div class="composebar-context-agent-name-container ${this.selectedAgent?.agentType === "agenticApp" ? 'agenticApp' : ''}">
+    //                 <div class="composebar-context-agent-icon">
+    //                 ${this.selectedAgent?.agentType === "agenticApp" ? `${getIconsList({}, this.selectedAgent?.agenticAppIcons)}` : `<img src="${this.selectedAgent?.icon}" alt="agent-icon" width="16" height="16">`}                        
+    //                 </div>
+    //                 <div class="composebar-context-agent-name" title="${this.selectedAgent?.name}">${this.selectedAgent?.name}</div>
+    //             </div>
+    //             <div class="composebar-context-close-button">${createCloseIcon({ size: 10, color: "#667085" })}</div>                
+    //         </button>
+    //     `;
 
-        /*change the placeholder to the selected agent name */
-        this.placeholder = `Interact with ${this.selectedAgent?.name}`;
-        this.updatePlaceholder();
+    //     /*change the placeholder to the selected agent name */
+    //     this.placeholder = `Interact with ${this.selectedAgent?.name}`;
+    //     this.updatePlaceholder();
 
-        const removeSelectedContextInComposeBarBtn = this.container.querySelector('.composebar-context-close-button');
-        if (removeSelectedContextInComposeBarBtn) {
-            removeSelectedContextInComposeBarBtn.addEventListener('click', (e) => this.handleRemoveSelectedContext());
-        }
-    }
+    //     const removeSelectedContextInComposeBarBtn = this.container.querySelector('.composebar-context-close-button');
+    //     if (removeSelectedContextInComposeBarBtn) {
+    //         removeSelectedContextInComposeBarBtn.addEventListener('click', (e) => this.handleRemoveSelectedContext());
+    //     }
+    // }
 
     renderAttachments() {
         const attachmentsContainer = this.container.querySelector('[data-eva-attachments]');
@@ -1699,7 +1699,6 @@ class ComposeBar {
                 const agent = agents.find(a => String(a.id) === String(agentId));
                 if (!agent) return;
                 this.selectedAgent = agent;
-                this.renderContextChipInComposeBar(); //setting selected agent as context chip in compose bar
                 if (attachments?.length > 0) {
                     // Store the agent for later invocation after user confirms
                     // this.pendingAgentInvocation = agent;

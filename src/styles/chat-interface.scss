@@ -2846,13 +2846,15 @@ html, body {
         margin: 0 auto;
         padding-left: 1.25rem;
         
-        & > div {
+        .chat-message-container {
             display: flex;
             flex-direction: column;
             gap: 1.75rem;
-        }
-        & > div:last-child {
-            min-height: calc(-10rem + 100dvh);
+            margin-bottom: 1.5rem;
+            &:last-child {
+                margin-bottom: 3.5rem;
+                min-height: calc(-10rem + 100dvh);
+            }
         }
     }
     .answerFromChipDiv {
