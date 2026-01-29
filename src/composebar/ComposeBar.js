@@ -3,7 +3,7 @@ import ChatInterface from "../chat/ChatInterface.js";
 import InvokeAgent from "../chat/invokeAgent.js";
 import store from "../redux/store.js";
 import { fetchAgents } from "../redux/actions/global.action.js";
-import { ActionsFlashIcon, arrowCirlceUpIcon, attachmentIcon, CheveronDownIcon, createCloseIcon, createDeleteIcon, createThumbsUpFilled, microphoneIcon, searchIcon, settingsIcon, Close, StopIcon, CurvedArrowForPreview } from "../templateRenderer/icons-library.js";
+import { ActionsFlashIcon, arrowCirlceUpIcon, attachmentIcon, CheveronDownIcon, createCloseIcon, createDeleteIcon, createThumbsUpFilled, microphoneIcon, searchIcon, settingsIcon, Close, StopIcon, CurvedArrowForPreview, PlusIcon } from "../templateRenderer/icons-library.js";
 import FileUpload from "../Attachments/fileUpload.js";
 import { getAgentType, getFileExtension, hideElementImmediately, showElementImmediately, showElementDelayed, getIconsList, markdownToPlainText, resolveSdkAssetPath } from "../utils/helpers.js";
 import { renderRecentFiles } from "./RenderRecentAttachments.js";
@@ -242,36 +242,8 @@ class ComposeBar {
             showElementImmediately(commonAgentsContainerDiv, 'flex');
         }
 
-        const commonAgentsContainer = this.container.querySelector('[data-eva-common-agents]');
-        if (!commonAgentsContainer) return;
-
-        commonAgentsContainer.innerHTML = this.commonAgents.map(agent => {
-            return `<button class="agents-action-item ${this.selectedCommonAgent?.id === agent.id ? 'active' : ''}" data-eva-common-agents-action data-agent-id="${agent.id}">
-                <img src="${(this.isMSEnv && agent.id === 'webSearch') ? resolveSdkAssetPath('images/MS-Icons/web-ms.svg') : agent.icon}" alt="" width="18" height="18" />
-                <span class='agent-name'>${agent?.name}</span>
-            </button>`;
-        }).join('');
-
-        // Add click handlers for common agents
-        commonAgentsContainer.querySelectorAll('[data-eva-common-agents-action]').forEach(item => {
-            item.addEventListener('click', () => {
-                const agentId = item.getAttribute('data-agent-id');
-                const agent = this.commonAgents.find(a => String(a.id) === String(agentId));
-                if (!agent) return;
-                if (this.selectedCommonAgent?.id === agentId) {
-                    this.selectedCommonAgent = null;
-                    if (this.chatInterface && this.chatInterface.setAgentContext) {
-                        this.chatInterface.setAgentContext(null);
-                    }
-                } else {
-                    this.selectedCommonAgent = agent;
-                    if (this.chatInterface && this.chatInterface.setAgentContext) {
-                        this.chatInterface.setAgentContext(agent);
-                    }
-                }
-                this.renderCommonAgents();
-            });
-        });
+        // Only render in dialog now
+        this.updateCommonAgentsInDialog();
     }
 
     renderContextChipInComposeBar() {
@@ -625,7 +597,7 @@ class ComposeBar {
 
 
         this.container.innerHTML = `
-            <div class="ComposeBarContainer">
+            <div class="ComposeBarContainer new-layout">
                 <div class="eva-composebar-parent">     
                     <div class="eva-quick-reply-container" data-eva-quick-replies></div>                           
                     ${this.showOverRideModal ? `
@@ -642,7 +614,7 @@ class ComposeBar {
                     </div>` : ''}
 
                     <div class="eva-composebar-area">
-                        <div class="composebar-bot-input-wrapper" style= "display: none;">
+                        <div class="composebar-bot-input-wrapper" style="display: none;">
                             <div class="bot-input-header">
                                 <div class="bot-input-header-left">
                                     <div class="bot-input-header-left-icon">                                        
@@ -671,6 +643,15 @@ class ComposeBar {
                                 <button class="srCicon">${createCloseIcon({ size: 10, color: "#667085" })}</button>
                             </div>         
                             <div class="eva-attachments-container" data-eva-attachments></div>
+                            <div class='left-actions'>
+                                <div class='common-agents-container'>
+                                    <button class="agents-action-item" data-eva-agents-action data-eva-open-dialog>
+                                        ${this.isMSEnv ? `<img src="images/MS-Icons/flash-ms.svg" alt="Agents" width="18" height="18" />` : PlusIcon({ size: 14, color: "#0F0F0F" })}
+                                        <!-- ${this.isMSEnv ? CheveronDownIcon({ size: 14, color: "#1773b0" }) : CheveronDownIcon({ size: 14, color: "#0F0F0F" })} -->
+                                    </button>
+                                </div>
+                                <div class="composebar-context-container" style="display: none;"></div>
+                            </div>
                             <div class="eva-compose-textarea-container">
                                 <textarea 
                                 class="eva-compose-textarea" 
@@ -679,34 +660,22 @@ class ComposeBar {
                                 data-eva-input
                                 ></textarea>
                             </div>
-                            <div class="eva-compose-textarea-actions">
-                                <div class='left-actions'>
-                                <div class='common-agents-container'>
-                                    <button class="agents-action-item" data-eva-agents-action data-eva-open-dialog>
-                                        ${this.isMSEnv ? `<img src="${resolveSdkAssetPath("images/MS-Icons/flash-ms.svg")}" alt="Agents" width="18" height="18" />` : ActionsFlashIcon({ size: 18, color: "#0F0F0F" })}
-                                        ${this.isMSEnv ? CheveronDownIcon({ size: 14, color: "#1773b0" }) : CheveronDownIcon({ size: 14, color: "#0F0F0F" })}                                        
-                                    </button>                                
-                                    <div data-eva-common-agents style="display: inline-flex; gap: 8px;"></div>
-                                </div>
-                                    <div class="composebar-context-container" style="display: none;"></div>
-                                </div>
-                                <div class="right-actions">
-                                    <sl-tooltip trigger="hover">
-                                        <div slot="content" class="caTooltips">5 attachments, max 10MB each. <br/>PDF, XLS, DOC, CSV, TXT formats.</div>
-                                        <button class="eva-input-action-btn attachment-btn" data-eva-attachment>
-                                            ${this.getAttachmentButtonIcon()}
-                                        </button>
-                                    </sl-tooltip>
-                                    ${!this.isMSEnv ? `<sl-tooltip trigger="hover">
-                                        <div slot="content" class="caTooltips">Search using voice</div>
-                                        <button class="eva-input-action-btn voice-btn" data-eva-speech>
-                                            ${microphoneIcon({ size: 16, color: "#0F0F0F" })}
-                                        </button>
-                                    </sl-tooltip>` : ''}
-                                    <button class="eva-input-action-btn send-btn" data-eva-send title="Send">
-                                        ${this.getSendButtonIcon()}
+                            <div class="right-actions">
+                                <sl-tooltip>
+                                    <div slot="content" class="caTooltips">5 attachments, max 10MB each. <br/>PDF, XLS, DOC, CSV, TXT formats.</div>
+                                    <button class="eva-input-action-btn attachment-btn" data-eva-attachment>
+                                        ${this.getAttachmentButtonIcon()}
                                     </button>
-                                </div>
+                                </sl-tooltip>
+                                ${!this.isMSEnv ? `<sl-tooltip>
+                                    <div slot="content" class="caTooltips">Search using voice</div>
+                                    <button class="eva-input-action-btn voice-btn" data-eva-speech>
+                                        ${microphoneIcon({ size: 16, color: "#0F0F0F" })}
+                                    </button>
+                                </sl-tooltip>` : ''}
+                                <button class="eva-input-action-btn send-btn" data-eva-send title="Send">
+                                    ${this.getSendButtonIcon()}
+                                </button>
                             </div>
                             
                             <!-- Hidden file input for attachment functionality -->
@@ -716,6 +685,16 @@ class ComposeBar {
                     </div>
                                     
                     <sl-dialog data-eva-dialog class="eva-agents-dialog">
+                        <div class="agentsTabWrapper">
+                            <div class="agentsModalHeader">
+                                <div class="modalTitle">
+                                    Select Agent
+                                </div>
+                                <div class="modalClose" data-eva-dialog-close>
+                                    ${createCloseIcon({ size: 12, color: "#667085" })}
+                                </div>
+                            </div>
+                        <div class="eva-common-agents-dialog" data-eva-common-agents-dialog></div>
                         <div class="composebarFilter">
                             <div class="agentsTabWrapper">
                                 <div class="agentsHeader">
@@ -735,7 +714,6 @@ class ComposeBar {
                                             />
                                         </div>
                                         <button class="agentSettings" style="display: none;">${settingsIcon({ size: 13, color: "#667085" })}</button>
-                                        <button class="agentSettings" data-eva-dialog-close>${createCloseIcon({ size: 12, color: "#667085" })}</button>
                                     </div>
                                 </div>
                             </div>
@@ -745,7 +723,8 @@ class ComposeBar {
                             <div class="eva-flows-container" data-eva-flows-content style="display: none;">
                                 <ul class="eva-flows-list" data-eva-all-flows></ul>
                             </div>
-                        </div>                        
+                        </div>     
+                        </div>                   
                     </sl-dialog>
                     
                     <sl-dialog label="Attachments" data-eva-attachment-dialog class="eva-attachments-dialog">
@@ -1100,8 +1079,40 @@ class ComposeBar {
      * Auto-resize textarea based on content
      */
     autoResize(textarea) {
+        // Get the input container to add/remove class
+        const inputContainer = this.container.querySelector('.eva-input-container');
+        
+        // Temporarily remove the class to measure in base layout state
+        // This prevents layout shift from affecting the measurement
+        const hadMultilineClass = inputContainer?.classList.contains('textarea-multiline');
+        if (hadMultilineClass && inputContainer) {
+            inputContainer.classList.remove('textarea-multiline');
+            // Force a reflow to ensure layout has updated before measuring
+            void inputContainer.offsetHeight;
+        }
+        
+        // Measure scrollHeight in the base layout state (without multiline class)
         textarea.style.height = 'auto';
-        textarea.style.height = Math.min(textarea.scrollHeight, 150) + 'px';
+        const scrollHeight = textarea.scrollHeight;
+        const newHeight = Math.min(scrollHeight, 150) + 'px';
+        textarea.style.height = newHeight;
+        
+        if (inputContainer) {
+            // Get the computed height after setting it
+            const computedStyle = getComputedStyle(textarea);
+            const currentHeight = parseFloat(computedStyle.height);
+            
+            // Convert 1.5rem to pixels (1rem = root font size, typically 16px)
+            const rootFontSize = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+            const minHeightInPx = 1.5 * rootFontSize; // 1.5rem in pixels
+            
+            // Add class if height exceeds 1.5rem, remove if it's 1.5rem or less
+            if (currentHeight > minHeightInPx) {
+                inputContainer.classList.add('textarea-multiline');
+            } else {
+                inputContainer.classList.remove('textarea-multiline');
+            }
+        }
     }
 
     /**
@@ -1261,7 +1272,61 @@ class ComposeBar {
             dialog.setAttribute('open', '');
         }
 
+        // Render common agents in the dialog
+        this.updateCommonAgentsInDialog();
+
         this.loadAndRenderAgents('');
+    }
+
+    /**
+     * Update common agents content in the dialog
+     */
+    updateCommonAgentsInDialog() {
+        const dialog = this.container.querySelector('[data-eva-dialog]');
+        if (!dialog) return;
+        
+        const commonAgentsDialog = dialog.querySelector('[data-eva-common-agents-dialog]');
+        if (!commonAgentsDialog) return;
+        
+        // Render common agents directly in the dialog
+        commonAgentsDialog.innerHTML = this.commonAgents.map(agent => {
+            return `<div class="agents-action-item ${this.selectedCommonAgent?.id === agent.id ? 'active' : ''}" data-eva-common-agents-action data-agent-id="${agent.id}">
+                <div class="modeCardIcon"><img src="${(this.isMSEnv && agent.id === 'webSearch') ? `images/MS-Icons/web-ms.svg` : agent.icon}" alt="" width="18" height="18" /></div>
+                <div class="modeCardContent">
+                    <div class="modeCardText">${agent?.name}</div>
+                    <div class="modeCardDescription">${agent?.shortDescription}</div>
+                </div>
+            </div>`;
+        }).join('');
+
+        // Add click handlers for common agents in the dialog
+        this.attachCommonAgentsEventListeners(commonAgentsDialog);
+    }
+
+    /**
+     * Attach event listeners for common agents in the dialog
+     */
+    attachCommonAgentsEventListeners(container) {
+        container.querySelectorAll('[data-eva-common-agents-action]').forEach(item => {
+            item.addEventListener('click', () => {
+                const agentId = item.getAttribute('data-agent-id');
+                const agent = this.commonAgents.find(a => String(a.id) === String(agentId));
+                if (!agent) return;
+                if (this.selectedCommonAgent?.id === agentId) {
+                    this.selectedCommonAgent = null;
+                    if (this.chatInterface && this.chatInterface.setAgentContext) {
+                        this.chatInterface.setAgentContext(null);
+                    }
+                } else {
+                    this.selectedCommonAgent = agent;
+                    if (this.chatInterface && this.chatInterface.setAgentContext) {
+                        this.chatInterface.setAgentContext(agent);
+                    }
+                }
+                this.renderCommonAgents();
+                this.handleCloseDialog();
+            });
+        });
     }
 
     /**
