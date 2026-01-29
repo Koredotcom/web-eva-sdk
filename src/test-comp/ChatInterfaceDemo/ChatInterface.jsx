@@ -185,7 +185,8 @@ const ChatInterfaceDemo = () => {
               });
 
               return (
-                <div
+                <div 
+                  className="chat-message-container"
                   key={index}
                   dangerouslySetInnerHTML={{
                     __html: html.innerHTML,
