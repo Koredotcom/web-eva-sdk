@@ -1079,39 +1079,43 @@ class ComposeBar {
      * Auto-resize textarea based on content
      */
     autoResize(textarea) {
-        // Get the input container to add/remove class
+        // Target the textarea with class "eva-compose-textarea" (rows='1', single line initially)
+        const composeTextarea = this.container.querySelector('.eva-compose-textarea');
+        if (!composeTextarea) return;
+        
+        // Get the input container to add class when textarea becomes multiline
         const inputContainer = this.container.querySelector('.eva-input-container');
+        if (!inputContainer) return;
         
         // Temporarily remove the class to measure in base layout state
         // This prevents layout shift from affecting the measurement
-        const hadMultilineClass = inputContainer?.classList.contains('textarea-multiline');
-        if (hadMultilineClass && inputContainer) {
+        const hadMultilineClass = inputContainer.classList.contains('textarea-multiline');
+        if (hadMultilineClass) {
             inputContainer.classList.remove('textarea-multiline');
             // Force a reflow to ensure layout has updated before measuring
             void inputContainer.offsetHeight;
         }
         
         // Measure scrollHeight in the base layout state (without multiline class)
-        textarea.style.height = 'auto';
-        const scrollHeight = textarea.scrollHeight;
+        composeTextarea.style.height = 'auto';
+        const scrollHeight = composeTextarea.scrollHeight;
         const newHeight = Math.min(scrollHeight, 150) + 'px';
-        textarea.style.height = newHeight;
+        composeTextarea.style.height = newHeight;
         
-        if (inputContainer) {
-            // Get the computed height after setting it
-            const computedStyle = getComputedStyle(textarea);
-            const currentHeight = parseFloat(computedStyle.height);
-            
-            // Convert 1.5rem to pixels (1rem = root font size, typically 16px)
-            const rootFontSize = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
-            const minHeightInPx = 1.5 * rootFontSize; // 1.5rem in pixels
-            
-            // Add class if height exceeds 1.5rem, remove if it's 1.5rem or less
-            if (currentHeight > minHeightInPx) {
-                inputContainer.classList.add('textarea-multiline');
-            } else {
-                inputContainer.classList.remove('textarea-multiline');
-            }
+        // Get the computed height after setting it
+        const computedStyle = getComputedStyle(composeTextarea);
+        const currentHeight = parseFloat(computedStyle.height);
+        
+        // Convert 1.5rem to pixels (1rem = root font size, typically 16px)
+        const rootFontSize = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+        const singleLineHeight = 1.5 * rootFontSize; // 1.5rem in pixels (single line height)
+        
+        // When single line goes to multiline, add class to eva-input-container
+        if (currentHeight > singleLineHeight) {
+            inputContainer.classList.add('textarea-multiline');
+        } else {
+            // Remove class when it reverts back to single line
+            inputContainer.classList.remove('textarea-multiline');
         }
     }
 
