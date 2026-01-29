@@ -12,11 +12,14 @@ const MultiIntentExecutionDemo = ({ data }) => {
   const initialState = items?.status === "draft";
 
   // Initialize MultiIntentExecution instance
-  const { runTask, cancelTask, restartExecution, fetchHistoricalTask } = MultiIntentExecution();
-
-
+  const { runTask, cancelTask, restartExecution, fetchHistoricalTask, addNewTask } = MultiIntentExecution();
+  
+  
   // Get questions from Redux store and keep them synced with store updates
   const [questions, setQuestions] = useState(() => store.getState().global.questions);
+  
+  // State to track which task is being hovered
+  const [hoveredTaskIndex, setHoveredTaskIndex] = useState(null);
 
   // Subscribe to Redux store changes to update questions reactively
   useEffect(() => {
@@ -68,9 +71,50 @@ const MultiIntentExecutionDemo = ({ data }) => {
           <React.Fragment key={task?._id || `task-${items?.id}-${index}`}>
             <div className='addNewLineWrapper'>
             </div>
-            <div className="taskItem">
+            <div 
+              className="taskItem"
+              onMouseEnter={() => setHoveredTaskIndex(index)}
+              onMouseLeave={() => setHoveredTaskIndex(null)}
+            >
               <div className="taskItemHeader">
-                <div className="taskItemHeaderTitle">Task {index + 1}</div>
+                <div className="taskItemHeaderTitle">
+                  Task {index + 1}
+                  {hoveredTaskIndex === index && (
+                    <div className="taskActionButtons">
+                      <button
+                        className="addTaskBtn"
+                        onClick={() => addNewTask(index + 1, task, items)}
+                        aria-label="Add new task"
+                        title="Add new task after this step"
+                      >
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                          <path d="M8 3v10M3 8h10" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                        </svg>
+                      </button>
+                      <button
+                        className="editTaskBtn"
+                        onClick={() => {/* editTask functionality to be added */}}
+                        aria-label="Edit task"
+                        title="Edit this task"
+                      >
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                          <path d="M11.5 2.5l2 2L6 12H4v-2l7.5-7.5z" stroke="currentColor" strokeWidth="1" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+                          <path d="M10 4l2 2" stroke="currentColor" strokeWidth="1" strokeLinecap="round"/>
+                        </svg>
+                      </button>
+                      <button
+                        className="deleteTaskBtn"
+                        onClick={() => {/* deleteTask functionality to be added */}}
+                        aria-label="Delete task"
+                        title="Delete this task"
+                      >
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                          <path d="M3 4h10M5 4V3a1 1 0 011-1h4a1 1 0 011 1v1M6 7v5M10 7v5M4 4h8v9a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      </button>
+                    </div>
+                  )}
+                </div>
                 <div className="contentBlock">
                   {Array.isArray(task?.intents) && task.intents.length > 0 && (
                     <div className="agentIcons">

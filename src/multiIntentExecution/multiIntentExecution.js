@@ -55,28 +55,36 @@ const MultiIntentExecution = (props) => {
     }
 
     const addNewTask = (index, task, item) => {
-        state = store.getState().global;
         const _questions = cloneDeep(state?.questions);
-        let currentExecutionPipeline = cloneDeep(_questions[item?.id]?.executionPipeline);
+        let currentExecutionPipeline = cloneDeep(_questions[item?.reqId]?.executionPipeline);
+        
 
-        if (isEmpty(_questions[item?.id]?.savedExecutionPipeline)) {
-            _questions[item?.id].savedExecutionPipeline = currentExecutionPipeline;
-        } else {
-            currentExecutionPipeline = _questions[item?.id].savedExecutionPipeline;
+        if(isEmpty(_questions[item?.reqId]?.savedExecutionPipeline)){
+          _questions[item?.reqId].savedExecutionPipeline = currentExecutionPipeline;
+        }else{
+          currentExecutionPipeline = _questions[item?.reqId].savedExecutionPipeline;
         }
 
         let newTask = {
-            _id: index, // temp id, it will get replaced with backend id later
-            utterance: '',
-            headerMsg: 'Oh, it seems I have missed a step. My apologies. Please describe and add the steps.',
-            step: `Step ${index + 1}`,
-            type: 'addTask'
+          _id: index, // temp id, it will get replaced with backend id later
+          utterance: '',
+          headerMsg: 'Oh, it seems I have missed a step. My apologies. Please describe and add the steps.',
+          step: `Step ${index+1}`,
+          type: 'addTask' 
         }
 
-        _questions[item?.id].executionPipeline.splice(index, 0, newTask);
-        store.dispatch(updateChatData(_questions))
-    }
-
+        const updatedPipeline = [...currentExecutionPipeline];
+        updatedPipeline.splice(index, 0, newTask);
+        
+        const updatedQuestions = {
+          ..._questions,
+          [item?.reqId]: { 
+            ..._questions[item?.reqId], 
+            executionPipeline: updatedPipeline 
+          }
+        };
+        store.dispatch(updateChatData(updatedQuestions))
+      }
     const saveTask = async (index, task, executionPipeline, item, utterance) => {
         state = store.getState().global;
         let _questions = cloneDeep(state?.questions);
