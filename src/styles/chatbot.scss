@@ -215,6 +215,18 @@
     height: 90%;
     max-height: 100%;
   }
+  .questions-container {
+    scrollbar-gutter: stable;
+  }
+  .landing-page-container.results-page-container {
+    .landing-page-content {
+      #questions-container {
+        .message-container {
+          padding-left: 1rem;
+        }
+      }
+    }
+  }
 }
 
 .eva-sdk-chatbot-panel--open {
