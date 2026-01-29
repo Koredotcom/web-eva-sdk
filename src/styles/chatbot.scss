@@ -149,6 +149,7 @@
     }
   }
   .ComposeBarContainer {
+    width: 95%;
     &.new-layout {
       width: 95%;
     }
@@ -187,11 +188,32 @@
       }
     }
   }
+  .composebarFilter {
+    .agentsTabWrapper {
+      height: auto;      
+    }
+  }
+  
   sl-dialog.eva-agents-dialog  {
     .composebarFilter {
       flex-grow: 1;
-      max-height: calc(100dvh - 370px);
+      height: auto;
+      overflow: auto;
     }
+    .eva-agents-container {
+      .eva-agents-list {
+        li:not(.eva-agent-item) {
+          text-align: center;
+        }
+      }
+    }
+  }
+  .recent-agents-empty, .recent-agents-loading {
+    max-width: 95%;
+  }
+  sl-dialog.eva-agents-dialog::part(panel) {
+    height: 90%;
+    max-height: 100%;
   }
 }
 
