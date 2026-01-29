@@ -149,6 +149,9 @@
     }
   }
   .ComposeBarContainer {
+    &.new-layout {
+      width: 95%;
+    }
     .eva-composebar-parent {
       .eva-composebar-area {
         .eva-input-container {
@@ -165,6 +168,29 @@
           }
         }
       }
+    }
+  }
+  .agentsTabWrapper {
+    height: 100%;
+    .agentsModalHeader {
+      flex-shrink: 0;
+    }
+    .eva-common-agents-dialog {
+      flex-shrink: 0;
+      .agents-action-item {
+        width: auto;
+        flex: 1 1 0;
+        min-width: 0;
+        &:hover {
+          background: #fafafa;
+        }
+      }
+    }
+  }
+  sl-dialog.eva-agents-dialog  {
+    .composebarFilter {
+      flex-grow: 1;
+      max-height: calc(100dvh - 370px);
     }
   }
 }
