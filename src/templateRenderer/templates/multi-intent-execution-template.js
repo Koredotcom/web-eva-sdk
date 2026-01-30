@@ -96,6 +96,7 @@ function render(data) {
                                         </div>
                                     ` : ''}                                    
                                     </div>
+<<<<<<< HEAD
                                     ${((task?.status === "completed" || task.status === "terminated") && items?.historicalData) ? `
                                         <div class="opItem" id="historyBtn-${task?._id}">${task?.showResponse ? `
                                             ${CheveronDownIcon({ size: 14, color: "#667085", rotation: 180 })}
@@ -115,6 +116,12 @@ function render(data) {
                                     </div>
                             ` : ''}                               
                             </div>                    
+=======
+                                `).join('')}
+                                </div>
+                            ` : ''}
+                            <div class="utterance" id="utterance-${items?.id}-${index}">${task?.utterance}</div>
+>>>>>>> 40e0ab2... agentic flow implementation
                         </div>
                     </div>
                 </div>

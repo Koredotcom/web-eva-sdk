@@ -12,7 +12,14 @@ const MultiIntentExecutionDemo = ({ data }) => {
   const initialState = items?.status === "draft";
 
   // Initialize MultiIntentExecution instance
-  const { runTask, cancelTask, restartExecution, fetchHistoricalTask, addNewTask } = MultiIntentExecution();
+  const {
+    runTask,
+    cancelTask,
+    restartExecution,
+    fetchHistoricalTask,
+    addNewTask,
+    saveTask,
+  } = MultiIntentExecution();
   
   
   // Get questions from Redux store and keep them synced with store updates
@@ -60,11 +67,65 @@ const MultiIntentExecutionDemo = ({ data }) => {
       {items?.executionPipeline?.map((task, index) => {
         // Merge task with question data from Redux store (like original logic)
         const mergedTask = { ...task, ...questions?.[task?._id], isTask: true };
-
+        const taskType = mergedTask?.type || task?.type;
+        
         // Render each task through TemplateRenderer (like original logic)
-        const taskHtml = TemplateRenderer.generateHTMLTemplate(mergedTask, {
-          loadingText: "Analyzing",
-        });
+        const taskHtml = mergedTask?.templateType
+          ? TemplateRenderer.generateHTMLTemplate(mergedTask, {
+              loadingText: "Analyzing",
+            })
+          : null;
+
+        if (taskType === "addTask" || taskType === "modify") {
+          return (
+            <div className="addingNewTask" key={task?._id || `task-${items?.id}-${index}`}>
+              <div className="headerSec">
+                {taskType === "addTask" && (
+                  <div className="headerMsg">? {mergedTask?.headerMsg}</div>
+                )}
+                <div className="headerInfo">
+                  <div className="step">{mergedTask?.step || `Step ${index + 1}`}</div>
+                </div>
+                <div className="addDescription">
+                  <input
+                    type="text"
+                    defaultValue={mergedTask?.utterance || ""}
+                    placeholder="Add the description of step(s) which I missed!"
+                    id={`utterance-${items?.id}-${index}`}
+                  />
+                </div>
+                <div className="footerSec">
+                  <div className="btns">
+                    <button
+                      className="cancelBtn"
+                      onClick={() => MultiIntentExecution().deleteNewTask(items , task , index)}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      className="doneBtn"
+                      onClick={async () => {
+                        const utteranceInput = document.getElementById(
+                          `utterance-${items?.id}-${index}`
+                        );
+                        const nextUtterance = utteranceInput?.value || "";
+                        await saveTask(
+                          index,
+                          mergedTask,
+                          items?.executionPipeline,
+                          items,
+                          nextUtterance
+                        );
+                      }}
+                    >
+                      Done
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
+        }
 
         // Regular task item
         return (
@@ -93,7 +154,7 @@ const MultiIntentExecutionDemo = ({ data }) => {
                       </button>
                       <button
                         className="editTaskBtn"
-                        onClick={() => {/* editTask functionality to be added */}}
+                        onClick={() => {MultiIntentExecution().editTask(index , task , items)}}
                         aria-label="Edit task"
                         title="Edit this task"
                       >
@@ -104,7 +165,7 @@ const MultiIntentExecutionDemo = ({ data }) => {
                       </button>
                       <button
                         className="deleteTaskBtn"
-                        onClick={() => {/* deleteTask functionality to be added */}}
+                        onClick={() => {MultiIntentExecution().deleteExistingTask(index , task , items)}}
                         aria-label="Delete task"
                         title="Delete this task"
                       >
@@ -125,7 +186,7 @@ const MultiIntentExecutionDemo = ({ data }) => {
                       ))}
                     </div>
                   )}
-                  <div className="utterance">{task?.utterance}</div>
+                  <div className="utterance" id={`utterance-${items?.id}-${index}`}>{task?.utterance}</div>
                 </div>
                 {(mergedTask?.status === "completed" || mergedTask?.status === "discard" || mergedTask?.status === "terminated") && (
                   <button
