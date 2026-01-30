@@ -121,6 +121,12 @@ const MultiIntentExecution = (props) => {
         store.dispatch(updateChatData(updatedQuestions))
       }
     const saveTask = async (index, task, executionPipeline, item, utterance) => {
+        // Validate utterance
+        if (!utterance || utterance.trim() === '') {
+            console.warn('The utterance is empty');
+            return;
+        }
+
         state = store.getState().global;
         let _questions = cloneDeep(state?.questions);
         const questionId = resolveQuestionId(item, _questions);

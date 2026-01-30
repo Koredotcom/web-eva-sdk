@@ -19,6 +19,9 @@ const MultiIntentExecutionDemo = ({ data }) => {
     fetchHistoricalTask,
     addNewTask,
     saveTask,
+    deleteNewTask,
+    deleteExistingTask,
+    editTask,
   } = MultiIntentExecution();
   
   
@@ -98,7 +101,7 @@ const MultiIntentExecutionDemo = ({ data }) => {
                   <div className="btns">
                     <button
                       className="cancelBtn"
-                      onClick={() => MultiIntentExecution().deleteNewTask(items , task , index)}
+                      onClick={() => deleteNewTask(items, task, index)}
                     >
                       Cancel
                     </button>
@@ -154,7 +157,7 @@ const MultiIntentExecutionDemo = ({ data }) => {
                       </button>
                       <button
                         className="editTaskBtn"
-                        onClick={() => {MultiIntentExecution().editTask(index , task , items)}}
+                        onClick={() => editTask(index, task, items)}
                         aria-label="Edit task"
                         title="Edit this task"
                       >
@@ -165,7 +168,7 @@ const MultiIntentExecutionDemo = ({ data }) => {
                       </button>
                       <button
                         className="deleteTaskBtn"
-                        onClick={() => {MultiIntentExecution().deleteExistingTask(index , task , items)}}
+                        onClick={() => deleteExistingTask(index, task, items)}
                         aria-label="Delete task"
                         title="Delete this task"
                       >
