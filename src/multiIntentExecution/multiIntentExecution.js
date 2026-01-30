@@ -83,6 +83,10 @@ const MultiIntentExecution = (props) => {
         const questionId = resolveQuestionId(item, _questions);
         const question = _questions[questionId] || {};
         const hasAddTask = question?.executionPipeline?.some(el => el?.type === "addTask")
+        let hasEditTask = question?.executionPipeline?.find(el => el?.type === "modify")
+        if(hasEditTask){
+            hasEditTask.type = "draft"
+        }
         let currentExecutionPipeline = question?.executionPipeline?.filter(el => el?.type !== "addTask") || item?.executionPipeline?.filter(el => el?.type !== "addTask") || []
         
         if (isEmpty(question?.savedExecutionPipeline)) {
@@ -158,7 +162,7 @@ const MultiIntentExecution = (props) => {
         const questionId = resolveQuestionId(item, _questions);
         const savedPipeline = _questions[questionId]?.savedExecutionPipeline;
         if (Array.isArray(savedPipeline)) {
-            if(index && task?.type === 'modify'){
+            if(index != undefined && index != null && task?.type === 'modify'){
                 savedPipeline[index].type = ''
             }
             _questions[questionId].executionPipeline = savedPipeline;
