@@ -143,7 +143,7 @@ const MultiIntentExecutionDemo = ({ data }) => {
               <div className="taskItemHeader">
                 <div className="taskItemHeaderTitle">
                   Task {index + 1}
-                  {hoveredTaskIndex === index && (
+                  {hoveredTaskIndex === index && initialState && (
                     <div className="taskActionButtons">
                       <button
                         className="addTaskBtn"
