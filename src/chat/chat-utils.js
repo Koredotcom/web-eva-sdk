@@ -296,6 +296,14 @@ export const constructQuestionPostCall = (data, qId) => {
 				}, 1000);
 		}
 	}
+    else if(data?.payload?.status === msgStatus.COMPLETED && data?.payload?.templateType === "bot_template"){
+        const currentQuestion = store.getState().global.currentQuestion;
+        if(currentQuestion?.isTask) {
+            const stepIndex = currentQuestion?.stepIndex;
+            setTimeout(() => {
+                MultiIntentExecution().runNextTask(stepIndex, data?.payload?.status , question)
+            }, 1000);
+    }}
     else if(data?.payload?.history?.status === msgStatus.TERMINATED){
         if(data?.payload?.history?.templateType === chatTemplateTypes.GPT_FORM_TEMPLATE){
             delete question.template_html

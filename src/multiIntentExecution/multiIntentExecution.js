@@ -44,11 +44,11 @@ const MultiIntentExecution = (props) => {
         let task = _item?.executionPipeline?.[index];
         task.stepIndex = index;
         store.dispatch(updateChatData({
-            ...state.questions,
-            [item?.reqId]: {
-                ...item,
-                status: "in-progress"
-            }
+          ...state.questions,
+          [item?.reqId]: {
+            ...item,
+            status: q?.status || "in-progress"
+          }
         }))
 
         const params = { cId: _item?.id, type: _item?.type, stepId: task?._id, task, currentRunningQuestion: _item, parentMsgId: _item?.reqId, isTask: true }

@@ -1,7 +1,7 @@
 import { cloneDeep, isEmpty } from "lodash";
 import {chatWindow, chatConfig} from "@koredev/kore-web-sdk"
 import store from "../../redux/store";
-import { checkHistoryAccessed, getCidByMessageId, getReqIdByMessageId } from "../../utils/helpers";
+import { checkHistoryAccessed } from "../../utils/helpers";
 import { updateChatData, setBotSDKInstance, setCurrentQuestion, setEnableKoreBotSDK } from "../../redux/globalSlice";
 import { advanceSearch } from "../../redux/actions/global.action";
 import { constructQuestionPostCall } from "../chat-utils";
@@ -51,13 +51,39 @@ const BotConversation = (args) => {
     }
     
     const setBotConversation = (detail) => {
+        state = store.getState().global
         let question;
-        let questions = cloneDeep(state?.questions)   
+        let questions = cloneDeep(state?.questions)
+        const resolveQuestionKeyByMessageId = (messageId) => {
+            if (!messageId || isEmpty(questions)) {
+                return null;
+            }
+            const keyByMessageId = Object.keys(questions).find(
+                (key) => questions[key]?.messageId === messageId
+            );
+            if (keyByMessageId) {
+                return keyByMessageId;
+            }
+            return Object.keys(questions).find(
+                (key) =>
+                    questions[key]?.reqId === messageId ||
+                    questions[key]?.id === messageId
+            );
+        };
+        const resolveQuestionKeyByReqId = (reqId) => {
+            if (!reqId || isEmpty(questions)) {
+                return null;
+            }
+            return Object.keys(questions).find(
+                (key) => questions[key]?.reqId === reqId
+            );
+        };
         if (isEmpty(questions)) {
             return;
         }     
         if(detail?.action === "create"){
-            question = questions[getReqIdByMessageId(detail?.pId)]
+            const questionKey = resolveQuestionKeyByMessageId(detail?.pId)
+            question = questions[questionKey]
             if (isEmpty(question)) {
                 //corresponding bot question is unavailable
                 if(state?.enableDebugging){
@@ -105,11 +131,9 @@ const BotConversation = (args) => {
             // }     
             if(Object.keys(questions || {}).length === 0){
                 return;
-            }   
-            /*Identify whether to update the question which is inside agentic flow or not
-            in case of agentic flow, pId will the main id i.e agentic flow id, so in order to get the bot question we need to check with the messageId
-            */               
-            question = questions[getReqIdByMessageId(detail?.message?.pId)] /*in order to update the already existing messages of botConversation, we will depend on pId */            
+            }            
+            const questionKey = resolveQuestionKeyByMessageId(detail?.message?.pId)
+            question = questions[detail?.message?.pId] /*in order to update the already existing messages of botConversation, we will depend on pId */
             if(question){//found the question with pId, so need to update the conversation present in botConversation
                 /*need to see if it is a agentic flow question or not, if it is a part of agentic flow question, using messageId fetch the key of the questions array to */
                 if(question?.executionPipeline?.length){
@@ -119,7 +143,8 @@ const BotConversation = (args) => {
                     question.botConversation[detail?.message?.messageId] = detail?.message
                 }                
             }else{
-                question = questions[detail?.message?.reqId] /*to update the parent message itself, */
+                const fallbackKey = resolveQuestionKeyByReqId(detail?.message?.reqId)
+                question = questions[fallbackKey] /*to update the parent message itself, */
                 if(!question){
                     if(state?.enableDebugging){
                         console.error(`bot question with reqId: ${detail?.message?.reqId} is unavailable, please check the store`)
