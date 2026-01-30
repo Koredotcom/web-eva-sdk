@@ -47,7 +47,7 @@ const MultiIntentExecution = (props) => {
           ...state.questions,
           [item?.reqId]: {
             ...item,
-            status: "in-progress"
+            status: q?.status || "in-progress"
           }
         }))
 
