@@ -11,6 +11,7 @@ import { current } from "@reduxjs/toolkit";
 import { sessionItemHandler } from "../Attachments/createContext";
 import RecentAgentsFunc from "../LandingPageRecentAgents/RecentAgents";
 import NewChat from "./NewChat";
+import { unHideRecentAgentsDiv } from "../LandingPageRecentAgents";
 const {hideRecentAgentsDiv} = RecentAgentsFunc();
 
 const ChatInterface = (props) => {
@@ -613,6 +614,7 @@ const ChatInterface = (props) => {
     }
 
     const startNewChatSession = () => {
+      unHideRecentAgentsDiv('recent-agents-container');
       NewChat(); // reuse EXACT logic
     };
 

@@ -1,6 +1,7 @@
 import { initializeSDKRuntime } from "../sdkRuntime";
 import { initializeSDK } from "../config";
 import NewChat from "../chat/NewChat";
+import { unHideRecentAgentsDiv } from "../LandingPageRecentAgents";
 
 const DEFAULT_CONTAINER_ID = "eva-sdk-chatbot-container";
 const DEFAULT_TITLE = "Eva Assistant";
@@ -57,6 +58,7 @@ const createPanel = (titleText) => {
   newChatButton.textContent = "New Chat";
 
   newChatButton.addEventListener("click", () => {
+    unHideRecentAgentsDiv('recent-agents-container');
     NewChat()
   });
 

@@ -149,12 +149,12 @@ const ChatInterfaceDemo = () => {
           <div className="sidebar-header">
             <div className="sidebar-title">AI for Work</div>
             <div className="new-btn" title="New" onClick={() => {
-              unHideRecentAgentsDiv('recent-agents-container');
+              // unHideRecentAgentsDiv('recent-agents-container');
               NewChat()
-              const botHeaderContainer = document.querySelector('.composebar-bot-input-wrapper');
-              if(botHeaderContainer){
-                botHeaderContainer.style.display = 'none';
-              }
+              // const botHeaderContainer = document.querySelector('.composebar-bot-input-wrapper');
+              // if(botHeaderContainer){
+              //   botHeaderContainer.style.display = 'none';
+              // }
             }}>+</div>
           </div>
           {/* <History /> */}
