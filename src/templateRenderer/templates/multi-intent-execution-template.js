@@ -63,7 +63,7 @@ function render(data) {
                                 `).join('')}
                                 </div>
                             ` : ''}
-                            <div class="utterance">${task?.utterance}</div>
+                            <div class="utterance" id="utterance-${items?.id}-${index}">${task?.utterance}</div>
                         </div>
                         ${initialState ? `<div class="optionsWrapper">
                             <button class="editBtn" id = "editBtn-${items?.id}-${index}">Edit</button>

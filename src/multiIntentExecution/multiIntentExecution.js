@@ -8,6 +8,30 @@ import { cancelOngoingCall } from "../templateRenderer/utils/helper";
 const MultiIntentExecution = (props) => {
     let state = store.getState().global;
 
+    const resolveQuestionId = (item, questions) => {
+        if (!item || !questions) {
+            return item?.reqId || item?.id;
+        }
+
+        if (item?.reqId && questions[item.reqId]) {
+            return item.reqId;
+        }
+        if (item?.id && questions[item.id]) {
+            return item.id;
+        }
+        if (item?.messageId) {
+            const matchedKey = Object.keys(questions).find(
+                (key) =>
+                    questions[key]?.messageId === item.messageId ||
+                    questions[key]?.id === item.messageId
+            );
+            if (matchedKey) {
+                return matchedKey;
+            }
+        }
+        return item?.reqId || item?.id;
+    };
+
     const runTask = (item, index = 0, q) => {
         state = store.getState().global;
         const {activeBoardId} = state;  
@@ -56,30 +80,37 @@ const MultiIntentExecution = (props) => {
 
     const addNewTask = (index, task, item) => {
         const _questions = cloneDeep(state?.questions);
-        let currentExecutionPipeline = cloneDeep(_questions[item?.reqId]?.executionPipeline);
+        const questionId = resolveQuestionId(item, _questions);
+        const question = _questions[questionId] || {};
+        const hasAddTask = question?.executionPipeline?.some(el => el?.type === "addTask")
+        let currentExecutionPipeline = question?.executionPipeline?.filter(el => el?.type !== "addTask") || item?.executionPipeline?.filter(el => el?.type !== "addTask") || []
         
-
-        if(isEmpty(_questions[item?.reqId]?.savedExecutionPipeline)){
-          _questions[item?.reqId].savedExecutionPipeline = currentExecutionPipeline;
-        }else{
-          currentExecutionPipeline = _questions[item?.reqId].savedExecutionPipeline;
+        if (isEmpty(question?.savedExecutionPipeline)) {
+          _questions[questionId] = {
+            ...question,
+            savedExecutionPipeline: currentExecutionPipeline
+          };
+        } else {
+          currentExecutionPipeline = question?.savedExecutionPipeline;
         }
 
         let newTask = {
           _id: index, // temp id, it will get replaced with backend id later
           utterance: '',
           headerMsg: 'Oh, it seems I have missed a step. My apologies. Please describe and add the steps.',
-          step: `Step ${index+1}`,
+          step: `Step ${hasAddTask ? index : index+1}`,
           type: 'addTask' 
         }
 
-        const updatedPipeline = [...currentExecutionPipeline];
+        const updatedPipeline = Array.isArray(currentExecutionPipeline)
+          ? [...currentExecutionPipeline]
+          : [];
         updatedPipeline.splice(index, 0, newTask);
         
         const updatedQuestions = {
           ..._questions,
-          [item?.reqId]: { 
-            ..._questions[item?.reqId], 
+          [questionId]: { 
+            ..._questions[questionId], 
             executionPipeline: updatedPipeline 
           }
         };
@@ -88,10 +119,15 @@ const MultiIntentExecution = (props) => {
     const saveTask = async (index, task, executionPipeline, item, utterance) => {
         state = store.getState().global;
         let _questions = cloneDeep(state?.questions);
+        const questionId = resolveQuestionId(item, _questions);
 
         let payload = {
             utterance: utterance,
             action: task?.type == 'addTask' ? 'add' : 'update',
+        }
+
+        if (task?.type === 'addTask' || task?.type === 'modify') {
+            payload.index = index;
         }
 
         if(task?._id > 0 && task?.type === 'addTask'){
@@ -108,19 +144,26 @@ const MultiIntentExecution = (props) => {
         const response = await store.dispatch(executionPipelineActions({params, payload}))
         
         if(!!response?.payload){
-            _questions[item?.id].executionPipeline = response?.payload?.executionPipeline;
-            _questions[item?.id].savedExecutionPipeline = response?.payload?.executionPipeline;
+            _questions[questionId].executionPipeline = response?.payload?.executionPipeline;
+            _questions[questionId].savedExecutionPipeline = response?.payload?.executionPipeline;
             store.dispatch(updateChatData(_questions))
         }
         
         return response;
     }
 
-    const deleteNewTask = (item) => {
+    const deleteNewTask = (item , task , index)  => {
         state = store.getState().global;
         const _questions = cloneDeep(state?.questions);
-        _questions[item?.id].executionPipeline = _questions[item?.id].savedExecutionPipeline;
-        store.dispatch(updateChatData(_questions))
+        const questionId = resolveQuestionId(item, _questions);
+        const savedPipeline = _questions[questionId]?.savedExecutionPipeline;
+        if (Array.isArray(savedPipeline)) {
+            if(index && task?.type === 'modify'){
+                savedPipeline[index].type = ''
+            }
+            _questions[questionId].executionPipeline = savedPipeline;
+            store.dispatch(updateChatData(_questions))
+        }
     }
 
     const deleteExistingTask = async (index, task, item) => {
@@ -140,8 +183,8 @@ const MultiIntentExecution = (props) => {
         const response = await store.dispatch(executionPipelineActions({params, payload}))
 
         if(!!response?.payload){
-            _questions[item?.id].executionPipeline = response?.payload?.executionPipeline;
-            _questions[item?.id].savedExecutionPipeline = response?.payload?.executionPipeline;
+            _questions[item?.reqId || item?.id].executionPipeline = response?.payload?.executionPipeline;
+            _questions[item?.reqId || item?.id].savedExecutionPipeline = response?.payload?.executionPipeline;
             store.dispatch(updateChatData(_questions))
         }
         
@@ -151,20 +194,41 @@ const MultiIntentExecution = (props) => {
     const editTask = (index, task, item) => {
         state = store.getState().global;
         const _questions = cloneDeep(state?.questions);
-        let currentExecutionPipeline = cloneDeep(_questions[item?.id]?.executionPipeline);
+        const questionId = resolveQuestionId(item, _questions);
+        const question = _questions[questionId] || {};
+        let hasEditTask = question?.executionPipeline?.find(el => el?.type === "modify")
+        if(hasEditTask){
+            hasEditTask.type = "draft"
+        }
+        // if(hasEditTask){
+        //     deleteNewTask(item , hasEditTask , index)
+        // }
+        let currentExecutionPipeline = cloneDeep(
+            question?.executionPipeline || item?.executionPipeline || []
+        );
 
-        if(isEmpty(_questions[item?.reqId]?.savedExecutionPipeline)){
-            _questions[item?.reqId].savedExecutionPipeline = currentExecutionPipeline;
+        if (isEmpty(question?.savedExecutionPipeline)) {
+            _questions[questionId] = {
+                ...question,
+                savedExecutionPipeline: currentExecutionPipeline
+            };
         } else {
-            currentExecutionPipeline = _questions[item?.reqId].savedExecutionPipeline;
+            currentExecutionPipeline = question?.savedExecutionPipeline;
         }
 
         let _task = {...task, type: 'modify', step: `Step ${index+1}`}
 
+        if (!Array.isArray(currentExecutionPipeline)) {
+            currentExecutionPipeline = [];
+        }
         currentExecutionPipeline.splice(index, 1, _task);
 
-        _questions[item?.reqId].executionPipeline = currentExecutionPipeline;
+        _questions[questionId] = {
+            ..._questions[questionId],
+            executionPipeline: currentExecutionPipeline
+        };
         store.dispatch(updateChatData(_questions))
+
     }
 
     const cancelTask = (task) => {
