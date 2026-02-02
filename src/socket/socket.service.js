@@ -2,10 +2,13 @@ import io from "socket.io-client";
 import { ChatInterface } from "../chat";
 import BotConversation from "../chat/botAgent/getBotConversation";
 import Notification from "../notifications/notification";
-import { HistoryInterface } from "../history";
 import { presenceStart } from "../redux/actions/global.action";
 import store from "../redux/store";
+<<<<<<< HEAD
 import { AnnouncementsInterface } from "../Announcements";
+=======
+import { HistoryInterface } from "../history";
+>>>>>>> 26d8b700c3e9492c21b06935fc73ef768f499999
 
 class WebSocketClient {
     constructor() {
@@ -25,6 +28,14 @@ class WebSocketClient {
             reconnection: true,
             reconnectionAttempts: 1000,
             reconnectionDelay: 1000,
+            auth: (cb) => {
+                // This function is called on every connection attempt (including reconnects)
+                cb({
+                    ...(options?.query || {}),
+                    sToken: store.getState().global?.presenceStart?.data?.sToken,
+                    rnd: new Date().getTime(),
+                });
+            },
             ...options,
         };
     }
@@ -66,9 +77,12 @@ class WebSocketClient {
             });
 
             this.socket.on('live', (msg) => {
-                if(msg?.entity === "answersuggestion") {
+                if(msg?.entity === "answerContext") {
                     /*In answer suggestion, will receive thoughts of agents, need to append to the question*/                    
                         ChatInterface().agentThoughts(msg)                                        
+                }
+                if (msg?.entity === "thoughts") {
+                    ChatInterface().agentThoughts(msg)     
                 }
                 if(msg?.entity === "answerChunk"){
                     ChatInterface().contentStreaming(msg)
@@ -77,8 +91,13 @@ class WebSocketClient {
                     /*update the name in the history board */
                     HistoryInterface().updateHistoryBoardNameonSocketEvent(msg?.data)
                 }
+<<<<<<< HEAD
                 if(msg?.entity === "announcements"){
                     AnnouncementsInterface().setNewAnnouncements(msg)
+=======
+                if (msg?.entity === 'reqFlow') {
+                    ChatInterface().responseFlowGeneration(msg)
+>>>>>>> 26d8b700c3e9492c21b06935fc73ef768f499999
                 }
             });
             this.socket.on("notification", (msg) => {

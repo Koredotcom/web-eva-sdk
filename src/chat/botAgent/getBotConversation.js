@@ -1,7 +1,11 @@
 import { cloneDeep, isEmpty } from "lodash";
 import {chatWindow, chatConfig} from "@koredev/kore-web-sdk"
 import store from "../../redux/store";
+<<<<<<< HEAD
 import { checkHistoryAccessed } from "../../utils/helpers";
+=======
+import { checkHistoryAccessed, getCidByMessageId, getReqIdByMessageId } from "../../utils/helpers";
+>>>>>>> 26d8b700c3e9492c21b06935fc73ef768f499999
 import { updateChatData, setBotSDKInstance, setCurrentQuestion, setEnableKoreBotSDK } from "../../redux/globalSlice";
 import { advanceSearch } from "../../redux/actions/global.action";
 import { constructQuestionPostCall } from "../chat-utils";
@@ -108,7 +112,7 @@ const BotConversation = (args) => {
                                 }
                             ]
                         }
-                        currentBotSDKInstance.chatEle = document.getElementById("chatTestComp")
+                        currentBotSDKInstance.chatEle = document.getElementsByClassName(".bot-conversation-wrapper")[0]
                         if(state?.enableDebugging){
                             console.log("template html: ", currentBotSDKInstance.generateMessageDOM(templatePayload))
                         }
@@ -131,11 +135,25 @@ const BotConversation = (args) => {
             // }     
             if(Object.keys(questions || {}).length === 0){
                 return;
+<<<<<<< HEAD
             }            
             const questionKey = resolveQuestionKeyByMessageId(detail?.message?.pId)
             question = questions[detail?.message?.pId] /*in order to update the already existing messages of botConversation, we will depend on pId */
+=======
+            }   
+            /*Identify whether to update the question which is inside agentic flow or not
+            in case of agentic flow, pId will the main id i.e agentic flow id, so in order to get the bot question we need to check with the messageId
+            */               
+            question = questions[getReqIdByMessageId(detail?.message?.pId)] /*in order to update the already existing messages of botConversation, we will depend on pId */            
+>>>>>>> 26d8b700c3e9492c21b06935fc73ef768f499999
             if(question){//found the question with pId, so need to update the conversation present in botConversation
-                question.botConversation[detail?.message?.messageId] = detail?.message
+                /*need to see if it is a agentic flow question or not, if it is a part of agentic flow question, using messageId fetch the key of the questions array to */
+                if(question?.executionPipeline?.length){
+                    question = questions[getCidByMessageId(questions, detail?.message?.messageId)]
+                    question = {...question, 'answer': detail?.message?.answer, 'status': detail?.message?.status, 'reqFlow': detail?.message?.reqFlow}
+                }else{
+                    question.botConversation[detail?.message?.messageId] = detail?.message
+                }                
             }else{
                 const fallbackKey = resolveQuestionKeyByReqId(detail?.message?.reqId)
                 question = questions[fallbackKey] /*to update the parent message itself, */
@@ -173,8 +191,12 @@ const BotConversation = (args) => {
         //     questions[question?.id] = question
         // }else{
         //     questions[question?.reqId] = question
-        // }        
-        questions[question?.reqId] = question
+        // }       
+        if(question?.isTask) {
+            questions[question?.cId] = question
+        }else{
+            questions[question?.reqId] = question
+        }        
         store.dispatch(updateChatData(questions))        
         setupTemplates(question.botConversation);
     }
@@ -222,6 +244,14 @@ const BotConversation = (args) => {
             console.log("params data: ", data)
         }
         console.log("custom data in getBotConversation line 171 : ", payload?.customData)
+        setTimeout(() => {
+            const conversation = Object.values(state?.questions)?.find(c => c?.reqId === data?.cId)?.botConversation?.[data?.messageId]
+            
+            const scrollToTarget = document.getElementById(conversation?.messageId) 
+            if (scrollToTarget) {
+                scrollToTarget.scrollIntoView({behavior: "smooth" , block: "start"});
+            }
+        }, 1000);
         const res = await store.dispatch(advanceSearch({ params, payload, userId: state?.profile?.data?.id || data?.userId}))
         console.log("custom data in getBotConversation line 173 : ", payload?.customData)
         constructQuestionPostCall(res, data?.cId)

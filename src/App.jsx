@@ -6,6 +6,7 @@ import Agents from './test-comp/agents';
 import SelectedContext from './test-comp/selectedContext';
 import TestComp from "./test-comp/testComp";
 import ChatInterfaceDemo from './test-comp/ChatInterfaceDemo/ChatInterface';
+import { renderParentComponent } from './master-component/ParentComponent';
 
 
 const App = () => {
@@ -13,6 +14,7 @@ const App = () => {
   useEffect(() => {
     fetchHistoryWidgetData()
     fetchPossiblitiesWidgetData()
+    // renderParentComponent('master-component')
   }, [])
 
   const fetchHistoryWidgetData = async () => {
@@ -21,11 +23,20 @@ const App = () => {
   const fetchPossiblitiesWidgetData = async () => {
     const res = await PossibilitiesWidget()    
   }
+
+  
   
   return (
+<<<<<<< HEAD
     <div>
       <ChatInterfaceDemo />
       {/* <ChatTestComp /> */}
+=======
+    <div className='app-container'>
+      {/* <div id='master-component' className='master-component'></div>  */}
+      <ChatInterfaceDemo />
+      {/* <ChatTestComp/> */}
+>>>>>>> 26d8b700c3e9492c21b06935fc73ef768f499999
       {/* <TestComp /> */}
       {/* <Agents /> */}
       {/* <File /> */}

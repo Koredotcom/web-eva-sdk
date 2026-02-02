@@ -1,6 +1,6 @@
 
 import store from "../redux/store";
-import FileUploader from "../utils/fileUploader";
+import FileUploader from "../utils/FileUploader";
 import axios, { all } from "axios";
 import { searchSession } from "../redux/actions/global.action";
 import { generateComponentId, generateShortUUID, getFileExtension, getUID } from "../utils/helpers";
@@ -67,7 +67,7 @@ const FileUpload = (props) => {
                 _selectedContext.data.sessionId = state?.selectedContext?.data?.sessionId
                 _selectedContext.data.quickactions = state?.selectedContext?.data?.quickactions
             }
-            //Setting Sources Initially in Loading State till the call is successful
+            //Setting Sources Initially in Loading State till the call is successful            
             store.dispatch(setSelectedContext(_selectedContext))
 
             for (let i = 0; i < allFiles.length; i++) {
@@ -76,7 +76,7 @@ const FileUpload = (props) => {
                 uploadFileInitial(currentFile, allSources, () => {
                     completedFiles++;
                     //Checking whether all files have completed token generation to make the searchSession Call
-                    if (completedFiles === files.length) {
+                    if (completedFiles === allFiles.length) {
                         let selectedSources = state?.selectedContext?.data?.sources
                         if ((allSources?.length !== selectedSources?.length) && selectedSources?.length > 0) {
                             //Checking and uploading the selected sources as context
@@ -272,10 +272,11 @@ const FileUpload = (props) => {
                 obj.discardPrevSession = true
             }
             /*In morgan they are using customQnAAPI, and when the source of the selectedContext is customQnAAPI, need to discardPrevSession */
-            if (args?.sources?.[0]?.source === "customQnAAPI" || selectedContext?.data?.sources?.[0]?.source === "customQnAAPI") {
+            if(args?.sources?.[0]?.source === "customQnAAPI" || selectedContext?.data?.sources?.[0]?.source === "customQnAAPI"){
                 obj.discardPrevSession = true
             }
             sessionItemHandler(obj)
+
         }
     }
 

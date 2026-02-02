@@ -1,8 +1,8 @@
 import axios from "axios";
-import FileUploader from "../../utils/fileUploader";
+import FileUploader from "../../utils/FileUploader";
 import { generateComponentId, getFileExtension, getUID } from "../../utils/helpers";
 import store from "../../redux/store";
-import { setGptUploadedFiles } from "../../redux/globalSlice";
+import { setGptUploadedFiles, updateChatData } from "../../redux/globalSlice";
 import { cloneDeep, isEmpty } from "lodash";
 
 let gptFileData = null;
@@ -24,16 +24,16 @@ let gptFileData = null;
 //     })
     
 // }
-const GptFileUpload = (event, id) => {
+const GptFileUpload = (event, id, questionId) => {
     const fileList = event?.target?.files ?? event?.detail?.files ?? [];
     const files = Array.from(fileList);
 
     if (!files.length) return Promise.resolve([]);
 
     // Create an array of upload promises
-    const uploadPromises = files.map(file => {
+    const uploadPromises = files.map((file, ind) => {
         return new Promise((resolve, reject) => {
-            uploadFileInitial(file, id, resolve, reject);
+            uploadFileInitial(file, id, questionId, resolve, reject);
         });
     });
 
@@ -43,7 +43,7 @@ const GptFileUpload = (event, id) => {
 
 export default GptFileUpload;
 
-const uploadFileInitial = (file, id, resolve, reject) => {
+const uploadFileInitial = (file, id, questionId, resolve, reject) => {
     const state = store.getState().global
     if(state?.enableDebugging){
         console.log(window.sdkConfig)
@@ -72,6 +72,27 @@ const uploadFileInitial = (file, id, resolve, reject) => {
     obj.source = "attachment"
     obj.extName = getFileExtension(u?.file?.name)
     obj.size = u?.file?.size
+
+    /*updating the GptUploadedFiles state, to add loading state of the currently uploading file*/
+
+    let uploadedFiles = cloneDeep(state.GptUploadedFiles || {});
+    if (isEmpty(uploadedFiles) || !Array.isArray(uploadedFiles[id])) {
+        uploadedFiles[id] = []
+    }
+    uploadedFiles[id].push(({
+        ...obj,
+        type: "file",
+        title: file?.title || file?.name        
+    }))    
+    store.dispatch(setGptUploadedFiles(uploadedFiles));
+
+    let _questions = cloneDeep(store.getState().global.questions) || {}
+    let currentQuestion = cloneDeep(_questions[questionId]);
+    currentQuestion.loadingFiles = currentQuestion?.loadingFiles || [];
+    currentQuestion.loadingFiles.push(id);
+    _questions[questionId] = currentQuestion;
+    store.dispatch(updateChatData(_questions));
+
     u.start(
         (res) => { }, (file) => {
             let componentId = generateComponentId();                        
@@ -90,27 +111,37 @@ const uploadFileInitial = (file, id, resolve, reject) => {
             if(!Array.isArray(currentFileData[id])) {
                 currentFileData[id] = [];
             }
-            currentFileData[id].push({
+
+            /*as we are already pushing the file to the GptUploadedFiles state, we need to update the existing file with the response*/
+
+            // currentFileData[id].push({
+            //     ...obj,
+            //     type: "file",
+            //     value: file?.fileUrl?.fileId,
+            //     title: file?.title || file?.fileName,
+            //     fileId:file?.fileUrl?.fileId,
+            //     loading: false                
+            // });       
+            currentFileData[id] = currentFileData[id].map(f => f?.mediaName === file?.mediaName ? {                
                 ...obj,
                 type: "file",
                 value: file?.fileUrl?.fileId,
                 title: file?.title || file?.fileName,
-                fileId:file?.fileUrl?.fileId,
-                loading: false                
-            });            
+                fileId: file?.fileUrl?.fileId,
+                loading: false                 
+            } : f);
 
             gptFileData = currentFileData;
             store.dispatch(setGptUploadedFiles(currentFileData))
 
-            const reqdTextArea = document.getElementById(`inputValue-${id}`)
-            if(reqdTextArea) {
-                reqdTextArea.style.display = 'none';
+            let _questions = cloneDeep(store.getState().global.questions) || {}
+            let currentQuestion = cloneDeep(_questions[questionId]);
+            currentQuestion.filesUploaded = currentQuestion?.filesUploaded + 1 || 1;
+            if(currentQuestion?.loadingFiles?.includes(id) && currentQuestion?.loadingFiles?.length > 0){
+                currentQuestion.loadingFiles = currentQuestion?.loadingFiles?.filter(file => file !== id);
             }
-
-            const reqdButton = document.getElementById(`removeButton-${id}`)
-            if(reqdButton) {
-                reqdButton.style.display = 'block'
-            }
+            _questions[questionId] = currentQuestion;
+            store.dispatch(updateChatData(_questions));
 
             resolve(currentFileData, f)
         },

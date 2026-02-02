@@ -10,7 +10,12 @@ import { chatTemplateTypes, msgStatus } from '../utils/constants';
 import MultiResponse from './gptTemplate/MultiResponse';
 import moment from "moment";
 import { fetchHistory } from "../redux/actions/global.action";
+<<<<<<< HEAD
 import MultiIntentExecution from '../multiIntentExecution/multiIntentExecution';
+=======
+import { multiIntentExecutionFunc } from "../templateRenderer/functionality/multi-intent-execution";
+import { sessionItemHandler } from '../Attachments/createContext';
+>>>>>>> 26d8b700c3e9492c21b06935fc73ef768f499999
 
 export const constructQuestionInitial = (args) => {
 	let uniqueMsgId = args?.reqId;
@@ -22,7 +27,7 @@ export const constructQuestionInitial = (args) => {
 
 	const activeBoardId = store.getState().global.activeBoardId;
 
-	let question = args?.question;
+	let question = args?.question || args?.action?.postback;
 
 	let obj = {};
 
@@ -108,6 +113,9 @@ export const constructQuestionPostCall = (data, qId) => {
         return;
     }
 
+    /*advance Search cancelled, data is coming into the block, so ignoring this by putting return in case of payload is undefined */
+    if(!data?.payload) return;
+
     const state = store.getState().global
     const questions = cloneDeep(state.questions)
     const activeBoardId = state.activeBoardId
@@ -118,7 +126,7 @@ export const constructQuestionPostCall = (data, qId) => {
 
 	if (!activeBoardId) {
 		store.dispatch(
-            fetchHistory({ deleteLoader: true, params: { limit: 1 } })
+			fetchHistory({ deleteLoader: true, params: { limit: 1} })
 		);
 	}
     if(state.enabledCustomTemplates?.[data?.payload?.templateType]) {
@@ -140,7 +148,11 @@ export const constructQuestionPostCall = (data, qId) => {
 		}
 	}
 
+<<<<<<< HEAD
     if (data?.payload?.templateType === chatTemplateTypes.SEARCH_ANSWER || data?.payload?.templateType === chatTemplateTypes.SEARCH_RESULTS) {
+=======
+	if (data?.payload?.templateType === chatTemplateTypes.SEARCH_ANSWER || data?.payload?.templateType === chatTemplateTypes.SEARCH_RESULTS) {
+>>>>>>> 26d8b700c3e9492c21b06935fc73ef768f499999
 		if (data?.payload?.sources?.length > 0 ){
 			// const ansFromChipData = AnswerFromChip({item: data?.payload });
 			// question.answerFrom_html = ansFromChipData.outerHTML;
@@ -179,9 +191,34 @@ export const constructQuestionPostCall = (data, qId) => {
 					}
 				}
 			}
+<<<<<<< HEAD
 		}
         /*Clearing the selected context when search results are received */
         if (state.autoRemoveWebSearchFromContext) {
+=======
+		}else{
+            if(question?.viewType === "threadView"){
+                if(!question?.hasOwnProperty('botConversation')){
+                    question.botConversation = {}
+                    question = {...question, ...data?.payload}
+                }else{                
+                let currentConversation = question?.botConversation?.[data?.payload?.messageId]
+                if(currentConversation){
+                    currentConversation.status = data?.payload?.status
+                    currentConversation.answer = data?.payload?.answer
+                    question.botConversation[data?.payload?.messageId] = currentConversation
+                }
+            }
+                
+            }
+        }
+
+        /*based on question, if its viewType is threadView need to do botConversation update here */
+        
+
+        /*Clearing the selected context when search results are received */
+        if(data?.payload?.context?.enable === false || state?.selectedContext?.type === "agent" || state?.selectedContext?.type === "commonAgent" || state?.selectedContext?.type === "searchAgent"){
+>>>>>>> 26d8b700c3e9492c21b06935fc73ef768f499999
             store.dispatch(setSelectedContext(null))
         }
 	}
@@ -244,9 +281,29 @@ export const constructQuestionPostCall = (data, qId) => {
     // }
 
     if(data?.error) {
+<<<<<<< HEAD
         // if (data?.meta?.arg?.multiIntentExecution || question?.isMultiIntentExecution) {
         //     const stepIndex = question?.stepIndex;
         //     question = { ...question, error : true};
+=======
+        /*when the api request returns error, need to check whether the question is having threadedView or not and update the status accordingly */
+
+        if (question?.viewType === "threadView"){
+            /*add error status to the child question present in the botConversation */
+            question = addErrorStateToBotConversation(questions?.[qId], data)
+        }else{
+            question.status = "error"            
+            question.templateType = "error_template"
+            question.error = data?.error
+        }
+        questions[qId] = { ...question, apiSuccess: false };
+        store.dispatch(updateChatData(questions))
+        return;
+        
+        // question = { ...question, error: data?.error, errInfo: data?.errInfo};
+        // if(data?.errInfo?.errors[0]?.code === 'MaximumPointsExceeded'){
+        //     _limitExhausted = data?.errInfo?.errors[0]
+>>>>>>> 26d8b700c3e9492c21b06935fc73ef768f499999
         // }
 	} else if (data?.meta?.arg?.multiIntentExecution || question?.isMultiIntentExecution) {
 		const stepIndex = question?.stepIndex;
@@ -279,7 +336,11 @@ export const constructQuestionPostCall = (data, qId) => {
         if (question?.isTask) {
             const stepIndex = question?.stepIndex;
             setTimeout(() => {
+<<<<<<< HEAD
                 MultiIntentExecution().runNextTask(stepIndex, data?.payload?.history?.status, question)
+=======
+                multiIntentExecutionFunc().runNextTask(stepIndex, data?.payload?.history?.status, question)
+>>>>>>> 26d8b700c3e9492c21b06935fc73ef768f499999
             }, 1000);
         }
 	} 
@@ -315,7 +376,7 @@ export const constructQuestionPostCall = (data, qId) => {
             question.botConversation = {}
             question.parentMessage = data.payload.res
             data?.payload?.thread?.messages?.map(message => {
-                question.botConversation[message?.messageId] = message
+                question.botConversation[message?.messageId] = { ...message, "chunkMeta": question.botConversation[message?.messageId]?.chunkMeta || {} }
             })                        
         }
         if (data?.payload?.thread && data?.payload?.thread?.nextMessages && data?.payload?.thread?.nextMessages?.length) {    
@@ -323,7 +384,7 @@ export const constructQuestionPostCall = (data, qId) => {
             question.botConversation[data?.payload?.messageId].status = data?.payload?.status
             question.botConversation[data?.payload?.messageId].answer = data?.payload?.answer
             data?.payload?.thread?.nextMessages?.map(message => {
-                question.botConversation[message?.messageId] = message
+                question.botConversation[message?.messageId] = { ...message, "chunkMeta": question.botConversation[message?.messageId]?.chunkMeta || message?.chunkMeta || {} }
             })
             if (data?.payload?.thread?.parentMessage?.status === "completed") {
                 question.status = "completed"                
@@ -334,9 +395,9 @@ export const constructQuestionPostCall = (data, qId) => {
         // question.question = data?.res?.question
     }
 
-    if(data?.payload?.viewType === "threadView" && (!data?.payload?.hasOwnProperty('thread'))){
-        question = {...question, ...data?.payload}
-    }
+    // if(data?.payload?.viewType === "threadView" && (!data?.payload?.hasOwnProperty('thread'))){
+    //     question = {...question, ...data?.payload}
+    // }
 
     /*cancelrequest / closing the botconversation logic, check for the status as completed and viewType as threadView */
     if(data?.payload?.history?.status === msgStatus.COMPLETED && data?.payload?.history?.viewType === "threadView") {
@@ -344,9 +405,16 @@ export const constructQuestionPostCall = (data, qId) => {
             ...question,
             "status": data?.payload?.history?.status,
             "answer": data?.payload?.history?.answer,
-
+        }
+        /*need to update botConversation question as well, in case of termination */
+        if(question?.hasOwnProperty('botConversation')){
+            if(question?.botConversation?.[data?.meta?.arg?.params?.quesId]){
+                question.botConversation[data?.meta?.arg?.params?.quesId].status = "terminated"
+            }
         }
     }
+
+    store.dispatch(setCurrentQuestion(question))
 
     // if(data?.res?.viewType === "threadView"){
     //     if(!question.hasOwnProperty("botConversation")){
@@ -389,7 +457,8 @@ export const constructQuestionPostCall = (data, qId) => {
             store.dispatch(setActiveBoardId(data?.payload?.boardId))
         } 
     }
-    if (data?.payload?.followUpContext && state.enableContextByFollowupContext) {
+    /*MS is having the concept of followupContext which updates the selectedContext, In agenticflow also it is happening once the 1st task is executed, so to prevent this we are checking for the existence of stepId, if exists followupcontext cant be set */
+    if (data?.payload?.followUpContext && state.enableContextByFollowupContext && !data?.payload?.hasOwnProperty('stepId')) {
         // console.log("data?.payload?.followUpContext", { ...data?.payload?.followUpContext, messageId: data?.payload?.messageId })
         let context = {
             context: data?.payload?.followUpContext,
@@ -401,6 +470,22 @@ export const constructQuestionPostCall = (data, qId) => {
             sessionId: data?.payload?.followUpContext?.sessionId
         }
         store.dispatch(setSelectedContext({data: context}))
+    }
+
+    /*once we get the response for the gpt form template, need to set the context with the response generated */
+    if(data?.payload?.templateType === chatTemplateTypes.SEARCH_ANSWER && data?.payload?.context?.agentType ==="gptAgent" && data?.payload?.sources?.length) {
+        /*need to make searchSession call, so will depend on sessionItemHandler */
+        const obj ={
+            boardId: data?.payload?.boardId,
+            messageId: data?.payload?.messageId,
+            item: data?.payload?.sources[0],
+            type: "agent",
+            invokeFrom: "gptAgent",
+            duplicateErr: true,
+            discardPrevSession: true
+            
+        }
+        sessionItemHandler(obj)
     }
     store.dispatch(updateChatData(questions))
 
@@ -438,3 +523,19 @@ const removeOutputMessageId = (question, apiResponse) => {
         return question;
 
     }
+
+const addErrorStateToBotConversation = (question, resp) =>{
+    /*the below block is for stop response scenario */
+    if(question?.botConversation?.[resp?.meta?.arg?.params?.quesId]){ 
+        question.botConversation[resp?.meta?.arg?.params?.quesId].status = "error"
+        question.botConversation[resp?.meta?.arg?.params?.quesId].error = resp?.error
+    }else{
+        const randomMessageId = uuid()
+        question.botConversation[randomMessageId] = {
+            messageId: randomMessageId,
+            status: "error",
+            error: resp?.error
+        }
+    }
+    return question;
+}

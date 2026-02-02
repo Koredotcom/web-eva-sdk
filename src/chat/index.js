@@ -14,4 +14,8 @@ export { default as RemoveUploadedGPTFile } from './gptTemplate/removeUploadedGP
 export { default as SubmitGPTForm } from './gptTemplate/submitGPTForm.js';
 export { default as BotConversation } from './botAgent/getBotConversation.js';
 export { default as Notification } from '../notifications/notification.js';
+<<<<<<< HEAD
+=======
+export { default as toast } from '../utils/toast.js';
+>>>>>>> 26d8b700c3e9492c21b06935fc73ef768f499999
 export { default as MultiIntentExecution } from '../multiIntentExecution/multiIntentExecution.js';

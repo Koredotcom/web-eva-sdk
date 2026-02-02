@@ -10,11 +10,19 @@ import { MultiIntentExecution } from '../../chat';
 const MultiIntentExecutionDemo = ({ data }) => {
   const items = data || {};
   const initialState = items?.status === "draft";
+<<<<<<< HEAD
   
   // Initialize MultiIntentExecution instance
   const { runTask, cancelTask, restartExecution, fetchHistoricalTask } = MultiIntentExecution();
   
   
+=======
+
+  // Initialize MultiIntentExecution instance
+  const { runTask, cancelTask, restartExecution, fetchHistoricalTask } = MultiIntentExecution();
+
+
+>>>>>>> 26d8b700c3e9492c21b06935fc73ef768f499999
   // Get questions from Redux store and keep them synced with store updates
   const [questions, setQuestions] = useState(() => store.getState().global.questions);
 
@@ -44,8 +52,13 @@ const MultiIntentExecutionDemo = ({ data }) => {
 
       {items?.status === 'draft' && items?.executionPipeline?.length > 0 && (
         <>
+<<<<<<< HEAD
           <button 
             className="startBtn" 
+=======
+          <button
+            className="startBtn"
+>>>>>>> 26d8b700c3e9492c21b06935fc73ef768f499999
             onClick={() => runTask(items)}
           >
             {items?.templateInfo?.action}
@@ -57,7 +70,11 @@ const MultiIntentExecutionDemo = ({ data }) => {
       {items?.executionPipeline?.map((task, index) => {
         // Merge task with question data from Redux store (like original logic)
         const mergedTask = { ...task, ...questions?.[task?._id], isTask: true };
+<<<<<<< HEAD
         
+=======
+
+>>>>>>> 26d8b700c3e9492c21b06935fc73ef768f499999
         // Render each task through TemplateRenderer (like original logic)
         const taskHtml = TemplateRenderer.generateHTMLTemplate(mergedTask, {
           loadingText: "Analyzing",
@@ -84,18 +101,29 @@ const MultiIntentExecutionDemo = ({ data }) => {
                   <div className="utterance">{task?.utterance}</div>
                 </div>
                 {(mergedTask?.status === "completed" || mergedTask?.status === "discard" || mergedTask?.status === "terminated") && (
+<<<<<<< HEAD
                   <button 
+=======
+                  <button
+>>>>>>> 26d8b700c3e9492c21b06935fc73ef768f499999
                     className="chevronBtn"
                     onClick={() => toggleTaskExpansion(mergedTask)}
                     aria-label="Toggle task details"
                   >
+<<<<<<< HEAD
                       <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
                         <path d="M12 10l-4-4-4 4" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
                       </svg>
+=======
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                      <path d="M12 10l-4-4-4 4" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+>>>>>>> 26d8b700c3e9492c21b06935fc73ef768f499999
                   </button>
                 )}
                 {mergedTask?.loading && (
                   <>
+<<<<<<< HEAD
                   <div className="loadingState"><div class="loading-text">Analyzing</div></div>
                   <button 
                     className="skipBtn" 
@@ -103,6 +131,15 @@ const MultiIntentExecutionDemo = ({ data }) => {
                   >
                     Skip this step
                   </button>
+=======
+                    <div className="loadingState"><div class="loading-text">Analyzing</div></div>
+                    <button
+                      className="skipBtn"
+                      onClick={() => cancelTask(mergedTask)}
+                    >
+                      Skip this step
+                    </button>
+>>>>>>> 26d8b700c3e9492c21b06935fc73ef768f499999
                   </>
                 )}
                 {mergedTask?.error && (
@@ -114,8 +151,13 @@ const MultiIntentExecutionDemo = ({ data }) => {
                       Restart Execution
                     </button>
                     {!mergedTask?.skipped && (
+<<<<<<< HEAD
                       <button 
                         className="skipBtn" 
+=======
+                      <button
+                        className="skipBtn"
+>>>>>>> 26d8b700c3e9492c21b06935fc73ef768f499999
                         onClick={() => cancelTask(mergedTask)}
                       >
                         Skip this step
@@ -124,7 +166,11 @@ const MultiIntentExecutionDemo = ({ data }) => {
                   </>
                 )}
                 {mergedTask?.showResponse && taskHtml && (
+<<<<<<< HEAD
                   <div 
+=======
+                  <div
+>>>>>>> 26d8b700c3e9492c21b06935fc73ef768f499999
                     className="bottomCard"
                     dangerouslySetInnerHTML={{ __html: taskHtml?.innerHTML }}
                   />
@@ -139,4 +185,7 @@ const MultiIntentExecutionDemo = ({ data }) => {
 };
 
 export default MultiIntentExecutionDemo;
+<<<<<<< HEAD
 
+=======
+>>>>>>> 26d8b700c3e9492c21b06935fc73ef768f499999

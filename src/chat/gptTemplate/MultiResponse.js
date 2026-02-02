@@ -182,11 +182,13 @@ const MultiResponse = () => {
         // Constructing contextFields
         let contextFields = item?.gpt_forms?.contextFields?.[0];
         let payloadContext = [];
+        let contextFieldDiv;
         if (!isEmpty(contextFields)) {
 
             payloadContext = {
                 [contextFields?.key]: {
                     type: contextFields?.value?.type,
+                    id: contextFields?.id,
                     required: !!contextFields?.value?.required,
                     label: contextFields?.label
                 }
@@ -196,8 +198,11 @@ const MultiResponse = () => {
             if (state?.enableDebugging) {
                 console.log("Recieved Context Fields", contextFields)
             }
+<<<<<<< HEAD
             let contextFieldDiv;
             // Checking the Type of Context Field and getting Input Values
+=======
+>>>>>>> 26d8b700c3e9492c21b06935fc73ef768f499999
             if (contextFields?.value?.type === "file") {
                 contextFieldDiv = document.getElementById(`fileUpload-${contextFields?.key}-${item?.messageId}`);
 
@@ -211,7 +216,8 @@ const MultiResponse = () => {
                 } else {
                     reqdValue = []
                 }
-            } else if (contextFields?.value?.canUploadFile) {
+            }
+             else if (contextFields?.value?.canUploadFile) {
                 // "MORGAN STANLEY REQUIREMENT" -> TO HANDLE CASES WHICH DOES NOT HAVE DEPENDENCY ON ID OF THE FILE UPLOADER. 
                 // FOR CASES WITH LONGTEXT AND SIMPLETEXT AS WELL, WE HAVE TO NOT RELY ON THE KEY OF THE FILE UPLOADER.
 
@@ -228,11 +234,16 @@ const MultiResponse = () => {
                             value: reqdValue || []
                         }
                     }
+<<<<<<< HEAD
                 }                
+=======
+                }
+>>>>>>> 26d8b700c3e9492c21b06935fc73ef768f499999
                 else {
                     contextFieldDiv = document.getElementById(`inputValue-${contextFields?.key}-${item?.messageId}`);
                     reqdValue = contextFieldDiv?.value || contextFieldDiv?.textContent || '';
                 }
+<<<<<<< HEAD
             }
         else if(contextFields?.value?.type === "dropdown"){
             contextFieldDiv = document.getElementById(`dropdownValue-${contextFields?.key}-${item?.messageId}`);
@@ -243,6 +254,20 @@ const MultiResponse = () => {
             }
 
             // Constructing the payloadContext
+=======
+                                
+            }
+            /*support for dropdown context field*/
+            else if (contextFields?.value?.type === "dropdown") {
+                let contextDropdownElement = document.getElementById(`dropdownValue-${contextFields?.key}-${item?.messageId}`);
+                reqdValue = contextDropdownElement?.value || contextDropdownElement?.textContent || '';
+            }
+            
+            else {
+                let contextFieldDiv = document.getElementById(`inputValue-${contextFields?.key}-${item?.messageId}`);
+                reqdValue = contextFieldDiv?.value || contextFieldDiv?.textContent || '';
+            }
+>>>>>>> 26d8b700c3e9492c21b06935fc73ef768f499999
             
             if (state?.enableDebugging) {
                 console.log("Modified Payload Context", payloadContext)
@@ -257,6 +282,7 @@ const MultiResponse = () => {
                     reqdValue = payloadContext[contextFields?.key].value || '';
                 }
             }
+            
 
             // Checking if the Required Field is empty and returning an Error
             if (reqdValue?.length === 0 && contextFields?.value?.required) {
@@ -290,7 +316,13 @@ const MultiResponse = () => {
                         reqdValue = reqdInputElement?.value || [];
                     } else {
                         reqdValue = reqdInputElement?.value || reqdInputElement?.textContent || "";
+<<<<<<< HEAD
                         
+=======
+                        //this check is for multi output, where we need to pass the id of the output for the context
+                        /*replace % with space, that we added while creating the dropdown element*/
+                        reqdValue = reqdValue?.replaceAll('%', ' ');
+>>>>>>> 26d8b700c3e9492c21b06935fc73ef768f499999
                         reqdValue = /^Output\s\d+$/.test(reqdValue)
                             ? reqdValue.split(" ")[1]
                             : reqdValue?.includes("Original Content")
@@ -308,7 +340,6 @@ const MultiResponse = () => {
                     }
                 } else {
                     reqdInputElement = document.getElementById(`inputValue-${field?.key}-${item?.messageId}-${index}`)
-
                     // Check if it's a Quill editor or regular element (specifically for prompt fields)
                     if ((field?.key === 'prompt' || field?.value?.nested?.key === 'prompt') && reqdInputElement && reqdInputElement?.quillEditor) {
                         reqdValue = reqdInputElement.quillEditor.getText();
@@ -326,11 +357,16 @@ const MultiResponse = () => {
                     required: !!field?.value?.required
                 };
 
-                if (reqdValue) {
+                // if (reqdValue) {
+                //     acc[field.key].value = reqdValue;
+                // }
                     acc[field.key].value = reqdValue;
+<<<<<<< HEAD
                 }else{
                     acc[field.key].value = '';
                 }
+=======
+>>>>>>> 26d8b700c3e9492c21b06935fc73ef768f499999
 
                 if (field?.value?.nested?.key === "prompt" || field?.key === 'prompt') {
                     // Need to send the Prompt Field Value as the prompt can be changed manually by the user if editable
@@ -343,12 +379,12 @@ const MultiResponse = () => {
                     } else {
                         promptValue = promptField?.value || promptField?.textContent || "";
                     }
-
                     acc["prompt"] = promptValue;
                 }
 
                 // Checking if the Field has a file and getting the file from the uploadedFiles
                 if (field?.value?.canUploadFile) {
+<<<<<<< HEAD
                     acc[field.key].type = "file"
                     let ind = Object.keys(uploadedFiles || {}).indexOf(`${field?.key}-${item?.messageId}-${index}`);
                     if (ind !== -1 && Object.values(state.GptUploadedFiles)?.[ind]?.length > 0) {                        
@@ -377,6 +413,23 @@ const MultiResponse = () => {
                 //         reqdValue = []
                 //     }
                 // }
+=======
+                    let ind = Object.keys(uploadedFiles || {}).indexOf(`${field?.key}-${item?.messageId}-${field?.uniqueFieldId}`);
+                    if (ind !== -1) {
+                        acc[field.key].type = "file"
+                        acc[field.key].value = Object.values(state.GptUploadedFiles)?.[ind]?.map(({ title, fileId }) => ({ title, fileId }));;
+                        // reqdValue = acc[field.key].value;
+                        reqdValue = acc[field.key].value || [];
+                    }else{
+                        if(field?.value?.type === "file"){
+                            acc[field.key].type = "file"   
+                            acc[field.key].value = [];                         
+                            reqdValue = [];
+                        }
+                    }
+                }
+                
+>>>>>>> 26d8b700c3e9492c21b06935fc73ef768f499999
 
                 // Checking if the Required Field is empty and returning an Error
                 if (field?.required || field?.value?.required) {
@@ -479,7 +532,7 @@ const MultiResponse = () => {
         // }
     }
 
-    const removeFile = (e, index, mediaName = null) => {
+    const removeFile = (e, index, mediaName = null, questionId = null) => {
         try {
             let uploadedFiles = cloneDeep(state.GptUploadedFiles);
             // Deleting that Particular File from the Uploaded Files
@@ -496,6 +549,12 @@ const MultiResponse = () => {
             const reqdButton = document.getElementById(`removeButton-${index}`)
             if (reqdButton) {
                 reqdButton.style.display = 'none'
+            }
+
+            /*to update the form template*/
+            let currentQuestion = cloneDeep(_questions[questionId]);
+            if (currentQuestion && currentQuestion.gpt_forms) {
+                handleDefaultTemplateChanges(currentQuestion.gpt_forms, currentQuestion);
             }
 
             // Return success response to client app
