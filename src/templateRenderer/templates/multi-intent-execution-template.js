@@ -3,7 +3,6 @@ import store from "../../redux/store";
 import { multiIntentExecutionFunc } from "../functionality/multi-intent-execution";
 import TemplateRenderer from "../templateRenderer";
 import "./../styles/template.scss";
-import { Close, PlusIcon, DragHandleIcon, RadioButtonChecked, createDeleteIcon, EditIcon, HistoryIcon, AddStepFilledIcon, WarningStrokeCircle, tickMarkIcon, LoadingSpinner, AgenticSearchIcon, CheveronDownIcon, cheveronRightIcon } from "../icons-library";
 
 
 const assistantIconTemplate = () => {
@@ -22,22 +21,19 @@ function render(data) {
     let initialState = items?.status === "draft"
 
     let header = `
-        <div id="answer-${items?.reqId}" class="threadName maxLength" >
+        <div id="answer-${items?.id}" class="threadName maxLength" >
             ${items?.templateInfo?.label}
         </div>
 
         ${items?.status === 'draft' ? items?.executionPipeline?.length > 0 ? `
-        <div class="btnWrapper">
-                <button class="kr-primary-btn-black btn-lg startBtn" id = "startBtn-${items?.reqId}">${items?.templateInfo?.action}</button>
-                <button class="kr-secondary-btn btn-lg editFlowBtn" id = "editFlowBtn-${items?.reqId}">Edit</button>
-            </div>
+            <button class="startBtn" id = "startBtn-${items?.id}">${items?.templateInfo?.action}</button>
+            <button class="editFlowBtn" id = "editFlowBtn-${items?.id}">Edit Flow</button>
         ` : '' : ''}
         `;
 
-
+       
     let body = `
         ${items?.executionPipeline?.map((task, index) => {
-<<<<<<< HEAD
             const originalTaskId = task?._id;
             task = { ...task, ..._questions[task?._id], isTask: true, _id: originalTaskId };
             let html = TemplateRenderer.generateHTMLTemplate(task, {
@@ -47,88 +43,28 @@ function render(data) {
             if(task?.type === 'addTask' || task?.type === 'modify'){
                 return addNewTaskRenderer(task, index, items);
             }
-=======
-        const originalTaskId = task?._id;
-        task = { ...task, ..._questions[task?._id], isTask: true, _id: originalTaskId };
-        let html = TemplateRenderer.generateHTMLTemplate(task, {});
-
-        if (task?.type === 'addTask' || task?.type === 'modify') {
-            return addNewTaskRenderer(task, index, items);
-        }
->>>>>>> 26d8b700c3e9492c21b06935fc73ef768f499999
 
             return `
-                <div class="tasksToRun">
-                    <div class="taskItems">
-                        <div class='addNewLineWrapper'>
-                            ${initialState ? `<div class='addNewLine'>
-                                <span class="stepIcon addNewTaskBtn" id="addNewTaskBtn-${index}">
-                                    ${AddStepFilledIcon({ size: 32, color: "#98A2B3" })}
-                                </span>
-                            </div>` : ''}
+                <div class='addNewLineWrapper'>
+                  ${initialState ? `<div class='addNewLine'>
+                      <button class="addNewTaskBtn" id = "addNewTaskBtn-${index}">+</button>
+                  </div>` : ''}
+                </div>
+                <div class="taskItem">
+                    <div class="taskItemHeader">
+                        <div class="taskItemHeaderTitle">Task ${index + 1}</div>
+                        <div class="contentBlock">
+                            ${Array.isArray(task?.intents) && task.intents.length > 0 ? `
+                                <div class="agentIcons">
+                                ${task.intents.slice(0, 2).map((intent, idx) => `
+                                    <div class="agentIcon">
+                                        <img src="${intent?.agentMeta?.icon}" alt="Agent ${idx + 1}" />
+                                    </div>
+                                `).join('')}
+                                </div>
+                            ` : ''}
+                            <div class="utterance">${task?.utterance}</div>
                         </div>
-                        <div class="dragTaskItem" 
-                            draggable="${initialState ? 'true' : 'false'}" 
-                            data-task-id="${task?._id}" 
-                            data-task-index="${index}">
-                            ${initialState ? `<div class="dragHandle" title="Drag to reorder">
-                                ${DragHandleIcon({ size: 14, color: "#9CA3AF" })}
-                            </div>` : ''}
-                            <div class="taskItem ${task?.showResponse ? 'loadingSkeleton' : ''}">
-                                <div class="topCard">
-                                    <div class="leftBlock">                                                                            
-                                ${task?.loading ? `<div class="statusIcon">
-                                    ${LoadingSpinner({ size: 16 })}    
-                                </div>`:
-                                task?.status === "completed"
-                                    ? tickMarkIcon({ size: 16, color: "#475467" }) 
-                                            : task?.status === "discard"
-                                                ? WarningStrokeCircle({ size: 16, color: "white", stroke: "#F04438", insideFill: "#F04438" }) 
-                                                : HistoryIcon({ size: 16, color: "#98A2B3" }) 
-                                        } 
-                              
-                                        <div class="contentBlock">
-                                            ${Array.isArray(task?.intents) && task.intents.length > 0 ? `
-                                                <div class="agentsAmbiguity">
-                                                ${task.intents.slice(0, 2).map((intent, idx) => `
-                                                    <div class="agentIcon">
-                                                        <img src="${intent?.agentMeta?.icon}" alt="Agent ${idx + 1}" />
-                                                    </div>
-                                                `).join('')}
-                                                </div>
-                                            ` : ''}                                    
-                                            <div class="utterance">${task?.utterance}</div>                                            
-                                        </div>
-                                    </div>
-                                    <div class="rightBlock">
-                                    ${initialState ? `
-                                        <div class="options">
-                                            <div class="opItem" id="editBtn-${task?._id}">${EditIcon({ size: 14, color: "#667085" })}</div>
-                                            <div class="opItem" id="deleteBtn-${task?._id}">${createDeleteIcon({ size: 14, color: "#667085" })}</div>
-                                        </div>
-                                    ` : ''}                                    
-                                    </div>
-                                    ${((task?.status === "completed" || task.status === "terminated") && items?.historicalData) ? `
-                                        <div class="opItem" id="historyBtn-${task?._id}">${task?.showResponse ? `
-                                            ${CheveronDownIcon({ size: 14, color: "#667085", rotation: 180 })}
-                                        ` : `
-                                            ${CheveronDownIcon({ size: 14, color: "#667085"})}
-                                        `}</div>
-                                    ` : ''}
-                                </div> 
-                                ${task?.showResponse ? `
-                                    <div class="bottomCard">
-                                        ${html?.innerHTML}
-                                        ${index < items?.executionPipeline?.length - 1  && ['draft', 'in-progress', 'threadRunning'].includes(task?.status) ?
-                                        `<div class='continuebtn' id="continueBtn-${task?._id}">
-                                            Continue Flow 
-                                        </div>`    :''
-                                        }
-                                    </div>
-                            ` : ''}                               
-                            </div>                    
-                        </div>
-<<<<<<< HEAD
                         ${initialState ? `<div class="optionsWrapper">
                             <button class="editBtn" id = "editBtn-${items?.id}-${index}">Edit</button>
                             <button class="deleteBtn" id = "deleteBtn-${items?.id}-${index}">Delete</button>
@@ -141,15 +77,13 @@ function render(data) {
                         ${task?.loading ? `
                             <div class="loadingState"><div class="loading-text">Analyzing</div></div>
                         ` : ''}
-=======
->>>>>>> 26d8b700c3e9492c21b06935fc73ef768f499999
                     </div>
                 </div>
             `;
         }).join('')}
     `;
 
-
+   
     let multiIntentExecution = `
         <div class="multiIntentExecution ${items?.status} ${items?.executionPipeline?.length === 0 ? 'd-none' : ''}">
             ${header}
@@ -177,38 +111,19 @@ const addNewTaskRenderer = (task, index, items) => {
                ? ${task?.headerMsg}
             </div>` : ''}
           <div class="headerInfo">
-            <div class='step'>${task?.step || `Step ${index + 1}`}</div>
+            <div class='step'>${task?.step || `Step ${index+1}`}</div>
               ${items?.executionPipeline?.length > 1 ?
-            `<div class="opItem" id = "deleteNewTaskBtn-${task?._id}">${createDeleteIcon({ size: 14, color: "#667085" })}</div>`
-            : ''}
+                `<button class="deleteBtn" id = "deleteNewTaskBtn-${items?.id}-${index}">Delete</button>`
+              : ''}
           </div>
           <div class="addDescription">
-            <input type="text" value = "${task?.utterance}" placeholder="Add the description of step(s) which I missed!" id = "utterance-${task?._id}" />
-
-            <div class="agentBlock ${task?.intents?.length === 0 ? 'space-between' : ''}">
-            <span class="add-agent-label" id="addAgentLabel-${task?._id}">                
-                + Add Agent
-              </span>              
-            ${task?.intents?.length > 0 ? task?.intents?.map((intent, idx) => `
-                <div key="${intent?.agentId}" class="agentBadgeWrapper">
-                    <div class="agentBadge">
-                            <span class='badgeimg'><img src="${intent?.agentMeta?.icon}" /></span>
-                            <span class='ellipsisTextBlock'>${intent?.agentMeta?.name}</span>
-                            <span class='badge-close' id = "deleteIntent-${task?._id}-${intent?.agentMeta?.agentId}">
-                            ${Close({ size: "8", color: "#98A2B3" })}
-                            </span>
-                    </div>
-                </div>
-            `).join('') : `<div class='agentBlock-last'>${AgenticSearchIcon({ size: 16})}<span class='defaultSearchText'>Default Search will respond</span></div>`}
+            <input type="text" value = "${task?.utterance}" placeholder="Add the description of step(s) which I missed!" id = "utterance-${items?.id}-${index}" />
           </div>
-          </div>
-          
           <div class="footerSec">
             <div class="btns">
-                <button class="kr-secondary-btn btn-sm cancelBtn" id = "cancelBtn-${task?._id}">Cancel</button>
-                <button class="kr-primary-btn-black btn-sm doneBtn" id = "doneBtn-${task?._id}">${task?.loading ? 'Loading...' : 'Done'}</button>                
+                <button class="cancelBtn" id = "cancelBtn-${items?.id}-${index}">Cancel</button>
+                <button class="doneBtn" id = "doneBtn-${items?.id}-${index}">Done</button>
             </div>
-            ${task?.intents?.length === 0 ? "<span class='errorMessage'>Relevant agent not found</span>" : ''}
           </div>
         </div>
     `;

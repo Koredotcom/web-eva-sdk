@@ -10,14 +10,6 @@ export default defineConfig({
   build: {
     rollupOptions: {
       input: './index.html'
-    },
-    css: {
-      preprocessorOptions: {
-        scss: {
-          additionalData: `@import "src/styles/variables_new.scss"; @import "src/styles/mixins_new.scss";`
-        }
-      }
     }
-    
   }
 });

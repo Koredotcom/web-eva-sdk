@@ -15,7 +15,6 @@ const HistoryInterface = (props) => {
             state = store.getState().global;
             // If callback exists and API call is completed, invoke it
             if (state.historyRes.status !== 'loading' && callback) {
-                /*sort history by createdOn in descending order using lodash*/
                 let _history = cloneDeep(state.AllHistory)
                 _history.data = _.orderBy(_history.data, 'createdOn', 'desc')
                 callback(_history, state.historyRes, state.bookMarkedChatThreads);

@@ -10,8 +10,8 @@ import builtins from 'rollup-plugin-node-builtins';
 import globals from 'rollup-plugin-node-globals';
 import alias from '@rollup/plugin-alias';
 import postcss from 'rollup-plugin-postcss';
-import copy from 'rollup-plugin-copy';
 import postcssImport from 'postcss-import';
+import copy from 'rollup-plugin-copy';
 
 
 const globals_var = {
@@ -52,17 +52,11 @@ const createConfig = (input, dir, name, isMainBuild = false) => ({
       extensions: ['js', 'jsx']
     }),
     postcss({
-      extract: 'sdk-styles.css',
+      extract: 'sdk-styles.css', 
       minimize: true,
-      use: [
-        ['sass', {
-          includePaths: ['./src/styles'],
-          api: 'modern-compiler'
-        }]
-      ],
       plugins: [
-        postcssImport()  // This will process @import statements after Sass compilation
-      ],
+        postcssImport()
+      ]
     }),
     babel({
       babelHelpers: 'bundled',
@@ -91,9 +85,8 @@ const createConfig = (input, dir, name, isMainBuild = false) => ({
 });
 
 export default [
-  createConfig('src/index.jsx', '.', 'EvaUIReact', true), // Main build - copy static assets (includes unified CSS)
+  createConfig('src/index.jsx', '.', 'EvaUIReact', true),
   createConfig('src/components/index.js', 'components', 'Components'),
-  createConfig('src/composebar/index.js', 'composebar', 'ComposeBar'),
   createConfig('src/history/index.js', 'history', 'History'),
   createConfig('src/widgets/index.js', 'widgets', 'Widgets'),
   createConfig('src/chat/index.js', 'chat', 'Chat'),

@@ -53,11 +53,7 @@ export const fetchAgents = createAsyncThunk(
                         payload: { id: createdByIds }
                     }));
 
-<<<<<<< HEAD
                     userDetailsMap = userDetailsResult?.payload?.reduce((acc, user) => {
-=======
-                    userDetailsMap = userDetailsResult.payload?.reduce((acc, user) => {
->>>>>>> 26d8b700c3e9492c21b06935fc73ef768f499999
                         acc[user?.id] = user;
                         return acc;
                     }, {}) || {};
@@ -87,14 +83,8 @@ export const fetchAgents = createAsyncThunk(
 
 let controller;
 
-<<<<<<< HEAD
 export const abortAdvanceSearch = () => {
     if (controller) {
-=======
-// Helper function to abort any in-progress advance search request
-export const abortAdvanceSearch = () => {
-    if(controller) {
->>>>>>> 26d8b700c3e9492c21b06935fc73ef768f499999
         controller?.abort();
         controller = null;
     }
@@ -111,15 +101,9 @@ export const advanceSearch = createAsyncThunk(
                 signal: controller.signal,
                 headers: {
                     'kore-traceid': traceId
-<<<<<<< HEAD
                 }                
             });
             return {...response.data, 'kore-traceid': traceId};
-=======
-                }
-            });
-            return { ...response.data, 'kore-traceid': traceId};
->>>>>>> 26d8b700c3e9492c21b06935fc73ef768f499999
         } catch (error) {
             // Check whether api is cancelled
             if (axios.isCancel(error) || error.name === 'CanceledError') {                
@@ -135,12 +119,6 @@ export const cancelAdvancedSearch = createAsyncThunk(
     'global/cancelAdvancedSearch',
     async (arg, thunkAPI) => { 
         
-        // Abort the in-flight request immediately before making the cancel API call
-        if (controller) {
-            controller.abort();
-            controller = null;
-        }
-        
         try {   
             let reqdQuestionId = encodeURIComponent(arg.reqId)
 
@@ -149,6 +127,9 @@ export const cancelAdvancedSearch = createAsyncThunk(
                 method: 'POST',
                 data: arg.payload
             });
+
+            controller?.abort();
+            controller = null;
             
             return response.data;
         } catch (error) {
@@ -517,59 +498,3 @@ export const getUserDetails = createAsyncThunk(
         }
     }
 );
-<<<<<<< HEAD
-=======
-
-
-export const getChannelRecepients = createAsyncThunk(
-    'global/getChannelRecepients',
-    async (arg, { rejectWithValue }) => {
-        try {
-            const response = await axiosInstance.post(`/1.1/ka/users/${arg?.userId}/connectors/${arg?.source}/actions/send_message/resolveFields`, arg?.payload);
-            return response.data;
-        } catch (error) {
-            handleErrorState(error, "Get Channel Recepients");
-            return rejectWithValue(error.response.data);
-        }
-    }
-);
-
-export const bookmarkAgentAction = createAsyncThunk(
-    'global/bookmarkAgent',
-    async (arg, { rejectWithValue }) => {
-        try {
-            const response = await axiosInstance.patch(`/1.1/users/${arg?.userId}/agents/${arg?.agentId}`, arg?.payload);
-            return response.data;
-        } catch (error) {
-            handleErrorState(error, "Bookmark Agent");
-            return rejectWithValue(error.response.data);
-        }
-    }
-);
-
-export const deleteAnnouncementAction = createAsyncThunk(
-    'global/deleteAnnouncementAction',
-    async (arg, { rejectWithValue }) => {
-        try {
-            const response = await axiosInstance.delete(`/1.1/users/${arg?.userId}/announcements/${arg?.announcementId}`);
-            return {data: response.data, status: response.status};
-        } catch (error) {
-            handleErrorState(error, "Delete Announcement");
-            return rejectWithValue(error.response.data);
-        }
-    }
-);
-
-export const resolveAgentAction = createAsyncThunk(
-    'global/resolveAgent',
-    async (arg, { rejectWithValue }) => {
-        try {
-            const response = await axiosInstance.post(`/1.1/_resolve/agent`,{id: arg?.payload});            
-            return response.data;
-        } catch (error) {
-            handleErrorState(error, "Resolve Agent");
-            return rejectWithValue(error.response.data);
-        }
-    }
-);
->>>>>>> 26d8b700c3e9492c21b06935fc73ef768f499999

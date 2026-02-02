@@ -10,26 +10,16 @@ const MultiIntentExecution = (props) => {
 
     const runTask = (item, index = 0, q) => {
         state = store.getState().global;
-<<<<<<< HEAD
         const {activeBoardId} = state;  
         if(!!q){
             let updatedQuestion = cloneDeep(state.questions);
             item = Object.values(updatedQuestion).find(qId => (updatedQuestion[qId?.parentMsgId]?.executingActionId ===  q?.id))
             item = updatedQuestion[item?.parentMsgId] || updatedQuestion[q?.parentMsgId] || updatedQuestion[state?.questions[q?.id]?.parentMsgId]
           }
-=======
-        const { activeBoardId } = state;
-        if (!!q) {
-            let updatedQuestion = cloneDeep(state.questions);
-            item = Object.values(updatedQuestion).find(qId => (updatedQuestion[qId?.parentMsgId]?.executingActionId === q?.id))
-            item = updatedQuestion[item?.parentMsgId] || updatedQuestion[q?.parentMsgId] || updatedQuestion[state?.questions[q?.id]?.parentMsgId]
-        }
->>>>>>> 26d8b700c3e9492c21b06935fc73ef768f499999
         let _item = cloneDeep(item);
         let task = _item?.executionPipeline?.[index];
         task.stepIndex = index;
         store.dispatch(updateChatData({
-<<<<<<< HEAD
           ...state.questions,
           [item?.reqId]: {
             ...item,
@@ -38,23 +28,12 @@ const MultiIntentExecution = (props) => {
         }))
 
       const params = { cId: _item?.id, type: _item?.type, stepId: task?._id, task, currentRunningQuestion: _item, parentMsgId: _item?.reqId, isTask: true}
-=======
-            ...state.questions,
-            [item?.reqId]: {
-                ...item,
-                status: "in-progress"
-            }
-        }))
-
-        const params = { cId: _item?.id, type: _item?.type, stepId: task?._id, task, currentRunningQuestion: _item, parentMsgId: _item?.reqId, isTask: true }
->>>>>>> 26d8b700c3e9492c21b06935fc73ef768f499999
 
         const payload = {
             "question": task?.utterance,
             "boardId": activeBoardId,
             "parentId": _item?.messageId,
             "context": {
-<<<<<<< HEAD
               "intentId": task?.intents?.[0]?.id,
               "agentId": task?.intents?.[0]?.agentId,
               "stepId": task?._id
@@ -62,26 +41,12 @@ const MultiIntentExecution = (props) => {
           }
 
         InitiateChatConversationAction({params, payload, multiIntentExecution: true })
-=======
-                "intentId": task?.intents?.[0]?.id,
-                "agentId": task?.intents?.[0]?.agentId,
-                "stepId": task?._id
-            }
-        }
-
-        InitiateChatConversationAction({ params, payload, multiIntentExecution: true })
->>>>>>> 26d8b700c3e9492c21b06935fc73ef768f499999
     }
 
     const runNextTask = (index, status, question, item) => {
         const nextTaskIndex = index + 1;
-<<<<<<< HEAD
         
         if([undefined, null, '', 'draft', 'in-progress', 'threadRunning'].includes(status)){
-=======
-
-        if ([undefined, null, '', 'draft', 'in-progress', 'threadRunning'].includes(status)) {
->>>>>>> 26d8b700c3e9492c21b06935fc73ef768f499999
             return;
         }
         else {
@@ -93,13 +58,8 @@ const MultiIntentExecution = (props) => {
         state = store.getState().global;
         const _questions = cloneDeep(state?.questions);
         let currentExecutionPipeline = cloneDeep(_questions[item?.id]?.executionPipeline);
-<<<<<<< HEAD
         
         if(isEmpty(_questions[item?.id]?.savedExecutionPipeline)){
-=======
-
-        if (isEmpty(_questions[item?.id]?.savedExecutionPipeline)) {
->>>>>>> 26d8b700c3e9492c21b06935fc73ef768f499999
             _questions[item?.id].savedExecutionPipeline = currentExecutionPipeline;
         } else {
             currentExecutionPipeline = _questions[item?.id].savedExecutionPipeline;
@@ -109,13 +69,8 @@ const MultiIntentExecution = (props) => {
             _id: index, // temp id, it will get replaced with backend id later
             utterance: '',
             headerMsg: 'Oh, it seems I have missed a step. My apologies. Please describe and add the steps.',
-<<<<<<< HEAD
             step: `Step ${index+1}`,
             type: 'addTask' 
-=======
-            step: `Step ${index + 1}`,
-            type: 'addTask'
->>>>>>> 26d8b700c3e9492c21b06935fc73ef768f499999
         }
 
         _questions[item?.id].executionPipeline.splice(index, 0, newTask);
@@ -131,15 +86,9 @@ const MultiIntentExecution = (props) => {
             action: task?.type == 'addTask' ? 'add' : 'update',
         }
 
-<<<<<<< HEAD
         if(task?._id > 0 && task?.type === 'addTask'){
             payload.stepId = executionPipeline[task?._id - 1]?._id;
         } else if(task?.type === 'modify'){
-=======
-        if (task?._id > 0 && task?.type === 'addTask') {
-            payload.stepId = executionPipeline[task?._id - 1]?._id;
-        } else if (task?.type === 'modify') {
->>>>>>> 26d8b700c3e9492c21b06935fc73ef768f499999
             payload.stepId = task?._id;
         }
 
@@ -148,24 +97,14 @@ const MultiIntentExecution = (props) => {
             boardId: state?.activeBoardId,
         }
 
-<<<<<<< HEAD
         const response = await store.dispatch(executionPipelineActions({params, payload}))
         
         if(!!response?.payload){
-=======
-        const response = await store.dispatch(executionPipelineActions({ params, payload }))
-
-        if (!!response?.payload) {
->>>>>>> 26d8b700c3e9492c21b06935fc73ef768f499999
             _questions[item?.id].executionPipeline = response?.payload?.executionPipeline;
             _questions[item?.id].savedExecutionPipeline = response?.payload?.executionPipeline;
             store.dispatch(updateChatData(_questions))
         }
-<<<<<<< HEAD
         
-=======
-
->>>>>>> 26d8b700c3e9492c21b06935fc73ef768f499999
         return response;
     }
 
@@ -190,24 +129,14 @@ const MultiIntentExecution = (props) => {
             stepId: task?._id,
         }
 
-<<<<<<< HEAD
         const response = await store.dispatch(executionPipelineActions({params, payload}))
 
         if(!!response?.payload){
-=======
-        const response = await store.dispatch(executionPipelineActions({ params, payload }))
-
-        if (!!response?.payload) {
->>>>>>> 26d8b700c3e9492c21b06935fc73ef768f499999
             _questions[item?.id].executionPipeline = response?.payload?.executionPipeline;
             _questions[item?.id].savedExecutionPipeline = response?.payload?.executionPipeline;
             store.dispatch(updateChatData(_questions))
         }
-<<<<<<< HEAD
         
-=======
-
->>>>>>> 26d8b700c3e9492c21b06935fc73ef768f499999
         return response;
     }
 
@@ -216,21 +145,13 @@ const MultiIntentExecution = (props) => {
         const _questions = cloneDeep(state?.questions);
         let currentExecutionPipeline = cloneDeep(_questions[item?.id]?.executionPipeline);
 
-<<<<<<< HEAD
         if(isEmpty(_questions[item?.reqId]?.savedExecutionPipeline)){
-=======
-        if (isEmpty(_questions[item?.reqId]?.savedExecutionPipeline)) {
->>>>>>> 26d8b700c3e9492c21b06935fc73ef768f499999
             _questions[item?.reqId].savedExecutionPipeline = currentExecutionPipeline;
         } else {
             currentExecutionPipeline = _questions[item?.reqId].savedExecutionPipeline;
         }
 
-<<<<<<< HEAD
         let _task = {...task, type: 'modify', step: `Step ${index+1}`}
-=======
-        let _task = { ...task, type: 'modify', step: `Step ${index + 1}` }
->>>>>>> 26d8b700c3e9492c21b06935fc73ef768f499999
 
         currentExecutionPipeline.splice(index, 1, _task);
 
@@ -325,13 +246,7 @@ const MultiIntentExecution = (props) => {
 }
 
 export default MultiIntentExecution;
-<<<<<<< HEAD
 export { 
     MultiIntentExecution
 };
 
-=======
-export {
-    MultiIntentExecution
-};
->>>>>>> 26d8b700c3e9492c21b06935fc73ef768f499999

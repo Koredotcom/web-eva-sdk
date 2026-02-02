@@ -8,21 +8,19 @@ export function render(data) {
 			.map((choice) => {
 				const value = choice.value || choice.name;
 				const label = choice.label || choice.name;
-				return `<sl-option value="${value}">${label}</sl-option>`;
+				return `<option value="${value}">${label}</option>`;
 			})
 			.join("");
 
 	const renderSelects = ambiguous
 		.map((el, index) => {
 			const multiple = el?.value?.multi ? "multiple" : "";
-			const checkedChoice = el?.value?.choices?.find(choice => choice.checked);
-			const checkedValue = checkedChoice ? (checkedChoice.value || checkedChoice.name) : '';
 			return `
 				<div class="drpdwnboxclass">
 					<div class="headerdropdowns" title="Tooltip for ${el.label}">${el.label}</div>
-					<sl-select id="resolve-ambiguity-select-${data?.id}" ${multiple} value="${checkedValue}">
+					<select id="resolve-ambiguity-select-${data?.id}" ${multiple}>
 						${renderOptions(el)}
-					</sl-select>
+					</select>
 				</div>
 			`;
 		})
@@ -35,8 +33,8 @@ export function render(data) {
 				<div class="maildrpbox" id="ambquityDropdown">
 					${renderSelects}
 					<div class="amb-action-box" id="resolve-ambiguity-action-box-${data?.id}">
-						<sl-button size="medium" variant="default" class="secondary-button" id="resolve-ambiguity-cancel-btn-${data?.id}">Cancel</sl-button>
-						<sl-button size="medium" variant="primary" class="primary-button-black" id="resolve-ambiguity-confirm-btn-${data?.id}">Confirm</sl-button>
+						<button class="amb-cancel-btn" id="resolve-ambiguity-cancel-btn-${data?.id}">Cancel</button>
+						<button class="amb-confirm-btn" id="resolve-ambiguity-confirm-btn-${data?.id}">Confirm</button>
 					</div>
 				</div>
 			</div>

@@ -1,7 +1,7 @@
 import MultiResponse from "./MultiResponse"
 
-const RemoveUploadedGPTFile = (event, fileKey, questionId = null, mediaName = null) => {
-    return MultiResponse().removeFile(event, fileKey, mediaName, questionId)
+const RemoveUploadedGPTFile = (item, index, mediaName) => {
+    return MultiResponse().removeFile(item, index, mediaName)
 }
 
 export default RemoveUploadedGPTFile;

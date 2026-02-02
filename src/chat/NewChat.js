@@ -2,8 +2,7 @@ import { abortAdvanceSearch } from "../redux/actions/global.action"
 import { setActiveBoardId, setGptUploadedFiles, updateChatData, setSelectedContext, setCurrentQuestion, setErrorState, setQuickActions } from "../redux/globalSlice"
 import store from "../redux/store"
 
-const NewChat = () => {    
-    abortAdvanceSearch()    
+const NewChat = () => {
     // Set board id as null
     abortAdvanceSearch()
     store.dispatch(setActiveBoardId(null))
@@ -12,7 +11,7 @@ const NewChat = () => {
     store.dispatch(setSelectedContext({}))
     store.dispatch(setCurrentQuestion({}))
     store.dispatch(setErrorState([]))
-    store.dispatch(setQuickActions([]))
+    store.dispatch(setQuickActions([]));
 
 }
 
