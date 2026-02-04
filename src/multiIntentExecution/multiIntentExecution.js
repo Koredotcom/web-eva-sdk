@@ -32,42 +32,77 @@ const MultiIntentExecution = (props) => {
         return item?.reqId || item?.id;
     };
 
-    const runTask = (item, index = 0, q) => {
-        state = store.getState().global;
-        const {activeBoardId} = state;  
-        if(!!q){
-            let updatedQuestion = cloneDeep(state.questions);
-            item = Object.values(updatedQuestion).find(qId => (updatedQuestion[qId?.parentMsgId]?.executingActionId ===  q?.id))
-            item = updatedQuestion[item?.parentMsgId] || updatedQuestion[q?.parentMsgId] || updatedQuestion[state?.questions[q?.id]?.parentMsgId]
-          }
-        let _item = cloneDeep(item);
-        let task = _item?.executionPipeline?.[index];
-        task.stepIndex = index;
-        store.dispatch(updateChatData({
-          ...state.questions,
-          [item?.reqId]: {
-            ...item,
-            status: q?.status || "in-progress"
-          }
-        }))
+   const runTask = (item, index = 0, q) => {
+        const globalState = store.getState().global;
+        const { activeBoardId } = globalState;
 
-      const params = { cId: _item?.id, type: _item?.type, stepId: task?._id, task, currentRunningQuestion: _item, parentMsgId: _item?.reqId, isTask: true}
+        const newItem = cloneDeep(item);
+
+        if (q) {
+            const updatedQuestion = cloneDeep(globalState.questions);
+            item = Object.values(updatedQuestion).find(
+            qId => updatedQuestion[qId?.parentMsgId]?.executingActionId === q?.id
+            );
+
+            if (!item) {
+            item =
+                updatedQuestion[newItem?.parentMsgId] ||
+                updatedQuestion[q?.parentMsgId] ||
+                updatedQuestion[globalState?.questions[q?.id]?.parentMsgId];
+            }
+        }
+
+        const _item = cloneDeep(item);
+
+        const sourceTask =
+            _item?.executionPipeline?.[index] ??
+            globalState.questions?.[newItem?.parentMsgId]?.executionPipeline?.[index];
+
+        if (!sourceTask) return;
+        const task = {
+            ...sourceTask,
+            stepIndex: index
+        };
+
+        store.dispatch(
+            updateChatData({
+            ...globalState.questions,
+            [item?.reqId]: {
+                ...item,
+                status: q?.status || "in-progress"
+            }
+            })
+        );
+
+        const params = {
+            cId: _item?.id,
+            type: _item?.type,
+            stepId: task?._id,
+            task,
+            currentRunningQuestion: _item,
+            parentMsgId: _item?.reqId,
+            isTask: true
+        };
 
         const payload = {
-            "question": task?.utterance,
-            "boardId": activeBoardId,
-            "parentId": _item?.messageId,
-            "context": {
-              "intentId": task?.intents?.[0]?.id,
-              "agentId": task?.intents?.[0]?.agentId,
-              "stepId": task?._id
+            question: task?.utterance,
+            boardId: activeBoardId,
+            parentId: _item?.messageId,
+            context: {
+            intentId: task?.intents?.[0]?.id,
+            agentId: task?.intents?.[0]?.agentId,
+            stepId: task?._id
             }
-          }
+        };
 
-        InitiateChatConversationAction({params, payload, multiIntentExecution: true })
-    }
+        InitiateChatConversationAction({
+            params,
+            payload,
+            multiIntentExecution: true
+        });
+};
 
-    const runNextTask = (index, status, question, item) => {
+    const runNextTask = (index, status, question, item = question) => {
         const nextTaskIndex = index + 1;
         
         if([undefined, null, '', 'draft', 'in-progress', 'threadRunning'].includes(status)){

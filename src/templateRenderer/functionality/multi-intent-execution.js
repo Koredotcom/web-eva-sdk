@@ -31,7 +31,7 @@ const multiIntentExecutionFunc = (item) => {
           }
         }))
 
-      const params = { cId: _item?.id, type: _item?.type, stepId: task?._id, task, currentRunningQuestion: _item, parentMsgId: _item?.reqId}
+      const params = { cId: _item?.id, type: _item?.type, stepId: task?._id, task, currentRunningQuestion: _item, parentMsgId: _item?.reqId , reqId : _item?.id}
 
         const payload = {
             "question": task?.utterance,
@@ -55,32 +55,43 @@ const multiIntentExecutionFunc = (item) => {
         else runTask(nextTaskIndex , question)
       }
 
-    const addNewTask = (index, task) => {
+   const addNewTask = (index, task, item) => {
         const _questions = cloneDeep(state?.questions);
-        let currentExecutionPipeline = cloneDeep(_questions[item?.reqId]?.executionPipeline);
+        const questionId = item?.reqId || item?.id;
+        const question = _questions[questionId] || {};
+        const hasAddTask = question?.executionPipeline?.some(el => el?.type === "addTask")
+        let hasEditTask = question?.executionPipeline?.find(el => el?.type === "modify")
+        if(hasEditTask){
+            hasEditTask.type = "draft"
+        }
+        let currentExecutionPipeline = question?.executionPipeline?.filter(el => el?.type !== "addTask") || item?.executionPipeline?.filter(el => el?.type !== "addTask") || []
         
-
-        if(isEmpty(_questions[item?.reqId]?.savedExecutionPipeline)){
-          _questions[item?.reqId].savedExecutionPipeline = currentExecutionPipeline;
-        }else{
-          currentExecutionPipeline = _questions[item?.reqId].savedExecutionPipeline;
+        if (isEmpty(question?.savedExecutionPipeline)) {
+          _questions[questionId] = {
+            ...question,
+            savedExecutionPipeline: currentExecutionPipeline
+          };
+        } else {
+          currentExecutionPipeline = question?.savedExecutionPipeline;
         }
 
         let newTask = {
           _id: index, // temp id, it will get replaced with backend id later
           utterance: '',
           headerMsg: 'Oh, it seems I have missed a step. My apologies. Please describe and add the steps.',
-          step: `Step ${index+1}`,
+          step: `Step ${hasAddTask ? index : index+1}`,
           type: 'addTask' 
         }
 
-        const updatedPipeline = [..._questions[item?.reqId].executionPipeline];
+        const updatedPipeline = Array.isArray(currentExecutionPipeline)
+          ? [...currentExecutionPipeline]
+          : [];
         updatedPipeline.splice(index, 0, newTask);
         
         const updatedQuestions = {
           ..._questions,
-          [item?.reqId]: { 
-            ..._questions[item?.reqId], 
+          [questionId]: { 
+            ..._questions[questionId], 
             executionPipeline: updatedPipeline 
           }
         };
@@ -145,8 +156,10 @@ const multiIntentExecutionFunc = (item) => {
         const _questions = cloneDeep(state?.questions);
         /*remove type key from the savedExecutionPipeline of that particular task which is having _id as task?._id*/
       const taskIndex = _questions[item?.reqId].savedExecutionPipeline?.findIndex(task => task?._id === taskId);
+      if(taskIndex !== -1){
         const {type, ...rest} = _questions[item?.reqId].savedExecutionPipeline?.[taskIndex];  
-        _questions[item?.reqId].savedExecutionPipeline[taskIndex] = rest;      
+        _questions[item?.reqId].savedExecutionPipeline[taskIndex] = rest;  
+      }    
 
         const updatedQuestions = {
           ..._questions,
@@ -683,7 +696,7 @@ const multiIntentExecutionFunc = (item) => {
 
         if(addNewTaskBtn && !addNewTaskBtn.eventListenerAdded){
             addNewTaskBtn.addEventListener("click", () => {
-                addNewTask(index, task);
+                addNewTask(index, task , item);
             });
             addNewTaskBtn.eventListenerAdded = true;
         }
