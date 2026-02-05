@@ -7,6 +7,7 @@ import { advanceSearch } from "../../redux/actions/global.action";
 import { constructQuestionPostCall } from "../chat-utils";
 import { setBotInstance, getBotInstance } from "./botSDKManager";
 import { setupTemplates } from "../../templateRenderer/templates/bot-conversation";
+import { MultiIntentExecution } from "..";
 
 
 const BotConversation = (args) => {
@@ -38,14 +39,21 @@ const BotConversation = (args) => {
                 if(state?.enableDebugging){
                     console.log(msg, renderTxt)
                 }
+               const cId = state?.currentQuestion?.cId ?? state?.currentQuestion?.reqId;
+
                 submitBotResponse({
-                    "input": msg,
-                    "cId": state?.currentQuestion?.reqId,
-                    "messageId": Object.values(store.getState().global?.currentQuestion?.botConversation)?.find(c => c.hasOwnProperty('template_html') && c.status === "in-progress")?.messageId,
-                    "context": state?.currentQuestion?.context,
-                    "source": "bot",
-                    "renderMsgPayload": renderTxt?.renderMsg
-                })
+                    input: msg,
+                    cId,
+                    messageId: Object.values(
+                        store.getState().global?.currentQuestion?.botConversation
+                    )?.find(
+                        c => c.hasOwnProperty("template_html") && c.status === "in-progress"
+                    )?.messageId,
+                    context: state?.currentQuestion?.context,
+                    source: "bot",
+                    renderMsgPayload: renderTxt?.renderMsg
+                });
+
             }
         }
     }
@@ -75,7 +83,7 @@ const BotConversation = (args) => {
                 return null;
             }
             return Object.keys(questions).find(
-                (key) => questions[key]?.reqId === reqId
+                (key) => questions[key]?.messageId === reqId
             );
         };
         if (isEmpty(questions)) {
@@ -134,10 +142,22 @@ const BotConversation = (args) => {
             }            
             const questionKey = resolveQuestionKeyByMessageId(detail?.message?.pId)
             question = questions[detail?.message?.pId] /*in order to update the already existing messages of botConversation, we will depend on pId */
+            const check = Object.values(questions)?.find(el => el?.messageId === detail?.message?.pId);
             if(question){//found the question with pId, so need to update the conversation present in botConversation
                 question.botConversation[detail?.message?.messageId] = detail?.message
-            }else{
-                const fallbackKey = resolveQuestionKeyByReqId(detail?.message?.reqId)
+                
+            }else if(check){
+                const currentQuestion = store.getState().global.currentQuestion;
+               if(currentQuestion?.isTask) {
+                   const stepIndex = currentQuestion?.stepIndex;
+                   setTimeout(() => {
+                       MultiIntentExecution().runNextTask(stepIndex, detail?.message?.status , currentQuestion)
+                   }, 1000);
+               }
+
+            }
+            else{
+                const fallbackKey = resolveQuestionKeyByReqId(detail?.message?.pId)
                 question = questions[fallbackKey] /*to update the parent message itself, */
                 if(!question){
                     if(state?.enableDebugging){
@@ -173,8 +193,11 @@ const BotConversation = (args) => {
         //     questions[question?.id] = question
         // }else{
         //     questions[question?.reqId] = question
-        // }        
-        questions[question?.reqId] = question
+        // }  
+         const currentQuestion = store.getState().global.currentQuestion;
+         if(!currentQuestion?.isTask) {    
+             questions[question?.reqId] = question
+         }
         store.dispatch(updateChatData(questions))        
         setupTemplates(question.botConversation);
     }
@@ -185,47 +208,44 @@ const BotConversation = (args) => {
 
 
     const submitBotResponse = async (data) => {
-        /**
-         * needed payload
-         payload = {
-         "question": "nothing but used entered answer",
-         "context": "current question's context",
-         "messageId": "current bot question's messageId"
-         "source": "bot"
-         }
-         */
-        state = store.getState().global
+        const globalState = store.getState().global;
+
         const params = {
-            "reqId": data?.cId, //use reqId
-            "from": "botAgent"
+            reqId: data?.cId,
+            from: "botAgent"
+        };
+
+        const payload = {
+            question: data?.input,
+            context: data?.context,
+            messageId: data?.messageId,
+            source: "bot"
+        };
+
+        if (data?.renderMsgPayload) {
+            payload.renderMsgPayload = data.renderMsgPayload;
         }
-        let payload = {
-            "question": data?.input,
-            "context": data?.context,
-            "messageId": data?.messageId,
-            "source": "bot"
+
+        if (!isEmpty(globalState?.customData)) {
+            payload.customData = globalState.customData;
         }
-        if (data?.renderMsgPayload){
-            payload.renderMsgPayload = data?.renderMsgPayload 
+
+        if (globalState?.enableDebugging) {
+            console.log("params:", params);
+            console.log("payload:", payload);
         }
-        if (!isEmpty(state.customData)) {
-            payload.customData = state.customData
-            console.log("custom data in getBotConversation line 165 : ", payload.customData)
-        }
-        if(state?.enableDebugging){
-            console.log("state data: ", state)        
-        }
-        /*need to add a loading state for the current question */
-        console.log("custom data in getBotConversation line 167 : ", payload.customData)
-        addLoadingStateToCurrentQuestion(data?.cId, data?.messageId, data?.input)
-        if(state?.enableDebugging){
-            console.log("params data: ", data)
-        }
-        console.log("custom data in getBotConversation line 171 : ", payload?.customData)
-        const res = await store.dispatch(advanceSearch({ params, payload, userId: state?.profile?.data?.id || data?.userId}))
-        console.log("custom data in getBotConversation line 173 : ", payload?.customData)
-        constructQuestionPostCall(res, data?.cId)
-    }
+
+        const res = await store.dispatch(
+            advanceSearch({
+            params,
+            payload,
+            userId: globalState?.profile?.data?.id || data?.userId
+            })
+        );
+
+        constructQuestionPostCall(res, data?.cId);
+};
+
 
     const addLoadingStateToCurrentQuestion = (quesReqId, messageId, input) => {
         let reqId = quesReqId
