@@ -297,6 +297,7 @@
   font-weight: 600;
   color: #111827;
 }
+
 .eva-sdk-chatbot-body {
   flex: 1;
   min-height: 0;
@@ -340,5 +341,152 @@
 
   .eva-sdk-chatbot-header {
     border-radius: 0;
+  }  
+}
+
+
+/* Chat History sidebar */
+.eva-sdk-chatbot-history-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  background: rgba(15, 23, 42, 0.2);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+  overflow: hidden;
+  border-radius: 16px;
+
+  &.eva-sdk-chatbot-history-overlay--open {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .eva-sdk-chatbot-history-sidebar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: min(50%, 92vw);
+    background: #ffffff;
+    box-shadow: 0 24px 60px rgba(15, 23, 42, 0.22);
+    transform: translateX(-100%);
+    transition: transform 0.2s ease;
+    display: flex;
+    flex-direction: column;
+  }
+  .eva-sdk-chatbot-history-sidebar--open {
+    transform: translateX(0);
+  }
+  .eva-sdk-chatbot-history-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+    background: #f8f9fb;
+    flex-shrink: 0;
+  }
+  
+  .eva-sdk-chatbot-history-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #111827;
+  }
+  
+  .eva-sdk-chatbot-history-close {
+    border: 1px solid #d0d5dd;
+    background: #fff;
+    font-size: 20px;
+    line-height: 1;
+    cursor: pointer;
+    color: #111827;
+    transition: all 0.2s ease;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 100%;
+  
+    &:hover {
+      color: #0f5bf0;
+    }
+  }
+  .eva-sdk-chatbot-history-body {
+    padding: 12px 16px 12px 0;
+    overflow: auto;
+    color: #344054;
+    font-size: 14px;
+    overflow-y: auto;
+    flex-grow: 1;
+    min-height: 0;
+
+    .eva-sdk-chatbot-history-content {
+      height: 100%;
+
+      .eva-sdk-chatbot-history-list {
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+
+        .history-item-group {
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+
+          .history-item-group-title {
+            font-family: Inter;
+            font-size: 12px;
+            font-style: normal;
+            font-weight: 400;
+            line-height: 18px;
+            letter-spacing: 0em;
+            color: #70707B;
+            padding-left: 16px;
+          }
+          .history-item-group-items {
+            margin: 0;
+            padding: 0 0 0 8px;
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+
+            .history-item-group-item {
+              list-style-type: none;
+              display: flex;
+              padding: 8px 12px 8px 16px;
+              align-items: center;
+              justify-content: space-between;
+              gap: 8px;
+              align-self: stretch;
+              border-radius: 12px;
+              height: 36px;
+              cursor: pointer;
+              transition: background-color .3s ease;
+              font-family: Inter;
+              font-size: 14px;
+              font-style: normal;
+              font-weight: 400;
+              line-height: 20px;
+              letter-spacing: 0em;
+              position: relative;
+              white-space: nowrap;
+              overflow: hidden;
+              text-overflow: ellipsis;
+              max-width: 100%;
+              &:hover {
+                background: rgba(229, 229, 229, .25);
+              }
+              .history-item-group-item-title {
+                max-width: 100%;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+              }
+            }
+          }
+        }
+      }
+    }
   }
 }
