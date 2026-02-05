@@ -786,25 +786,12 @@ const multiIntentExecutionFunc = (item) => {
          }
 
          if (doneBtn && !doneBtn.eventListenerAdded) {
-<<<<<<< HEAD
            doneBtn.addEventListener("click", (e) => {
              if (doneBtn.disabled) {
                e.preventDefault();
                return;
              }
              saveTask(index, task, item?.executionPipeline);
-=======
-           doneBtn.addEventListener("click", async () => {
-             const utteranceInput = document.getElementById(`utterance-${item?.id}-${index}`);
-             const response = await saveTask(index, task, item?.executionPipeline);
-             if (response?.payload && utteranceInput) {
-               const utteranceDiv = document.createElement("div");
-               utteranceDiv.className = "utterance";
-               utteranceDiv.id = `utterance-${item?.id}-${index}`;
-               utteranceDiv.textContent = utteranceInput.value;
-               utteranceInput.replaceWith(utteranceDiv);
-             }
->>>>>>> 40e0ab2... agentic flow implementation
            });
            doneBtn.eventListenerAdded = true;
          }
