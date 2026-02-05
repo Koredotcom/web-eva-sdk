@@ -7,6 +7,7 @@ import "./ChatInterface.scss"
 import Announcements from "../announcements";
 import Composebar from "./Composebar";
 import { AnnouncementsInterface } from "../../Announcements";
+import Agents from "../agents";
 
 
 
@@ -94,8 +95,8 @@ const ChatInterfaceDemo = () => {
           </div>
           {/* <History /> */}
           {/* <Notifications /> */}
-          {/* <Agents />  */}
-          <Announcements />
+          <Agents /> 
+          {/* <Announcements /> */}
         </div>
       </div>
       <div className="chatInterfaceSec">
