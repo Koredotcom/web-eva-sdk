@@ -486,7 +486,54 @@
             }
           }
         }
+        .history-loadmore {
+          padding: 8px 16px;
+          .loadmore-btn {
+            width: 100%;
+            padding: 8px 12px;
+            font-size: 14px;
+            color: #0f5bf0;
+            background: transparent;
+            border: 1px solid rgba(15, 91, 240, 0.4);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            &:hover {
+              background: rgba(15, 91, 240, 0.08);
+            }
+          }
+        }
+      }
+
+      .eva-sdk-chatbot-history-loader {
+        display: none;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 16px;
+        font-size: 14px;
+        color: #70707B;
+        &.eva-sdk-chatbot-history-loader--visible {
+          display: flex;
+        }
+        .eva-sdk-chatbot-history-loader-spinner {
+          width: 20px;
+          height: 20px;
+          border: 2px solid rgba(15, 91, 240, 0.2);
+          border-top-color: #0f5bf0;
+          border-radius: 50%;
+          animation: eva-sdk-chatbot-history-spin 0.7s linear infinite;
+        }
+        .eva-sdk-chatbot-history-loader-text {
+          font-family: Inter, sans-serif;
+        }
       }
     }
+  }
+}
+
+@keyframes eva-sdk-chatbot-history-spin {
+  to {
+    transform: rotate(360deg);
   }
 }

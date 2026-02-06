@@ -2,6 +2,7 @@ import { initializeSDKRuntime } from "../sdkRuntime";
 import { initializeSDK } from "../config";
 import NewChat from "../chat/NewChat";
 import { unHideRecentAgentsDiv } from "../LandingPageRecentAgents";
+import { createHistorySidebar, initHistoryList } from "./chatbotHistory";
 
 const DEFAULT_CONTAINER_ID = "eva-sdk-chatbot-container";
 const DEFAULT_TITLE = "Eva Assistant";
@@ -23,6 +24,7 @@ const state = {
     historyBody: null,
     historyContent: null,
   },
+  historyUnsubscribe: null,
 };
 
 const ensureDomAvailable = () =>
@@ -118,96 +120,6 @@ const createPanel = (titleText) => {
   };
 };
 
-const createHistorySidebar = () => {
-  const overlay = document.createElement("div");
-  overlay.className = "eva-sdk-chatbot-history-overlay";
-  overlay.setAttribute("aria-hidden", "true");
-
-  const sidebar = document.createElement("aside");
-  sidebar.className = "eva-sdk-chatbot-history-sidebar";
-  sidebar.setAttribute("role", "dialog");
-  sidebar.setAttribute("aria-label", "Chat History");
-  sidebar.setAttribute("aria-modal", "true");
-
-  const header = document.createElement("div");
-  header.className = "eva-sdk-chatbot-history-header";
-
-  const title = document.createElement("div");
-  title.className = "eva-sdk-chatbot-history-title";
-  title.textContent = "Chat History";
-
-  const closeButton = document.createElement("button");
-  closeButton.type = "button";
-  closeButton.className = "eva-sdk-chatbot-history-close";
-  closeButton.setAttribute("aria-label", "Close chat history");
-  closeButton.innerHTML = "×";
-
-  header.appendChild(title);
-  header.appendChild(closeButton);
-
-  const body = document.createElement("div");
-  body.className = "eva-sdk-chatbot-history-body";
-
-  const content = document.createElement("div");
-  content.className = "eva-sdk-chatbot-history-content";
-
-  // Sample structured HTML (can be replaced via setChatHistoryContent)
-  content.innerHTML = `
-    <div class="eva-sdk-chatbot-history-list">
-      <div class='history-item-group'>
-        <div class='history-item-group-title'>Last 7 days</div>
-        <ul class='history-item-group-items'>
-          <li class='history-item-group-item'>
-            <div class='history-item-group-item-title'>Order status</div>
-          </li>
-          <li class='history-item-group-item'>
-            <div class='history-item-group-item-title'>Order status</div>
-          </li>
-          <li class='history-item-group-item'>
-            <div class='history-item-group-item-title'>Order status</div>
-          </li>
-          <li class='history-item-group-item'>
-            <div class='history-item-group-item-title'>Order status</div>
-          </li>
-          <li class='history-item-group-item'>
-            <div class='history-item-group-item-title'>Order status</div>
-          </li>
-        </ul>
-      </div>
-      <div class='history-item-group'>
-        <div class='history-item-group-title'>Last 7 days</div>
-        <ul class='history-item-group-items'>
-          <li class='history-item-group-item'>
-            <div class='history-item-group-item-title'>Order status</div>
-          </li>
-          <li class='history-item-group-item'>
-            <div class='history-item-group-item-title'>Order status</div>
-          </li>
-          <li class='history-item-group-item'>
-            <div class='history-item-group-item-title'>Order status</div>
-          </li>
-          <li class='history-item-group-item'>
-            <div class='history-item-group-item-title'>Order status</div>
-          </li>
-          <li class='history-item-group-item'>
-            <div class='history-item-group-item-title'>Lorem ipsum dolor sit amet Lorem ipsum dolor sit amet Lorem ipsum dolor sit amet Lorem ipsum dolor sit amet</div>
-          </li>
-        </ul>
-      </div>
-    </div>
-  `;
-  body.appendChild(content);
-
-  sidebar.appendChild(header);
-  sidebar.appendChild(body);
-  overlay.appendChild(sidebar);
-
-  // Clicking outside closes; clicking inside should not.
-  sidebar.addEventListener("click", (e) => e.stopPropagation());
-
-  return { overlay, sidebar, closeButton, body, content };
-};
-
 const ensureElements = (config = {}) => {
   if (state.elements.button && state.elements.panel) {
     return;
@@ -251,6 +163,14 @@ const ensureElements = (config = {}) => {
     historyBody,
     historyContent,
   };
+
+  const listContainer = historyContent?.querySelector(".eva-sdk-chatbot-history-list");
+  if (listContainer && !state.historyUnsubscribe) {
+    const result = initHistoryList(listContainer, {
+      onItemSelect: () => closeHistory(),
+    });
+    if (result) state.historyUnsubscribe = result.unsubscribe;
+  }
 
   button.addEventListener("click", () => {
     if (state.isOpen) {
