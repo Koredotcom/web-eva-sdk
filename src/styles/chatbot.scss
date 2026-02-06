@@ -414,15 +414,15 @@
   }
   .eva-sdk-chatbot-history-body {
     padding: 12px 16px 12px 0;
-    overflow: auto;
+    overflow-y: auto;
+    overflow-x: hidden;
     color: #344054;
     font-size: 14px;
-    overflow-y: auto;
     flex-grow: 1;
     min-height: 0;
 
     .eva-sdk-chatbot-history-content {
-      height: 100%;
+      /* No fixed height so content grows with list and body shows scrollbar when needed */
 
       .eva-sdk-chatbot-history-list {
         display: flex;
@@ -477,11 +477,62 @@
               &:hover {
                 background: rgba(229, 229, 229, .25);
               }
+              .history-item-group-item-row {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                min-width: 0;
+                flex: 1;
+              }
               .history-item-group-item-title {
-                max-width: 100%;
+                min-width: 0;
+                flex: 1;
                 white-space: nowrap;
                 overflow: hidden;
                 text-overflow: ellipsis;
+              }
+              .eva-sdk-history-item-title-input {
+                min-width: 0;
+                flex: 1;
+                font-family: Inter;
+                font-size: 14px;
+                font-weight: 400;
+                line-height: 20px;
+                color: #111827;
+                border: 1px solid #0f5bf0;
+                border-radius: 6px;
+                padding: 4px 8px;
+                background: #fff;
+                outline: none;
+              }
+              .eva-sdk-history-item-menu-trigger {
+                flex-shrink: 0;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                width: 28px;
+                height: 28px;
+                padding: 0;
+                border: none;
+                border-radius: 6px;
+                background: transparent;
+                cursor: pointer;
+                opacity: 0;
+                transition: opacity 0.2s ease, background-color 0.2s ease;
+                .eva-sdk-history-item-menu-icon {
+                  display: block;
+                  pointer-events: none;
+                }
+                &:hover {
+                  background: rgba(0, 0, 0, 0.06);
+                }
+                &:focus-visible {
+                  outline: 2px solid rgba(15, 91, 240, 0.5);
+                  outline-offset: 1px;
+                }
+              }
+              &:hover .eva-sdk-history-item-menu-trigger {
+                opacity: 1;
               }
             }
           }
@@ -536,4 +587,44 @@
   to {
     transform: rotate(360deg);
   }
+}
+
+/* History item dropdown menu - hoist so panel is not clipped by sidebar overflow */
+.eva-sdk-history-item-dropdown {
+  flex-shrink: 0;
+  display: inline-flex;
+}
+.eva-sdk-history-item-dropdown::part(panel) {
+  z-index: 10000;
+  padding: 4px 0;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  min-width: 120px;
+  background: #fff;
+  overflow: visible;
+}
+.eva-sdk-history-item-dropdown sl-menu.eva-sdk-history-item-menu {
+  border: none;
+  background: #fff;
+  padding: 4px 0;
+  display: block;
+  min-width: 120px;
+}
+.eva-sdk-history-item-dropdown sl-menu-item {
+  font-family: Inter;
+  font-size: 14px;
+  cursor: pointer;
+  color: #111827;
+  padding: 8px 12px;
+  display: block;
+  white-space: nowrap;
+}
+.eva-sdk-history-item-dropdown sl-menu-item:hover {
+  background: #f3f4f6;
+}
+/* Ensure Shoelace menu items are visible (they use shadow DOM parts) */
+.eva-sdk-history-item-dropdown sl-menu-item::part(base) {
+  color: #111827;
+  padding: 8px 12px;
 }

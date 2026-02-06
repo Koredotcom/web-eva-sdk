@@ -228,6 +228,16 @@ export function EllipsisVertical({ size = config.size, color = config.color, cla
   `
 }
 
+export function EllipsisHorizontal({ size = config.size, color = config.color, className = '' } = {}) {
+  return `
+    <svg width="${size}" height="${size}" viewBox="0 0 14 3" fill="none" xmlns="http://www.w3.org/2000/svg" class="wa-EllipsisHorizontal ${className}">
+      <path d="M2.02222 1.46667C2.02222 2.15396 1.46506 2.71112 0.777771 2.71112C0.090485 2.71112 -0.466675 2.15396 -0.466675 1.46667C-0.466675 0.779386 0.090485 0.222229 0.777771 0.222229C1.46506 0.222229 2.02222 0.779386 2.02222 1.46667Z" fill="${color}"/>
+      <path d="M6.99999 1.46667C6.99999 2.15396 6.44284 2.71112 5.75555 2.71112C5.06826 2.71112 4.51111 2.15396 4.51111 1.46667C4.51111 0.779386 5.06826 0.222229 5.75555 0.222229C6.44284 0.222229 6.99999 0.779386 6.99999 1.46667Z" fill="${color}"/>
+      <path d="M11.9778 1.46667C11.9778 2.15396 11.4206 2.71112 10.7333 2.71112C10.046 2.71112 9.48889 2.15396 9.48889 1.46667C9.48889 0.779386 10.046 0.222229 10.7333 0.222229C11.4206 0.222229 11.9778 0.779386 11.9778 1.46667Z" fill="${color}"/>
+    </svg>
+  `
+}
+
 export function Gmail({ size = config.size, color = config.color, className = '' }) {
   return `
       <svg width="${size}" height="${size}" className="wa-Gmail ${className}" viewBox="0 0 12 9" fill="none" xmlns="http://www.w3.org/2000/svg">
