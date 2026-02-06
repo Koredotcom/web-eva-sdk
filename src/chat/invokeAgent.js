@@ -7,6 +7,10 @@ const InvokeAgent = (agent) => {
         question: `How can the "${agent?.name}" agent assist me`,
         source: agent?.id
     }
+    if(!agent?.hasOwnProperty('sampleQuery') || agent?.sampleQuery?.length === 0) {
+        delete payload.intent
+        delete payload.source
+    }
     const agentDetails = {
         "name": agent?.name,
         "docId": agent?.id,
