@@ -101,8 +101,16 @@ const multiIntentExecutionFunc = (item) => {
 
          const doneBtn = document.getElementById(`doneBtn-${item?.id}-${index}`);
          if (doneBtn && !doneBtn.eventListenerAdded) {
-           doneBtn.addEventListener("click", () => {
-             saveTask(index, task, item?.executionPipeline);
+           doneBtn.addEventListener("click", async () => {
+             const utteranceInput = document.getElementById(`utterance-${item?.id}-${index}`);
+             const response = await saveTask(index, task, item?.executionPipeline);
+             if (response?.payload && utteranceInput) {
+               const utteranceDiv = document.createElement("div");
+               utteranceDiv.className = "utterance";
+               utteranceDiv.id = `utterance-${item?.id}-${index}`;
+               utteranceDiv.textContent = utteranceInput.value;
+               utteranceInput.replaceWith(utteranceDiv);
+             }
            });
            doneBtn.eventListenerAdded = true;
          }
