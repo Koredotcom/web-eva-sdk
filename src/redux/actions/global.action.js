@@ -498,3 +498,43 @@ export const getUserDetails = createAsyncThunk(
         }
     }
 );
+
+
+export const getChannelRecepients = createAsyncThunk(
+    'global/getChannelRecepients',
+    async (arg, { rejectWithValue }) => {
+        try {
+            const response = await axiosInstance.post(`/1.1/ka/users/${arg?.userId}/connectors/${arg?.source}/actions/send_message/resolveFields`, arg?.payload);
+            return response.data;
+        } catch (error) {
+            handleErrorState(error, "Get Channel Recepients");
+            return rejectWithValue(error.response.data);
+        }
+    }
+);
+
+export const bookmarkAgentAction = createAsyncThunk(
+    'global/bookmarkAgent',
+    async (arg, { rejectWithValue }) => {
+        try {
+            const response = await axiosInstance.patch(`/1.1/users/${arg?.userId}/agents/${arg?.agentId}`, arg?.payload);
+            return response.data;
+        } catch (error) {
+            handleErrorState(error, "Bookmark Agent");
+            return rejectWithValue(error.response.data);
+        }
+    }
+);
+
+export const deleteAnnouncementAction = createAsyncThunk(
+    'global/deleteAnnouncementAction',
+    async (arg, { rejectWithValue }) => {
+        try {
+            const response = await axiosInstance.delete(`/1.1/users/${arg?.userId}/announcements/${arg?.announcementId}`);
+            return response.data;
+        } catch (error) {
+            handleErrorState(error, "Delete Announcement");
+            return rejectWithValue(error.response.data);
+        }
+    }
+);
