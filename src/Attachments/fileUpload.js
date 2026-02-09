@@ -206,6 +206,7 @@ const FileUpload = (props) => {
         // console.log(msg, data, allFilesCount)
         let _selectedContext = {};
         _selectedContext.data = {};
+        if(state.selectedContext?.data?.sources) {
         let remainingFiles = state.selectedContext.data.sources.filter(file => file.uID !== data.uniqueID)
         let errorFiles = [...(state.selectedContext.data.error || [])];
         let fileWithError = {
@@ -218,6 +219,9 @@ const FileUpload = (props) => {
         _selectedContext.data.sessionId = state.selectedContext?.data?.sessionId
         _selectedContext.data.quickactions = state.selectedContext?.data?.quickactions  
         _selectedContext.data.error = errorFiles
+    }else{
+        _selectedContext.data.sources = [{...data, error: msg}]
+    }
         store.dispatch(setSelectedContext(_selectedContext))
         // Returning as an object with success as false for the client to know that the request could not be completed
         return;
