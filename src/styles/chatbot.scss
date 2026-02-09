@@ -623,6 +623,15 @@
     color: #424242;
   }
 }
+.menu-item .menu-item__label {
+  font-family: Inter;
+  font-size: .875rem;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 1.125rem;
+  letter-spacing: 0em;
+  color: #424242;
+}
 .eva-sdk-history-item-dropdown::part(panel) {
   z-index: 10000;
   min-width: 7.5rem;
