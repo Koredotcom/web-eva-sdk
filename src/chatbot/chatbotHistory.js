@@ -4,7 +4,7 @@ import LoadMoreHistoryData from "../history/LoadMoreHistoryData";
 import store from "../redux/store";
 import { hideRecentAgentsDiv } from "../LandingPageRecentAgents";
 import { segregateHistoryBySections, HISTORY_SECTIONS } from "../utils/helpers";
-import { EllipsisHorizontal } from "../templateRenderer/icons-library";
+import { EllipsisHorizontal, createDeleteIcon, EditIcon } from "../templateRenderer/icons-library";
 
 
 const getHistorySectionsOrdered = (items, timeZone) => {
@@ -130,16 +130,40 @@ const createHistoryItemDropdown = (item, callbacks = {}) => {
   const menu = document.createElement("sl-menu");
   menu.classList.add("eva-sdk-history-item-menu");
   const renameItem = document.createElement("sl-menu-item");
+  renameItem.classList.add("eva-sdk-history-menu-item");
   renameItem.setAttribute("data-action", "rename");
-  renameItem.textContent = "Rename";
+  const renameIcon = document.createElement("span");
+  renameIcon.className = "eva-sdk-history-menu-item-icon";
+  renameIcon.setAttribute("slot", "prefix");
+  renameIcon.innerHTML = EditIcon({ size: 14, color: "#667085", className: "eva-sdk-history-menu-item-svg" });
+  renameItem.appendChild(renameIcon);
+  renameItem.appendChild(document.createTextNode("Rename"));
   const deleteItem = document.createElement("sl-menu-item");
+  deleteItem.classList.add("eva-sdk-history-menu-item", "delete-menu-item", "eva-sdk-history-menu-item--delete");
   deleteItem.setAttribute("data-action", "delete");
-  deleteItem.textContent = "Delete";
+  const deleteIcon = document.createElement("span");
+  deleteIcon.className = "eva-sdk-history-menu-item-icon";
+  deleteIcon.setAttribute("slot", "prefix");
+  deleteIcon.innerHTML = createDeleteIcon({ size: 14, color: "#F04438", className: "eva-sdk-history-menu-item-svg" });
+  deleteItem.appendChild(deleteIcon);
+  deleteItem.appendChild(document.createTextNode("Delete"));
   menu.appendChild(renameItem);
   menu.appendChild(deleteItem);
 
   dropdown.appendChild(trigger);
   dropdown.appendChild(menu);
+
+  const setActive = (isActive) => {
+    const li = dropdown.closest(".history-item-group-item");
+    if (!li) return;
+    li.classList.toggle("active", Boolean(isActive));
+  };
+
+  // Add active state when the menu opens/closes.
+  dropdown.addEventListener("sl-show", () => setActive(true));
+  dropdown.addEventListener("sl-hide", () => setActive(false));
+  // Defensive: ensure active state is removed even if hide lifecycle differs.
+  dropdown.addEventListener("sl-after-hide", () => setActive(false));
 
   renameItem.addEventListener("click", (e) => {
     e.stopPropagation();
