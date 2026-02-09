@@ -132,7 +132,7 @@ const FileUpload = (props) => {
         const uploadConfig = {
             file: file.file,
             userInfoId: userId,
-            fileContext: 'knowledge',
+            fileContext: 'runtime',
             userAccessToken: userAccessToken,
             mediaName: obj.mediaName,
             source: source,
