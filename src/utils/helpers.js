@@ -38,7 +38,7 @@ export const getUID = function (len) {
 
 export const getFileExtension = (fileName) => {
     const parts = fileName?.split('.');
-    const supportedFileTypesForAttachments = store.getState().global.fileTypes.attachment;
+    const supportedFileTypesForAttachments = store.getState().global?.fileTypes?.attachment;
     if (parts?.length > 1 && parts[parts?.length - 1].trim() !== '') {
         if(supportedFileTypesForAttachments.includes(parts[parts?.length - 1].toLowerCase())) {
             return parts[parts?.length - 1].toLowerCase()
