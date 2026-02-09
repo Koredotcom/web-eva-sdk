@@ -215,51 +215,51 @@
 }
 
 /* Dark mode support */
-@media (prefers-color-scheme: dark) {
+// @media (prefers-color-scheme: dark) {
     
-    .eva-compose-textarea {
-        color: #fff;
-    }
+//     .eva-compose-textarea {
+//         color: #fff;
+//     }
     
-    .eva-compose-textarea::placeholder {
-        color: #888;
-    }
+//     .eva-compose-textarea::placeholder {
+//         color: #888;
+//     }
     
-    .eva-input-action-btn {
-        color: #9ca3af;
-    }
+//     .eva-input-action-btn {
+//         color: #9ca3af;
+//     }
     
-    .eva-input-action-btn:hover {
-        background-color: #374151;
-        color: #d1d5db;
-    }
+//     .eva-input-action-btn:hover {
+//         background-color: #374151;
+//         color: #d1d5db;
+//     }
     
-    .eva-input-action-btn:active {
-        background-color: #4b5563;
-    }
+//     .eva-input-action-btn:active {
+//         background-color: #4b5563;
+//     }
     
-    .eva-quick-reply-chip {
-        background-color: #2a2a2a;
-        border-color: #444;
-        color: #fff;
-    }
+//     .eva-quick-reply-chip {
+//         background-color: #2a2a2a;
+//         border-color: #444;
+//         color: #fff;
+//     }
     
-    .eva-quick-reply-chip:hover {
-        background-color: #333;
-        border-color: #555;
-    }
+//     .eva-quick-reply-chip:hover {
+//         background-color: #333;
+//         border-color: #555;
+//     }
     
-    .eva-btn-secondary {
-        background-color: #2a2a2a;
-        border-color: #444;
-        color: #fff;
-    }
+//     .eva-btn-secondary {
+//         background-color: #2a2a2a;
+//         border-color: #444;
+//         color: #fff;
+//     }
     
-    .eva-btn-secondary:hover:not(:disabled) {
-        background-color: #333;
-        border-color: #555;
-    }
-}
+//     .eva-btn-secondary:hover:not(:disabled) {
+//         background-color: #333;
+//         border-color: #555;
+//     }
+// }
 
 .ComposeBarContainer {    
     .eva-composebar-parent {
