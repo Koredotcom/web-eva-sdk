@@ -59,7 +59,7 @@ const uploadFileInitial = (file, id, resolve, reject) => {
     const uploadConfig = {
         file,
         userInfoId: userId,
-        fileContext: 'knowledge',
+        fileContext: 'runtime',
         userAccessToken: userAccessToken,
         mediaName: obj.mediaName,
         source: source

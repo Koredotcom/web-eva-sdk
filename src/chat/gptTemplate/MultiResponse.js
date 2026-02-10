@@ -168,7 +168,7 @@ const MultiResponse = () => {
         // Submit Button Action for the GPT Form
         event?.preventDefault()
         const state = store.getState().global;
-        const uploadedFiles = state.GptUploadedFiles;
+        const uploadedFiles = state.GptUploadedFiles;  
 
         let payload = {}
         payload.formData = {}
@@ -279,12 +279,21 @@ const MultiResponse = () => {
 
         // Constructing requestParams
         let requestParams = allResponseFields?.map((field, index) => {
+            let selectedPrompt = null;
+            /*check for the nested key in the fieldValues when key is prompts */
+            const nestedPromptCheck = field?.find(field => field?.key === "prompts" && field.value?.nested?.key === "prompt");
+            if(nestedPromptCheck){
+                const selectedPromptLabel = document.getElementById(`dropdownValue-${nestedPromptCheck?.key}-${item?.messageId}-${index}`)?.value;
+                selectedPrompt = nestedPromptCheck?.value?.choices?.find(choice => choice.label === selectedPromptLabel);
+            }
             let totalMockParameters = field?.reduce((acc, field) => {
                 let reqdInputElement;
-                let reqdValue;
+                let reqdValue; 
+                if(selectedPrompt && !selectedPrompt?.variables?.includes(field?.key) && field?.key !== "prompts"){
+                    return acc;
+                }
                 if (field?.value?.type === 'dropdown') {
-                    reqdInputElement = document.getElementById(`dropdownValue-${field?.key}-${item?.messageId}-${index}`);
-
+                    reqdInputElement = document.getElementById(`dropdownValue-${field?.key}-${item?.messageId}-${index}`);                    
                     if (field?.value?.multi) {
                         // For shoelace multi-select, value is already an array
                         reqdValue = reqdInputElement?.value || [];
@@ -302,6 +311,10 @@ const MultiResponse = () => {
                     if (field?.key === 'prompts') {
                         const promptId = field?.value?.choices?.find(choice => choice.label === reqdValue)?.id;
                         reqdValue = promptId || reqdValue;
+                        if(field?.value?.nested?.key === "prompt"){
+                            // reqdValue is the selected id (string); don't use reqdValue?.value
+                            selectedPrompt = field?.value?.choices?.find(choice => String(choice?.id) === String(reqdValue) || choice?.id == reqdValue);
+                        }
                     }
                     if (state?.enableDebugging) {
                         console.log(`Form field is ${`(dropdownValue-${field?.key})`} and value is {${reqdValue}}`)
@@ -332,20 +345,20 @@ const MultiResponse = () => {
                     acc[field.key].value = '';
                 }
 
-                if (field?.value?.nested?.key === "prompt" || field?.key === 'prompt') {
-                    // Need to send the Prompt Field Value as the prompt can be changed manually by the user if editable
-                    let promptField = document.getElementById(`inputValue-${field?.key}-${item?.messageId}-${index}`);
+                // if (field?.value?.nested?.key === "prompt" || field?.key === 'prompt') {
+                //     // Need to send the Prompt Field Value as the prompt can be changed manually by the user if editable
+                //     let promptField = document.getElementById(`inputValue-${field?.key}-${item?.messageId}-${index}`);
 
-                    // Check if it's a Quill editor or regular element
-                    let promptValue = "";
-                    if (promptField && promptField.quillEditor) {
-                        promptValue = promptField.quillEditor.getText();
-                    } else {
-                        promptValue = promptField?.value || promptField?.textContent || "";
-                    }
+                //     // Check if it's a Quill editor or regular element
+                //     let promptValue = "";
+                //     if (promptField && promptField.quillEditor) {
+                //         promptValue = promptField.quillEditor.getText();
+                //     } else {
+                //         promptValue = promptField?.value || promptField?.textContent || "";
+                //     }
 
-                    acc["prompt"] = promptValue;
-                }
+                //     acc["prompt"] = promptValue;
+                // }
 
                 // Checking if the Field has a file and getting the file from the uploadedFiles
                 if (field?.value?.canUploadFile) {
@@ -379,7 +392,7 @@ const MultiResponse = () => {
                 // }
 
                 // Checking if the Required Field is empty and returning an Error
-                if (field?.required || field?.value?.required) {
+                if ((field?.required || field?.value?.required)) {
                     if (reqdValue?.length === 0) {
                         throw new Error(`Required field ${field.label} is empty in ${index}th response.`);
                     }
