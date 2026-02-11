@@ -320,21 +320,249 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 		return body;
 	};
 
+	/**
+	 * Render sources chip tag (similar to sourcesChipTagRefactored in Kora-React)
+	 * Shows sources chip when multiple sources exist
+	 */
+	const sourcesChipTagRefactored = () => {
+		const sources = item?.sources || [];
+		if (sources.length === 0) return '';
+
+		// Check invalid scenarios
+		const firstSource = sources[0];
+		const sourceType = firstSource?.source;
+		if (sources.length === 1 && !firstSource?.hasOwnProperty('redirectUrl') && sourceType === 'llm') {
+			return '';
+		}
+		if (item?.viewType === "threadView") {
+			return '';
+		}
+
+		const isMultiSource = sources.length > 1;
+		const isSearchResults = item?.templateType === 'search_results';
+
+		// Get unique sources (handle webSearch agentId case)
+		const agentId = item?.agentId;
+		const uniqueSources = sources.reduce((acc, source) => {
+			let identifier;
+			if (agentId === 'webSearch') {
+				identifier = source?.domainIcon?.iconUrl || null;
+			} else {
+				identifier = source?.iconUrl || source?.extIcon || source?.source;
+			}
+			if (!acc.find(existing => {
+				const existingIdentifier = agentId === 'webSearch' 
+					? (existing?.domainIcon?.iconUrl || null)
+					: (existing?.iconUrl || existing?.extIcon || existing?.source);
+				return existingIdentifier === identifier;
+			})) {
+				acc.push(source);
+			}
+			return acc;
+		}, []);
+
+		// Render multi-source chip
+		const renderMultiSourceChip = () => {
+			const sourcesToShow = uniqueSources.slice(0, 3);
+			const avatarsHtml = sourcesToShow.map((source, index) => {
+				// Handle webSearch agentId case
+				let iconSrc;
+				if (agentId === 'webSearch') {
+					iconSrc = source?.domainIcon?.iconUrl || null;
+				} else {
+					iconSrc = source?.iconUrl || source?.extIcon;
+				}
+				
+				if (iconSrc) {
+					return `<img src="${encodeHtml(iconSrc)}" alt="" class="source-avatar" style="width: 20px; height: 20px; border-radius: 50%; margin-right: -8px; border: 2px solid white;" />`;
+				} else {
+					const iconEl = renderIcons(source?.source, source?.extIcon, null, source?.iconUrl, source?.isSupervisor);
+					return `<span class="sourceIcon" style="width: 20px; height: 20px; display: inline-flex; align-items: center; justify-content: center; margin-right: -8px;">${iconEl?.outerHTML || ''}</span>`;
+				}
+			}).join('');
+
+			return `
+				<div class="sourceChipItemTextGroup" style="display: flex; align-items: center; gap: 8px;">
+					<div style="display: flex; align-items: center; margin-right: 4px;">
+						${avatarsHtml}
+					</div>
+					<span class="sourceChipItemText">Sources</span>
+				</div>
+			`;
+		};
+
+		// Render single source chip
+		const renderSingleSourceChip = () => {
+			const source = firstSource;
+			const sourceType = source?.source;
+			const attachment = sourceType === 'attachment';
+			const defaultRag = sourceType === 'accountKnowledge';
+			
+			// GPT form template case
+			if (source?.templateType === 'gpt_form_template') {
+				const documentIcon = `<svg width="14px" height="14px" viewBox="0 0 16 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+					<path d="M9.84975 1.89124V5.33335C9.84975 5.80006 9.84975 6.03342 9.94058 6.21168C10.0205 6.36848 10.148 6.49596 10.3048 6.57586C10.483 6.66669 10.7164 6.66669 11.1831 6.66669H14.6252M9.84975 14.1666H4.84975M11.5164 10.8333H4.84975M14.8498 8.32348V14.3333C14.8498 15.7334 14.8498 16.4335 14.5773 16.9683C14.3376 17.4387 13.9551 17.8211 13.4847 18.0608C12.95 18.3333 12.2499 18.3333 10.8498 18.3333H5.51642C4.11629 18.3333 3.41622 18.3333 2.88144 18.0608C2.41104 17.8211 2.02859 17.4387 1.7889 16.9683C1.51642 16.4335 1.51642 15.7334 1.51642 14.3333V5.66663C1.51642 4.26649 1.51642 3.56643 1.7889 3.03165C2.02859 2.56124 2.41104 2.17879 2.88144 1.93911C3.41622 1.66663 4.11629 1.66663 5.51642 1.66663H8.1929C8.80438 1.66663 9.11011 1.66663 9.39783 1.7357C9.65292 1.79694 9.89678 1.89795 10.1205 2.03503C10.3728 2.18963 10.5889 2.40582 11.0213 2.8382L13.6782 5.49505C14.1106 5.92743 14.3267 6.14362 14.4814 6.39591C14.6184 6.61959 14.7194 6.86346 14.7807 7.11855C14.8498 7.40627 14.8498 7.712 14.8498 8.32348Z" stroke="#79716B" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+				</svg>`;
+				
+				const hasContextFields = (Object.keys(item?.content?.formData?.contextFields || {}))?.length > 0;
+				const hasRequestParamsWithFields = item?.content?.formData?.requestParams?.some(param => 
+					Object.keys(param?.fields || {})?.length > 0
+				);
+				const hasNoContent = !hasContextFields && !hasRequestParamsWithFields;
+				
+				return `
+					<div class="gpt-agents-source-chip ${hasNoContent ? 'no-content' : ''}" style="display: flex; align-items: center; gap: 6px;">
+						<div class="icon-cls">${documentIcon}</div>
+						<div class="sourceTitle">${htmlDecode(source?.title || 'Data')}</div>
+					</div>
+				`;
+			}
+			
+			// Get icon
+			const iconSrc = source?.iconUrl || source?.extIcon;
+			const iconEl = renderIcons(
+				sourceType,
+				source?.extIcon || null,
+				null,
+				source?.iconUrl || source?.icon,
+				source?.isSupervisor
+			);
+			const iconHtml = iconEl?.outerHTML || '';
+			
+			// Attachment or defaultRag without hasData
+			if (!item.hasData && (attachment || defaultRag)) {
+				const avatarHtml = iconSrc ? 
+					`<img src="${encodeHtml(iconSrc)}" alt="" class="avatar-sources-chip" style="width: 16px; height: 16px; border-radius: 50%;" />` :
+					`<span class="sourceIcon">${iconHtml}</span>`;
+				
+				return `
+					<div class="sourceChipItemText buttonchip" style="display: flex; align-items: center; gap: 6px;">
+						${avatarHtml}
+						<span class="sourceTitle">Source</span>
+					</div>
+				`;
+			}
+			
+			// hasData case
+			if (item.hasData) {
+				if (isSearchResults) {
+					const avatarHtml = iconSrc ? 
+						`<img src="${encodeHtml(iconSrc)}" alt="" style="width: 16px; height: 16px; border-radius: 50%;" />` :
+						`<span class="sourceIcon">${iconHtml}</span>`;
+					
+					// For single source, show "Source" (singular), not "Sources"
+					return `
+						<div class="sourceChipItemText buttonchip" style="display: flex; align-items: center; gap: 6px;">
+							${avatarHtml}
+							<span class="sourceTitle">Source</span>
+						</div>
+					`;
+				} else {
+					// CheckList icon for hasData non-search-results
+					const checkListIcon = `<svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+						<path d="M11.6667 3.5L5.25 9.91667L2.33333 7" stroke="#79716B" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+					</svg>`;
+					
+					return `
+						<div class="sourceChipItemText buttonchip" style="display: flex; align-items: center; gap: 6px;">
+							<span class="sourceIcon">${checkListIcon}</span>
+							<span class="sourceTitle">${htmlDecode(source?.title || 'Data')}</span>
+						</div>
+					`;
+				}
+			}
+			
+			// DEFAULT CASE - Handles all other scenarios including file sources
+			const avatarHtml = iconSrc ? 
+				`<img src="${encodeHtml(iconSrc)}" alt="" style="width: 16px; height: 16px; border-radius: 50%;" />` :
+				`<span class="sourceIcon">${iconHtml}</span>`;
+			
+			return `
+				<div class="sourceChipItemText buttonchip" style="display: flex; align-items: center; gap: 6px;">
+					${avatarHtml}
+					<span class="sourceTitle">${htmlDecode(source?.title || 'Source')}</span>
+				</div>
+			`;
+		};
+
+		return `
+			<div class="sourcesChip" style="display: flex; align-items: center;">
+				<div class="sourceChipItem" data-open-sources="sources" style="cursor: pointer; display: flex; align-items: center;">
+					${isMultiSource ? renderMultiSourceChip() : renderSingleSourceChip()}
+				</div>
+				${isSearchResults ? `<div class="lineSeperator" style="margin: 0 8px;">|</div>` : ''}
+			</div>
+		`;
+	};
+
+	/**
+	 * Render "Related Search Results" button
+	 */
+	const renderRelatedSearchResults = () => {
+		if (item?.templateType !== "search_results") return '';
+
+		return `
+			<div class="search-results-ans-block" data-open-sources="searchResults" style="cursor: pointer; display: flex; align-items: center; gap: 4px;">
+				<div class="inline-flex-wrapper" style="display: flex; align-items: center; gap: 4px;">
+					<span class="normal-text">Related Search Results</span>
+					<span class="icon-cls">
+						<svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+							<path d="M5.83325 14.1667L14.1666 5.83334M14.1666 5.83334H5.83325M14.1666 5.83334V14.1667" stroke="#A9A29D" stroke-width="1.66667" stroke-linecap="round" stroke-linejoin="round"/>
+						</svg>
+					</span>
+				</div>
+			</div>
+		`;
+	};
+
 	const knowledgeChipRenderer = () => {
 		let body = "";
 
-		if (
-			(!!item?.data?.length || item?.hasData) &&
-			!item?.citationAnswers?.length
-		) {
-			body += `<div class="leftWrapperBlockCntr new-layout">`;
-		}
-		body += sourceChipRender();
-		if (
-			(!!item?.data?.length || item?.hasData) &&
-			!item?.citationAnswers?.length
-		) {
+		// Determine if we should show sources chip
+		// Similar to Kora-React: showSources = !!botMsg?.sources?.length && !isSuperSearchAgent && isEnterpriseKnowledge
+		// For web-eva-sdk, we'll show sources when there are sources (let sourcesChipTagRefactored handle invalid scenarios)
+		const sources = item?.sources || [];
+		const hasSources = sources.length > 0;
+		
+		// Get sources chip HTML (will be empty string if invalid scenarios)
+		const sourcesChipHtml = sourcesChipTagRefactored();
+		const hasSourcesChip = sourcesChipHtml.trim().length > 0;
+		const hasRelatedSearchResults = item?.templateType === "search_results";
+
+		// Add sources chip and Related Search Results button container
+		if (hasSourcesChip || hasRelatedSearchResults) {
+			body += `<div class="ansFromChip widthChip" id="ansFromChip-${item?.id}">`;
+			body += `<div class="sourceGroup-item" style="display: flex; align-items: center; gap: 8px;">`;
+			
+			if (hasSourcesChip) {
+				body += sourcesChipHtml;
+			}
+			
+			body += renderRelatedSearchResults();
+			
 			body += `</div>`;
+			body += `</div>`;
+		}
+
+		// Do NOT show ansFromChip-wrapper (from sourceChipRender) when we're showing Sources button
+		// Only show sourceChipRender when we don't have Sources chip
+		if (!hasSourcesChip) {
+			// For search_results template type, do NOT render data wrapper - results should only appear in SourcesSidebar
+			if (
+				(!!item?.data?.length || item?.hasData) &&
+				!item?.citationAnswers?.length &&
+				item?.templateType !== "search_results"
+			) {
+				body += `<div class="leftWrapperBlockCntr new-layout">`;
+			}
+			body += sourceChipRender();
+			if (
+				(!!item?.data?.length || item?.hasData) &&
+				!item?.citationAnswers?.length &&
+				item?.templateType !== "search_results"
+			) {
+				body += `</div>`;
+			}
 		}
 
 		return `<div class="ansFromChip">${body}</div>`;
@@ -829,7 +1057,8 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 		}
 
 		// Generate the chat filter group content for the drawer (forDrawer: true so content is always built regardless of showData)
-		if(item?.hasData || item?.sources?.[0]?.source === "customQnAAPI") {
+		// For search_results template type, do NOT render chatFilterGroup in main area - results should only appear in SourcesSidebar
+		if((item?.hasData || item?.sources?.[0]?.source === "customQnAAPI") && item?.templateType !== "search_results") {
 			chatFilterGroupHTML = chatFilterGroupRenderer({ forDrawer: true });
 		}
 

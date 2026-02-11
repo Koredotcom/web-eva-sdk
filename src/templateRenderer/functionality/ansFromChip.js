@@ -1,5 +1,5 @@
 import { cloneDeep } from "lodash";
-import { updateChatData } from "../../redux/globalSlice";
+import { updateChatData, setAnswerSources } from "../../redux/globalSlice";
 import store from "../../redux/store";
 import { sessionItemHandler } from "../../Attachments/createContext";
 import { getRelevantQuestions } from "../../redux/actions/global.action";
@@ -8,6 +8,7 @@ import { InitiateChatConversationAction, toast } from "../../chat";
 import { submitUserFeedback } from "../../Feedback";
 import customMarkdownRenderer from "../utils/customMarkdownRenderer";
 import chatInterface from "../../chat/ChatInterface";
+import SourcesSidebarInstance from "../../sources/SourcesSidebar.js";
 
 const AnsFromChipFunctionality = ({ item }) => {
 	const getRelevantQuestionsData = async () => {
@@ -136,26 +137,37 @@ const AnsFromChipFunctionality = ({ item }) => {
 			item?.sources[0]?.hasOwnProperty("redirectUrl")
 		) {
 			openInNewTab(item?.sources?.[0]);
-		} else if (item?.sources?.length > 1) {
-			let state = store.getState()?.global;
-			let _questions = cloneDeep(state?.questions);
-			let constId = item?.reqId || item?.id;
-			let showMultiSourceList =
-				!!_questions[constId]?.showMultiSourceList;
-			_questions[constId].showMultiSourceList = !showMultiSourceList;
-			store.dispatch(updateChatData(_questions));
 		} else {
-			let state = store.getState()?.global;
-			let _questions = cloneDeep(state?.questions);
-			let constId = item?.reqId || item?.id;
-			let showData = !!_questions[constId]?.showData;
-			_questions[constId].showData = !showData;
-			store.dispatch(updateChatData(_questions));
+			// Open SourcesSidebar for multiple sources or single source with data
+			openSourcesSidebar(item);
 		}
 	};
 
 	const openInNewTab = (data) => {
 		window.open(data?.redirectUrl?.dweb, "_blank");
+	};
+
+	/**
+	 * Open SourcesSidebar with item data
+	 * @param {Object} itemData - The item data
+	 * @param {string} type - 'sources' or 'searchResults'
+	 */
+	const openSourcesSidebar = (itemData, type = 'sources') => {
+		// Prepare sources data in the format expected by SourcesSidebar
+		const sourcesData = {
+			...itemData,
+			id: itemData?.reqId || itemData?.id,
+			question: itemData?.question,
+			boardId: itemData?.boardId,
+			messageId: itemData?.messageId
+		};
+
+		// Update Redux state
+		store.dispatch(setAnswerSources(sourcesData));
+
+		// Open sidebar with the specified type
+		const sidebar = SourcesSidebarInstance();
+		sidebar.open(sourcesData, type === 'searchResults' ? 'searchResults' : null);
 	};
 
 	const copyAnswerToClipboard = async () => {
@@ -521,6 +533,41 @@ const AnsFromChipFunctionality = ({ item }) => {
 				} else {
 					showDataAction();
 				}
+			});
+		}
+
+		// Add event listeners for sources chip and Related Search Results button
+		// Find elements within the current item's container
+		// Try multiple selectors to find the container
+		const ansFromChipEl = document.getElementById(`ansFromChip-${item?.id}`);
+		const itemContainer = ansFromChipEl?.closest('.answerFromChipDiv') || 
+		                      ansFromChipEl?.closest('.ansFromChip')?.closest('.answerFromChipDiv') ||
+		                      document.querySelector(`.answerFromChipDiv:has(#ansFromChip-${item?.id})`) ||
+		                      document.querySelector(`[data-item-id="${item?.id}"]`);
+		
+		// Find buttons directly if container search fails
+		const sourceChipItem = itemContainer?.querySelector(`[data-open-sources="sources"]`) ||
+		                        document.querySelector(`#ansFromChip-${item?.id} [data-open-sources="sources"]`) ||
+		                        document.querySelector(`.answerFromChipDiv:has(#ansFromChip-${item?.id}) [data-open-sources="sources"]`);
+		const relatedSearchResultsBtn = itemContainer?.querySelector(`[data-open-sources="searchResults"]`) ||
+		                                document.querySelector(`#ansFromChip-${item?.id} [data-open-sources="searchResults"]`) ||
+		                                document.querySelector(`.answerFromChipDiv:has(#ansFromChip-${item?.id}) [data-open-sources="searchResults"]`);
+		
+		if (sourceChipItem && !sourceChipItem.eventListenerAdded) {
+			sourceChipItem.eventListenerAdded = true;
+			sourceChipItem.addEventListener("click", (e) => {
+				e?.preventDefault();
+				e?.stopPropagation();
+				openSourcesSidebar(item, 'sources');
+			});
+		}
+
+		if (relatedSearchResultsBtn && !relatedSearchResultsBtn.eventListenerAdded) {
+			relatedSearchResultsBtn.eventListenerAdded = true;
+			relatedSearchResultsBtn.addEventListener("click", (e) => {
+				e?.preventDefault();
+				e?.stopPropagation();
+				openSourcesSidebar(item, 'searchResults');
 			});
 		}
 
