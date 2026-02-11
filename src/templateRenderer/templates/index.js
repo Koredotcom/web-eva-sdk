@@ -2,8 +2,46 @@ import { encodeHtml } from "../utils/helper";
 import * as responseQueryFlow from "./response-query-flow";
 import * as copyQuestion from "./copy-question";
 import store from "../../redux/store";
-import { convertToTimeFormat } from "../../utils/helpers";
+import { convertToTimeFormat, getFileExtension, getExtIcon } from "../../utils/helpers";
 // import { encodeHtml } from "../utils/helper";
+
+/**
+ * Render attachment preview container (similar to renderReferenceToAttachment in Kora-React)
+ * @param {Object} data Question/Item data
+ * @returns {string} HTML string
+ */
+function renderReferenceToAttachment(data) {
+    // Check for attachments in response sources (after agent processing)
+    const responseAttachments = (data?.sources?.filter((source) => source?.source === 'attachment') || []);
+    
+    // Check for user-submitted attachments in context (during thought process)
+    const userAttachments = (data?.context?.sources?.filter((source) => source?.source === 'attachment') || []);
+    
+    // Combine both sources, giving priority to response attachments if available
+    const allAttachments = responseAttachments.length > 0 ? responseAttachments : userAttachments;
+    
+    if (allAttachments?.length > 0) {
+        const previewContainer = allAttachments.map((file, index) => {
+            const fileTitle = file?.title || file?.fileName || 'Untitled';
+            const extIcon = file?.extIcon || getExtIcon(getFileExtension(fileTitle));
+            
+            return `
+                <div class="file-preview-chip" key="${index}">
+                    <div class="file-icon">
+                        <img src="${encodeHtml(extIcon)}" alt="${encodeHtml(file?.extName || getFileExtension(fileTitle))}" />
+                    </div>
+                    <div class="file-title" title="${encodeHtml(fileTitle)}">
+                        ${encodeHtml(fileTitle)}
+                    </div>
+                </div>
+            `;
+        }).join('');
+        
+        return `<div class="attachment-preview-container">${previewContainer}</div>`;
+    } else {
+        return '';
+    }
+}
 
 /**
  * Render a question bubble
@@ -13,7 +51,12 @@ import { convertToTimeFormat } from "../../utils/helpers";
 export function renderQuestionBubble(data, userIconTemplate = false, displayTimestamp = true) {
 	const { question, timestamp, icon} = data;
     if(data?.isTask) return "";
+    
+    // Render attachment preview above the question
+    const attachmentPreview = renderReferenceToAttachment(data);
+    
 	return `
+        ${attachmentPreview}
         <div class="message-bubble question ${data?.isTask ? 'task-item' : ''}">
             <div class="message-content">  
                 <div class="user-content">
@@ -96,7 +139,11 @@ export function renderLoading(
     if(data?.isTask){
         html = `<div class="task-item-loader">Loading...</div>`
     }else{
-        html = ` <div class="message-bubble question">
+        // Render attachment preview above the question for loading state too
+        const attachmentPreview = renderReferenceToAttachment(data);
+        
+        html = ` ${attachmentPreview}
+            <div class="message-bubble question">
                     <div class="message-content"> 
                         <div class="user-content">
                             ${userIconTemplate ? renderUserIconTemplate() : ""}
