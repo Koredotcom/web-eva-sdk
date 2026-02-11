@@ -170,6 +170,9 @@ export const sessionItemHandler = (args) => {
     } else {
         // if adding or updating any item in context, it should always come inside this condition
         addedItem = { ...item, loading: true }
+        if (item?.source === 'attachment') {
+            addedItem.type = 'attachment'
+        }
         if (type === 'accountKnowledge') {
             addedItem.sourceFrom = type
         }
@@ -199,15 +202,16 @@ export const sessionItemHandler = (args) => {
         _selectedContext.setViaGptAgent = true;
         args.setViaGptAgent = true;
     }
-
+    
+    // Dispatch loading state to store so UI shows loader
     // store.dispatch(setSelectedContext({selectedContext: _selectedContext}));
+    const selectedContextData = {};
+    selectedContextData.data = {};
+    selectedContextData.data.sources = _selectedContext.sources;
+    selectedContextData.data.sessionId = selectedContext?.data?.sessionId;
+    selectedContextData.data.quickactions = selectedContext?.data?.quickactions;
+    store.dispatch(setSelectedContext(selectedContextData));
 
-    // let selectedContextData = {};
-    // selectedContextData.data = {};
-    // selectedContextData.data.sources = _selectedContext.sources
-    // selectedContextData.data.sessionId = selectedContext?.data?.sessionId
-    // selectedContextData.data.quickactions = selectedContext?.data?.quickactions
-    // store.dispatch(setSelectedContext(selectedContextData))
     setContext(state, { payload, action, params: args, messageId, boardId }, () => { }, type);
 };
 

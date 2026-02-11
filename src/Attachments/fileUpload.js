@@ -50,7 +50,8 @@ const FileUpload = (props) => {
                 file,
                 title: file.name,
                 loading: true, //setting loading as true for initial setting of sources
-                uID: getUID(10)
+                uID: getUID(10),
+                type: 'attachment' // required so ComposeBar includes these in filesOnly and shows loader
             }));
 
             let _selectedContext = {};
@@ -132,7 +133,8 @@ const FileUpload = (props) => {
         const uploadConfig = {
             file: file.file,
             userInfoId: userId,
-            fileContext: 'knowledge',
+            // fileContext: 'knowledge',
+            fileContext: 'runtime',
             userAccessToken: userAccessToken,
             mediaName: obj.mediaName,
             source: source,
