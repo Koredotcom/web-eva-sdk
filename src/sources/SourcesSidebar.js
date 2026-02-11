@@ -1,6 +1,8 @@
 import { cloneDeep, keyBy } from 'lodash';
 import store from '../redux/store.js';
 import { createCloseIcon } from '../templateRenderer/icons-library.js';
+import { upgradeCustomElements } from '../templateRenderer/templateRenderer.js';
+import { setUnifiedSearchResults } from '../redux/globalSlice.js';
 import RenderAttachments from './RenderAttachments.js';
 import GPTFormSummary from './GPTFormSummary.js';
 import TableDataSummary from './TableDataSummary.js';
@@ -52,6 +54,56 @@ class SourcesSidebar {
     }
 
     /**
+     * Create "All" tab by combining all tabs (similar to makeALLtabSearchResults in Kora-React)
+     * Only creates "All" tab if there's more than 1 tab
+     */
+    makeALLtabSearchResults(advanceSearchResponse) {
+        if (!advanceSearchResponse?.data?.tab || advanceSearchResponse.data.tab.length <= 1) {
+            return advanceSearchResponse;
+        }
+
+        let allDocCount = 0;
+        advanceSearchResponse.data.tab.forEach((t) => {
+            allDocCount += (t?.doc_count || 0);
+        });
+
+        let allResults = [];
+        Object.values(advanceSearchResponse?.data?.results || {}).forEach(r => {
+            if (r?.data && Array.isArray(r.data)) {
+                allResults = [...allResults, ...r.data];
+            }
+        });
+        
+        // Sort by createdOn descending (if available)
+        allResults = allResults.sort((a, b) => {
+            const aDate = a?.createdOn ? new Date(a.createdOn) : new Date(0);
+            const bDate = b?.createdOn ? new Date(b.createdOn) : new Date(0);
+            return bDate - aDate;
+        });
+
+        // Filter out existing "all" tab before adding the new one
+        const tabsWithoutAll = advanceSearchResponse.data.tab.filter(t => t?.key !== "all") || [];
+
+        return {
+            ...advanceSearchResponse,
+            data: {
+                ...advanceSearchResponse.data,
+                tab: [
+                    { key: "all", name: "All", doc_count: allDocCount },
+                    ...tabsWithoutAll
+                ],
+                results: {
+                    ...advanceSearchResponse.data.results,
+                    all: {
+                        data: allResults,
+                        doc_count: allDocCount
+                    }
+                }
+            }
+        };
+    }
+
+    /**
      * Open the sidebar with sources data
      * @param {Object} sourcesData - The answer sources data
      * @param {string} userSelectedTab - Optional: 'searchResults' to open in search tab
@@ -75,7 +127,14 @@ class SourcesSidebar {
         this.userSelectedTab = userSelectedTab;
         if (userSelectedTab === 'searchResults') {
             this.selectedTab = 'search';
-            this.unifiedSearchResults = cloneDeep(this.answerSources);
+            // Create "All" tab if there's more than 1 tab (similar to Kora-React)
+            let unifiedData = cloneDeep(this.answerSources);
+            if (unifiedData?.data?.tab?.length > 1) {
+                unifiedData = this.makeALLtabSearchResults(unifiedData);
+            }
+            this.unifiedSearchResults = unifiedData;
+            // Update Redux state
+            store.dispatch(setUnifiedSearchResults(this.unifiedSearchResults));
         } else {
             this.selectedTab = 'sources';
         }
@@ -133,9 +192,40 @@ class SourcesSidebar {
     handleTabSwitch(tab) {
         this.selectedTab = tab;
         if (tab === 'search') {
-            this.unifiedSearchResults = cloneDeep(this.answerSources);
+            // Create "All" tab if there's more than 1 tab (similar to Kora-React)
+            let unifiedData = cloneDeep(this.answerSources);
+            if (unifiedData?.data?.tab?.length > 1) {
+                unifiedData = this.makeALLtabSearchResults(unifiedData);
+            }
+            this.unifiedSearchResults = unifiedData;
+            // Update Redux state for unifiedSearchResults
+            store.dispatch(setUnifiedSearchResults(this.unifiedSearchResults));
+            // Re-render to show updated tabs
+            this.render();
+        } else {
+            // Update active tab in the DOM without full re-render
+            const tabGroup = this.drawer?.querySelector('#sources-tab-group');
+            if (tabGroup) {
+                const tabs = tabGroup.querySelectorAll('sl-tab');
+                const panels = tabGroup.querySelectorAll('sl-tab-panel');
+                
+                tabs.forEach(t => {
+                    if (t.getAttribute('panel') === tab) {
+                        t.setAttribute('active', '');
+                    } else {
+                        t.removeAttribute('active');
+                    }
+                });
+                
+                panels.forEach(p => {
+                    if (p.getAttribute('name') === tab) {
+                        p.setAttribute('active', '');
+                    } else {
+                        p.removeAttribute('active');
+                    }
+                });
+            }
         }
-        this.render();
     }
 
     /**
@@ -261,28 +351,11 @@ class SourcesSidebar {
             showMoreSearchResults = true;
         }
 
+        // Return header without tabs - tabs will be in the main render method
         return `
             <div class="right-panel-header">
                 <span class="close-icon" id="sources-sidebar-close">${createCloseIcon({ size: 16, color: "#667085" })}</span>
-                ${showSwitchTabs
-                    ? `
-                        <div class="sources-tabs-wrapper">
-                            <div class="right-panel-tab ${this.selectedTab === 'sources' ? 'active' : ''}" 
-                                 data-tab="sources">Sources (${sourcesCount})</div>
-                            <div class="right-panel-tab ${this.selectedTab === 'search' ? 'active' : ''}" 
-                                 data-tab="search">More search results</div>
-                        </div>
-                    `
-                    : showMoreSearchResults
-                        ? `
-                            <div class="sources-tabs-wrapper">
-                                <div class="right-panel-tab ${this.selectedTab === 'search' ? 'active' : ''}">More search results</div>
-                            </div>
-                        `
-                        : `
-                            <span class="search-header">${headerTitle || 'Data'}</span>
-                        `
-                }
+                ${showSwitchTabs || showMoreSearchResults ? '' : `<span class="search-header">${headerTitle || 'Data'}</span>`}
             </div>
         `;
     }
@@ -294,32 +367,87 @@ class SourcesSidebar {
         if (!this.drawer || !this.answerSources) return;
 
         const header = this.renderHeader();
-        const content = this.selectedTab === 'sources'
-            ? `
+        
+        let sourcesData = cloneDeep(this.answerSources);
+        const sourcesCount = sourcesData?.templateType === 'search_answer' && sourcesData?.data?.length
+            ? sourcesData.data.length
+            : sourcesData?.sources?.length || 0;
+        
+        let showSwitchTabs = false;
+        let showMoreSearchResults = false;
+        
+        if (sourcesData?.templateType === 'search_results' && sourcesCount > 1) {
+            showSwitchTabs = true;
+        } else if (sourcesData?.templateType === 'search_results' && 
+                   sourcesCount === 1 && 
+                   sourcesData?.sources?.[0]?.source !== 'llm') {
+            showSwitchTabs = true;
+        } else if (sourcesData?.from === 'thoughts') {
+            showMoreSearchResults = true;
+        }
+
+        // Use Shoelace tab-group with tab-panels when tabs are needed
+        if (showSwitchTabs || showMoreSearchResults) {
+            const sourcesContent = this.answerSources?.viewType === "table"
+                ? TableDataSummary.render({
+                    summaryData: this.answerSources,
+                    scrollBottom: () => {},
+                    closeSourcesPanel: () => this.closeSourcesPanel()
+                })
+                : this.handleListData();
+            
+            const searchResultsContent = KnowledgeSearchResults.render({ 
+                unifiedSearchResults: this.unifiedSearchResults || this.answerSources 
+            });
+
+            this.drawer.innerHTML = `
+                ${header}
+                <sl-tab-group id="sources-tab-group" placement="top">
+                    ${showSwitchTabs ? `
+                        <sl-tab slot="nav" panel="sources" ${this.selectedTab === 'sources' ? 'active' : ''}>Sources (${sourcesCount})</sl-tab>
+                        <sl-tab slot="nav" panel="search" ${this.selectedTab === 'search' ? 'active' : ''}>More search results</sl-tab>
+                    ` : `
+                        <sl-tab slot="nav" panel="search" ${this.selectedTab === 'search' ? 'active' : ''}>More search results</sl-tab>
+                    `}
+                    ${showSwitchTabs ? `
+                        <sl-tab-panel name="sources" ${this.selectedTab === 'sources' ? 'active' : ''}>
+                            <div class="right-panel-tabs-wrapper">
+                                ${sourcesContent}
+                            </div>
+                        </sl-tab-panel>
+                    ` : ''}
+                    <sl-tab-panel name="search" ${this.selectedTab === 'search' ? 'active' : ''}>
+                        ${searchResultsContent}
+                    </sl-tab-panel>
+                </sl-tab-group>
+            `;
+            
+            // Upgrade Shoelace custom elements after rendering
+            if (this.drawer && upgradeCustomElements) {
+                upgradeCustomElements(this.drawer);
+            }
+        } else {
+            // No tabs - just show sources content
+            const content = this.answerSources?.viewType === "table"
+                ? TableDataSummary.render({
+                    summaryData: this.answerSources,
+                    scrollBottom: () => {},
+                    closeSourcesPanel: () => this.closeSourcesPanel()
+                })
+                : this.handleListData();
+
+            this.drawer.innerHTML = `
+                ${header}
                 <div class="right-panel-tabs-wrapper">
-                    ${this.answerSources?.viewType === "table"
-                        ? TableDataSummary.render({
-                            summaryData: this.answerSources,
-                            scrollBottom: () => {}, // Implement scrollBottom if needed
-                            closeSourcesPanel: () => this.closeSourcesPanel()
-                        })
-                        : this.handleListData()
-                    }
-                </div>
-            `
-            : `
-                <div class="right-panel-tabs-wrapper">
-                    ${KnowledgeSearchResults.render({ unifiedSearchResults: this.unifiedSearchResults || this.answerSources })}
+                    ${content}
                 </div>
             `;
+        }
 
-        this.drawer.innerHTML = `
-            ${header}
-            ${content}
-        `;
-
-        // Attach event listeners
-        this.attachEventListeners();
+        // Attach event listeners after a short delay to ensure Shoelace components are initialized
+        setTimeout(() => {
+            this.attachEventListeners();
+        }, 100);
     }
 
     /**
@@ -333,16 +461,45 @@ class SourcesSidebar {
             closeBtn.addEventListener('click', () => this.closeSourcesPanel());
         }
 
-        // Tab switching
-        const tabs = this.drawer?.querySelectorAll('[data-tab]');
-        if (tabs) {
-            tabs.forEach(tab => {
-                tab.removeEventListener('click', this.handleTabClick);
-                tab.addEventListener('click', (e) => {
-                    const tabName = e.currentTarget.getAttribute('data-tab');
-                    this.handleTabSwitch(tabName);
+        // Tab switching using Shoelace tab-group
+        const tabGroup = this.drawer?.querySelector('#sources-tab-group');
+        if (tabGroup) {
+            // Remove existing listener if any
+            if (this.handleTabShowBound) {
+                tabGroup.removeEventListener('sl-tab-show', this.handleTabShowBound);
+            }
+            
+            // Create bound handler
+            this.handleTabShowBound = (e) => {
+                const tabPanel = e.detail.name; // 'sources' or 'search'
+                this.handleTabSwitch(tabPanel);
+            };
+            
+            tabGroup.addEventListener('sl-tab-show', this.handleTabShowBound);
+            
+            // Set initial active tab programmatically
+            setTimeout(() => {
+                const tabs = tabGroup.querySelectorAll('sl-tab');
+                const panels = tabGroup.querySelectorAll('sl-tab-panel');
+                
+                tabs.forEach(tab => {
+                    const panelName = tab.getAttribute('panel');
+                    if (panelName === this.selectedTab) {
+                        tab.setAttribute('active', '');
+                    } else {
+                        tab.removeAttribute('active');
+                    }
                 });
-            });
+                
+                panels.forEach(panel => {
+                    const panelName = panel.getAttribute('name');
+                    if (panelName === this.selectedTab) {
+                        panel.setAttribute('active', '');
+                    } else {
+                        panel.removeAttribute('active');
+                    }
+                });
+            }, 50);
         }
     }
 

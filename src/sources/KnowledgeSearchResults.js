@@ -15,35 +15,52 @@ class KnowledgeSearchResults {
             return '<div class="empty-field-wrapper"><span class="empty-text">No search results available</span></div>';
         }
 
-        let html = '<div class="right-panel-tabs-wrapper">';
-
-        // Render tabs if available
+        // Render tabs using Shoelace tab-group if available
         if (unifiedSearchResults?.data?.tab?.length) {
-            html += '<div class="tab-content-wrapper">';
+            let tabsHtml = '';
+            let panelsHtml = '';
             
+            // Render tabs dynamically from response data
+            // Tabs are created from unifiedSearchResults.data.tab array
             unifiedSearchResults.data.tab.forEach((tab, index) => {
                 const tabData = unifiedSearchResults.data.results?.[tab?.key];
-                html += `
-                    <div class="tab-content" data-tab-key="${tab.key}">
-                        <div class="tab-header">
-                            <span class="tab-icon"><img src="${encodeHtml(tab.iconUrl || '')}" alt="${encodeHtml(tab.name)}" /></span>
-                            <span class="tab-name">${encodeHtml(tab.name)}</span>
-                            <span class="tab-count">${tab.doc_count || 0}</span>
-                        </div>
+                const tabKey = tab.key || `tab-${index}`;
+                const tabName = tab.name || 'Untitled';
+                const tabIcon = tab.iconUrl || tab.icon || '';
+                const tabCount = tab.doc_count || 0;
+                
+                // Tab navigation - render dynamically from response
+                tabsHtml += `
+                    <sl-tab slot="nav" panel="${encodeHtml(tabKey)}">
+                        ${tabIcon ? `<img src="${encodeHtml(tabIcon)}" alt="${encodeHtml(tabName)}" style="width: 16px; height: 16px; margin-right: 6px; vertical-align: middle;" />` : ''}
+                        <span>${encodeHtml(tabName)}</span>
+                        ${tabCount > 0 ? `<span style="margin-left: 4px;">(${tabCount})</span>` : ''}
+                    </sl-tab>
+                `;
+                
+                // Tab panel content - render results for this tab
+                panelsHtml += `
+                    <sl-tab-panel name="${encodeHtml(tabKey)}">
                         ${this.renderTabContent(tabData, tab)}
-                    </div>
+                    </sl-tab-panel>
                 `;
             });
 
-            html += '</div>';
+            return `
+                <sl-tab-group id="knowledge-search-tabs" placement="top" style="width: 100%;">
+                    ${tabsHtml}
+                    ${panelsHtml}
+                </sl-tab-group>
+            `;
         } else {
             // Render all results without tabs
             const allResults = this.getAllResults(unifiedSearchResults);
-            html += this.renderResultsList(allResults);
+            return `
+                <div class="right-panel-tabs-wrapper">
+                    ${this.renderResultsList(allResults)}
+                </div>
+            `;
         }
-
-        html += '</div>';
-        return html;
     }
 
     /**
