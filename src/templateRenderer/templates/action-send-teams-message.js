@@ -202,7 +202,8 @@ const initializeTeamsMessageFunctionality = (data) => {
         const uploadConfig = {
             file: file,
             userInfoId: userId,
-            fileContext: 'knowledge',
+            // fileContext: 'knowledge',
+            fileContext: 'runtime',
             userAccessToken: userAccessToken,
             mediaName: mediaName,
             source: cancelSource,

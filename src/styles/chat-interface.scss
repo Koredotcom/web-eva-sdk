@@ -151,11 +151,6 @@ html, body {
             overflow: auto;
             position: relative;
         }
-        .ComposeBarContainer {
-            flex-shrink: 0;
-            width: 48rem;
-            margin: 0 auto;
-        }
     }
 }
     
@@ -2851,13 +2846,15 @@ html, body {
         margin: 0 auto;
         padding-left: 1.25rem;
         
-        & > div {
+        .chat-message-container {
             display: flex;
             flex-direction: column;
             gap: 1.75rem;
-        }
-        & > div:last-child {
-            min-height: calc(-10rem + 100dvh);
+            margin-bottom: 1.5rem;
+            &:last-child {
+                margin-bottom: 3.5rem;
+                min-height: calc(-10rem + 100dvh);
+            }
         }
     }
     .answerFromChipDiv {
@@ -5524,6 +5521,76 @@ sl-dialog.gpt-form-dialog {
             }
         }
     }
+
+    .agentsModalHeader {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        .modalTitle {
+            @include typography-regular(1.125rem,600,1.75rem);
+            color: #0f0f0f;
+        }
+        .modalClose {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 1.75rem;
+            height: 1.75rem;
+            flex-shrink: 0;
+            border-radius: 6.25rem;
+            transition: transform .2s ease-in-out, background .1s ease-in-out;
+            cursor: pointer;
+            &:hover {
+                background: #fafafa;
+                transform: rotate(180deg);
+            }
+        }
+    }
+
+    .eva-common-agents-dialog {
+        display: flex;
+        align-items: center;
+        gap: .75rem;
+        .agents-action-item {
+            padding: .75rem 1rem;
+            background: #fff;
+            border: 0.0625rem solid #e5e5e5;
+            border-radius: 1.25rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            cursor: pointer;
+            width: 14rem;
+            &:hover {
+                background: #f5f5f5;
+            }
+            .modeCardIcon {
+                display: flex;
+                align-items: center;
+                .img {
+                    width: 20px;
+                    height: 20px;
+                }
+            }
+            .modeCardContent {
+                display: flex;
+                flex-direction: column;
+                gap: 0.125rem;
+                max-width: 100%;
+                .modeCardText {
+                    @include typography-regular(0.875rem,500,1.25rem);
+                    color: #0f0f0f;
+                }
+                .modeCardDescription {
+                    @include typography-regular(0.75rem,400,1rem);
+                    color: #737373;
+                    @include ellipsisText;
+                    max-width: 100%;
+                }
+            }
+        }
+    }
 }
 
 #ambquityDropdown {
@@ -5701,6 +5768,182 @@ sl-dialog.gpt-form-dialog {
         .lineBreak {
             border-bottom: .0625rem solid $wa-gray-300;
             width: 100%;
+        }
+    }
+}
+
+.ComposeBarContainer {
+    flex-shrink: 0;
+    width: 48rem;
+    margin: 0 auto;
+    &.new-layout {
+        width: 42.5rem;
+        .eva-composebar-parent {
+            .eva-composebar-area {
+                padding: 0;
+                display: grid;
+                border-radius: 2rem;
+                border: none;
+                background: linear-gradient(to bottom, rgba(241, 241, 241, 0.58) 0%, rgb(255, 255, 255) 100%);
+                box-shadow: 0 -0.3125rem 2.0625rem 0 rgba(0, 0, 0, .04), 0 .625rem 1.5rem 0 rgba(0, 0, 0, .04);
+                backdrop-filter: blur(0.3125rem);
+                .eva-input-container {
+                    background: linear-gradient(to bottom, rgba(241, 241, 241, 0.58) 0%, rgb(255, 255, 255) 100%);
+                    border: 1.6px solid #fff;
+                    border-radius: 2rem;
+                    display: grid;
+                    grid-template-columns: auto 1fr auto;
+                    gap: 0;
+                    align-items: center;
+                    padding: 0;
+                    .left-actions {
+                        width: auto;
+                        order: 1;
+                        padding: .75rem 0 .75rem .75rem;
+                        display: flex;
+                        align-items: center;
+                        justify-content: space-between;
+                        .common-agents-container {
+                            display: flex;
+                            .agents-action-item {
+                                width: 2rem;
+                                height: 2rem;
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                border: none;
+                                min-width: auto;
+                                padding: 0;
+                                background: rgba(0, 0, 0, 0);
+                                border-radius: 6.25rem;
+                                cursor: pointer;
+                                &:hover {
+                                    background: #f5f5f5;
+                                }
+                            }
+                        }
+                    }
+                    .eva-compose-textarea-container {
+                        order: 2;
+                        min-height: 0;
+                        width: 100%;
+                        height: 100%;
+                        display: flex;
+                        align-items: center;
+                        justify-content: space-between;
+                        gap: 0.5rem;
+                        padding: .75rem 0;
+                        .eva-compose-textarea {
+                            word-break: break-word;
+                            white-space: pre-wrap;
+                            max-height: 6.25rem;
+                            scrollbar-color: #e5e5e5 rgba(0, 0, 0, 0);
+                            background: transparent;
+                        }
+                    }
+                    .right-actions {
+                        order: 3;
+                        padding: .75rem .75rem .75rem 0;
+                        display: flex;
+                        align-items: center;
+                        justify-content: flex-end;
+                        gap: 0.25rem;
+                        .eva-input-action-btn {
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            border-radius: 6.25rem;
+                            width: 2rem;
+                            height: 2rem;
+                            border: none;
+                            background: transparent;
+                            cursor: pointer;
+                            &:hover {
+                                background: #f5f5f5;
+                            }
+                        }
+                    }
+
+                    &.textarea-multiline {
+                        display: grid;
+                        grid-template-rows: auto auto;
+                        grid-template-columns: 1fr auto;
+                        .left-actions {
+                            grid-row: 2;
+                            grid-column: 1;
+                            order: 2;
+                            padding: 0 0 .75rem .75rem;
+                        }
+                        .eva-compose-textarea-container {
+                            grid-row: 1;
+                            grid-column: 1 / -1;
+                            order: 1;
+                            padding: .75rem 1.3rem 0 1.3rem;
+                        }
+                        .right-actions {
+                            grid-row: 2;
+                            grid-column: 2;
+                            order: 3;
+                            padding: 0 .75rem .75rem 0;
+                        }
+                    }
+
+                    &.file-uploaded {
+                        grid-template-rows: auto auto;
+                        grid-template-columns: auto 1fr auto;
+                        .eva-attachments-container {
+                            grid-row: 1;
+                            grid-column: 1 / -1;
+                            margin: .75rem .75rem 0 .75rem;
+                            max-width: 48rem;
+                            white-space: nowrap;
+                            overflow-x: auto;
+                            overflow-y: hidden;
+                        }
+                        .left-actions {
+                            grid-row: 2;
+                            grid-column: 1;
+                        }
+                        .eva-compose-textarea-container {
+                            grid-row: 2;
+                            grid-column: 2;
+                        }
+                        .right-actions {
+                            grid-row: 2;
+                            grid-column: 3;
+                        }
+                    }
+
+                    &.textarea-multiline.file-uploaded {
+                        grid-template-rows: auto auto auto;
+                        grid-template-columns: 1fr auto;
+                        .eva-attachments-container {
+                            grid-row: 1;
+                            grid-column: 1 / -1;
+                            margin: .75rem .75rem 0 .75rem;
+                            max-width: 48rem;
+                            white-space: nowrap;
+                            overflow-x: auto;
+                            overflow-y: hidden;
+                        }
+                        .eva-compose-textarea-container {
+                            grid-row: 2;
+                            grid-column: 1 / -1;
+                            padding: .75rem 1.3rem 0 1.3rem;
+                        }
+                        .left-actions {
+                            grid-row: 3;
+                            grid-column: 1;
+                            padding: 0 0 .75rem .75rem;
+                        }
+                        .right-actions {
+                            grid-row: 3;
+                            grid-column: 2;
+                            padding: 0 .75rem .75rem 0;
+                        }
+                    }
+                }
+            }
         }
     }
 }

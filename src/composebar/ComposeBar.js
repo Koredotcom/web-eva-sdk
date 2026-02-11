@@ -3,7 +3,7 @@ import ChatInterface from "../chat/ChatInterface.js";
 import InvokeAgent from "../chat/invokeAgent.js";
 import store from "../redux/store.js";
 import { fetchAgents } from "../redux/actions/global.action.js";
-import { ActionsFlashIcon, arrowCirlceUpIcon, attachmentIcon, CheveronDownIcon, createCloseIcon, createDeleteIcon, createThumbsUpFilled, microphoneIcon, searchIcon, settingsIcon, Close, StopIcon, CurvedArrowForPreview } from "../templateRenderer/icons-library.js";
+import { ActionsFlashIcon, arrowCirlceUpIcon, attachmentIcon, CheveronDownIcon, createCloseIcon, createDeleteIcon, createThumbsUpFilled, microphoneIcon, searchIcon, settingsIcon, Close, StopIcon, CurvedArrowForPreview, PlusIcon } from "../templateRenderer/icons-library.js";
 import FileUpload from "../Attachments/fileUpload.js";
 import { getAgentType, getFileExtension, hideElementImmediately, showElementImmediately, showElementDelayed, getIconsList, markdownToPlainText } from "../utils/helpers.js";
 import { renderRecentFiles } from "./RenderRecentAttachments.js";
@@ -145,7 +145,7 @@ class ComposeBar {
                 if (sources) {
                     try {
                         const filesOnly = Array.isArray(sources)
-                            ? sources.filter(source => source.type === "attachment")
+                            ? sources.filter(source => source.type === "attachment" || source.loading === true)
                             : [];
                         this.attachments = filesOnly;
                         this.quickActions = quickActions || [];
@@ -256,68 +256,40 @@ class ComposeBar {
             showElementImmediately(commonAgentsContainerDiv, 'flex');
         }
 
-        const commonAgentsContainer = this.container.querySelector('[data-eva-common-agents]');
-        if (!commonAgentsContainer) return;
-
-        commonAgentsContainer.innerHTML = this.commonAgents.map(agent => {
-            return `<button class="agents-action-item ${this.selectedCommonAgent?.id === agent.id ? 'active' : ''}" data-eva-common-agents-action data-agent-id="${agent.id}">
-                <img src="${(this.isMSEnv && agent.id === 'webSearch') ? `images/MS-Icons/web-ms.svg` : agent.icon}" alt="" width="18" height="18" />
-                <span class='agent-name'>${agent?.name}</span>
-            </button>`;
-        }).join('');
-
-        // Add click handlers for common agents
-        commonAgentsContainer.querySelectorAll('[data-eva-common-agents-action]').forEach(item => {
-            item.addEventListener('click', () => {
-                const agentId = item.getAttribute('data-agent-id');
-                const agent = this.commonAgents.find(a => String(a.id) === String(agentId));
-                if (!agent) return;
-                if (this.selectedCommonAgent?.id === agentId) {
-                    this.selectedCommonAgent = null;
-                    if (this.chatInterface && this.chatInterface.setAgentContext) {
-                        this.chatInterface.setAgentContext(null);
-                    }
-                } else {
-                    this.selectedCommonAgent = agent;
-                    if (this.chatInterface && this.chatInterface.setAgentContext) {
-                        this.chatInterface.setAgentContext(agent);
-                    }
-                }
-                this.renderCommonAgents();
-            });
-        });
+        // Only render in dialog now
+        this.updateCommonAgentsInDialog();
     }
 
-    renderContextChipInComposeBar() {
-        const commonAgentsContainer = this.container.querySelector('.common-agents-container');
-        if (commonAgentsContainer) {
-            hideElementImmediately(commonAgentsContainer);
-        }
-        const composebarContextChipContainer = this.container.querySelector('.composebar-context-container');
-        if (!composebarContextChipContainer) return;
-        showElementImmediately(composebarContextChipContainer, 'flex');
-        /*innerHtml should display the selected agent name and close button */
-        composebarContextChipContainer.innerHTML = `
-            <button class="context-chip-button">
-                <div class="composebar-context-agent-name-container ${this.selectedAgent?.agentType === "agenticApp" ? 'agenticApp' : ''}">
-                    <div class="composebar-context-agent-icon">
-                    ${this.selectedAgent?.agentType === "agenticApp" ? `${getIconsList({}, this.selectedAgent?.agenticAppIcons)}` : `<img src="${this.selectedAgent?.icon}" alt="agent-icon" width="16" height="16">`}                        
-                    </div>
-                    <div class="composebar-context-agent-name" title="${this.selectedAgent?.name}">${this.selectedAgent?.name}</div>
-                </div>
-                <div class="composebar-context-close-button">${createCloseIcon({ size: 10, color: "#667085" })}</div>                
-            </button>
-        `;
+    // renderContextChipInComposeBar() {
+    //     const commonAgentsContainer = this.container.querySelector('.common-agents-container');
+    //     if (commonAgentsContainer) {
+    //         hideElementImmediately(commonAgentsContainer);
+    //     }
+    //     const composebarContextChipContainer = this.container.querySelector('.composebar-context-container');
+    //     if (!composebarContextChipContainer) return;
+    //     showElementImmediately(composebarContextChipContainer, 'flex');
+    //     /*innerHtml should display the selected agent name and close button */
+    //     composebarContextChipContainer.innerHTML = `
+    //         <button class="context-chip-button">
+    //             <div class="composebar-context-agent-name-container ${this.selectedAgent?.agentType === "agenticApp" ? 'agenticApp' : ''}">
+    //                 <div class="composebar-context-agent-icon">
+    //                 ${this.selectedAgent?.agentType === "agenticApp" ? `${getIconsList({}, this.selectedAgent?.agenticAppIcons)}` : `<img src="${this.selectedAgent?.icon}" alt="agent-icon" width="16" height="16">`}                        
+    //                 </div>
+    //                 <div class="composebar-context-agent-name" title="${this.selectedAgent?.name}">${this.selectedAgent?.name}</div>
+    //             </div>
+    //             <div class="composebar-context-close-button">${createCloseIcon({ size: 10, color: "#667085" })}</div>                
+    //         </button>
+    //     `;
 
-        /*change the placeholder to the selected agent name */
-        this.placeholder = `Interact with ${this.selectedAgent?.name}`;
-        this.updatePlaceholder();
+    //     /*change the placeholder to the selected agent name */
+    //     this.placeholder = `Interact with ${this.selectedAgent?.name}`;
+    //     this.updatePlaceholder();
 
-        const removeSelectedContextInComposeBarBtn = this.container.querySelector('.composebar-context-close-button');
-        if (removeSelectedContextInComposeBarBtn) {
-            removeSelectedContextInComposeBarBtn.addEventListener('click', (e) => this.handleRemoveSelectedContext());
-        }
-    }
+    //     const removeSelectedContextInComposeBarBtn = this.container.querySelector('.composebar-context-close-button');
+    //     if (removeSelectedContextInComposeBarBtn) {
+    //         removeSelectedContextInComposeBarBtn.addEventListener('click', (e) => this.handleRemoveSelectedContext());
+    //     }
+    // }
 
     renderAttachments() {
         const attachmentsContainer = this.container.querySelector('[data-eva-attachments]');
@@ -347,6 +319,16 @@ class ComposeBar {
         }).join('');
 
         attachmentsContainer.innerHTML = attachmentHtml;
+
+        // Toggle class on eva-input-container when file(s) are uploaded
+        const inputContainer = attachmentsContainer.closest('.eva-input-container');
+        if (inputContainer) {
+            if (this.attachments?.length > 0) {
+                inputContainer.classList.add('file-uploaded');
+            } else {
+                inputContainer.classList.remove('file-uploaded');
+            }
+        }
 
         // Reattach event listeners for remove buttons
         this.attachAttachmentEventListeners();
@@ -550,7 +532,7 @@ class ComposeBar {
         if (env === 'MS') {
             return `<img src="images/MS-Icons/send-ms.svg" alt="Send" width="20" height="20" />`;
         }
-        return arrowCirlceUpIcon({ size: 16, color: "#101828" });
+        return arrowCirlceUpIcon({ size: 20, color: "#101828" });
     }
 
 
@@ -657,7 +639,7 @@ class ComposeBar {
 
 
         this.container.innerHTML = `
-            <div class="ComposeBarContainer">
+            <div class="ComposeBarContainer new-layout">
                 <div class="eva-composebar-parent">     
                     <div class="eva-quick-reply-container" data-eva-quick-replies></div>                           
                     ${this.showOverRideModal ? `
@@ -674,7 +656,7 @@ class ComposeBar {
                     </div>` : ''}
 
                     <div class="eva-composebar-area">
-                        <div class="composebar-bot-input-wrapper" style= "display: none;">
+                        <div class="composebar-bot-input-wrapper" style="display: none;">
                             <div class="bot-input-header">
                                 <div class="bot-input-header-left">
                                     <div class="bot-input-header-left-icon">                                        
@@ -696,13 +678,22 @@ class ComposeBar {
                                               
                         </div>                        
                         
-                        <div class="eva-input-container">
+                        <div class="eva-input-container${this.attachments?.length ? ' file-uploaded' : ''}">
                             <div class="response-as-context-truncated-text" style="display: none;">
                                 <div class='arrow-down-icon'>${CurvedArrowForPreview({ size: 12, color: "#101828" })}</div>                                
                                 <div class="answer-context-chip-text response-as-context-question-text"></div>
                                 <button class="srCicon">${createCloseIcon({ size: 10, color: "#667085" })}</button>
                             </div>         
                             <div class="eva-attachments-container" data-eva-attachments></div>
+                            <div class='left-actions'>
+                                <div class='common-agents-container'>
+                                    <button class="agents-action-item" data-eva-agents-action data-eva-open-dialog>
+                                        ${this.isMSEnv ? `<img src="images/MS-Icons/flash-ms.svg" alt="Agents" width="18" height="18" />` : PlusIcon({ size: 14, color: "#0F0F0F" })}
+                                        <!-- ${this.isMSEnv ? CheveronDownIcon({ size: 14, color: "#1773b0" }) : CheveronDownIcon({ size: 14, color: "#0F0F0F" })} -->
+                                    </button>
+                                </div>
+                                <div class="composebar-context-container" style="display: none;"></div>
+                            </div>
                             <div class="eva-compose-textarea-container">
                                 <textarea 
                                 class="eva-compose-textarea" 
@@ -711,34 +702,22 @@ class ComposeBar {
                                 data-eva-input
                                 ></textarea>
                             </div>
-                            <div class="eva-compose-textarea-actions">
-                                <div class='left-actions'>
-                                <div class='common-agents-container'>
-                                    <button class="agents-action-item" data-eva-agents-action data-eva-open-dialog>
-                                        ${this.isMSEnv ? `<img src="images/MS-Icons/flash-ms.svg" alt="Agents" width="18" height="18" />` : ActionsFlashIcon({ size: 18, color: "#0F0F0F" })}
-                                        ${this.isMSEnv ? CheveronDownIcon({ size: 14, color: "#1773b0" }) : CheveronDownIcon({ size: 14, color: "#0F0F0F" })}                                        
-                                    </button>                                
-                                    <div data-eva-common-agents style="display: inline-flex; gap: 8px;"></div>
-                                </div>
-                                    <div class="composebar-context-container" style="display: none;"></div>
-                                </div>
-                                <div class="right-actions">
-                                    <sl-tooltip>
-                                        <div slot="content" class="caTooltips">5 attachments, max 10MB each. <br/>PDF, XLS, DOC, CSV, TXT formats.</div>
-                                        <button class="eva-input-action-btn attachment-btn" data-eva-attachment>
-                                            ${this.getAttachmentButtonIcon()}
-                                        </button>
-                                    </sl-tooltip>
-                                    ${!this.isMSEnv ? `<sl-tooltip>
-                                        <div slot="content" class="caTooltips">Search using voice</div>
-                                        <button class="eva-input-action-btn voice-btn" data-eva-speech>
-                                            ${microphoneIcon({ size: 16, color: "#0F0F0F" })}
-                                        </button>
-                                    </sl-tooltip>` : ''}
-                                    <button class="eva-input-action-btn send-btn" data-eva-send title="Send">
-                                        ${this.getSendButtonIcon()}
+                            <div class="right-actions">
+                                <sl-tooltip>
+                                    <div slot="content" class="caTooltips">5 attachments, max 10MB each. <br/>PDF, XLS, DOC, CSV, TXT formats.</div>
+                                    <button class="eva-input-action-btn attachment-btn" data-eva-attachment>
+                                        ${this.getAttachmentButtonIcon()}
                                     </button>
-                                </div>
+                                </sl-tooltip>
+                                ${!this.isMSEnv ? `<sl-tooltip>
+                                    <div slot="content" class="caTooltips">Search using voice</div>
+                                    <button class="eva-input-action-btn voice-btn" data-eva-speech>
+                                        ${microphoneIcon({ size: 16, color: "#0F0F0F" })}
+                                    </button>
+                                </sl-tooltip>` : ''}
+                                <button class="eva-input-action-btn send-btn" data-eva-send title="Send">
+                                    ${this.getSendButtonIcon()}
+                                </button>
                             </div>
                             
                             <!-- Hidden file input for attachment functionality -->
@@ -748,6 +727,16 @@ class ComposeBar {
                     </div>
                                     
                     <sl-dialog data-eva-dialog class="eva-agents-dialog">
+                        <div class="agentsTabWrapper">
+                            <div class="agentsModalHeader">
+                                <div class="modalTitle">
+                                    Select Agent
+                                </div>
+                                <div class="modalClose" data-eva-dialog-close>
+                                    ${createCloseIcon({ size: 12, color: "#667085" })}
+                                </div>
+                            </div>
+                        <div class="eva-common-agents-dialog" data-eva-common-agents-dialog></div>
                         <div class="composebarFilter">
                             <div class="agentsTabWrapper">
                                 <div class="agentsHeader">
@@ -767,7 +756,6 @@ class ComposeBar {
                                             />
                                         </div>
                                         <button class="agentSettings" style="display: none;">${settingsIcon({ size: 13, color: "#667085" })}</button>
-                                        <button class="agentSettings" data-eva-dialog-close>${createCloseIcon({ size: 12, color: "#667085" })}</button>
                                     </div>
                                 </div>
                             </div>
@@ -777,7 +765,8 @@ class ComposeBar {
                             <div class="eva-flows-container" data-eva-flows-content style="display: none;">
                                 <ul class="eva-flows-list" data-eva-all-flows></ul>
                             </div>
-                        </div>                        
+                        </div>     
+                        </div>                   
                     </sl-dialog>
                     
                     <sl-dialog label="Attachments" data-eva-attachment-dialog class="eva-attachments-dialog">
@@ -1139,8 +1128,44 @@ class ComposeBar {
      * Auto-resize textarea based on content
      */
     autoResize(textarea) {
-        textarea.style.height = 'auto';
-        textarea.style.height = Math.min(textarea.scrollHeight, 150) + 'px';
+        // Target the textarea with class "eva-compose-textarea" (rows='1', single line initially)
+        const composeTextarea = this.container.querySelector('.eva-compose-textarea');
+        if (!composeTextarea) return;
+        
+        // Get the input container to add class when textarea becomes multiline
+        const inputContainer = this.container.querySelector('.eva-input-container');
+        if (!inputContainer) return;
+        
+        // Temporarily remove the class to measure in base layout state
+        // This prevents layout shift from affecting the measurement
+        const hadMultilineClass = inputContainer.classList.contains('textarea-multiline');
+        if (hadMultilineClass) {
+            inputContainer.classList.remove('textarea-multiline');
+            // Force a reflow to ensure layout has updated before measuring
+            void inputContainer.offsetHeight;
+        }
+        
+        // Measure scrollHeight in the base layout state (without multiline class)
+        composeTextarea.style.height = 'auto';
+        const scrollHeight = composeTextarea.scrollHeight;
+        const newHeight = Math.min(scrollHeight, 150) + 'px';
+        composeTextarea.style.height = newHeight;
+        
+        // Get the computed height after setting it
+        const computedStyle = getComputedStyle(composeTextarea);
+        const currentHeight = parseFloat(computedStyle.height);
+        
+        // Convert 1.5rem to pixels (1rem = root font size, typically 16px)
+        const rootFontSize = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+        const singleLineHeight = 1.5 * rootFontSize; // 1.5rem in pixels (single line height)
+        
+        // When single line goes to multiline, add class to eva-input-container
+        if (currentHeight > singleLineHeight) {
+            inputContainer.classList.add('textarea-multiline');
+        } else {
+            // Remove class when it reverts back to single line
+            inputContainer.classList.remove('textarea-multiline');
+        }
     }
 
     /**
@@ -1300,7 +1325,61 @@ class ComposeBar {
             dialog.setAttribute('open', '');
         }
 
+        // Render common agents in the dialog
+        this.updateCommonAgentsInDialog();
+
         this.loadAndRenderAgents('');
+    }
+
+    /**
+     * Update common agents content in the dialog
+     */
+    updateCommonAgentsInDialog() {
+        const dialog = this.container.querySelector('[data-eva-dialog]');
+        if (!dialog) return;
+        
+        const commonAgentsDialog = dialog.querySelector('[data-eva-common-agents-dialog]');
+        if (!commonAgentsDialog) return;
+        
+        // Render common agents directly in the dialog
+        commonAgentsDialog.innerHTML = this.commonAgents.map(agent => {
+            return `<div class="agents-action-item ${this.selectedCommonAgent?.id === agent.id ? 'active' : ''}" data-eva-common-agents-action data-agent-id="${agent.id}">
+                <div class="modeCardIcon"><img src="${(this.isMSEnv && agent.id === 'webSearch') ? `images/MS-Icons/web-ms.svg` : agent.icon}" alt="" width="18" height="18" /></div>
+                <div class="modeCardContent">
+                    <div class="modeCardText">${agent?.name}</div>
+                    <div class="modeCardDescription">${agent?.shortDescription}</div>
+                </div>
+            </div>`;
+        }).join('');
+
+        // Add click handlers for common agents in the dialog
+        this.attachCommonAgentsEventListeners(commonAgentsDialog);
+    }
+
+    /**
+     * Attach event listeners for common agents in the dialog
+     */
+    attachCommonAgentsEventListeners(container) {
+        container.querySelectorAll('[data-eva-common-agents-action]').forEach(item => {
+            item.addEventListener('click', () => {
+                const agentId = item.getAttribute('data-agent-id');
+                const agent = this.commonAgents.find(a => String(a.id) === String(agentId));
+                if (!agent) return;
+                if (this.selectedCommonAgent?.id === agentId) {
+                    this.selectedCommonAgent = null;
+                    if (this.chatInterface && this.chatInterface.setAgentContext) {
+                        this.chatInterface.setAgentContext(null);
+                    }
+                } else {
+                    this.selectedCommonAgent = agent;
+                    if (this.chatInterface && this.chatInterface.setAgentContext) {
+                        this.chatInterface.setAgentContext(agent);
+                    }
+                }
+                this.renderCommonAgents();
+                this.handleCloseDialog();
+            });
+        });
     }
 
     /**
@@ -1669,7 +1748,6 @@ class ComposeBar {
                 const agent = agents.find(a => String(a.id) === String(agentId));
                 if (!agent) return;
                 this.selectedAgent = agent;
-                // this.renderContextChipInComposeBar(); //setting selected agent as context chip in compose bar
                 if (attachments?.length > 0) {
                     // Store the agent for later invocation after user confirms
                     // this.pendingAgentInvocation = agent;
