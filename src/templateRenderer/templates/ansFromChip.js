@@ -206,10 +206,23 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 			return '';
 		}
 
+		// Normalize to array: item.data can be array or object
+		const getDataList = () => {
+			if (Array.isArray(item?.data)) return item.data;
+			if (item?.data && typeof item.data === 'object') return Object.values(item.data);
+			return [];
+		};
+		const getContentLinksList = () => {
+			const links = item?.content?.payload?.text?.body?.content_links_for_answer;
+			if (Array.isArray(links)) return links;
+			if (links && typeof links === 'object') return Object.values(links);
+			return [];
+		};
+
 		let body = `<div class="chatFilterGroup">`;
 		body += `<div class="threadListGroup">`;
 		if (item?.sources?.[0]?.source === "customQnAAPI") {
-			item?.content?.payload?.text?.body?.content_links_for_answer?.map((data, i) => {
+			getContentLinksList().map((data, i) => {
 				body += `<div class="threadListItem" key="${i}">
 	<div class="rightCol">
 		<div class="leftDetails">
@@ -247,7 +260,23 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 			});
 		}
 		else {
-			(Array.isArray(item?.data) ? item.data : []).map((data, i) => {
+			const dataList = getDataList();
+			if (dataList.length === 0 && (item?.sources?.length > 0)) {
+				// Fallback: show source chips when no thread data
+				item.sources.forEach((source, i) => {
+					const title = source?.name || source?.title || source?.source || 'Source';
+					const icon = renderIcons(source?.source, source?.extIcon || source?.iconUrl, source?.providerIcon || source?.icon)?.outerHTML || '';
+					body += `<div class="threadListItem" key="src-${i}">
+						<div class="leftCol">${icon}</div>
+						<div class="rightCol">
+							<div class="leftDetails">
+								<div class="namgeGroup"><div class="name">${htmlDecode(title)}</div></div>
+							</div>
+						</div>
+					</div>`;
+				});
+			} else {
+				dataList.map((data, i) => {
 				body += `<div class="threadListItem" key="${i}">
                                 <div class='leftCol'>
                                 ${renderIcons(data?.source, null)?.outerHTML}
@@ -282,7 +311,8 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
                                 </div>
                             </div>
                         </div>`;
-			});
+				});
+			}
 		}
 		body += `</div>`;
 		body += `</div>`;
