@@ -1,4 +1,4 @@
-import { encodeHtml } from '../utils/helpers.js';
+import { encodeHtml, renderIcons, getFileExtension, getExtIcon } from '../utils/helpers.js';
 import store from '../redux/store.js';
 
 /**
@@ -8,9 +8,14 @@ import store from '../redux/store.js';
 class KnowledgeSearchResults {
     /**
      * Render knowledge search results
-     * @param {Object} params - { unifiedSearchResults }
+     * @param {Object} params - { unifiedSearchResults, answerSources }
      */
-    static render({ unifiedSearchResults }) {
+    static render({ unifiedSearchResults, answerSources = null }) {
+        // Debug: Log the data structure
+        console.log('KnowledgeSearchResults.render - unifiedSearchResults:', unifiedSearchResults);
+        console.log('KnowledgeSearchResults.render - data.tab:', unifiedSearchResults?.data?.tab);
+        console.log('KnowledgeSearchResults.render - data.results:', unifiedSearchResults?.data?.results);
+        
         if (!unifiedSearchResults?.data?.results) {
             return '<div class="empty-field-wrapper"><span class="empty-text">No search results available</span></div>';
         }
@@ -24,14 +29,23 @@ class KnowledgeSearchResults {
             // Tabs are created from unifiedSearchResults.data.tab array
             unifiedSearchResults.data.tab.forEach((tab, index) => {
                 const tabData = unifiedSearchResults.data.results?.[tab?.key];
+                console.log(`Tab ${index} (${tab?.key}):`, {
+                    tab,
+                    tabData,
+                    hasData: !!tabData?.data,
+                    dataLength: tabData?.data?.length
+                });
+                
                 const tabKey = tab.key || `tab-${index}`;
                 const tabName = tab.name || 'Untitled';
                 const tabIcon = tab.iconUrl || tab.icon || '';
                 const tabCount = tab.doc_count || 0;
+                const isFirstTab = index === 0;
                 
                 // Tab navigation - render dynamically from response
+                // Activate first tab by default
                 tabsHtml += `
-                    <sl-tab slot="nav" panel="${encodeHtml(tabKey)}">
+                    <sl-tab slot="nav" panel="${encodeHtml(tabKey)}" ${isFirstTab ? 'active' : ''}>
                         ${tabIcon ? `<img src="${encodeHtml(tabIcon)}" alt="${encodeHtml(tabName)}" style="width: 16px; height: 16px; margin-right: 6px; vertical-align: middle;" />` : ''}
                         <span>${encodeHtml(tabName)}</span>
                         ${tabCount > 0 ? `<span style="margin-left: 4px;">(${tabCount})</span>` : ''}
@@ -39,9 +53,10 @@ class KnowledgeSearchResults {
                 `;
                 
                 // Tab panel content - render results for this tab
+                // Activate first panel by default
                 panelsHtml += `
-                    <sl-tab-panel name="${encodeHtml(tabKey)}">
-                        ${this.renderTabContent(tabData, tab)}
+                    <sl-tab-panel name="${encodeHtml(tabKey)}" ${isFirstTab ? 'active' : ''}>
+                        ${this.renderTabContent(tabData, tab, answerSources)}
                     </sl-tab-panel>
                 `;
             });
@@ -57,7 +72,7 @@ class KnowledgeSearchResults {
             const allResults = this.getAllResults(unifiedSearchResults);
             return `
                 <div class="right-panel-tabs-wrapper">
-                    ${this.renderResultsList(allResults)}
+                    ${this.renderResultsList(allResults, answerSources)}
                 </div>
             `;
         }
@@ -82,46 +97,173 @@ class KnowledgeSearchResults {
     /**
      * Render tab content
      */
-    static renderTabContent(tabData, tab) {
+    static renderTabContent(tabData, tab, answerSources = null) {
+        console.log('renderTabContent - tabData:', tabData);
+        console.log('renderTabContent - tab:', tab);
+        console.log('renderTabContent - tabData?.data:', tabData?.data);
+        console.log('renderTabContent - tabData?.data length:', tabData?.data?.length);
+        
         if (!tabData?.data || !Array.isArray(tabData.data) || tabData.data.length === 0) {
+            console.log('renderTabContent - No data or empty array, returning empty message');
             return '<div class="empty-field-wrapper"><span class="empty-text">No results found</span></div>';
         }
 
-        return this.renderResultsList(tabData.data);
+        const resultsHtml = this.renderResultsList(tabData.data, answerSources);
+        console.log('renderTabContent - resultsHtml length:', resultsHtml?.length);
+        console.log('renderTabContent - resultsHtml preview:', resultsHtml?.substring(0, 200));
+        return `<div class="tab-content-wrapper"><div class="tab-content">${resultsHtml}</div></div>`;
     }
 
     /**
-     * Render results list
+     * Get result data icon (similar to getResultDataIcon in Kora-React)
      */
-    static renderResultsList(results) {
+    static getResultDataIcon(item) {
+        // If only iconUrl, show it as onlySource
+        if (!item?.extIcon && item?.iconUrl) {
+            return `
+                <div class="sourceIcon onlySource">
+                    <img src="${encodeHtml(item.iconUrl)}" alt="" />
+                </div>
+            `;
+        }
+
+        // If both extIcon and iconUrl, show both
+        if (item?.extIcon && item?.iconUrl) {
+            const ext = item?.ext || getFileExtension(item?.title || item?.file_title || '');
+            const extIconUrl = getExtIcon(ext);
+            
+            return `
+                <div class="extIcon">
+                    <img src="${encodeHtml(extIconUrl)}" alt="" />
+                    <div class="sourceIcon">
+                        <img src="${encodeHtml(item.iconUrl)}" alt="" />
+                    </div>
+                </div>
+            `;
+        }
+
+        // If only extIcon
+        if (item?.extIcon) {
+            const ext = item?.ext || getFileExtension(item?.title || item?.file_title || '');
+            const extIconUrl = getExtIcon(ext);
+            
+            return `
+                <div class="extIcon">
+                    <img src="${encodeHtml(extIconUrl)}" alt="" />
+                    <div class="sourceIcon">
+                        <img src="${encodeHtml(item.extIcon)}" alt="" />
+                    </div>
+                </div>
+            `;
+        }
+
+        // Fallback to renderIcons
+        try {
+            const iconEl = renderIcons(
+                item?.source || item?.type,
+                item?.extIcon || null,
+                null,
+                item?.iconUrl || item?.icon,
+                item?.isSupervisor
+            );
+            return iconEl?.outerHTML || '';
+        } catch (e) {
+            return '';
+        }
+    }
+
+    /**
+     * Render results list (matching Kora-React structure)
+     */
+    static renderResultsList(results, answerSources = null) {
         if (!results || results.length === 0) {
             return '<div class="empty-field-wrapper"><span class="empty-text">No results found</span></div>';
         }
 
-        let html = '<div class="results-list">';
+        // Get source IDs from answerSources for "Answered Source" badge
+        const allSourceIds = new Set();
+        if (answerSources?.sources) {
+            answerSources.sources.forEach(source => {
+                if (source?.docId) allSourceIds.add(source.docId);
+                if (source?.contentId) allSourceIds.add(source.contentId);
+            });
+        }
+
+        let html = '';
         
         results.forEach((result, index) => {
-            const title = result?.title || result?.file_title || 'Untitled';
-            const desc = result?.desc || result?.content || '';
+            let title = result?.title || result?.file_title || 'Untitled';
+            let desc = result?.desc || result?.content || '';
+            
+            // Handle file type
+            if (result?.sys_content_type === 'file') {
+                title = result?.file_title || result?.title || 'Untitled';
+            }
+            
+            // Handle content array
+            if (result?.hasOwnProperty('content')) {
+                if (Array.isArray(result?.content)) {
+                    desc = result?.content?.[0] || '';
+                } else {
+                    desc = result?.content || '';
+                }
+            }
+            
             const url = result?.redirectUrl?.dweb || result?.redirectUrl?.dWeb || result?.webViewLink || result?.url;
+            const iconHtml = this.getResultDataIcon(result);
+            const isAnsweredSource = (result?.contentId && allSourceIds.has(result.contentId)) || 
+                                     (result?.docId && allSourceIds.has(result.docId));
             
             html += `
-                <div class="result-item" ${url ? `onclick="window.open('${encodeHtml(url)}', '_blank')" style="cursor: pointer;"` : ''}>
-                    <div class="result-title">${encodeHtml(title)}</div>
-                    <div class="result-description">${encodeHtml(desc)}</div>
-                    ${result?.meta ? `
-                        <div class="result-meta">
-                            ${result.meta.updatedBy ? `<span>${encodeHtml(result.meta.updatedBy)}</span>` : ''}
-                            ${result.meta.updatedOn ? `<span> • Updated on ${encodeHtml(result.meta.updatedOn)}</span>` : ''}
+                <div class="content-wrapper" ${url ? `onclick="window.open('${encodeHtml(url)}', '_blank')" style="cursor: pointer;"` : ''}>
+                    <span class="icon-wrapper">${iconHtml}</span>
+                    <div class="content-desc">
+                        <div class="content-header">
+                            <div class="options-name-wrapper">
+                                <span class="content-name">${encodeHtml(title)}</span>
+                                ${isAnsweredSource ? '<div class="options-wrapper answerSourceChip">Answered Source</div>' : ''}
+                            </div>
+                            ${desc ? `<div class="desc">${typeof desc === 'string' ? encodeHtml(desc) : desc}</div>` : ''}
                         </div>
-                    ` : ''}
+                        ${result?.meta ? this.renderMetaInfo(result, result?.sourceType) : ''}
+                    </div>
                 </div>
                 <div class="line-seperator"></div>
             `;
         });
 
-        html += '</div>';
         return html;
+    }
+
+    /**
+     * Render meta information
+     */
+    static renderMetaInfo(result, sourceType) {
+        const meta = result.meta;
+        if (!meta) return '';
+
+        let metaHtml = '<div class="metaDescription">';
+        
+        // Basic meta info
+        if (meta.updatedBy && meta.updatedOn) {
+            metaHtml += `<span>${encodeHtml(meta.updatedBy)}</span>`;
+            metaHtml += `<span> • Updated on ${encodeHtml(meta.updatedOn)}</span>`;
+        } else if (meta.createdBy) {
+            metaHtml += `<span>${encodeHtml(meta.createdBy)}</span>`;
+        }
+        
+        // Add other meta fields if present
+        Object.keys(meta).forEach(key => {
+            if (key !== 'updatedBy' && key !== 'updatedOn' && key !== 'createdBy') {
+                const value = meta[key];
+                if (value) {
+                    metaHtml += `<span> • ${encodeHtml(key)}: ${encodeHtml(Array.isArray(value) ? value.join(', ') : value)}</span>`;
+                }
+            }
+        });
+        
+        metaHtml += '</div>';
+        return metaHtml;
     }
 }
 

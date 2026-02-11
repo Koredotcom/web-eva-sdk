@@ -197,11 +197,50 @@ class SourcesSidebar {
             if (unifiedData?.data?.tab?.length > 1) {
                 unifiedData = this.makeALLtabSearchResults(unifiedData);
             }
+            
+            // Only re-render if unifiedSearchResults has changed
+            const needsRerender = !this.unifiedSearchResults || 
+                JSON.stringify(this.unifiedSearchResults?.data?.tab) !== JSON.stringify(unifiedData?.data?.tab);
+            
             this.unifiedSearchResults = unifiedData;
             // Update Redux state for unifiedSearchResults
             store.dispatch(setUnifiedSearchResults(this.unifiedSearchResults));
-            // Re-render to show updated tabs
-            this.render();
+            
+            if (needsRerender) {
+                // Re-render to show updated tabs
+                this.render();
+            } else {
+                // Just update the active tab without full re-render
+                const tabGroup = this.drawer?.querySelector('#sources-tab-group');
+                if (tabGroup) {
+                    const tabs = tabGroup.querySelectorAll('sl-tab');
+                    const panels = tabGroup.querySelectorAll('sl-tab-panel');
+                    
+                    tabs.forEach(t => {
+                        if (t.getAttribute('panel') === tab) {
+                            t.setAttribute('active', '');
+                        } else {
+                            t.removeAttribute('active');
+                        }
+                    });
+                    
+                    panels.forEach(p => {
+                        if (p.getAttribute('name') === tab) {
+                            p.setAttribute('active', '');
+                        } else {
+                            p.removeAttribute('active');
+                        }
+                    });
+                    
+                    // Ensure nested tab-group is upgraded
+                    setTimeout(() => {
+                        const nestedTabGroup = this.drawer?.querySelector('#knowledge-search-tabs');
+                        if (nestedTabGroup && upgradeCustomElements) {
+                            upgradeCustomElements(nestedTabGroup);
+                        }
+                    }, 50);
+                }
+            }
         } else {
             // Update active tab in the DOM without full re-render
             const tabGroup = this.drawer?.querySelector('#sources-tab-group');
@@ -397,7 +436,8 @@ class SourcesSidebar {
                 : this.handleListData();
             
             const searchResultsContent = KnowledgeSearchResults.render({ 
-                unifiedSearchResults: this.unifiedSearchResults || this.answerSources 
+                unifiedSearchResults: this.unifiedSearchResults || this.answerSources,
+                answerSources: this.answerSources
             });
 
             this.drawer.innerHTML = `
@@ -416,8 +456,10 @@ class SourcesSidebar {
                             </div>
                         </sl-tab-panel>
                     ` : ''}
-                    <sl-tab-panel name="search" ${this.selectedTab === 'search' ? 'active' : ''}>
-                        ${searchResultsContent}
+                    <sl-tab-panel name="search" ${this.selectedTab === 'search' ? 'active' : ''} style="padding: 0;">
+                        <div style="width: 100%; height: 100%;">
+                            ${searchResultsContent}
+                        </div>
                     </sl-tab-panel>
                 </sl-tab-group>
             `;
@@ -425,6 +467,45 @@ class SourcesSidebar {
             // Upgrade Shoelace custom elements after rendering
             if (this.drawer && upgradeCustomElements) {
                 upgradeCustomElements(this.drawer);
+                // Also upgrade nested tab-group for "More search results" - need to wait for parent tab-group to be ready
+                setTimeout(() => {
+                    const nestedTabGroup = this.drawer?.querySelector('#knowledge-search-tabs');
+                    if (nestedTabGroup && upgradeCustomElements) {
+                        upgradeCustomElements(nestedTabGroup);
+                        // Force update the nested tab-group
+                        if (nestedTabGroup.requestUpdate) {
+                            nestedTabGroup.requestUpdate();
+                        }
+                        
+                        // Activate the first tab in the nested tab-group
+                        const nestedTabs = nestedTabGroup.querySelectorAll('sl-tab');
+                        const nestedPanels = nestedTabGroup.querySelectorAll('sl-tab-panel');
+                        
+                        if (nestedTabs.length > 0 && nestedPanels.length > 0) {
+                            // Activate first tab
+                            const firstTab = nestedTabs[0];
+                            const firstPanelName = firstTab.getAttribute('panel');
+                            const firstPanel = nestedTabGroup.querySelector(`sl-tab-panel[name="${firstPanelName}"]`);
+                            
+                            if (firstTab && firstPanel) {
+                                firstTab.setAttribute('active', '');
+                                firstPanel.setAttribute('active', '');
+                                
+                                // Remove active from other tabs/panels
+                                nestedTabs.forEach(tab => {
+                                    if (tab !== firstTab) {
+                                        tab.removeAttribute('active');
+                                    }
+                                });
+                                nestedPanels.forEach(panel => {
+                                    if (panel !== firstPanel) {
+                                        panel.removeAttribute('active');
+                                    }
+                                });
+                            }
+                        }
+                    }
+                }, 200);
             }
         } else {
             // No tabs - just show sources content
@@ -447,6 +528,46 @@ class SourcesSidebar {
         // Attach event listeners after a short delay to ensure Shoelace components are initialized
         setTimeout(() => {
             this.attachEventListeners();
+            
+            // If search tab is active, ensure nested tab-group is upgraded and activated
+            if (this.selectedTab === 'search') {
+                setTimeout(() => {
+                    const nestedTabGroup = this.drawer?.querySelector('#knowledge-search-tabs');
+                    if (nestedTabGroup && upgradeCustomElements) {
+                        upgradeCustomElements(nestedTabGroup);
+                        if (nestedTabGroup.requestUpdate) {
+                            nestedTabGroup.requestUpdate();
+                        }
+                        
+                        // Activate the first tab in the nested tab-group
+                        const nestedTabs = nestedTabGroup.querySelectorAll('sl-tab');
+                        const nestedPanels = nestedTabGroup.querySelectorAll('sl-tab-panel');
+                        
+                        if (nestedTabs.length > 0 && nestedPanels.length > 0) {
+                            const firstTab = nestedTabs[0];
+                            const firstPanelName = firstTab.getAttribute('panel');
+                            const firstPanel = nestedTabGroup.querySelector(`sl-tab-panel[name="${firstPanelName}"]`);
+                            
+                            if (firstTab && firstPanel) {
+                                firstTab.setAttribute('active', '');
+                                firstPanel.setAttribute('active', '');
+                                
+                                // Remove active from other tabs/panels
+                                nestedTabs.forEach(tab => {
+                                    if (tab !== firstTab) {
+                                        tab.removeAttribute('active');
+                                    }
+                                });
+                                nestedPanels.forEach(panel => {
+                                    if (panel !== firstPanel) {
+                                        panel.removeAttribute('active');
+                                    }
+                                });
+                            }
+                        }
+                    }
+                }, 150);
+            }
         }, 100);
     }
 
@@ -473,6 +594,21 @@ class SourcesSidebar {
             this.handleTabShowBound = (e) => {
                 const tabPanel = e.detail.name; // 'sources' or 'search'
                 this.handleTabSwitch(tabPanel);
+                
+                // When switching to 'search' tab, upgrade nested tab-group
+                if (tabPanel === 'search') {
+                    setTimeout(() => {
+                        const nestedTabGroup = this.drawer?.querySelector('#knowledge-search-tabs');
+                        if (nestedTabGroup && upgradeCustomElements) {
+                            console.log('Upgrading nested tab-group on tab switch:', nestedTabGroup);
+                            upgradeCustomElements(nestedTabGroup);
+                            // Force update
+                            if (nestedTabGroup.requestUpdate) {
+                                nestedTabGroup.requestUpdate();
+                            }
+                        }
+                    }, 100);
+                }
             };
             
             tabGroup.addEventListener('sl-tab-show', this.handleTabShowBound);
@@ -499,6 +635,46 @@ class SourcesSidebar {
                         panel.removeAttribute('active');
                     }
                 });
+                
+                // If search tab is active, upgrade nested tab-group and activate first tab
+                if (this.selectedTab === 'search') {
+                    setTimeout(() => {
+                        const nestedTabGroup = this.drawer?.querySelector('#knowledge-search-tabs');
+                        if (nestedTabGroup && upgradeCustomElements) {
+                            upgradeCustomElements(nestedTabGroup);
+                            if (nestedTabGroup.requestUpdate) {
+                                nestedTabGroup.requestUpdate();
+                            }
+                            
+                            // Activate the first tab in the nested tab-group
+                            const nestedTabs = nestedTabGroup.querySelectorAll('sl-tab');
+                            const nestedPanels = nestedTabGroup.querySelectorAll('sl-tab-panel');
+                            
+                            if (nestedTabs.length > 0 && nestedPanels.length > 0) {
+                                const firstTab = nestedTabs[0];
+                                const firstPanelName = firstTab.getAttribute('panel');
+                                const firstPanel = nestedTabGroup.querySelector(`sl-tab-panel[name="${firstPanelName}"]`);
+                                
+                                if (firstTab && firstPanel) {
+                                    firstTab.setAttribute('active', '');
+                                    firstPanel.setAttribute('active', '');
+                                    
+                                    // Remove active from other tabs/panels
+                                    nestedTabs.forEach(tab => {
+                                        if (tab !== firstTab) {
+                                            tab.removeAttribute('active');
+                                        }
+                                    });
+                                    nestedPanels.forEach(panel => {
+                                        if (panel !== firstPanel) {
+                                            panel.removeAttribute('active');
+                                        }
+                                    });
+                                }
+                            }
+                        }
+                    }, 150);
+                }
             }, 50);
         }
     }
