@@ -302,7 +302,7 @@ export function shouldShowQuestion(templateType, bot) {
 }
 
 export function supportsFeedback(templateType) {
-	const feedbackTemplates = ["search_answer", "multi_responses", "gpt_form"];
+	const feedbackTemplates = ["search_answer", "multi_responses", "gpt_form" , "search_results"];
 	return feedbackTemplates.includes(templateType);
 }
 

@@ -452,6 +452,12 @@ html, body {
 
 .answerFromChipDiv {   
     margin-bottom: 1rem;
+
+    .ansFromChip-drawer-body {
+        overflow: auto;
+        max-height: 70vh;
+    }
+
     .leftWrapperBlockCntr {
         display: flex;
         gap: .75rem;
@@ -467,6 +473,57 @@ html, body {
                 .contextIcon {
                     .srcimg {
                         display: flex;
+                    }
+                }
+            }
+        }
+
+        &.new-layout {
+            .ansFromChip-wrapper {
+                display: flex;
+                flex-direction: column;
+                gap: 0.75rem;
+
+                .left-splitter-opener {
+                    .leftWrapperBlock {
+                        .koraSpecDr {
+                            background: $wa-gray-50;
+                            border: none;
+                            &:hover {
+                                background: $wa-gray-100;
+                            }
+                        }
+                    }
+                }
+
+                .chip-wrapper {
+                    display: flex;
+                    align-items: center;
+                    gap: 0.25rem;
+                    .ansFrom {
+                        @include typography-regular(0.875rem,400,1.25rem);
+                        color: $wa-gray-500;
+                    }
+                    .chip-item {
+                        display: flex;
+                        align-items: center;
+                        gap: 0.25rem;
+                        .img-cls {
+                            display: flex;
+                            align-items: center;
+                            width: 1rem;
+                            height: 1rem;
+                            flex-shrink: 0;
+                            img {
+                                width: 100%;
+                                max-height: 1rem;
+                                object-fit: contain;
+                            }
+                        }
+                        .text-cls {
+                            @include typography-regular(0.875rem,400,1.25rem);
+                            color: $wa-gray-500;
+                        }
                     }
                 }
             }
@@ -2860,7 +2917,7 @@ html, body {
     .answerFromChipDiv {
         .ansFromChip {
             display: flex;
-            align-items: center;
+            align-items: flex-start;
             gap: .5rem;            
             font-family: Inter;
             font-size: 0.875rem;

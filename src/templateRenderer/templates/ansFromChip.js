@@ -200,8 +200,9 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
         `;
 	};
 
-	const chatFilterGroupRenderer = () => {
-		if (!item?.showData) {
+	const chatFilterGroupRenderer = (options = {}) => {
+		const { forDrawer = false } = options;
+		if (!forDrawer && !item?.showData) {
 			return '';
 		}
 
@@ -246,7 +247,7 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 			});
 		}
 		else {
-			item?.data?.map((data, i) => {
+			(Array.isArray(item?.data) ? item.data : []).map((data, i) => {
 				body += `<div class="threadListItem" key="${i}">
                                 <div class='leftCol'>
                                 ${renderIcons(data?.source, null)?.outerHTML}
@@ -296,26 +297,14 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 			(!!item?.data?.length || item?.hasData) &&
 			!item?.citationAnswers?.length
 		) {
-			body += `<div class="leftWrapperBlockCntr"><span class="ansFrom">Answer from10 :</span>`;
-		} else {
-			body += ansFromChip();
+			body += `<div class="leftWrapperBlockCntr new-layout">`;
 		}
-
-		if (item?.sources?.length > 1 && item?.showMultiSourceList) {
-			const multiSourceList = item?.sources
-				?.map(
-					(_, i) => `
-                <div class="multiSourceListItem" key="${i}" id = "multiSourceListItem-${item?.id}-${_?.docId}">${_?.title}</div>
-                <button class="askFollowupButton" id = "askFollowupButton-${item?.id}-${_?.docId}">Ask Followup</button>
-            `
-				)
-				.join("");
-
-			body += `<div class="MultiSourceListView">${multiSourceList}</div>`;
-		}
-
-		if (item?.sources?.length === 1) {
-			body += singleSourceChipRenderer(item.sources[0]);
+		body += sourceChipRender();
+		if (
+			(!!item?.data?.length || item?.hasData) &&
+			!item?.citationAnswers?.length
+		) {
+			body += `</div>`;
 		}
 
 		return `<div class="ansFromChip">${body}</div>`;
@@ -494,6 +483,56 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 		});
 
 		return html;
+	};
+
+	const sourceChipRender = () => {
+		const sources = item?.sources || [];
+		if (sources.length === 0) {
+			return null;
+		}
+		const sourceChips = sources.map((source) => {
+			const warning = source?.warning;
+			let iconHtml = "";
+			try {
+				const iconEl = renderIcons(
+					source.source,
+					source.extIcon || source.iconUrl,
+					source.providerIcon || source.icon
+				);
+				iconHtml = iconEl?.outerHTML || "";
+			} catch (e) {
+				iconHtml = "";
+			}
+			if (isMSEnv()) {
+				if (source?.source === "llm" || source?.source === "customQnAAPI" || source?.source === "web") {
+					iconHtml = `<img src="images/MS-Icons/aims-favicon.svg" alt="AIMS" width="16" height="16" />`;
+				}
+			}
+			const chipTitle = source?.title?.[0]?.toUpperCase() + source?.title?.slice(1) || source?.source || "No subject";
+			return `
+            <div class="leftWrapperBlock">
+				<span class="koraSpecDr${warning ? " fromWarning" : ""}">
+                    <div class="contextIcon">${iconHtml}</div>
+                    <span class="krSpecName">${htmlDecode(chipTitle || "No subject")}</span>
+                </span>
+				 ${warning ? `<div class="warningText">${warning}</div>` : ""}
+            </div>`;
+		}).join("");
+		return `
+			<div id="ansFromChip-${item?.id}" class="ansFromChip-wrapper">
+				<div class="left-splitter-opener">
+					${sourceChips}
+				</div>
+				<div class="chip-wrapper">
+					<span class="ansFrom">Answer from :</span>
+					<div class="chip-item">
+						<div class="img-cls">
+							<img src="${item?.context?.sources?.[0]?.icon}" />
+						</div>
+						<span class="text-cls">${htmlDecode(item?.context?.sources?.[0]?.title || "No subject")}</span>
+					</div>
+				</div>
+			</div>`;
 	};
 	
 	const copyAnswerChip = () => {
@@ -759,24 +798,30 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 			chipHTML += actionChipsHTML;
 		}
 
-		// Generate the chat filter group content 
+		// Generate the chat filter group content for the drawer (forDrawer: true so content is always built regardless of showData)
 		if(item?.hasData || item?.sources?.[0]?.source === "customQnAAPI") {
-			chatFilterGroupHTML = chatFilterGroupRenderer();
+			chatFilterGroupHTML = chatFilterGroupRenderer({ forDrawer: true });
+		}
+
+		// When chatFilterGroup exists, show it in a Shoelace drawer (opened by clicking left-splitter-opener), aligned to viewport
+		if (chatFilterGroupHTML) {
+			const drawerHTML = `
+				<sl-drawer id="ansFromChip-drawer-${item?.id}" label="Sources" placement="end" class="ansFromChip-drawer" style="--size: 35vw;">
+					<div class="ansFromChip-drawer-body">${chatFilterGroupHTML}</div>
+				</sl-drawer>`;
+			return `<div class="answerFromChipDiv">${chipHTML}${drawerHTML}</div>`;
 		}
 		
-		// Add chatFilterGroup inside answerFromChipDiv but outside chipHTML
-		const chatFilterGroupWrapper = chatFilterGroupHTML ? `<div>${chatFilterGroupHTML}</div>` : '';
-		
-		return `<div class="answerFromChipDiv">${chipHTML}${chatFilterGroupWrapper}</div>`;
+		return `<div class="answerFromChipDiv">${chipHTML}</div>`;
 	};
 
-	// Initialize functionality after DOM insertion
+	// Initialize functionality after DOM insertion (delay so chip/split panel are in the DOM)
 	setTimeout(() => {
 		AnsFromChipFunctionality({
 			item: item,
 			regeneratingAnswer: regeneratingAnswer,
 		});
-	}, 100);
+	}, 200);
 
 	return renderChip();
 };

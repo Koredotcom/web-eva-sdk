@@ -467,7 +467,9 @@ const AnsFromChipFunctionality = ({ item }) => {
 		// 	}
 		// }
 
-		if (item?.sources?.length === 1) {
+		// When split panel is used, only left-splitter-opener toggles the panel (see below)
+		const hasSplitPanel = !!(item?.hasData || item?.sources?.[0]?.source === "customQnAAPI");
+		if (item?.sources?.length === 1 && !hasSplitPanel) {
 			let chip = document.getElementById(`ansFromChip-${item?.id}`);
 
 			if (chip && !chip.eventListenerAdded) {
@@ -504,7 +506,26 @@ const AnsFromChipFunctionality = ({ item }) => {
 			}
 		}
 
-		if (item?.showData) {
+		// Open chatFilterGroup in Shoelace drawer (aligned to window) when left-splitter-opener is clicked
+		const chipForOpener = document.getElementById(`ansFromChip-${item?.id}`);
+		const opener = chipForOpener?.querySelector(".left-splitter-opener");
+		if (opener && !opener.drawerListenerAdded) {
+			opener.drawerListenerAdded = true;
+			opener.style.cursor = "pointer";
+			opener.addEventListener("click", (e) => {
+				e?.preventDefault();
+				e?.stopPropagation();
+				const drawer = document.getElementById(`ansFromChip-drawer-${item?.id}`);
+				if (drawer && typeof drawer.show === "function") {
+					drawer.show();
+				} else {
+					showDataAction();
+				}
+			});
+		}
+
+		// Attach list item listeners when showData is true or when drawer exists (hasData/customQnAAPI) so drawer content is interactive
+		if (item?.showData || item?.hasData || item?.sources?.[0]?.source === "customQnAAPI") {
 			/*for morgan stanley customQnAAPI */
 			if (item?.sources?.[0]?.source === "customQnAAPI") {
 				item?.content?.payload?.text?.body?.content_links_for_answer?.map((data, i) => {
@@ -519,8 +540,8 @@ const AnsFromChipFunctionality = ({ item }) => {
 					}
 				});
 			}
-			else{
-				item?.data?.map((data, i) => {
+			else if (Array.isArray(item?.data)) {
+				item.data.map((data, i) => {
 					let listItem = document.getElementById(
 						`listItem-${item?.id}-${data?.docId}`
 					);
