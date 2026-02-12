@@ -261,7 +261,6 @@ class ComposeBar {
                 if (answerContextChipContainer) {
                     hideElementImmediately(answerContextChipContainer);
                 }
-                this.syncContextTrueClass(false);
             }
         });
 
@@ -531,25 +530,6 @@ class ComposeBar {
         return div.innerHTML;
     }
 
-    /**
-     * Toggle `context-true` class on `.eva-input-container` based on whether
-     * `.response-as-context-truncated-text` is currently shown.
-     */
-    syncContextTrueClass(isVisible) {
-        const inputContainer = this.container?.querySelector?.('.eva-input-container');
-        if (!inputContainer) return;
-        inputContainer.classList.toggle('context-true', !!isVisible);
-
-        // When response-as-context is shown, hide the bot details wrapper
-        // (including `.composebar-bot-input-wrapper.details-hidden`).
-        if (!!isVisible) {
-            const botWrapper = this.container?.querySelector?.('.composebar-bot-input-wrapper');
-            if (botWrapper) {
-                hideElementImmediately(botWrapper);
-            }
-        }
-    }
-
     updateBotHeaderContent(contextChipData) {
         console.log("contextChipData in updateBotHeaderContent", contextChipData);
         const composeBarWrapperDiv = this.container.querySelector('.composebar-bot-input-wrapper');  
@@ -558,7 +538,6 @@ class ComposeBar {
         const answerContextChipContainer = this.container.querySelector('.response-as-context-truncated-text');
         if(!contextChipData){            
             hideElementImmediately(composeBarWrapperDiv);
-            this.syncContextTrueClass(false);
             return;
         }
 
@@ -607,7 +586,6 @@ class ComposeBar {
             if(answerContextChipContainer){
                 // Show the container (matching Kora-React)
                 showElementImmediately(answerContextChipContainer, 'flex');
-                this.syncContextTrueClass(true);
                 // Render response selected as context
                 this.responseSelectedAsContext(source);
                 
@@ -621,7 +599,6 @@ class ComposeBar {
                                 this.fileUploaderInterface.clearContext({});
                             }
                             hideElementImmediately(answerContextChipContainer);
-                            this.syncContextTrueClass(false);
                             // Also hide the wrapper when context is cleared
                             hideElementImmediately(composeBarWrapperDiv);
                         });
@@ -644,7 +621,6 @@ class ComposeBar {
             if (composeBarWrapperDiv) {
                 hideElementImmediately(composeBarWrapperDiv);
             }
-            this.syncContextTrueClass(false);
             return;
         }
 
@@ -654,7 +630,6 @@ class ComposeBar {
             if (answerContextChipContainer) {
                 hideElementImmediately(answerContextChipContainer);
             }
-            this.syncContextTrueClass(false);
             // For attachments, we don't show the response-as-context-truncated-text
             // The attachment pill (eva-attachment-pill) is handled separately
             // Just hide the wrapper if no other context chip is needed
@@ -675,7 +650,6 @@ class ComposeBar {
             if(answerContextChipContainer){
                 hideElementImmediately(answerContextChipContainer);
             }                       
-            this.syncContextTrueClass(false);
             if (iconElement) {
                 const agentIcon = contextChipData?.icon;
                 if (agentIcon) {
@@ -697,7 +671,6 @@ class ComposeBar {
                 if (answerContextChipContainer) {
                     hideElementImmediately(answerContextChipContainer);
                 }
-                this.syncContextTrueClass(false);
                 // Hide the wrapper for attachments (attachments are shown via eva-attachment-pill)
                 if (composeBarWrapperDiv) {
                     hideElementImmediately(composeBarWrapperDiv);
@@ -714,7 +687,6 @@ class ComposeBar {
             }                        
             if(answerContextChipContainer){
                 showElementImmediately(answerContextChipContainer, 'flex');
-                this.syncContextTrueClass(true);
                 // Hide the bot input wrapper when response context is shown
                 hideElementImmediately(composeBarWrapperDiv);
                     /*set answer inside response-as-context-truncated-text */
@@ -735,7 +707,6 @@ class ComposeBar {
                     answerContextCloseBtn.addEventListener('click', () => {
                         this.fileUploaderInterface.clearContext({});
                         hideElementImmediately(answerContextChipContainer);
-                        this.syncContextTrueClass(false);
                         // Hide the bot input wrapper as well when response context is closed
                         hideElementImmediately(composeBarWrapperDiv);
                     });
