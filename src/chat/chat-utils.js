@@ -76,6 +76,22 @@ export const constructQuestionInitial = (args) => {
 			reqId: uniqueMsgId,
 		};
 
+		// Store context data in question object (matching Kora-React)
+		// This allows renderReferenceToResponseContext to access context when rendering the question
+		const state = store.getState()?.global;
+		const selectedContext = state?.selectedContext?.data;
+		if (selectedContext && (selectedContext?.setViaMenuOptions || selectedContext?.setViaGptAgent)) {
+			// Store context with all necessary fields for response context preview
+			obj.context = {
+				type: selectedContext?.type || (selectedContext?.sources?.[0]?.agentType === "gptAgent" ? "agent" : null),
+				messageId: selectedContext?.messageId,
+				setViaMenuOptions: selectedContext?.setViaMenuOptions,
+				setViaGptAgent: selectedContext?.setViaGptAgent,
+				sources: selectedContext?.sources,
+				sessionId: selectedContext?.sessionId
+			};
+		}
+
 		questions[uniqueMsgId] = obj;
 	}
 
@@ -115,6 +131,12 @@ export const constructQuestionPostCall = (data, qId) => {
     // let followupFromSuggestionModal = data?.params?.suggestionContext;
     let question = questions?.[qId]
     delete question?.loading;
+    
+    // Preserve context data in question object (including originalContext for renderReferenceToResponseContext)
+    // Matching Kora-React: use originalContext first, fallback to context
+    if (question?.context && !question?.originalContext) {
+        question.originalContext = cloneDeep(question.context);
+    }
 
 	if (!activeBoardId) {
 		store.dispatch(

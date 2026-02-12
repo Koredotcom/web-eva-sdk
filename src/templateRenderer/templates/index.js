@@ -2,7 +2,8 @@ import { encodeHtml } from "../utils/helper";
 import * as responseQueryFlow from "./response-query-flow";
 import * as copyQuestion from "./copy-question";
 import store from "../../redux/store";
-import { convertToTimeFormat, getFileExtension, getExtIcon } from "../../utils/helpers";
+import { convertToTimeFormat, getFileExtension, getExtIcon, markdownToPlainText } from "../../utils/helpers";
+import { CurvedArrowForPreview } from "../icons-library";
 // import { encodeHtml } from "../utils/helper";
 
 /**
@@ -44,6 +45,55 @@ function renderReferenceToAttachment(data) {
 }
 
 /**
+ * Render response context preview (similar to renderReferenceToResponseContext in Kora-React)
+ * Shows the question and answer preview when a GPT agent response is set as context
+ * @param {Object} data Question/Item data
+ * @returns {string} HTML string
+ */
+function renderReferenceToResponseContext(data) {
+    // Check if response is selected as context - use originalContext first, fallback to context
+    const contextData = data?.originalContext || data?.context;
+    const hasResponseContext = contextData?.type === 'agent' && contextData?.messageId;
+    
+    const wasSetManually = contextData?.setViaMenuOptions;
+    const wasSetViaGptAgent = contextData?.setViaGptAgent;
+
+    if (hasResponseContext && (wasSetManually || wasSetViaGptAgent)) {
+        // Find the response in questions using messageId
+        const state = store.getState()?.global;
+        const questions = state?.questions || {};
+        let response = null;
+        
+        if (contextData?.messageId && questions) {
+            response = Object.values(questions).find(
+                (q) => q.messageId === contextData.messageId,
+            );
+        }
+
+        if (response) {
+            let responseText = response?.answer || '';
+            // Convert markdown to plain text
+            const plainText = markdownToPlainText(responseText) || '';
+
+            // Use the full plain text for CSS line clamping
+            const preview = plainText.trim();
+            const questionText = response?.question || '';
+
+            return `
+                <div class="response-as-context-truncated-text">
+                    ${CurvedArrowForPreview({ size: 12, color: "#101828" })}
+                    <div class="response-as-context-question-text">
+                        ${questionText ? `<strong>${encodeHtml(questionText)} -&gt; </strong>` : ''}
+                        ${encodeHtml(preview)}
+                    </div>
+                </div>
+            `;
+        }
+    }
+    return '';
+}
+
+/**
  * Render a question bubble
  * @param {Object} data Question data
  * @returns {string} HTML string
@@ -55,8 +105,12 @@ export function renderQuestionBubble(data, userIconTemplate = false, displayTime
     // Render attachment preview above the question
     const attachmentPreview = renderReferenceToAttachment(data);
     
+    // Render response context preview above the question (when GPT agent response is set as context)
+    const responseContextPreview = renderReferenceToResponseContext(data);
+    
 	return `
         ${attachmentPreview}
+        ${responseContextPreview}
         <div class="message-bubble question ${data?.isTask ? 'task-item' : ''}">
             <div class="message-content">  
                 <div class="user-content">
@@ -142,7 +196,11 @@ export function renderLoading(
         // Render attachment preview above the question for loading state too
         const attachmentPreview = renderReferenceToAttachment(data);
         
+        // Render response context preview above the question (when GPT agent response is set as context)
+        const responseContextPreview = renderReferenceToResponseContext(data);
+        
         html = ` ${attachmentPreview}
+            ${responseContextPreview}
             <div class="message-bubble question">
                     <div class="message-content"> 
                         <div class="user-content">
