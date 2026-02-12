@@ -826,8 +826,17 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 	}
 
 	const setContextChip = () => {
+		const messageId = item?.messageId || item?.id;
+		const displayMenu = !item?.isTask && !item?.noResultFound && item?.viewType !== "list" && (item?.type === "search" || item?.type === "followup");
+		const isMultiSource = item?.sources?.length > 1;
+		// Match Kora-React: button has 'hide' class when displayMenu is false, and 'multiSource' class when multiple sources
+		const hideClass = displayMenu ? '' : 'hide';
+		const multiSourceClass = isMultiSource ? 'multiSource' : '';
 		return `
-			<div class="setContextButton" id="setContextButton-${item?.messageId}" title="Set as Context">${setContextIcon({ size: 16, color: "#667085" })}</div>
+			<div class="setContextButton optionWrapper ${multiSourceClass} ${hideClass}" id="setContextButton-${messageId}" title="Set as Context: Set the sources as context and ask queries.">
+				${setContextIcon({ size: 16, color: "#667085" })}
+				${isMultiSource ? `<div class="cheveron-icon"><svg width="8" height="8" viewBox="0 0 8 8" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2 3L4 5L6 3" stroke="#344054" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/></svg></div>` : ''}
+			</div>
 		`;
 	}
 
@@ -1027,8 +1036,50 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 		if (item?.answer && !state?.ansFromChipElements?.disableExporttoWordDoc) {
 			actionChipsHTML += exportWordChip();
 		}
-		if (item?.sources?.[0]?.canSetAsSourceContext !== false && !state?.ansFromChipElements?.disableSetAsContext) {
+		// Add Set as Context button with conditions matching Kora-React MenuOptions
+		// Conditions: !llm && !testAgentFlow && showSetAsSource && !isPersonalKnowledge
+		// Also need to check: item has sources, not threadView, not bot_template, not isEnterpriseKnowledge
+		const llm = item?.sources?.[0]?.source === "llm";
+		// canSetAsSourceContext defaults to true if undefined (only false when explicitly set to false)
+		const showSetAsSource = item?.sources?.[0]?.canSetAsSourceContext !== false;
+		const testAgentFlow = state?.ansFromChipElements?.testAgentFlow || false;
+		const isPersonalKnowledge = item?.context?.provider === "personalKnowledge";
+		const displayMenu = !item?.isTask && !item?.noResultFound && item?.viewType !== "list" && (item?.type === "search" || item?.type === "followup");
+		const hasSources = !!item?.sources?.length;
+		const isThreadView = item?.viewType === "threadView";
+		const isBotTemplate = item?.templateType === "bot_template";
+		const isEnterpriseKnowledge = item?.sources?.[0]?.isSupervisor || item?.isSupervisor;
+		
+		// Match Kora-React conditions: MenuOptions is shown when: !!item?.sources?.length && (item?.viewType !== "threadView" && item?.templateType !== "bot_template" && !isEnterpriseKnowledge)
+		// And Set as Context is shown when: !llm && !testAgentFlow && showSetAsSource && !isPersonalKnowledge
+		// Note: Kora-React does NOT check disableSetAsContext - it's always shown when conditions are met
+		// The disableSetAsContext flag is an SDK-specific feature flag that can be used to disable it if needed
+		const shouldShowSetAsContext = hasSources && !isThreadView && !isBotTemplate && !isEnterpriseKnowledge && 
+		                                !llm && !testAgentFlow && showSetAsSource && !isPersonalKnowledge;
+		
+		// Debug logging
+		console.log('Set as Context conditions check:', {
+			hasSources,
+			isThreadView,
+			isBotTemplate,
+			isEnterpriseKnowledge,
+			llm,
+			testAgentFlow,
+			showSetAsSource,
+			isPersonalKnowledge,
+			disableSetAsContext: state?.ansFromChipElements?.disableSetAsContext,
+			shouldShowSetAsContext,
+			itemId: item?.id,
+			sources: item?.sources,
+			viewType: item?.viewType,
+			templateType: item?.templateType
+		});
+		
+		if (shouldShowSetAsContext) {
 			actionChipsHTML += setContextChip();
+			console.log('Set as Context button added to actionChipsHTML for item:', item?.id);
+		} else {
+			console.log('Set as Context button NOT added - conditions not met for item:', item?.id);
 		}
 
 		if (!item?.disableFeedback && !state?.ansFromChipElements?.disableFeedback) {
@@ -1043,17 +1094,23 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 
 		actionChipsHTML += `</div>`;
 
-		// Insert action chips inside .ansFromChip if present
-		if (chipHTML.includes('class="ansFromChip"')) {
-			const tempDiv = document.createElement('div');
-			tempDiv.innerHTML = chipHTML;
-			const ansFromChipDiv = tempDiv.querySelector('.ansFromChip');
-			if (ansFromChipDiv) {
-				ansFromChipDiv.insertAdjacentHTML('beforeend', actionChipsHTML);
-				chipHTML = tempDiv.innerHTML;
-			}
+		// Debug: Log actionChipsHTML content
+		console.log('actionChipsHTML content:', actionChipsHTML);
+		console.log('chipHTML includes ansFromChip:', chipHTML.includes('class="ansFromChip"'));
+
+		// In Kora-React, MenuOptions (which contains Set as Context) is in a SEPARATE ansFromChip div
+		// Line 1213: <div className={`ansFromChip${...}`}> contains <MenuOptions />
+		// So we need to wrap actionChipsHTML in a separate ansFromChip div, similar to Kora-React structure
+		// Only add the wrapper if we have action chips to show
+		if (actionChipsHTML.includes('setContextButton') || actionChipsHTML.includes('copyAnswerButton') || 
+		    actionChipsHTML.includes('exportWordButton') || actionChipsHTML.includes('feedbackChip') || 
+		    actionChipsHTML.includes('three-dot-menu-container')) {
+			// Wrap action chips in a separate ansFromChip div (matching Kora-React structure)
+			const actionChipsWrapper = `<div class="ansFromChip">${actionChipsHTML}</div>`;
+			chipHTML += actionChipsWrapper;
+			console.log('Action chips wrapper added to chipHTML');
 		} else {
-			chipHTML += actionChipsHTML;
+			console.log('No action chips to add');
 		}
 
 		// Generate the chat filter group content for the drawer (forDrawer: true so content is always built regardless of showData)

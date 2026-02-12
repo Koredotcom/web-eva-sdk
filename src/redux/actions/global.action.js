@@ -238,23 +238,36 @@ export const searchSession = createAsyncThunk(
     'global/searchSession',
     async (arg, { rejectWithValue }) => {
         try{
+            // Match Kora-React: use /api/1.1/ prefix and correct URL structure
             if(arg?.params?.action === "add"){
-                const response = await axiosInstance.post(`/kora/users/${arg?.userId}/searchsession`, arg?.payload)
+                // POST to 1.1/kora/users/:userId/searchsession (no sessionId in URL)
+                // Note: baseURL already includes /api/, so we use 1.1/... to match other API calls
+                const response = await axiosInstance.post(`1.1/kora/users/${arg?.userId}/searchsession`, arg?.payload)
                 return response.data
             }
             else if(arg?.params?.action === "update"){
-                const response = await axiosInstance.put(`/kora/users/${arg?.userId}/searchsession/${arg?.params?.sessionId}`, arg?.payload)
+                // PUT to 1.1/kora/users/:userId/searchsession/:sessionId
+                if (!arg?.params?.sessionId) {
+                    // If sessionId is undefined, fall back to POST (create new session)
+                    const response = await axiosInstance.post(`1.1/kora/users/${arg?.userId}/searchsession`, arg?.payload)
+                    return response.data
+                }
+                const response = await axiosInstance.put(`1.1/kora/users/${arg?.userId}/searchsession/${arg?.params?.sessionId}`, arg?.payload)
                 return response.data
             }
             else if(arg?.params?.action === "remove"){
-                // const response = await axiosInstance.delete(`/kora/users/${arg?.userId}/searchsession/${arg?.params?.sessionId}/sources/${arg?.params?.docId}`) // DELETE wont work due to CORS error, so going with PUT
-                const response = await axiosInstance.put(`/kora/users/${arg?.userId}/searchsession/${arg?.params?.sessionId}`, arg?.payload)
+                // DELETE to 1.1/kora/users/:userId/searchsession/:sessionId/sources/:docId
+                if (!arg?.params?.sessionId) {
+                    return rejectWithValue({ error: "sessionId is required for remove action" })
+                }
+                const docId = encodeURIComponent(arg?.params?.docId || arg?.payload?.[0]?.docId)
+                const response = await axiosInstance.delete(`1.1/kora/users/${arg?.userId}/searchsession/${arg?.params?.sessionId}/sources/${docId}`)
                 return response.data
             }
         }
         catch (error){
             handleErrorState(error, "Search Session");
-            return rejectWithValue(error.response.data)
+            return rejectWithValue(error.response?.data || error)
         }
     }
 )

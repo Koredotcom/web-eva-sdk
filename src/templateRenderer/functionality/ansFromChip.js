@@ -319,30 +319,38 @@ const AnsFromChipFunctionality = ({ item }) => {
 		let sourceType = isAgentSetAsSource ? "agent" : null
 
 		if (item?.viewType === "table" && _selectedContext?.hasOwnProperty("sessionId")) {
-			// sessionItemHandler({ appContext, dispatch, item: { ..._selectedContext, source: 'attachment' }, viewType: item?.viewType, type: sourceType })
+			sessionItemHandler({
+				item: {..._selectedContext, source: 'attachment'},
+				viewType: item?.viewType,
+				type: sourceType,
+				invokeFrom: 'menuOptions',
+				setViaMenuOptions: true
+			});
 		} else if (item?.templateType === 'search_results') {
 			// Specific for search result 
 			obj = {			
 				item: item?.sources?.[0],
 				type: 'accountKnowledge',
-				discardPrevSession: true
+				discardPrevSession: true,
+				invokeFrom: 'menuOptions',
+				setViaMenuOptions: true
 			}
 			sessionItemHandler(obj)
 		} else {
-
 			obj = {
 				boardId: item.boardId,
 				messageId,
-			
 				item: item?.sources?.[0],
 				duplicateErr: true,
 				viewType: item?.viewType,
-				type: sourceType
+				type: sourceType,
+				invokeFrom: 'menuOptions',
+				setViaMenuOptions: true  // Set flag to indicate context was set via menu options
 			}
 			// if(selectedContext?.sources?.[0]?.isAgent) {
-			// if (sourceType === 'agent' || selectedContext?.sources?.[0]?.isAgent) {
-			// 	obj.discardPrevSession = true
-			// }
+			if (sourceType === 'agent') {
+				obj.discardPrevSession = true
+			}
 			// if (selectedContext?.viewType === "table") {
 			// 	obj.override = true
 			// }
@@ -931,15 +939,60 @@ const AnsFromChipFunctionality = ({ item }) => {
 			}
 		}
 
-		if(item?.context?.enable){
+		// Add Set as Context button click handler
+		// Check conditions matching Kora-React: !llm && !testAgentFlow && showSetAsSource && !isPersonalKnowledge
+		const llm = item?.sources?.[0]?.source === "llm";
+		const showSetAsSource = item?.sources?.[0]?.canSetAsSourceContext !== false;
+		const state = store.getState()?.global;
+		const testAgentFlow = state?.ansFromChipElements?.testAgentFlow || false;
+		const isPersonalKnowledge = item?.context?.provider === "personalKnowledge";
+		
+		// Only add handler if conditions match (same as Kora-React MenuOptions)
+		if (!llm && !testAgentFlow && showSetAsSource && !isPersonalKnowledge) {
 			let setContextButton = document.getElementById(
-				`setContextButton-${item?.messageId}`
+				`setContextButton-${item?.messageId || item?.id}`
 			);
 			if (setContextButton && !setContextButton.eventListenerAdded) {
 				setContextButton.addEventListener("click", (e) => {
 					e?.preventDefault();
 					e?.stopPropagation();
-
+					
+					// Match Kora-React's handleSetAsContextClick logic
+					const selectedContext = state?.selectedContext?.data;
+					const removingSources = selectedContext?.sources?.map(el => el?.docId) || [];
+					
+					// If multiple sources, show dropdown menu (for now, just use first source - multi-source dropdown can be added later)
+					if (item?.sources?.length > 1) {
+						// TODO: Implement multi-source dropdown menu similar to Kora-React's Menu component
+						// For now, use the first source
+						setContextData(e, item);
+						return;
+					}
+					
+					// If there are existing sources to remove, call sessionItemHandler with different structure
+					if (removingSources?.length > 0) {
+						const _selectedContext = {...item?.context, messageId: item?.messageId, sources: item?.sources, viewType: item?.viewType};
+						const enabledUserAgents = state?.allAgents?.data?.agents?.filter(a => !!a?.enabled) || [];
+						const _agents = cloneDeep(enabledUserAgents);
+						const isAgentSetAsSource = _agents.find(ag => ag.id === item?.sources?.[0]?.source);
+						const sourceType = isAgentSetAsSource ? "agent" : null;
+						
+						const obj = {
+							item: item?.sources?.[0],
+							boardId: item?.boardId,
+							messageId: item?.messageId,
+							invokeFrom: 'menuOptions',
+							viewType: item?.viewType,
+							type: sourceType,
+							context: _selectedContext,
+							setViaMenuOptions: true
+						};
+						
+						sessionItemHandler(obj);
+					} else {
+						// Otherwise, call setContextData directly
+						setContextData(e, item);
+					}
 				});
 				setContextButton.eventListenerAdded = true;
 			}

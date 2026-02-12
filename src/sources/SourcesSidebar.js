@@ -313,7 +313,9 @@ class SourcesSidebar {
                 ? source?.templateType === 'gpt_form_template'
                     ? source?.title
                     : sourcesData?.viewType === 'table'
-                        ? source?.title
+                        ? (sourcesData?.templateType === 'search_answer' && sourcesData?.data?.[0]?.name 
+                            ? sourcesData.data[0].name 
+                            : source?.title || sourcesData?.sources?.[0]?.title || 'Data')
                         : 'Sources'
                 : sourcesData?.question;
         }
@@ -369,6 +371,8 @@ class SourcesSidebar {
 
         // Top section: div-based switcher (Sources / More search results). Only bottom tab-group (e.g. Jira Cloud) uses sl-tab-group.
         if (showSwitchTabs || showMoreSearchResults) {
+            // For viewType === "table", always render TableDataSummary
+            // For search_answer with data array but viewType !== "table", handleListData will handle it
             const sourcesContent = this.answerSources?.viewType === "table"
                 ? TableDataSummary.render({
                     summaryData: this.answerSources,

@@ -33,6 +33,7 @@ class ComposeBar {
         this.recognition = null;
         this.unsubscribe = null;
         this.fileUploaderUnsubscribe = null;
+        this.selectedContextUnsubscribe = null;
         this.chatInterface = null;
         this.fileUploaderInterface = null;
         this.questions = {};
@@ -144,15 +145,58 @@ class ComposeBar {
                 console.log("fileUploaderInterface subscribe", sources, sessionId, quickActions, error, apiResp);
                 if (sources) {
                     try {
-                        const filesOnly = Array.isArray(sources)
-                            ? sources.filter(source => source.type === "attachment" || source.loading === true)
-                            : [];
+                        // Get selectedContext from store to check if context is actually set
+                        const state = store.getState()?.global;
+                        const selectedContext = state?.selectedContext?.data;
+                        
+                        // Only show attachment pills when context is actually set (matching Kora-React behavior)
+                        // In Kora-React, attachment pills are only shown when selectedContext?.sources?.length >= 1
+                        const hasContextSet = selectedContext?.sources?.length >= 1;
+                        
+                        // Filter files: only show attachments that are actually set as context
+                        // Don't show items that are only loading (not yet set as context)
+                        let filesOnly = [];
+                        if (hasContextSet && selectedContext?.sources) {
+                            // Only show attachments that exist in selectedContext
+                            filesOnly = Array.isArray(sources)
+                                ? sources.filter(source => {
+                                    if (source.type === "attachment") {
+                                        // Check if this source exists in selectedContext
+                                        const isInContext = selectedContext.sources.some(ctxSource => 
+                                            ctxSource?.docId === source?.docId || 
+                                            ctxSource?.uID === source?.uID ||
+                                            ctxSource?.componentId === source?.componentId ||
+                                            (ctxSource?.source === "attachment" && ctxSource?.title === source?.title)
+                                        );
+                                        return isInContext;
+                                    }
+                                    return false;
+                                })
+                                : [];
+                        }
+                        // If no context is set, don't show any attachment pills (even if loading)
+                        // The loader should only appear temporarily during upload, and disappear if context isn't set
+                        
                         this.attachments = filesOnly;
                         this.quickActions = quickActions || [];
-                        // Always render to handle both adding and clearing attachments       
-                        if (this.attachments?.length > 0) {
+                        // Only render attachments if context is set
+                        // Match Kora-React: only show when selectedContext?.sources?.length >= 1
+                        if (hasContextSet && this.attachments?.length > 0) {
                             this.renderAttachments();
                         } else {
+                            // Clear attachments if no context is set
+                            const attachmentsContainer = this.container.querySelector('[data-eva-attachments]');
+                            if (attachmentsContainer) {
+                                attachmentsContainer.innerHTML = '';
+                                const inputContainer = attachmentsContainer.closest('.eva-input-container');
+                                if (inputContainer) {
+                                    inputContainer.classList.remove('file-uploaded');
+                                }
+                            }
+                        }
+                        
+                        // Handle context chip data (for non-attachment sources)
+                        if (!hasContextSet) {
                             if (sources?.length > 0) {
                                 /*check whether it is an agent */
                                 if (sources?.[0]?.isAgent) {
@@ -192,6 +236,33 @@ class ComposeBar {
         } catch (e) {
             console.warn('FileUpload init failed:', e);
         }
+
+        // Subscribe to selectedContext changes in Redux store
+        // This ensures the context chip updates when selectedContext changes (e.g., after API success)
+        this.selectedContextUnsubscribe = store.subscribe(() => {
+            const state = store.getState()?.global;
+            const selectedContext = state?.selectedContext?.data;
+            
+            // Only update if selectedContext has sources (context is set)
+            if (selectedContext?.sources?.length > 0) {
+                // Get the source to pass to updateBotHeaderContent
+                const source = selectedContext?.sources?.[0];
+                // Update the context chip display
+                setTimeout(() => {
+                    this.updateBotHeaderContent(source);
+                }, 0);
+            } else if (!selectedContext || !selectedContext?.sources?.length) {
+                // Clear context chip if no context is set
+                const composeBarWrapperDiv = this.container.querySelector('.composebar-bot-input-wrapper');
+                const answerContextChipContainer = this.container.querySelector('.response-as-context-truncated-text');
+                if (composeBarWrapperDiv) {
+                    hideElementImmediately(composeBarWrapperDiv);
+                }
+                if (answerContextChipContainer) {
+                    hideElementImmediately(answerContextChipContainer);
+                }
+            }
+        });
 
         this.initSpeechRecognition();
         await this.getAgents();
@@ -407,6 +478,58 @@ class ComposeBar {
     /**
      * Update the bot header content dynamically
      */
+    /**
+     * Render response selected as context (similar to responseSelectedAsContext in Kora-React)
+     * Shows question text and answer preview for GPT agent responses
+     */
+    responseSelectedAsContext(source) {
+        const state = store.getState()?.global;
+        const selectedContext = state?.selectedContext?.data;
+        const questions = state?.questions || this.questions;
+        
+        // Find the response by searching through questions for matching messageId
+        let response = null;
+        if (selectedContext?.messageId && questions) {
+            response = Object.values(questions).find(
+                (q) => q.messageId === selectedContext.messageId,
+            );
+        }
+
+        let responseText = response?.answer || '';
+        // Convert markdown to plain text
+        const plainText = markdownToPlainText(responseText);
+
+        // use the full plain text for CSS line clamping
+        const preview = plainText.trim();
+
+        // Get the question text
+        const questionText = response?.question || '';
+
+        const answerContextChipContainer = this.container.querySelector('.response-as-context-truncated-text');
+        const answerContextChipText = this.container.querySelector('.response-as-context-question-text') || 
+                                      this.container.querySelector('.answer-context-chip-text');
+        
+        if (answerContextChipContainer && answerContextChipText) {
+            // Set the question and answer preview (matching Kora-React structure)
+            if (questionText) {
+                answerContextChipText.innerHTML = `<strong>${this.escapeHtml(questionText)} -&gt; </strong>${this.escapeHtml(preview)}`;
+            } else {
+                answerContextChipText.innerText = preview;
+            }
+        }
+
+        return answerContextChipContainer;
+    }
+
+    /**
+     * Escape HTML to prevent XSS
+     */
+    escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
     updateBotHeaderContent(contextChipData) {
         console.log("contextChipData in updateBotHeaderContent", contextChipData);
         const composeBarWrapperDiv = this.container.querySelector('.composebar-bot-input-wrapper');  
@@ -418,9 +541,88 @@ class ComposeBar {
             return;
         }
 
+        // Get selectedContext from store to check for setViaMenuOptions/setViaGptAgent
+        const state = store.getState()?.global;
+        const selectedContext = state?.selectedContext?.data;
+        const currentQuestion = state?.currentQuestion;
+        const questions = state?.questions || this.questions;
+        
+        // Get source from selectedContext (matching Kora-React: source = selectedContext?.sources?.[0])
+        // If selectedContext doesn't have sources, fall back to contextChipData
+        const source = selectedContext?.sources?.[0] || contextChipData;
+        
+        // Check for mcpAgent from currentQuestion (matching Kora-React: questions?.[currentQuestion]?.context?.agentType === "mcpAgent")
+        const isMcpAgent = currentQuestion && questions?.[currentQuestion]?.context?.agentType === "mcpAgent";
+        
+        // Check if this is a GPT agent response selected as context
+        // Matching Kora-React exactly: (source?.templateType === 'gpt_form_template' || source?.agentType === 'gptAgent' || isMcpAgent) && (selectedContext?.setViaMenuOptions || selectedContext?.setViaGptAgent)
+        // This check comes FIRST in Kora-React's singleChipRenderer
+        const isGptAgentResponse = (source?.templateType === 'gpt_form_template' || 
+                                     source?.agentType === 'gptAgent' || 
+                                     isMcpAgent) &&
+                                    (selectedContext?.setViaMenuOptions || selectedContext?.setViaGptAgent);
+        
+        // Check if should return null (matching Kora-React conditions from singleChipRenderer)
+        // If selectedContext?.type === "commonAgent" || selectedContext?.sources?.[0]?.isSupervisor || selectedContext?.type === "agent" || props?.from === "testAgent"
+        // In ComposeBar context, we don't have props?.from === "testAgent", so we check the others
+        // This check comes SECOND in Kora-React's singleChipRenderer (else if)
+        const shouldReturnNull = selectedContext?.type === "commonAgent" || 
+                                 selectedContext?.sources?.[0]?.isSupervisor || 
+                                 selectedContext?.type === "agent";
+        
+        // If GPT agent response, show response preview (matching Kora-React: return responseSelectedAsContext(source))
+        if (isGptAgentResponse) {
+            if (botInputHeaderDiv) {
+                hideElementImmediately(botInputHeaderDiv);
+            }
+            // Show the wrapper first so the context chip container is visible
+            showElementImmediately(composeBarWrapperDiv, 'block');
+            
+            if(answerContextChipContainer){
+                // Show the container (matching Kora-React)
+                showElementImmediately(answerContextChipContainer, 'flex');
+                // Render response selected as context
+                this.responseSelectedAsContext(source);
+                
+                // Attach close button handler (matching Kora-React: renderCloseBtn)
+                const answerContextCloseBtn = answerContextChipContainer.querySelector('.srCicon');
+                if (answerContextCloseBtn) {
+                    if (!answerContextCloseBtn.eventListenerAdded) {
+                        answerContextCloseBtn.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            if (this.fileUploaderInterface && typeof this.fileUploaderInterface.clearContext === 'function') {
+                                this.fileUploaderInterface.clearContext({});
+                            }
+                            hideElementImmediately(answerContextChipContainer);
+                            // Also hide the wrapper when context is cleared
+                            hideElementImmediately(composeBarWrapperDiv);
+                        });
+                        answerContextCloseBtn.eventListenerAdded = true;
+                    }
+                }
+            }
+            return; // Early return after showing GPT agent response preview
+        }
+        
+        // If should return null (commonAgent, supervisor, or agent type), don't show anything
+        // Matching Kora-React: else if(...) return null
+        if (shouldReturnNull) {
+            if (botInputHeaderDiv) {
+                hideElementImmediately(botInputHeaderDiv);
+            }
+            if (answerContextChipContainer) {
+                hideElementImmediately(answerContextChipContainer);
+            }
+            if (composeBarWrapperDiv) {
+                hideElementImmediately(composeBarWrapperDiv);
+            }
+            return;
+        }
+
         /*check whether contextChipData is holding agent or answer */
         const iconElement = composeBarWrapperDiv.querySelector('.icon-image img');
         const nameElement = composeBarWrapperDiv.querySelector('.bot-input-header-left-text');
+        
         if (contextChipData?.isAgent) {  
             if(botInputHeaderDiv){
                 showElementImmediately(botInputHeaderDiv, 'flex');
@@ -450,10 +652,13 @@ class ComposeBar {
                 // Hide the bot input wrapper when response context is shown
                 hideElementImmediately(composeBarWrapperDiv);
                     /*set answer inside response-as-context-truncated-text */
-                    const answerContextChipText = this.container.querySelector('.answer-context-chip-text');  
+                    const answerContextChipText = this.container.querySelector('.response-as-context-question-text') || 
+                                                  this.container.querySelector('.answer-context-chip-text');  
                     const currentQuestionsLength = Object.values(this.questions)?.length;
                     const currentAnswer = Object.values(this.questions)?.[currentQuestionsLength - 1]?.answer || 'Answer Context';
-                    answerContextChipText.innerText = markdownToPlainText(currentAnswer);
+                    if (answerContextChipText) {
+                        answerContextChipText.innerText = markdownToPlainText(currentAnswer);
+                    }
                     // answerContextChipText.innerHTML = this.answerContextHTML(markdownToPlainText(currentAnswer));
                 
             }            
@@ -648,7 +853,7 @@ class ComposeBar {
                         
                         <div class="eva-input-container${this.attachments?.length ? ' file-uploaded' : ''}">
                             <div class="response-as-context-truncated-text" style="display: none;">
-                                <div class='arrow-down-icon'>${CurvedArrowForPreview({ size: 12, color: "#101828" })}</div>                                
+                                ${CurvedArrowForPreview({ size: 12, color: "#101828" })}
                                 <div class="answer-context-chip-text response-as-context-question-text"></div>
                                 <button class="srCicon">${createCloseIcon({ size: 10, color: "#667085" })}</button>
                             </div>         
@@ -1893,6 +2098,10 @@ class ComposeBar {
         if (typeof this.fileUploaderUnsubscribe === 'function') {
             try { this.fileUploaderUnsubscribe(); } catch (e) { }
             this.fileUploaderUnsubscribe = null;
+        }
+        if (typeof this.selectedContextUnsubscribe === 'function') {
+            try { this.selectedContextUnsubscribe(); } catch (e) { }
+            this.selectedContextUnsubscribe = null;
         }
     }
 }
