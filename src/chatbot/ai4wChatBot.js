@@ -70,6 +70,9 @@ const createPanel = (titleText) => {
   newChatButton.textContent = "New Chat";
 
   newChatButton.addEventListener("click", () => {
+    panel
+      ?.querySelector?.(".eva-composebar-area")
+      ?.classList?.remove("eva-composebar-area--history-selected");
     unHideRecentAgentsDiv('recent-agents-container');
     NewChat()
   });
@@ -96,11 +99,72 @@ const createPanel = (titleText) => {
   body.appendChild(contentContainer);
 
   const threadLoadingOverlay = document.createElement("div");
-  threadLoadingOverlay.className = "eva-sdk-chatbot-thread-loading";
+  threadLoadingOverlay.className = "eva-sdk-chatbot-thread-skeleton";
   threadLoadingOverlay.setAttribute("aria-hidden", "true");
   threadLoadingOverlay.innerHTML = `
-    <div class="eva-sdk-chatbot-thread-loading-spinner"></div>
-    <span class="eva-sdk-chatbot-thread-loading-text">Loading...</span>
+    <div class="eva-sdk-chatbot-thread-skeleton-content">
+      <div class='top-component'>
+         <div class="questions-container">
+           <div class="message-container">
+              <div class="skeleton-group-wrapper">
+                <div class="skeleton-group">
+                  <div class="skeleton-group-item">
+                    <sl-skeleton effect="pulse" width="1rem" height="1rem"></sl-skeleton>
+                    <sl-skeleton effect="pulse" width="60%" height="1rem"></sl-skeleton>
+                  </div>
+                  <div class="skeleton-group-item">
+                    <sl-skeleton effect="pulse" width="1rem" height="1rem"></sl-skeleton>
+                    <sl-skeleton effect="pulse" width="60%" height="1rem"></sl-skeleton>
+                  </div>
+                </div>
+                <div class="skeleton-group">
+                  <div class="skeleton-group-item">
+                    <sl-skeleton effect="pulse" width="1rem" height="1rem"></sl-skeleton>
+                    <sl-skeleton effect="pulse" width="60%" height="1rem"></sl-skeleton>
+                  </div>
+                  <div class="skeleton-group-item">
+                    <sl-skeleton effect="pulse" width="1rem" height="1rem"></sl-skeleton>
+                    <sl-skeleton effect="pulse" width="60%" height="1rem"></sl-skeleton>
+                  </div>
+                </div>
+                <div class="skeleton-group">
+                  <div class="skeleton-group-item">
+                    <sl-skeleton effect="pulse" width="1rem" height="1rem"></sl-skeleton>
+                    <sl-skeleton effect="pulse" width="60%" height="1rem"></sl-skeleton>
+                  </div>
+                  <div class="skeleton-group-item">
+                    <sl-skeleton effect="pulse" width="1rem" height="1rem"></sl-skeleton>
+                    <sl-skeleton effect="pulse" width="60%" height="1rem"></sl-skeleton>
+                  </div>
+                </div>
+              </div>
+           </div>
+         </div>
+      </div>
+      <div class='bottom-component'>
+        <div class="compose-bar-container" id="compose-bar-container">
+          <div class="ComposeBarContainer new-layout">
+            <div class="eva-composebar-parent">
+              <div class="eva-composebar-area eva-composebar-area--history-selected">
+                <div class="eva-input-container">
+                  <div class="left-actions">
+                    <sl-skeleton effect="pulse" width="2rem" height="2rem"></sl-skeleton>
+                  </div>
+                  <div class="eva-compose-textarea-container">
+                    <sl-skeleton effect="pulse" width="60%"></sl-skeleton>
+                  </div>
+                  <div class="right-actions">
+                    <sl-skeleton effect="pulse" width="2rem" height="2rem"></sl-skeleton>
+                    <sl-skeleton effect="pulse" width="2rem" height="2rem"></sl-skeleton>
+                    <sl-skeleton effect="pulse" width="2rem" height="2rem"></sl-skeleton>
+                  </div>                  
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   `;
   contentContainer.appendChild(threadLoadingOverlay);
 
@@ -183,14 +247,14 @@ const ensureElements = (config = {}) => {
     const showThreadLoader = () => {
       const overlay = state.elements.threadLoadingOverlay;
       if (overlay) {
-        overlay.classList.add("eva-sdk-chatbot-thread-loading--visible");
+        overlay.classList.add("eva-sdk-chatbot-thread-skeleton--visible");
         overlay.setAttribute("aria-hidden", "false");
       }
     };
     const hideThreadLoader = () => {
       const overlay = state.elements.threadLoadingOverlay;
       if (overlay) {
-        overlay.classList.remove("eva-sdk-chatbot-thread-loading--visible");
+        overlay.classList.remove("eva-sdk-chatbot-thread-skeleton--visible");
         overlay.setAttribute("aria-hidden", "true");
       }
     };

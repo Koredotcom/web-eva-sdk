@@ -7,6 +7,14 @@ import { segregateHistoryBySections, HISTORY_SECTIONS } from "../utils/helpers";
 import { EllipsisHorizontal, createDeleteIcon, EditIcon } from "../templateRenderer/icons-library";
 
 
+const HISTORY_COMPOSEBAR_ACTIVE_CLASS = "eva-composebar-area--history-selected";
+
+const addHistorySelectedClassToComposebar = (listContainer) => {
+  const root = listContainer?.closest?.("#eva-sdk-chatbot-panel") || document;
+  const composebarArea = root?.querySelector?.(".eva-composebar-area");
+  composebarArea?.classList?.add(HISTORY_COMPOSEBAR_ACTIVE_CLASS);
+};
+
 const getHistorySectionsOrdered = (items, timeZone) => {
   const { today, yesterday, last7Days, last30Days, older } = segregateHistoryBySections(items, timeZone);
   const out = [];
@@ -217,12 +225,14 @@ const renderHistoryList = (listContainer, historyData, callbacks = {}) => {
       li.addEventListener("click", async (e) => {
         if (e.target.closest("sl-dropdown") || e.target.closest(".eva-sdk-history-item-title-input")) return;
 
+        if (li.classList.contains("history-item-group-item--loading")) return;
+        addHistorySelectedClassToComposebar(listContainer);
+
         if (onThreadClick) {
           await onThreadClick(item);
           return;
         }
 
-        if (li.classList.contains("history-item-group-item--loading")) return;
         li.classList.add("history-item-group-item--loading");
         const spinner = document.createElement("span");
         spinner.className = "eva-sdk-history-item-loading-spinner";
