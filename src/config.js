@@ -16,7 +16,7 @@ export const initializeSDK = async (config) => {
   }
 
   const requiredKeys = ['accessToken', 'api_url', 'userId']
-  let initialHistoryLimit = config?.initialHistoryLimit || 10;
+  let initialHistoryLimit = config?.initialHistoryLimit || 20;
 
   let misConfig = false;
   requiredKeys.map(key => {
