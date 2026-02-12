@@ -238,6 +238,9 @@ const ChatInterface = (props) => {
 				}
 			}
 		}
+    if(payload['formData'] && arg?.isTask){
+       delete payload.context;
+    }
 
     console.log("custom data payload in chat interface line no 206", payload.customData)
 

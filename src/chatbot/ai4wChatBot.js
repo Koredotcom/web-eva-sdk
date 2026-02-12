@@ -1,7 +1,8 @@
 import { initializeSDKRuntime } from "../sdkRuntime";
 import { initializeSDK } from "../config";
 import NewChat from "../chat/NewChat";
-import { unHideRecentAgentsDiv } from "../LandingPageRecentAgents";
+import { JoinChatThread } from "../chat";
+import { unHideRecentAgentsDiv, hideRecentAgentsDiv } from "../LandingPageRecentAgents";
 import { createHistorySidebar, initHistoryList } from "./chatbotHistory";
 
 const DEFAULT_CONTAINER_ID = "eva-sdk-chatbot-container";
@@ -17,6 +18,7 @@ const state = {
     title: null,
     closeButton: null,
     contentContainer: null,
+    threadLoadingOverlay: null,
     chatHistoryButton: null,
     historyOverlay: null,
     historySidebar: null,
@@ -68,6 +70,9 @@ const createPanel = (titleText) => {
   newChatButton.textContent = "New Chat";
 
   newChatButton.addEventListener("click", () => {
+    panel
+      ?.querySelector?.(".eva-composebar-area")
+      ?.classList?.remove("eva-composebar-area--history-selected");
     unHideRecentAgentsDiv('recent-agents-container');
     NewChat()
   });
@@ -93,6 +98,76 @@ const createPanel = (titleText) => {
   contentContainer.className = "eva-sdk-chatbot-content";
   body.appendChild(contentContainer);
 
+  const threadLoadingOverlay = document.createElement("div");
+  threadLoadingOverlay.className = "eva-sdk-chatbot-thread-skeleton";
+  threadLoadingOverlay.setAttribute("aria-hidden", "true");
+  threadLoadingOverlay.innerHTML = `
+    <div class="eva-sdk-chatbot-thread-skeleton-content">
+      <div class='top-component'>
+         <div class="questions-container">
+           <div class="message-container">
+              <div class="skeleton-group-wrapper">
+                <div class="skeleton-group">
+                  <div class="skeleton-group-item">
+                    <sl-skeleton effect="pulse" width="1rem" height="1rem"></sl-skeleton>
+                    <sl-skeleton effect="pulse" width="60%" height="1rem"></sl-skeleton>
+                  </div>
+                  <div class="skeleton-group-item">
+                    <sl-skeleton effect="pulse" width="1rem" height="1rem"></sl-skeleton>
+                    <sl-skeleton effect="pulse" width="60%" height="1rem"></sl-skeleton>
+                  </div>
+                </div>
+                <div class="skeleton-group">
+                  <div class="skeleton-group-item">
+                    <sl-skeleton effect="pulse" width="1rem" height="1rem"></sl-skeleton>
+                    <sl-skeleton effect="pulse" width="60%" height="1rem"></sl-skeleton>
+                  </div>
+                  <div class="skeleton-group-item">
+                    <sl-skeleton effect="pulse" width="1rem" height="1rem"></sl-skeleton>
+                    <sl-skeleton effect="pulse" width="60%" height="1rem"></sl-skeleton>
+                  </div>
+                </div>
+                <div class="skeleton-group">
+                  <div class="skeleton-group-item">
+                    <sl-skeleton effect="pulse" width="1rem" height="1rem"></sl-skeleton>
+                    <sl-skeleton effect="pulse" width="60%" height="1rem"></sl-skeleton>
+                  </div>
+                  <div class="skeleton-group-item">
+                    <sl-skeleton effect="pulse" width="1rem" height="1rem"></sl-skeleton>
+                    <sl-skeleton effect="pulse" width="60%" height="1rem"></sl-skeleton>
+                  </div>
+                </div>
+              </div>
+           </div>
+         </div>
+      </div>
+      <div class='bottom-component'>
+        <div class="compose-bar-container" id="compose-bar-container">
+          <div class="ComposeBarContainer new-layout">
+            <div class="eva-composebar-parent">
+              <div class="eva-composebar-area eva-composebar-area--history-selected">
+                <div class="eva-input-container">
+                  <div class="left-actions">
+                    <sl-skeleton effect="pulse" width="2rem" height="2rem"></sl-skeleton>
+                  </div>
+                  <div class="eva-compose-textarea-container">
+                    <sl-skeleton effect="pulse" width="60%"></sl-skeleton>
+                  </div>
+                  <div class="right-actions">
+                    <sl-skeleton effect="pulse" width="2rem" height="2rem"></sl-skeleton>
+                    <sl-skeleton effect="pulse" width="2rem" height="2rem"></sl-skeleton>
+                    <sl-skeleton effect="pulse" width="2rem" height="2rem"></sl-skeleton>
+                  </div>                  
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+  contentContainer.appendChild(threadLoadingOverlay);
+
   panel.appendChild(header);
   panel.appendChild(body);
 
@@ -111,6 +186,7 @@ const createPanel = (titleText) => {
     title,
     closeButton,
     contentContainer,
+    threadLoadingOverlay,
     chatHistoryButton,
     historyOverlay: overlay,
     historySidebar: sidebar,
@@ -136,6 +212,7 @@ const ensureElements = (config = {}) => {
     title,
     closeButton,
     contentContainer,
+    threadLoadingOverlay,
     chatHistoryButton,
     historyOverlay: overlay,
     historySidebar: sidebar,
@@ -156,6 +233,7 @@ const ensureElements = (config = {}) => {
     title,
     closeButton,
     contentContainer,
+    threadLoadingOverlay,
     chatHistoryButton,
     historyOverlay: overlay,
     historySidebar: sidebar,
@@ -166,8 +244,31 @@ const ensureElements = (config = {}) => {
 
   const listContainer = historyContent?.querySelector(".eva-sdk-chatbot-history-list");
   if (listContainer && !state.historyUnsubscribe) {
+    const showThreadLoader = () => {
+      const overlay = state.elements.threadLoadingOverlay;
+      if (overlay) {
+        overlay.classList.add("eva-sdk-chatbot-thread-skeleton--visible");
+        overlay.setAttribute("aria-hidden", "false");
+      }
+    };
+    const hideThreadLoader = () => {
+      const overlay = state.elements.threadLoadingOverlay;
+      if (overlay) {
+        overlay.classList.remove("eva-sdk-chatbot-thread-skeleton--visible");
+        overlay.setAttribute("aria-hidden", "true");
+      }
+    };
     const result = initHistoryList(listContainer, {
-      onItemSelect: () => closeHistory(),
+      onThreadClick: async (item) => {
+        closeHistory();
+        hideRecentAgentsDiv("recent-agents-container");
+        showThreadLoader();
+        try {
+          await JoinChatThread({ boardId: item?.id });
+        } finally {
+          hideThreadLoader();
+        }
+      },
     });
     if (result) state.historyUnsubscribe = result.unsubscribe;
   }
@@ -206,7 +307,7 @@ const ensureElements = (config = {}) => {
 };
 
 const ensureChatContainer = (containerId) => {
-  const { contentContainer } = state.elements;
+  const { contentContainer, threadLoadingOverlay } = state.elements;
   if (!contentContainer) {
     return null;
   }
@@ -217,6 +318,10 @@ const ensureChatContainer = (containerId) => {
     container.id = containerId;
     container.className = "eva-sdk-chatbot-container";
     contentContainer.appendChild(container);
+  }
+
+  if (threadLoadingOverlay && threadLoadingOverlay.parentNode === contentContainer) {
+    contentContainer.appendChild(threadLoadingOverlay);
   }
 
   return container;
@@ -231,6 +336,7 @@ const syncPanelState = () => {
   panel.classList.toggle("eva-sdk-chatbot-panel--open", state.isOpen);
   panel.setAttribute("aria-hidden", state.isOpen ? "false" : "true");
   button.setAttribute("aria-expanded", state.isOpen ? "true" : "false");
+  button.classList.toggle("eva-sdk-chatbot-button--hidden", state.isOpen);
 };
 
 const syncHistoryState = () => {

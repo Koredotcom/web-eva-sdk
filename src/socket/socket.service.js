@@ -11,6 +11,39 @@ class WebSocketClient {
         this.socket = null;
         this.url = null;
         this.options = null;
+        this._presenceRefreshPromise = null;
+        this._lastPresenceRefreshAt = 0;
+    }
+
+    shouldRefreshPresence(errorOrReason) {
+        const text = String(errorOrReason?.message || errorOrReason || "").toLowerCase();
+        // Only refresh presence when it likely helps (auth/token issues).
+        return (
+            text.includes("unauthor") ||
+            text.includes("forbidden") ||
+            text.includes("token") ||
+            text.includes("jwt") ||
+            text.includes("auth")
+        );
+    }
+
+    async refreshPresenceToken() {
+        // Avoid spamming /presence/start during socket reconnect loops.
+        const MIN_INTERVAL_MS = 60_000;
+        const now = Date.now();
+        if (this._presenceRefreshPromise) return this._presenceRefreshPromise;
+        if (now - this._lastPresenceRefreshAt < MIN_INTERVAL_MS) return;
+
+        this._lastPresenceRefreshAt = now;
+        this._presenceRefreshPromise = store
+            .dispatch(presenceStart())
+            .catch(() => {
+                // Ignore; reconnect logic will keep trying the socket.
+            })
+            .finally(() => {
+                this._presenceRefreshPromise = null;
+            });
+        return this._presenceRefreshPromise;
     }
 
     initialize({ url, options }) {
@@ -54,12 +87,19 @@ class WebSocketClient {
             });
             
             this.socket.on("disconnect", async (reason) => {
-                await store.dispatch(presenceStart())
+                // Don't call presenceStart on every disconnect — it causes continuous API calls
+                // when the socket is unstable. Refresh only for likely auth/token issues.
+                if (this.shouldRefreshPresence(reason)) {
+                    await this.refreshPresenceToken();
+                }
                 console.warn(`Socket disconnected: ${reason}`);
             });
 
             this.socket.on("connect_error", async (error) => {
-                await store.dispatch(presenceStart())
+                // Don't call presenceStart for generic network/CORS errors. Only refresh if auth/token issue.
+                if (this.shouldRefreshPresence(error)) {
+                    await this.refreshPresenceToken();
+                }
                 console.error(`Socket connection Error: ${error.message}`);
             });
 

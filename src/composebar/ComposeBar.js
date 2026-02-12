@@ -145,7 +145,7 @@ class ComposeBar {
                 if (sources) {
                     try {
                         const filesOnly = Array.isArray(sources)
-                            ? sources.filter(source => source.type === "attachment")
+                            ? sources.filter(source => source.type === "attachment" || source.loading === true)
                             : [];
                         this.attachments = filesOnly;
                         this.quickActions = quickActions || [];
@@ -305,6 +305,16 @@ class ComposeBar {
         }).join('');
 
         attachmentsContainer.innerHTML = attachmentHtml;
+
+        // Toggle class on eva-input-container when file(s) are uploaded
+        const inputContainer = attachmentsContainer.closest('.eva-input-container');
+        if (inputContainer) {
+            if (this.attachments?.length > 0) {
+                inputContainer.classList.add('file-uploaded');
+            } else {
+                inputContainer.classList.remove('file-uploaded');
+            }
+        }
 
         // Reattach event listeners for remove buttons
         this.attachAttachmentEventListeners();
@@ -504,7 +514,7 @@ class ComposeBar {
         if (env === 'MS') {
             return `<img src="${resolveSdkAssetPath("images/MS-Icons/send-ms.svg")}" alt="Send" width="20" height="20" />`;
         }
-        return arrowCirlceUpIcon({ size: 16, color: "#101828" });
+        return arrowCirlceUpIcon({ size: 20, color: "#101828" });
     }
 
 
@@ -636,7 +646,7 @@ class ComposeBar {
                                               
                         </div>                        
                         
-                        <div class="eva-input-container">
+                        <div class="eva-input-container${this.attachments?.length ? ' file-uploaded' : ''}">
                             <div class="response-as-context-truncated-text" style="display: none;">
                                 <div class='arrow-down-icon'>${CurvedArrowForPreview({ size: 12, color: "#101828" })}</div>                                
                                 <div class="answer-context-chip-text response-as-context-question-text"></div>
