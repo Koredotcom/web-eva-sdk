@@ -114,7 +114,8 @@ function render(data) {
                                         }
                                     </div>
                             ` : ''}                               
-                            </div>                    
+                            </div>   
+                             <div class="utterance" id="utterance-${items?.id}-${index}">${task?.utterance}</div>                 
                         </div>
                     </div>
                 </div>

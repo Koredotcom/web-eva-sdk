@@ -1,12 +1,13 @@
 import { cloneDeep, isEmpty } from "lodash";
 import {chatWindow, chatConfig} from "@koredev/kore-web-sdk"
 import store from "../../redux/store";
-import { checkHistoryAccessed, getCidByMessageId, getReqIdByMessageId } from "../../utils/helpers";
+import { checkHistoryAccessed } from "../../utils/helpers";
 import { updateChatData, setBotSDKInstance, setCurrentQuestion, setEnableKoreBotSDK } from "../../redux/globalSlice";
 import { advanceSearch } from "../../redux/actions/global.action";
 import { constructQuestionPostCall } from "../chat-utils";
 import { setBotInstance, getBotInstance } from "./botSDKManager";
 import { setupTemplates } from "../../templateRenderer/templates/bot-conversation";
+import { MultiIntentExecution } from "..";
 
 
 const BotConversation = (args) => {
@@ -38,26 +39,59 @@ const BotConversation = (args) => {
                 if(state?.enableDebugging){
                     console.log(msg, renderTxt)
                 }
+               const cId = state?.currentQuestion?.cId ?? state?.currentQuestion?.reqId;
+
                 submitBotResponse({
-                    "input": msg,
-                    "cId": state?.currentQuestion?.reqId,
-                    "messageId": Object.values(store.getState().global?.currentQuestion?.botConversation)?.find(c => c.hasOwnProperty('template_html') && c.status === "in-progress")?.messageId,
-                    "context": state?.currentQuestion?.context,
-                    "source": "bot",
-                    "renderMsgPayload": renderTxt?.renderMsg
-                })
+                    input: msg,
+                    cId,
+                    messageId: Object.values(
+                        store.getState().global?.currentQuestion?.botConversation
+                    )?.find(
+                        c => c.hasOwnProperty("template_html") && c.status === "in-progress"
+                    )?.messageId,
+                    context: state?.currentQuestion?.context,
+                    source: "bot",
+                    renderMsgPayload: renderTxt?.renderMsg
+                });
+
             }
         }
     }
     
     const setBotConversation = (detail) => {
+        state = store.getState().global
         let question;
-        let questions = cloneDeep(state?.questions)   
+        let questions = cloneDeep(state?.questions)
+        const resolveQuestionKeyByMessageId = (messageId) => {
+            if (!messageId || isEmpty(questions)) {
+                return null;
+            }
+            const keyByMessageId = Object.keys(questions).find(
+                (key) => questions[key]?.messageId === messageId
+            );
+            if (keyByMessageId) {
+                return keyByMessageId?.hasOwnProperty('messageId') ? keyByMessageId['messageId']  || messageId :  keyByMessageId;
+            }
+            return Object.keys(questions).find(
+                (key) =>
+                    questions[key]?.reqId === messageId ||
+                    questions[key]?.id === messageId
+            );
+        };
+        const resolveQuestionKeyByReqId = (reqId) => {
+            if (!reqId || isEmpty(questions)) {
+                return null;
+            }
+            return Object.keys(questions).find(
+                (key) => questions[key]?.messageId === reqId
+            );
+        };
         if (isEmpty(questions)) {
             return;
         }     
         if(detail?.action === "create"){
-            question = questions[getReqIdByMessageId(detail?.pId)]
+            const questionKey = resolveQuestionKeyByMessageId(detail?.pId)
+            question = questions[questionKey]
             if (isEmpty(question)) {
                 //corresponding bot question is unavailable
                 if(state?.enableDebugging){
@@ -82,7 +116,7 @@ const BotConversation = (args) => {
                                 }
                             ]
                         }
-                        currentBotSDKInstance.chatEle = document.getElementsByClassName(".bot-conversation-wrapper")[0]
+                        currentBotSDKInstance.chatEle = document.getElementById("chatTestComp")
                         if(state?.enableDebugging){
                             console.log("template html: ", currentBotSDKInstance.generateMessageDOM(templatePayload))
                         }
@@ -105,21 +139,26 @@ const BotConversation = (args) => {
             // }     
             if(Object.keys(questions || {}).length === 0){
                 return;
-            }   
-            /*Identify whether to update the question which is inside agentic flow or not
-            in case of agentic flow, pId will the main id i.e agentic flow id, so in order to get the bot question we need to check with the messageId
-            */               
-            question = questions[getReqIdByMessageId(detail?.message?.pId)] /*in order to update the already existing messages of botConversation, we will depend on pId */            
+            }            
+            const questionKey = resolveQuestionKeyByMessageId(detail?.message?.pId)
+            question = questions[detail?.message?.pId] /*in order to update the already existing messages of botConversation, we will depend on pId */
+            const check = Object.values(questions)?.find(el => el?.messageId === detail?.message?.pId);
             if(question){//found the question with pId, so need to update the conversation present in botConversation
-                /*need to see if it is a agentic flow question or not, if it is a part of agentic flow question, using messageId fetch the key of the questions array to */
-                if(question?.executionPipeline?.length){
-                    question = questions[getCidByMessageId(questions, detail?.message?.messageId)]
-                    question = {...question, 'answer': detail?.message?.answer, 'status': detail?.message?.status, 'reqFlow': detail?.message?.reqFlow}
-                }else{
-                    question.botConversation[detail?.message?.messageId] = detail?.message
-                }                
-            }else{
-                question = questions[detail?.message?.reqId] /*to update the parent message itself, */
+                question.botConversation[detail?.message?.messageId] = detail?.message
+                
+            }else if(check){
+                const currentQuestion = store.getState().global.currentQuestion;
+               if(currentQuestion?.isTask) {
+                   const stepIndex = currentQuestion?.stepIndex;
+                   setTimeout(() => {
+                       MultiIntentExecution().runNextTask(stepIndex, detail?.message?.status , currentQuestion)
+                   }, 1000);
+               }
+
+            }
+            else{
+                const fallbackKey = resolveQuestionKeyByReqId(detail?.message?.pId)
+                question = questions[fallbackKey] /*to update the parent message itself, */
                 if(!question){
                     if(state?.enableDebugging){
                         console.error(`bot question with reqId: ${detail?.message?.reqId} is unavailable, please check the store`)
@@ -154,12 +193,8 @@ const BotConversation = (args) => {
         //     questions[question?.id] = question
         // }else{
         //     questions[question?.reqId] = question
-        // }       
-        if(question?.isTask) {
-            questions[question?.cId] = question
-        }else{
-            questions[question?.reqId] = question
-        }        
+        // }        
+        // questions[question?.reqId] = question
         store.dispatch(updateChatData(questions))        
         setupTemplates(question.botConversation);
     }
@@ -170,55 +205,44 @@ const BotConversation = (args) => {
 
 
     const submitBotResponse = async (data) => {
-        /**
-         * needed payload
-         payload = {
-         "question": "nothing but used entered answer",
-         "context": "current question's context",
-         "messageId": "current bot question's messageId"
-         "source": "bot"
-         }
-         */
-        state = store.getState().global
+        const globalState = store.getState().global;
+
         const params = {
-            "reqId": data?.cId, //use reqId
-            "from": "botAgent"
+            reqId: data?.cId,
+            from: "botAgent"
+        };
+
+        const payload = {
+            question: data?.input,
+            context: data?.context,
+            messageId: data?.messageId,
+            source: "bot"
+        };
+
+        if (data?.renderMsgPayload) {
+            payload.renderMsgPayload = data.renderMsgPayload;
         }
-        let payload = {
-            "question": data?.input,
-            "context": data?.context,
-            "messageId": data?.messageId,
-            "source": "bot"
+
+        if (!isEmpty(globalState?.customData)) {
+            payload.customData = globalState.customData;
         }
-        if (data?.renderMsgPayload){
-            payload.renderMsgPayload = data?.renderMsgPayload 
+
+        if (globalState?.enableDebugging) {
+            console.log("params:", params);
+            console.log("payload:", payload);
         }
-        if (!isEmpty(state.customData)) {
-            payload.customData = state.customData
-            console.log("custom data in getBotConversation line 165 : ", payload.customData)
-        }
-        if(state?.enableDebugging){
-            console.log("state data: ", state)        
-        }
-        /*need to add a loading state for the current question */
-        console.log("custom data in getBotConversation line 167 : ", payload.customData)
-        addLoadingStateToCurrentQuestion(data?.cId, data?.messageId, data?.input)
-        if(state?.enableDebugging){
-            console.log("params data: ", data)
-        }
-        console.log("custom data in getBotConversation line 171 : ", payload?.customData)
-        setTimeout(() => {
-            const conversation = Object.values(state?.questions)?.find(c => c?.reqId === data?.cId)?.botConversation?.[data?.messageId]
-            
-            const scrollToTarget = document.getElementById(conversation?.messageId) 
-            if (scrollToTarget) {
-                scrollToTarget.scrollIntoView({behavior: "smooth" , block: "start"});
-            }
-        }, 1000);
-        const res = await store.dispatch(advanceSearch({ params, payload, userId: state?.profile?.data?.id || data?.userId}))
-        console.log("custom data in getBotConversation line 173 : ", payload?.customData)
-        constructQuestionPostCall(res, data?.cId)
-    }
+
+        const res = await store.dispatch(
+            advanceSearch({
+            params,
+            payload,
+            userId: globalState?.profile?.data?.id || data?.userId
+            })
+        );
+
+        constructQuestionPostCall(res, data?.cId);
+};
+
 
     const addLoadingStateToCurrentQuestion = (quesReqId, messageId, input) => {
         let reqId = quesReqId
