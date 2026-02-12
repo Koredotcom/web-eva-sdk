@@ -97,6 +97,23 @@ export const getReqIdByMessageId = (messageId) => {
     return null; // or an appropriate value if no match is found
 };
 
+export const isTask = (messageId) => {
+    let questions = cloneDeep(store.getState().global?.questions)
+    const currentQuestion = Object.values(questions).find(question => question?.pId === messageId)
+    if(currentQuestion?.isTask) {
+        return true
+    }
+    return false;
+}
+
+export const getTaskIdBypId = (messageId) => {
+    let questions = cloneDeep(store.getState().global?.questions)
+    const currentQuestion = Object.values(questions).find(question => (question?.pId === messageId && question?.status === 'threadRunning'))
+    if(currentQuestion?.isTask) {
+        return currentQuestion?.cId;
+    }
+    return null;
+}
 export const getCidByReqId = (questions, reqId) => {
     for (const key in questions) {
         if (questions[key].reqId === reqId) {
@@ -470,6 +487,14 @@ export function markdownToPlainText(md) {
 
     // Final trim
     return trimWithEllipsis(text).trim();
+}
+
+
+export const getAgentTypeByAgentId = (agentId) => {
+    const allAgents = store.getState().global?.allAgents?.data?.agents;
+    const agent = allAgents?.find(agent => agent?.id === agentId);
+    return agent?.type;
+
 }
 
 const trimWithEllipsis = (str, max=100) =>

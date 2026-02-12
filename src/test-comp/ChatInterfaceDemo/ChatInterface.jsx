@@ -8,6 +8,8 @@ import Announcements from "../announcements";
 import Composebar from "./Composebar";
 import { AnnouncementsInterface } from "../../Announcements";
 import Agents from "../agents";
+import MultiIntentExecutionDemo from "./MultiIntentExecutionDemo";
+import History from "../history";
 
 
 
@@ -93,10 +95,11 @@ const ChatInterfaceDemo = () => {
               }
             }}>+</div>
           </div>
-          {/* <History /> */}
+          
           {/* <Notifications /> */}
-          <Agents /> 
+          {/* <Agents />  */}
           {/* <Announcements /> */}
+          {/* <History /> */}
         </div>
       </div>
       <div className="chatInterfaceSec">
