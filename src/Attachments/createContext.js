@@ -333,8 +333,10 @@ export const setContext = async (state, args, callback, type) => {
     if (args?.action === "update" || args?.action === "remove") {
         params.sessionId = state.selectedContext?.data?.sessionId
         if (args?.action === "remove") {
-            // params.docId = args?.payload?.[0]?.docId
-            payload.removeSources = args?.payload?.map(obj => obj?.docId)
+            // Set params.docId for DELETE API call (matching Kora-React)
+            // The API expects docId in params for the URL path: /sources/:docId
+            params.docId = args?.payload?.[0]?.docId || args?.payload?.[0]?.contentId || args?.payload?.[0]?.id
+            payload.removeSources = args?.payload?.map(obj => obj?.docId || obj?.contentId || obj?.id)
         }
     }
     const response = await store.dispatch(searchSession({ params, payload, userId }))
