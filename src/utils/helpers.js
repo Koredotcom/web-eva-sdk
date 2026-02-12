@@ -485,6 +485,23 @@ export function markdownToPlainText(md) {
     // Final trim
     return trimWithEllipsis(text).trim();
 }
+export const isTask = (messageId) => {
+    let questions = cloneDeep(store.getState().global?.questions)
+    const currentQuestion = Object.values(questions).find(question => question?.pId === messageId)
+    if(currentQuestion?.isTask) {
+        return true
+    }
+    return false;
+}
+
+export const getTaskIdBypId = (messageId) => {
+    let questions = cloneDeep(store.getState().global?.questions)
+    const currentQuestion = Object.values(questions).find(question => (question?.pId === messageId && question?.status === 'threadRunning'))
+    if(currentQuestion?.isTask) {
+        return currentQuestion?.cId;
+    }
+    return null;
+}
 
 const trimWithEllipsis = (str, max = 100) =>
     str.length > max ? str.slice(0, max) + "..." : str;
