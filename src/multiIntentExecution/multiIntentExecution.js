@@ -4,6 +4,7 @@ import InitiateChatConversationAction from "../chat/InitiateChatConversationActi
 import { updateChatData } from "../redux/globalSlice";
 import { executionPipelineActions, getSearchHistory } from "../redux/actions/global.action";
 import { cancelOngoingCall } from "../templateRenderer/utils/helper";
+import { getAgentTypeByAgentId } from "../utils/helpers";
 
 const MultiIntentExecution = (props) => {
     let state = store.getState().global;
@@ -42,15 +43,31 @@ const MultiIntentExecution = (props) => {
           }
         let _item = cloneDeep(item);
         let task = _item?.executionPipeline?.[index];
-        task.stepIndex = index;
+        /*TODO:- the status of the item should not be changed to completed, till all the tasks of execution pipeline are completed,
+        May be in chat-utils.js, need to check where the status is changed to completed
+        */
+        if(index > 0){
+            if(_item?.executionPipeline[index - 1]){
+                _item.executionPipeline[index - 1].status = 'completed';
+            }
+        }        
+        const isMultiIntentExecutionCompleted = _item?.executionPipeline?.every(task => task?.status === 'completed');
+        if(isMultiIntentExecutionCompleted){
+            _item.status = 'completed';
+        }
         store.dispatch(updateChatData({
           ...state.questions,
           [item?.reqId]: {
-            ...item,
-            status: q?.status || "in-progress"
+            ..._item,
+            status: _item?.status || q?.status || "in-progress"
           }
-        }))
+        }))        
+        if(isMultiIntentExecutionCompleted || !task){
+            return;
+        }
 
+        task = {...task, stepIndex: index};
+        
       const params = { cId: _item?.id, type: _item?.type, stepId: task?._id, task, currentRunningQuestion: _item, parentMsgId: _item?.reqId, isTask: true}
 
         const payload = {
@@ -74,6 +91,7 @@ const MultiIntentExecution = (props) => {
             return;
         }
         else {
+            
             runTask(item, nextTaskIndex, question)
         }
     }
@@ -278,9 +296,8 @@ const MultiIntentExecution = (props) => {
             store.dispatch(updateChatData(mockQuestions))
         }
         else {
-            const params = { pId: item?.messageId, msgId: task?.msgId || task?.messageId, showdata: true }
-            const response = await store.dispatch(getSearchHistory({ boardId: activeBoardId, params }))
-
+            let params = { pId: item?.messageId, msgId: task?.msgId || task?.messageId, showdata: true }            
+            const response = await store.dispatch(getSearchHistory({ boardId: activeBoardId, params }))            
             if (response?.payload?.history) {
                 let executionPipeLineIds = item?.executionPipeline?.map(pipelineItem => pipelineItem?._id);
 
