@@ -161,7 +161,7 @@ export const fetchRecentFiles = createAsyncThunk(
     async ({userId, params}, { rejectWithValue }) => {
         try {
             const response = await axiosInstance({
-                url: `1.1/ka/users/${userId}/files?fileContext=knowledge`,
+                url: `1.1/ka/users/${userId}/files?fileContext=runtime`,
                 method: 'GET',
                 params
             });
