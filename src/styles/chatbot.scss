@@ -27,6 +27,10 @@
   outline-offset: 2px;
 }
 
+.eva-sdk-chatbot-button.eva-sdk-chatbot-button--hidden {
+  display: none !important;
+}
+
 .eva-sdk-chatbot-button-icon {
   width: 16px;
   height: 16px;
@@ -310,6 +314,34 @@
   flex: 1;
   min-height: 0;
   display: flex;
+  position: relative;
+}
+
+.eva-sdk-chatbot-thread-loading {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: #fff;
+  font-size: 14px;
+  color: #70707B;
+  &.eva-sdk-chatbot-thread-loading--visible {
+    display: flex;
+  }
+  .eva-sdk-chatbot-thread-loading-spinner {
+    width: 20px;
+    height: 20px;
+    border: 2px solid rgba(15, 91, 240, 0.2);
+    border-top-color: #0f5bf0;
+    border-radius: 50%;
+    animation: eva-sdk-chatbot-history-spin 0.7s linear infinite;
+  }
+  .eva-sdk-chatbot-thread-loading-text {
+    font-family: Inter, sans-serif;
+  }
 }
 
 .eva-sdk-chatbot-container {
@@ -495,12 +527,27 @@
                 min-width: 0;
                 flex: 1;
               }
+              &.history-item-group-item--loading {
+                pointer-events: none;
+                .eva-sdk-history-item-menu-trigger {
+                  visibility: hidden;
+                }
+              }
               .history-item-group-item-title {
                 min-width: 0;
                 flex: 1;
                 white-space: nowrap;
                 overflow: hidden;
                 text-overflow: ellipsis;
+              }
+              .eva-sdk-history-item-loading-spinner {
+                flex-shrink: 0;
+                width: 16px;
+                height: 16px;
+                border: 2px solid rgba(15, 91, 240, 0.2);
+                border-top-color: #0f5bf0;
+                border-radius: 50%;
+                animation: eva-sdk-chatbot-history-spin 0.7s linear infinite;
               }
               .eva-sdk-history-item-title-input {
                 min-width: 0;

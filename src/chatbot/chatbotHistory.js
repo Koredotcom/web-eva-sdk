@@ -182,7 +182,7 @@ const createHistoryItemDropdown = (item, callbacks = {}) => {
 const renderHistoryList = (listContainer, historyData, callbacks = {}) => {
   if (!listContainer) return;
   const boards = historyData?.data || [];
-  const { onItemSelect, onRename, onDelete } = callbacks;
+  const { onThreadClick, onItemSelect, onRename, onDelete } = callbacks;
 
   const sections = getHistorySectionsOrdered(boards);
 
@@ -214,11 +214,29 @@ const renderHistoryList = (listContainer, historyData, callbacks = {}) => {
       row.appendChild(dropdown);
 
       li.appendChild(row);
-      li.addEventListener("click", (e) => {
+      li.addEventListener("click", async (e) => {
         if (e.target.closest("sl-dropdown") || e.target.closest(".eva-sdk-history-item-title-input")) return;
-        hideRecentAgentsDiv("recent-agents-container");
-        JoinChatThread({ boardId: item?.id });
-        onItemSelect?.();
+
+        if (onThreadClick) {
+          await onThreadClick(item);
+          return;
+        }
+
+        if (li.classList.contains("history-item-group-item--loading")) return;
+        li.classList.add("history-item-group-item--loading");
+        const spinner = document.createElement("span");
+        spinner.className = "eva-sdk-history-item-loading-spinner";
+        spinner.setAttribute("aria-hidden", "true");
+        row.appendChild(spinner);
+
+        try {
+          hideRecentAgentsDiv("recent-agents-container");
+          await JoinChatThread({ boardId: item?.id });
+          onItemSelect?.();
+        } finally {
+          li.classList.remove("history-item-group-item--loading");
+          spinner.remove();
+        }
       });
       ul.appendChild(li);
     });
