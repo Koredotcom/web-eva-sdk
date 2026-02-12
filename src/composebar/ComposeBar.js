@@ -551,13 +551,18 @@ class ComposeBar {
         // If selectedContext doesn't have sources, fall back to contextChipData
         const source = selectedContext?.sources?.[0] || contextChipData;
         
+        // Check if source is an attachment (matching Kora-React: const attachment = source?.source === "attachment")
+        const isAttachment = source?.source === "attachment" || source?.type === "attachment";
+        
         // Check for mcpAgent from currentQuestion (matching Kora-React: questions?.[currentQuestion]?.context?.agentType === "mcpAgent")
         const isMcpAgent = currentQuestion && questions?.[currentQuestion]?.context?.agentType === "mcpAgent";
         
         // Check if this is a GPT agent response selected as context
         // Matching Kora-React exactly: (source?.templateType === 'gpt_form_template' || source?.agentType === 'gptAgent' || isMcpAgent) && (selectedContext?.setViaMenuOptions || selectedContext?.setViaGptAgent)
         // This check comes FIRST in Kora-React's singleChipRenderer
-        const isGptAgentResponse = (source?.templateType === 'gpt_form_template' || 
+        // IMPORTANT: Only show response-as-context-truncated-text for GPT agent responses, NOT for attachments
+        const isGptAgentResponse = !isAttachment && 
+                                    (source?.templateType === 'gpt_form_template' || 
                                      source?.agentType === 'gptAgent' || 
                                      isMcpAgent) &&
                                     (selectedContext?.setViaMenuOptions || selectedContext?.setViaGptAgent);
@@ -619,6 +624,21 @@ class ComposeBar {
             return;
         }
 
+        // If it's an attachment, hide response-as-context-truncated-text (attachments use eva-attachment-pill instead)
+        // Matching Kora-React: attachments show in chipCard with 'attachment' class, not in response-as-context-truncated-text
+        if (isAttachment) {
+            if (answerContextChipContainer) {
+                hideElementImmediately(answerContextChipContainer);
+            }
+            // For attachments, we don't show the response-as-context-truncated-text
+            // The attachment pill (eva-attachment-pill) is handled separately
+            // Just hide the wrapper if no other context chip is needed
+            if (composeBarWrapperDiv && !botInputHeaderDiv) {
+                hideElementImmediately(composeBarWrapperDiv);
+            }
+            return;
+        }
+
         /*check whether contextChipData is holding agent or answer */
         const iconElement = composeBarWrapperDiv.querySelector('.icon-image img');
         const nameElement = composeBarWrapperDiv.querySelector('.bot-input-header-left-text');
@@ -643,7 +663,25 @@ class ComposeBar {
                     nameElement.textContent = agentName;
                 }
             }
-        } else {                        
+        } else {
+            // For non-agent contexts, check if it's an attachment first
+            // Attachments should NOT show response-as-context-truncated-text (they use eva-attachment-pill instead)
+            if (isAttachment) {
+                // Hide response-as-context-truncated-text for attachments
+                if (answerContextChipContainer) {
+                    hideElementImmediately(answerContextChipContainer);
+                }
+                // Hide the wrapper for attachments (attachments are shown via eva-attachment-pill)
+                if (composeBarWrapperDiv) {
+                    hideElementImmediately(composeBarWrapperDiv);
+                }
+                if (botInputHeaderDiv) {
+                    hideElementImmediately(botInputHeaderDiv);
+                }
+                return; // Early return for attachments
+            }
+            
+            // For other non-agent contexts (not attachments), show the answer context chip
             if (botInputHeaderDiv) {
                 hideElementImmediately(botInputHeaderDiv);
             }                        
