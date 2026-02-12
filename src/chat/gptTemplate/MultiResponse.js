@@ -281,7 +281,7 @@ const MultiResponse = () => {
         let requestParams = allResponseFields?.map((field, index) => {
             let selectedPrompt = null;
             /*check for the nested key in the fieldValues when key is prompts */
-            const nestedPromptCheck = field?.find(field => field?.key === "prompts" && field.value?.nested?.key === "prompt");
+            const nestedPromptCheck = field?.find(field => field?.key === "prompts" && field.value?.choices?.length > 1);
             if(nestedPromptCheck){
                 const selectedPromptLabel = document.getElementById(`dropdownValue-${nestedPromptCheck?.key}-${item?.messageId}-${index}`)?.value;
                 selectedPrompt = nestedPromptCheck?.value?.choices?.find(choice => choice.label === selectedPromptLabel);

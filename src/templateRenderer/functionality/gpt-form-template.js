@@ -53,7 +53,7 @@ const gptFormFunctionality = (formData, item) => {
 		const removeButton = document.getElementById(
 			`removeButton-${contextField?.key}-${item?.messageId}`
 		);
-		removeButton.addEventListener("click", (event) =>
+		removeButton?.addEventListener("click", (event) =>
 			removeUploadedFile(event, `${contextField?.key}-${item?.messageId}`)
 		);
 	}
