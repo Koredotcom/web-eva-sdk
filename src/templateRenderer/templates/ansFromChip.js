@@ -374,7 +374,7 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 				}
 				
 				if (iconSrc) {
-					return `<img src="${encodeHtml(iconSrc)}" alt="" class="source-avatar" style="width: 20px; height: 20px; border-radius: 50%; margin-right: -8px; border: 2px solid white;" />`;
+					return `<img src="${encodeHtml(iconSrc)}" alt="" class="source-avatar" style="width: 20px; height: 20px; border-radius: 50%;" />`;
 				} else {
 					const iconEl = renderIcons(source?.source, source?.extIcon, null, source?.iconUrl, source?.isSupervisor);
 					return `<span class="sourceIcon" style="width: 20px; height: 20px; display: inline-flex; align-items: center; justify-content: center; margin-right: -8px;">${iconEl?.outerHTML || ''}</span>`;
@@ -382,8 +382,8 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 			}).join('');
 
 			return `
-				<div class="sourceChipItemTextGroup" style="display: flex; align-items: center; gap: 8px;">
-					<div style="display: flex; align-items: center; margin-right: 4px;">
+				<div class="sourceChipItemTextGroup">
+					<div class="p-avatar">
 						${avatarsHtml}
 					</div>
 					<span class="sourceChipItemText">Sources</span>
@@ -486,11 +486,11 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 		};
 
 		return `
-			<div class="sourcesChip" style="display: flex; align-items: center;">
-				<div class="sourceChipItem" data-open-sources="sources" style="cursor: pointer; display: flex; align-items: center;">
+			<div class="sourcesChip"">
+				<div class="sourceChipItem" data-open-sources="sources">
 					${isMultiSource ? renderMultiSourceChip() : renderSingleSourceChip()}
 				</div>
-				${isSearchResults ? `<div class="lineSeperator" style="margin: 0 8px;">|</div>` : ''}
+				${isSearchResults ? `<div class="lineSeperator">|</div>` : ''}
 			</div>
 		`;
 	};
@@ -502,8 +502,8 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 		if (item?.templateType !== "search_results") return '';
 
 		return `
-			<div class="search-results-ans-block" data-open-sources="searchResults" style="cursor: pointer; display: flex; align-items: center; gap: 4px;">
-				<div class="inline-flex-wrapper" style="display: flex; align-items: center; gap: 4px;">
+			<div class="search-results-ans-block" data-open-sources="searchResults">
+				<div class="inline-flex-wrapper">
 					<span class="normal-text">Related Search Results</span>
 					<span class="icon-cls">
 						<svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -532,7 +532,7 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 		// Add sources chip and Related Search Results button container
 		if (hasSourcesChip || hasRelatedSearchResults) {
 			body += `<div class="ansFromChip widthChip" id="ansFromChip-${item?.id}">`;
-			body += `<div class="sourceGroup-item" style="display: flex; align-items: center; gap: 8px;">`;
+			body += `<div class="sourceGroup-item">`;
 			
 			if (hasSourcesChip) {
 				body += sourcesChipHtml;

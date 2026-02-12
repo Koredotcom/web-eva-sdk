@@ -215,7 +215,7 @@ class KnowledgeSearchResults {
                                      (result?.docId && allSourceIds.has(result.docId));
             
             html += `
-                <div class="content-wrapper" ${url ? `onclick="window.open('${encodeHtml(url)}', '_blank')" style="cursor: pointer;"` : ''}>
+                <div class="content-wrapper" ${url ? `onclick="window.open('${encodeHtml(url)}', '_blank')"` : ''}>
                     <span class="icon-wrapper">${iconHtml}</span>
                     <div class="content-desc">
                         <div class="content-header">
@@ -243,27 +243,23 @@ class KnowledgeSearchResults {
         if (!meta) return '';
 
         let metaHtml = '<div class="metaDescription">';
-        
-        // Basic meta info
-        if (meta.updatedBy && meta.updatedOn) {
-            metaHtml += `<span>${encodeHtml(meta.updatedBy)}</span>`;
-            metaHtml += `<span> • Updated on ${encodeHtml(meta.updatedOn)}</span>`;
-        } else if (meta.createdBy) {
-            metaHtml += `<span>${encodeHtml(meta.createdBy)}</span>`;
+        const parts = [];
+
+        if (meta.appName ?? meta.applicationName) {
+            parts.push(encodeHtml(meta.label));
         }
-        
-        // Add other meta fields if present
-        Object.keys(meta).forEach(key => {
-            if (key !== 'updatedBy' && key !== 'updatedOn' && key !== 'createdBy') {
-                const value = meta[key];
-                if (value) {
-                    metaHtml += `<span> • ${encodeHtml(key)}: ${encodeHtml(Array.isArray(value) ? value.join(', ') : value)}</span>`;
-                }
-            }
-        });
-        
-        metaHtml += '</div>';
-        return metaHtml;
+        if (meta.assignee ?? meta.assigneeName) {
+            parts.push(encodeHtml(meta.assignee || meta.assigneeName));
+        }
+        if (meta.status) {
+            parts.push(encodeHtml(meta.status));
+        }
+        if (parts.length) {
+            metaHtml += `<span>${parts.join(' • ')}</span>`;
+            metaHtml += '</div>';
+            return metaHtml;
+        }
+        return '';
     }
 }
 

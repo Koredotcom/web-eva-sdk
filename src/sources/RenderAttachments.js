@@ -248,7 +248,7 @@ class RenderAttachments {
             : '';
 
         return `
-            <div class="content-wrapper" ${onClickHandler} style="cursor: ${hasUrl ? 'pointer' : 'default'};">
+            <div class="content-wrapper" ${onClickHandler}>
                 <span class="icon-wrapper">${iconHtml}</span>
                 <div class="content-desc">
                     <div class="content-header">

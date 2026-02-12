@@ -34,7 +34,8 @@ class SourcesSidebar {
             drawer.id = 'sources-sidebar-drawer';
             drawer.setAttribute('placement', 'end');
             drawer.setAttribute('class', 'sources-sidebar-drawer');
-            drawer.style.setProperty('--size', '35vw');
+            drawer.style.setProperty('--size', '40%');
+            drawer.setAttribute('no-header', 'true');
             document.body.appendChild(drawer);
             this.drawer = drawer;
         } else {
@@ -197,73 +198,14 @@ class SourcesSidebar {
             if (unifiedData?.data?.tab?.length > 1) {
                 unifiedData = this.makeALLtabSearchResults(unifiedData);
             }
-            
-            // Only re-render if unifiedSearchResults has changed
-            const needsRerender = !this.unifiedSearchResults || 
-                JSON.stringify(this.unifiedSearchResults?.data?.tab) !== JSON.stringify(unifiedData?.data?.tab);
-            
             this.unifiedSearchResults = unifiedData;
             // Update Redux state for unifiedSearchResults
             store.dispatch(setUnifiedSearchResults(this.unifiedSearchResults));
-            
-            if (needsRerender) {
-                // Re-render to show updated tabs
-                this.render();
-            } else {
-                // Just update the active tab without full re-render
-                const tabGroup = this.drawer?.querySelector('#sources-tab-group');
-                if (tabGroup) {
-                    const tabs = tabGroup.querySelectorAll('sl-tab');
-                    const panels = tabGroup.querySelectorAll('sl-tab-panel');
-                    
-                    tabs.forEach(t => {
-                        if (t.getAttribute('panel') === tab) {
-                            t.setAttribute('active', '');
-                        } else {
-                            t.removeAttribute('active');
-                        }
-                    });
-                    
-                    panels.forEach(p => {
-                        if (p.getAttribute('name') === tab) {
-                            p.setAttribute('active', '');
-                        } else {
-                            p.removeAttribute('active');
-                        }
-                    });
-                    
-                    // Ensure nested tab-group is upgraded
-                    setTimeout(() => {
-                        const nestedTabGroup = this.drawer?.querySelector('#knowledge-search-tabs');
-                        if (nestedTabGroup && upgradeCustomElements) {
-                            upgradeCustomElements(nestedTabGroup);
-                        }
-                    }, 50);
-                }
-            }
+            // Re-render to show updated tabs
+            this.render();
         } else {
-            // Update active tab in the DOM without full re-render
-            const tabGroup = this.drawer?.querySelector('#sources-tab-group');
-            if (tabGroup) {
-                const tabs = tabGroup.querySelectorAll('sl-tab');
-                const panels = tabGroup.querySelectorAll('sl-tab-panel');
-                
-                tabs.forEach(t => {
-                    if (t.getAttribute('panel') === tab) {
-                        t.setAttribute('active', '');
-                    } else {
-                        t.removeAttribute('active');
-                    }
-                });
-                
-                panels.forEach(p => {
-                    if (p.getAttribute('name') === tab) {
-                        p.setAttribute('active', '');
-                    } else {
-                        p.removeAttribute('active');
-                    }
-                });
-            }
+            // Re-render so the div-based top section shows the correct content
+            this.render();
         }
     }
 
@@ -425,7 +367,7 @@ class SourcesSidebar {
             showMoreSearchResults = true;
         }
 
-        // Use Shoelace tab-group with tab-panels when tabs are needed
+        // Top section: div-based switcher (Sources / More search results). Only bottom tab-group (e.g. Jira Cloud) uses sl-tab-group.
         if (showSwitchTabs || showMoreSearchResults) {
             const sourcesContent = this.answerSources?.viewType === "table"
                 ? TableDataSummary.render({
@@ -436,76 +378,40 @@ class SourcesSidebar {
                 : this.handleListData();
             
             const searchResultsContent = KnowledgeSearchResults.render({ 
-                unifiedSearchResults: this.unifiedSearchResults || this.answerSources,
-                answerSources: this.answerSources
+                unifiedSearchResults: this.unifiedSearchResults || this.answerSources 
             });
+
+            const navItems = showSwitchTabs
+                ? [
+                    { panel: 'sources', label: `Sources (${sourcesCount})` },
+                    { panel: 'search', label: 'More search results' }
+                ]
+                : [{ panel: 'search', label: 'More search results' }];
+
+            const navHtml = navItems.map(({ panel, label }) =>
+                `<button type="button" class="sources-nav-item ${this.selectedTab === panel ? 'active' : ''}" data-panel="${panel}">${label}</button>`
+            ).join('');
 
             this.drawer.innerHTML = `
                 ${header}
-                <sl-tab-group id="sources-tab-group" placement="top">
-                    ${showSwitchTabs ? `
-                        <sl-tab slot="nav" panel="sources" ${this.selectedTab === 'sources' ? 'active' : ''}>Sources (${sourcesCount})</sl-tab>
-                        <sl-tab slot="nav" panel="search" ${this.selectedTab === 'search' ? 'active' : ''}>More search results</sl-tab>
-                    ` : `
-                        <sl-tab slot="nav" panel="search" ${this.selectedTab === 'search' ? 'active' : ''}>More search results</sl-tab>
-                    `}
-                    ${showSwitchTabs ? `
-                        <sl-tab-panel name="sources" ${this.selectedTab === 'sources' ? 'active' : ''}>
+                <div class="sources-top-section">
+                    <div class="sources-nav-div" role="tablist">
+                        ${navHtml}
+                    </div>
+                    <div class="sources-content-area">
+                        ${showSwitchTabs && this.selectedTab === 'sources' ? `
                             <div class="right-panel-tabs-wrapper">
                                 ${sourcesContent}
                             </div>
-                        </sl-tab-panel>
-                    ` : ''}
-                    <sl-tab-panel name="search" ${this.selectedTab === 'search' ? 'active' : ''} style="padding: 0;">
-                        <div style="width: 100%; height: 100%;">
-                            ${searchResultsContent}
-                        </div>
-                    </sl-tab-panel>
-                </sl-tab-group>
+                        ` : ''}
+                        ${this.selectedTab === 'search' ? searchResultsContent : ''}
+                    </div>
+                </div>
             `;
             
-            // Upgrade Shoelace custom elements after rendering
+            // Upgrade Shoelace custom elements (for KnowledgeSearchResults sl-tab-group inside content)
             if (this.drawer && upgradeCustomElements) {
                 upgradeCustomElements(this.drawer);
-                // Also upgrade nested tab-group for "More search results" - need to wait for parent tab-group to be ready
-                setTimeout(() => {
-                    const nestedTabGroup = this.drawer?.querySelector('#knowledge-search-tabs');
-                    if (nestedTabGroup && upgradeCustomElements) {
-                        upgradeCustomElements(nestedTabGroup);
-                        // Force update the nested tab-group
-                        if (nestedTabGroup.requestUpdate) {
-                            nestedTabGroup.requestUpdate();
-                        }
-                        
-                        // Activate the first tab in the nested tab-group
-                        const nestedTabs = nestedTabGroup.querySelectorAll('sl-tab');
-                        const nestedPanels = nestedTabGroup.querySelectorAll('sl-tab-panel');
-                        
-                        if (nestedTabs.length > 0 && nestedPanels.length > 0) {
-                            // Activate first tab
-                            const firstTab = nestedTabs[0];
-                            const firstPanelName = firstTab.getAttribute('panel');
-                            const firstPanel = nestedTabGroup.querySelector(`sl-tab-panel[name="${firstPanelName}"]`);
-                            
-                            if (firstTab && firstPanel) {
-                                firstTab.setAttribute('active', '');
-                                firstPanel.setAttribute('active', '');
-                                
-                                // Remove active from other tabs/panels
-                                nestedTabs.forEach(tab => {
-                                    if (tab !== firstTab) {
-                                        tab.removeAttribute('active');
-                                    }
-                                });
-                                nestedPanels.forEach(panel => {
-                                    if (panel !== firstPanel) {
-                                        panel.removeAttribute('active');
-                                    }
-                                });
-                            }
-                        }
-                    }
-                }, 200);
             }
         } else {
             // No tabs - just show sources content
@@ -528,46 +434,6 @@ class SourcesSidebar {
         // Attach event listeners after a short delay to ensure Shoelace components are initialized
         setTimeout(() => {
             this.attachEventListeners();
-            
-            // If search tab is active, ensure nested tab-group is upgraded and activated
-            if (this.selectedTab === 'search') {
-                setTimeout(() => {
-                    const nestedTabGroup = this.drawer?.querySelector('#knowledge-search-tabs');
-                    if (nestedTabGroup && upgradeCustomElements) {
-                        upgradeCustomElements(nestedTabGroup);
-                        if (nestedTabGroup.requestUpdate) {
-                            nestedTabGroup.requestUpdate();
-                        }
-                        
-                        // Activate the first tab in the nested tab-group
-                        const nestedTabs = nestedTabGroup.querySelectorAll('sl-tab');
-                        const nestedPanels = nestedTabGroup.querySelectorAll('sl-tab-panel');
-                        
-                        if (nestedTabs.length > 0 && nestedPanels.length > 0) {
-                            const firstTab = nestedTabs[0];
-                            const firstPanelName = firstTab.getAttribute('panel');
-                            const firstPanel = nestedTabGroup.querySelector(`sl-tab-panel[name="${firstPanelName}"]`);
-                            
-                            if (firstTab && firstPanel) {
-                                firstTab.setAttribute('active', '');
-                                firstPanel.setAttribute('active', '');
-                                
-                                // Remove active from other tabs/panels
-                                nestedTabs.forEach(tab => {
-                                    if (tab !== firstTab) {
-                                        tab.removeAttribute('active');
-                                    }
-                                });
-                                nestedPanels.forEach(panel => {
-                                    if (panel !== firstPanel) {
-                                        panel.removeAttribute('active');
-                                    }
-                                });
-                            }
-                        }
-                    }
-                }, 150);
-            }
         }, 100);
     }
 
@@ -582,100 +448,18 @@ class SourcesSidebar {
             closeBtn.addEventListener('click', () => this.closeSourcesPanel());
         }
 
-        // Tab switching using Shoelace tab-group
-        const tabGroup = this.drawer?.querySelector('#sources-tab-group');
-        if (tabGroup) {
-            // Remove existing listener if any
-            if (this.handleTabShowBound) {
-                tabGroup.removeEventListener('sl-tab-show', this.handleTabShowBound);
-            }
-            
-            // Create bound handler
-            this.handleTabShowBound = (e) => {
-                const tabPanel = e.detail.name; // 'sources' or 'search'
-                this.handleTabSwitch(tabPanel);
-                
-                // When switching to 'search' tab, upgrade nested tab-group
-                if (tabPanel === 'search') {
-                    setTimeout(() => {
-                        const nestedTabGroup = this.drawer?.querySelector('#knowledge-search-tabs');
-                        if (nestedTabGroup && upgradeCustomElements) {
-                            console.log('Upgrading nested tab-group on tab switch:', nestedTabGroup);
-                            upgradeCustomElements(nestedTabGroup);
-                            // Force update
-                            if (nestedTabGroup.requestUpdate) {
-                                nestedTabGroup.requestUpdate();
-                            }
-                        }
-                    }, 100);
-                }
-            };
-            
-            tabGroup.addEventListener('sl-tab-show', this.handleTabShowBound);
-            
-            // Set initial active tab programmatically
-            setTimeout(() => {
-                const tabs = tabGroup.querySelectorAll('sl-tab');
-                const panels = tabGroup.querySelectorAll('sl-tab-panel');
-                
-                tabs.forEach(tab => {
-                    const panelName = tab.getAttribute('panel');
-                    if (panelName === this.selectedTab) {
-                        tab.setAttribute('active', '');
-                    } else {
-                        tab.removeAttribute('active');
-                    }
+        // Top section: div-based nav item clicks (Sources / More search results)
+        const navItems = this.drawer?.querySelectorAll('.sources-nav-item');
+        if (navItems?.length) {
+            navItems.forEach(btn => {
+                btn.replaceWith(btn.cloneNode(true));
+            });
+            this.drawer?.querySelectorAll('.sources-nav-item').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const panel = btn.getAttribute('data-panel');
+                    if (panel) this.handleTabSwitch(panel);
                 });
-                
-                panels.forEach(panel => {
-                    const panelName = panel.getAttribute('name');
-                    if (panelName === this.selectedTab) {
-                        panel.setAttribute('active', '');
-                    } else {
-                        panel.removeAttribute('active');
-                    }
-                });
-                
-                // If search tab is active, upgrade nested tab-group and activate first tab
-                if (this.selectedTab === 'search') {
-                    setTimeout(() => {
-                        const nestedTabGroup = this.drawer?.querySelector('#knowledge-search-tabs');
-                        if (nestedTabGroup && upgradeCustomElements) {
-                            upgradeCustomElements(nestedTabGroup);
-                            if (nestedTabGroup.requestUpdate) {
-                                nestedTabGroup.requestUpdate();
-                            }
-                            
-                            // Activate the first tab in the nested tab-group
-                            const nestedTabs = nestedTabGroup.querySelectorAll('sl-tab');
-                            const nestedPanels = nestedTabGroup.querySelectorAll('sl-tab-panel');
-                            
-                            if (nestedTabs.length > 0 && nestedPanels.length > 0) {
-                                const firstTab = nestedTabs[0];
-                                const firstPanelName = firstTab.getAttribute('panel');
-                                const firstPanel = nestedTabGroup.querySelector(`sl-tab-panel[name="${firstPanelName}"]`);
-                                
-                                if (firstTab && firstPanel) {
-                                    firstTab.setAttribute('active', '');
-                                    firstPanel.setAttribute('active', '');
-                                    
-                                    // Remove active from other tabs/panels
-                                    nestedTabs.forEach(tab => {
-                                        if (tab !== firstTab) {
-                                            tab.removeAttribute('active');
-                                        }
-                                    });
-                                    nestedPanels.forEach(panel => {
-                                        if (panel !== firstPanel) {
-                                            panel.removeAttribute('active');
-                                        }
-                                    });
-                                }
-                            }
-                        }
-                    }, 150);
-                }
-            }, 50);
+            });
         }
     }
 
