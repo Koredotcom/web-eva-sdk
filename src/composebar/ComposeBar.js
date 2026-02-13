@@ -388,8 +388,35 @@ class ComposeBar {
             }
         }
 
+        // Disable attachment button + update tooltip while upload is in progress
+        this.syncAttachmentUploadState();
+
         // Reattach event listeners for remove buttons
         this.attachAttachmentEventListeners();
+    }
+
+    isAttachmentUploadInProgress() {
+        return (this.attachments || []).some(a => !!a?.loading);
+    }
+
+    syncAttachmentUploadState() {
+        const attachmentBtn = this.container?.querySelector?.('[data-eva-attachment]');
+        if (!attachmentBtn) return;
+
+        const tooltip = attachmentBtn.closest('sl-tooltip');
+        const tooltipContentEl = tooltip?.querySelector?.('[data-eva-attachment-tooltip-content]');
+
+        const inProgress = this.isAttachmentUploadInProgress();
+
+        if (tooltipContentEl) {
+            tooltipContentEl.innerHTML = inProgress
+                ? 'Please wait. Upload is in progress'
+                : '5 attachments, max 10MB each. <br/>PDF, XLS, DOC, CSV, TXT formats.';
+        }
+
+        // Don't disable the button element itself (disabled blocks hover/focus so tooltip won't show).
+        // Instead, mark state for click handler to guard.
+        attachmentBtn.setAttribute('data-upload-in-progress', inProgress ? 'true' : 'false');
     }
 
     renderQuickReplies() {
@@ -877,6 +904,7 @@ class ComposeBar {
             .replace(/"/g, '&quot;')
             .replace(/'/g, '&#39;');
 
+        const uploadInProgress = (this.attachments || []).some(a => !!a?.loading);
 
         this.container.innerHTML = `
             <div class="ComposeBarContainer new-layout">
@@ -944,7 +972,9 @@ class ComposeBar {
                             </div>
                             <div class="right-actions">
                                 <sl-tooltip>
-                                    <div slot="content" class="caTooltips">5 attachments, max 10MB each. <br/>PDF, XLS, DOC, CSV, TXT formats.</div>
+                                    <div slot="content" class="caTooltips" data-eva-attachment-tooltip-content>
+                                        ${uploadInProgress ? 'Please wait. Upload is in progress' : '5 attachments, max 10MB each. <br/>PDF, XLS, DOC, CSV, TXT formats.'}
+                                    </div>
                                     <button class="eva-input-action-btn attachment-btn" data-eva-attachment>
                                         ${this.getAttachmentButtonIcon()}
                                     </button>
@@ -1110,7 +1140,42 @@ class ComposeBar {
 
         // Attachment button event
         if (attachmentBtn) {
-            attachmentBtn.addEventListener('click', () => this.handleAttachment());
+            attachmentBtn.addEventListener('click', () => {
+                const inProgressAttr = attachmentBtn.getAttribute('data-upload-in-progress') === 'true';
+                const inProgress = inProgressAttr || this.isAttachmentUploadInProgress();
+
+                // If upload is in progress, block opening dialog and show tooltip message.
+                if (inProgress) {
+                    try {
+                        const tooltip = attachmentBtn.closest('sl-tooltip');
+                        if (tooltip && typeof tooltip.show === 'function') {
+                            tooltip.show();
+                        }
+                        // Auto-hide after a short delay so it doesn't stick.
+                        setTimeout(() => {
+                            try {
+                                if (tooltip && typeof tooltip.hide === 'function') {
+                                    tooltip.hide();
+                                }
+                            } catch (e) { /* noop */ }
+                        }, 1500);
+                    } catch (e) { /* noop */ }
+                    return;
+                }
+
+                // Shoelace tooltip can remain open on click due to focus.
+                // Hide it immediately on click for better UX.
+                try {
+                    const tooltip = attachmentBtn.closest('sl-tooltip');
+                    if (tooltip && typeof tooltip.hide === 'function') {
+                        tooltip.hide();
+                    }
+                } catch (e) { /* noop */ }
+
+                try { attachmentBtn.blur(); } catch (e) { /* noop */ }
+
+                this.handleAttachment();
+            });
         }
 
         if (uploadFileBtn) {
