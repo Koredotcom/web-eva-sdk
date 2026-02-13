@@ -840,13 +840,16 @@ const setContextChip = () => {
             ${isMultiSource ? `
             <div id="setContextDropdown-${messageId}" class="setContextDropdown" style="display:none; position:absolute; background:#fff; border:1px solid #e5e7eb; border-radius:6px; padding:6px; z-index:999;">
                 ${item?.sources?.map((src, idx) => {
-                    const isSelected = ((item?.context?.sources || [])?.some(s => s?.docId === src?.docId)) ? true : false;
+                    const selectedSources = item?.context?.sources || [];
+                    const isSelected = selectedSources?.some(s => (
+                        s?.docId === src?.docId || s?.docId === src?.id || s?.id === src?.docId || s?.id === src?.id
+                    ));
                     const label = src?.title || src?.source;
-                    const baseStyle = 'padding:6px 8px; cursor:pointer; white-space:nowrap; display:flex; align-items:center; gap:6px;';
+                    const baseStyle = 'padding:6px 8px; cursor:pointer; white-space:nowrap; display:flex; align-items:center; justify-content: space-between; width:100%;';
                     const style = isSelected ? baseStyle + ' background-color:#f0fff4;' : baseStyle;
                     return `<div class="dropdown-item ${isSelected ? 'selected' : ''}" data-source-index="${idx}" style="${style}">
                         <span>${label}</span>
-                        ${isSelected ? `<span style="margin-left:auto; color:#10B981;">${tickMarkIcon({ size: 10, color: '#10B981' })}</span>` : ''}
+                        ${isSelected ? `<span>${tickMarkIcon({ size: 10, color: '#10B981' })}</span>` : ''}
                     </div>`;
                 }).join('')}
             </div>
