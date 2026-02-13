@@ -560,7 +560,10 @@ class ComposeBar {
     handleCloseBanner() {
         this.bannerClosedByUser = true;
         const composeBarWrapperDiv = this.container.querySelector('.composebar-bot-input-wrapper');
-        if (this.selectedAgent?.agentType === 'botAgent') {
+        const state = store.getState().global;
+        const currentQuestion = state.currentQuestion;
+        const question = state.questions[currentQuestion.reqId];
+        if (this.selectedAgent?.agentType === 'botAgent' && question?.status === 'threadRunning') {
             this.chatInterface.stopBotAnswer();
         } else {
             this.fileUploaderInterface.clearContext();
