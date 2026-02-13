@@ -3,6 +3,7 @@ import store from '../redux/store.js';
 import { createCloseIcon } from '../templateRenderer/icons-library.js';
 import { upgradeCustomElements } from '../templateRenderer/templateRenderer.js';
 import { setUnifiedSearchResults } from '../redux/globalSlice.js';
+import { advanceSearch, searchResultFilters } from '../redux/actions/global.action.js';
 import RenderAttachments from './RenderAttachments.js';
 import GPTFormSummary from './GPTFormSummary.js';
 import TableDataSummary from './TableDataSummary.js';
@@ -15,12 +16,17 @@ import ResultTemplate from './ResultTemplate.js';
  * Handles single and multi sources with all conditions from Kora-React
  */
 class SourcesSidebar {
-    constructor() {
+    constructor(config) {
+        this.config = config;
+        this.element = null;
         this.drawer = null;
-        this.selectedTab = 'sources';
-        this.answerSources = null;
         this.unifiedSearchResults = null;
-        this.userSelectedTab = null;
+        this.answerSources = null; // Store answer sources separately
+        this.activeInnerTab = null; // Track active inner tab
+        this.loadingTabs = new Set(); // Track loading state for tabs
+        this.loadingTabs = new Set(); // Track loading state for tabs
+        this._documentTabListenerAttached = false; // Flag to prevent duplicate global listeners
+        this._tabSwitchTimeout = null; // For debouncing
         this.init();
     }
 
@@ -74,7 +80,7 @@ class SourcesSidebar {
                 allResults = [...allResults, ...r.data];
             }
         });
-        
+
         // Sort by createdOn descending (if available)
         allResults = allResults.sort((a, b) => {
             const aDate = a?.createdOn ? new Date(a.createdOn) : new Date(0);
@@ -239,17 +245,17 @@ class SourcesSidebar {
         }
 
         // GPT Form Summary
-        if (!!sourcesData?.context && 
-            (sourcesData?.context?.type === "gptAgent" || 
-             sourcesData?.context?.agentType === "gptAgent" || 
-             sourcesData?.context?.agentType === 'galeAgent')) {
+        if (!!sourcesData?.context &&
+            (sourcesData?.context?.type === "gptAgent" ||
+                sourcesData?.context?.agentType === "gptAgent" ||
+                sourcesData?.context?.agentType === 'galeAgent')) {
             return GPTFormSummary.render({ summaryData: sourcesData });
         }
 
         // For search_answer templateType, use data array as sources if available
-        if (sourcesData?.templateType === 'search_answer' && 
-            sourcesData?.data && 
-            Array.isArray(sourcesData.data) && 
+        if (sourcesData?.templateType === 'search_answer' &&
+            sourcesData?.data &&
+            Array.isArray(sourcesData.data) &&
             sourcesData.data.length > 0) {
             const transformedData = {
                 ...sourcesData,
@@ -264,9 +270,9 @@ class SourcesSidebar {
         // Sources List View (multiple sources or specific conditions)
         else if (sourcesData?.sources?.length > 1 ||
             (sourcesData?.sources?.length === 1 &&
-                (!sourcesData?.hasData || 
-                 sourcesData?.viewType === 'knowledge' ||
-                 (sourcesData?.viewType === 'message' && sourcesData?.templateType === 'search_results')))) {
+                (!sourcesData?.hasData ||
+                    sourcesData?.viewType === 'knowledge' ||
+                    (sourcesData?.viewType === 'message' && sourcesData?.templateType === 'search_results')))) {
             return `
                 <div class="MultiSourceListView">
                     ${RenderAttachments.render({ data: sourcesData })}
@@ -274,9 +280,9 @@ class SourcesSidebar {
             `;
         }
         // Single Source List View
-        else if (sourcesData?.sources?.length === 1 && 
-                 sourcesData?.viewType === 'list' && 
-                 sourcesData?.hasData) {
+        else if (sourcesData?.sources?.length === 1 &&
+            sourcesData?.viewType === 'list' &&
+            sourcesData?.hasData) {
             return `
                 <div class="threadListGroup sidebarListGroup">
                     ${ResultTemplate.render({ results: sourcesData, sidebar: true })}
@@ -313,8 +319,8 @@ class SourcesSidebar {
                 ? source?.templateType === 'gpt_form_template'
                     ? source?.title
                     : sourcesData?.viewType === 'table'
-                        ? (sourcesData?.templateType === 'search_answer' && sourcesData?.data?.[0]?.name 
-                            ? sourcesData.data[0].name 
+                        ? (sourcesData?.templateType === 'search_answer' && sourcesData?.data?.[0]?.name
+                            ? sourcesData.data[0].name
                             : source?.title || sourcesData?.sources?.[0]?.title || 'Data')
                         : 'Sources'
                 : sourcesData?.question;
@@ -326,9 +332,9 @@ class SourcesSidebar {
 
         if (sourcesData?.templateType === 'search_results' && sourcesCount > 1) {
             showSwitchTabs = true;
-        } else if (sourcesData?.templateType === 'search_results' && 
-                   sourcesCount === 1 && 
-                   sourcesData?.sources?.[0]?.source !== 'llm') {
+        } else if (sourcesData?.templateType === 'search_results' &&
+            sourcesCount === 1 &&
+            sourcesData?.sources?.[0]?.source !== 'llm') {
             showSwitchTabs = true;
         } else if (sourcesData?.from === 'thoughts') {
             showMoreSearchResults = true;
@@ -350,20 +356,20 @@ class SourcesSidebar {
         if (!this.drawer || !this.answerSources) return;
 
         const header = this.renderHeader();
-        
+
         let sourcesData = cloneDeep(this.answerSources);
         const sourcesCount = sourcesData?.templateType === 'search_answer' && sourcesData?.data?.length
             ? sourcesData.data.length
             : sourcesData?.sources?.length || 0;
-        
+
         let showSwitchTabs = false;
         let showMoreSearchResults = false;
-        
+
         if (sourcesData?.templateType === 'search_results' && sourcesCount > 1) {
             showSwitchTabs = true;
-        } else if (sourcesData?.templateType === 'search_results' && 
-                   sourcesCount === 1 && 
-                   sourcesData?.sources?.[0]?.source !== 'llm') {
+        } else if (sourcesData?.templateType === 'search_results' &&
+            sourcesCount === 1 &&
+            sourcesData?.sources?.[0]?.source !== 'llm') {
             showSwitchTabs = true;
         } else if (sourcesData?.from === 'thoughts') {
             showMoreSearchResults = true;
@@ -376,13 +382,16 @@ class SourcesSidebar {
             const sourcesContent = this.answerSources?.viewType === "table"
                 ? TableDataSummary.render({
                     summaryData: this.answerSources,
-                    scrollBottom: () => {},
+                    scrollBottom: () => { },
                     closeSourcesPanel: () => this.closeSourcesPanel()
                 })
                 : this.handleListData();
-            
-            const searchResultsContent = KnowledgeSearchResults.render({ 
-                unifiedSearchResults: this.unifiedSearchResults || this.answerSources 
+
+            // Pass the activeInnerTab to KnowledgeSearchResults so it renders with the correct tab active
+            const searchResultsContent = KnowledgeSearchResults.render({
+                unifiedSearchResults: this.unifiedSearchResults || this.answerSources,
+                activeTab: this.activeInnerTab,
+                loadingTabs: this.loadingTabs
             });
 
             const navItems = showSwitchTabs
@@ -412,7 +421,7 @@ class SourcesSidebar {
                     </div>
                 </div>
             `;
-            
+
             // Upgrade Shoelace custom elements (for KnowledgeSearchResults sl-tab-group inside content)
             if (this.drawer && upgradeCustomElements) {
                 upgradeCustomElements(this.drawer);
@@ -422,7 +431,7 @@ class SourcesSidebar {
             const content = this.answerSources?.viewType === "table"
                 ? TableDataSummary.render({
                     summaryData: this.answerSources,
-                    scrollBottom: () => {},
+                    scrollBottom: () => { },
                     closeSourcesPanel: () => this.closeSourcesPanel()
                 })
                 : this.handleListData();
@@ -439,31 +448,284 @@ class SourcesSidebar {
         setTimeout(() => {
             this.attachEventListeners();
         }, 100);
+
+        // Trigger initial search if coming from 'thoughts' and in search tab
+        // Similar to Kora-React useEffect logic
+        if (this.answerSources?.from === 'thoughts' && (this.selectedTab === 'search' || !showSwitchTabs)) {
+            // Only trigger if we don't have results yet for the default tab
+            const defaultTabKey = this.answerSources?.tabKey || this.answerSources?.data?.tab?.[0]?.key;
+            if (defaultTabKey && this.unifiedSearchResults) {
+                const currentTabData = this.unifiedSearchResults.data?.results?.[defaultTabKey]?.data;
+                // If data is missing or empty, trigger fetch
+                if (!currentTabData || currentTabData.length === 0) {
+                    // Debounce slightly to avoid double triggers
+                    if (!this._initialFetchTriggered) {
+                        this.activeInnerTab = defaultTabKey; // Set active tab before trigger
+                        this.triggerSearch(defaultTabKey);
+                        this._initialFetchTriggered = true;
+                        // Reset flag after some time
+                        setTimeout(() => this._initialFetchTriggered = false, 2000);
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Trigger search result filters (fetch data for a specific tab)
+     * Replicates searchResultFilters action from Kora-React
+     */
+    async triggerSearch(tabKey) {
+        if (!this.unifiedSearchResults) return;
+
+        // Track the tab we are fetching for so it stays active
+        this.activeInnerTab = tabKey;
+
+        // userId is not needed for searchResultFilters (dataFilters endpoint)
+        // const state = store.getState()?.global;
+        // const userId = state?.profile?.data?.id || state?.profile?.data?.userInfo?.id || state?.config?.data?.userId;
+
+        const { boardId, messageId, question, from, msgId } = this.unifiedSearchResults;
+
+        // Prepare params and payload matching Kora-React/curl
+        const params = {
+            boardId: this.unifiedSearchResults.boardId,
+            messageId: this.unifiedSearchResults.messageId
+        };
+
+        const payload = {
+            question: this.unifiedSearchResults.question,
+            tab: tabKey
+        };
+
+        if (!payload.question) {
+            payload.question = 'Fetch Search Results';
+        }
+
+        // Mark tab as loading
+        this.loadingTabs.add(tabKey);
+        this.render();
+
+        try {
+            // Show loading if needed (maybe add a loader to the tab content)
+            const tabPanel = this.drawer?.querySelector(`sl-tab-panel[name="${tabKey}"] .tab-content`);
+
+            // Use searchResultFilters instead of advanceSearch
+            const response = await store.dispatch(searchResultFilters({
+                params,
+                payload
+            }));
+
+            if (response.payload && !response.error) {
+                this.postFilterUpdation({ res: response.payload }, tabKey);
+            } else {
+                console.error('SourcesSidebar: Search failed', response.error);
+                this.loadingTabs.delete(tabKey);
+                // Render error state in tab
+                if (tabPanel) tabPanel.innerHTML = '<div class="error-wrapper">Failed to load results</div>';
+                this.render();
+            }
+        } catch (error) {
+            console.error('SourcesSidebar: Error triggering search', error);
+            this.loadingTabs.delete(tabKey);
+            this.render();
+        }
+    }
+
+    /**
+     * Handle post filter updation (merge new results)
+     * Replicates postFilterUpdation from Kora-React
+     */
+    postFilterUpdation(data, tab) {
+        console.log(`SourcesSidebar: PostFilterUpdation for tab: ${tab}`, data);
+
+        let _unifiedSearchResults = cloneDeep(this.unifiedSearchResults || {});
+        if (!_unifiedSearchResults.data) _unifiedSearchResults.data = {};
+
+        // Concatenate tabs by checking keys - only add unique tabs
+        if (data?.res?.data?.tab) {
+            const existingTabs = _unifiedSearchResults.data.tab || [];
+            const newTabs = data.res.data.tab || [];
+            const existingTabKeys = new Set(existingTabs.map(t => t?.key));
+            const uniqueNewTabs = newTabs.filter(t => !existingTabKeys.has(t?.key));
+            _unifiedSearchResults.data.tab = [...existingTabs, ...uniqueNewTabs];
+        }
+
+        // Update results data for matching keys
+        if (data?.res?.data?.results) {
+            const resultsData = data.res.data.results;
+
+            // Generate results object if not present
+            if (!_unifiedSearchResults.data.results) _unifiedSearchResults.data.results = {};
+
+            // Check for direct data structure (some APIs return results.data directly)
+            if (resultsData.data && !resultsData[tab]) {
+                const existingData = _unifiedSearchResults.data.results?.[tab]?.data || [];
+                const newData = resultsData.data || [];
+
+                _unifiedSearchResults.data.results = {
+                    ..._unifiedSearchResults.data.results,
+                    [tab]: {
+                        data: [...existingData, ...newData]
+                    }
+                };
+            } else {
+                // Merge keyed results structure
+                Object.keys(resultsData).forEach(responseKey => {
+                    // Try to find a matching tab key in our existing results (case-insensitive check)
+                    let targetTabKey = responseKey;
+
+                    // If the response key matches the requested tab (case-insensitive), force it to the requested tab key
+                    if (tab && responseKey.toLowerCase() === tab.toLowerCase()) {
+                        targetTabKey = tab;
+                    }
+
+                    const existingTabData = _unifiedSearchResults.data.results?.[targetTabKey]?.data || [];
+                    const sourceData = resultsData[responseKey];
+                    const newTabData = sourceData?.data || [];
+
+                    console.log(`SourcesSidebar: Merging ${newTabData.length} items from API key '${responseKey}' into Tab '${targetTabKey}'`);
+
+                    _unifiedSearchResults.data.results[targetTabKey] = {
+                        ..._unifiedSearchResults.data.results?.[targetTabKey],
+                        ...sourceData,
+                        data: [...existingTabData, ...newTabData]
+                    };
+                });
+            }
+
+            // Update filters if present
+            if (data?.res?.data?.filters) {
+                _unifiedSearchResults.data.filters = data.res.data.filters;
+            }
+        }
+
+        // Only create ALL tab if there's more than 1 tab
+        const tabCount = _unifiedSearchResults?.data?.tab?.length || 0;
+        if (tabCount > 1) {
+            _unifiedSearchResults = this.makeALLtabSearchResults(_unifiedSearchResults);
+        }
+
+        this.unifiedSearchResults = _unifiedSearchResults;
+
+        // Remove from loading set
+        this.loadingTabs.delete(tab);
+
+        // Update Redux state
+        store.dispatch(setUnifiedSearchResults(this.unifiedSearchResults));
+
+        // Re-render to show updated results
+        this.render();
+
+        // Ensure the tab that was clicked remains active in the UI
+        setTimeout(() => {
+            const tabsGroup = this.drawer?.querySelector('sl-tab-group#knowledge-search-tabs');
+            if (tabsGroup && tab) {
+                try {
+                    // Force show the tab to ensure it is selected
+                    tabsGroup.show(tab);
+                } catch (e) {
+                    console.warn(`SourcesSidebar: Failed to switch to tab '${tab}'`, e);
+                }
+            }
+        }, 150);
     }
 
     /**
      * Attach event listeners
      */
+    /**
+     * Attach event listeners
+    /**
+     * Attach event listeners
+     */
     attachEventListeners() {
-        // Close button
+        // Close button - needs to be re-attached every render as it's part of innerHTML
         const closeBtn = this.drawer?.querySelector('#sources-sidebar-close');
         if (closeBtn) {
-            closeBtn.removeEventListener('click', this.closeSourcesPanel);
-            closeBtn.addEventListener('click', () => this.closeSourcesPanel());
+            const newCloseBtn = closeBtn.cloneNode(true);
+            closeBtn.parentNode.replaceChild(newCloseBtn, closeBtn);
+            newCloseBtn.addEventListener('click', () => this.closeSourcesPanel());
         }
 
         // Top section: div-based nav item clicks (Sources / More search results)
         const navItems = this.drawer?.querySelectorAll('.sources-nav-item');
         if (navItems?.length) {
             navItems.forEach(btn => {
-                btn.replaceWith(btn.cloneNode(true));
-            });
-            this.drawer?.querySelectorAll('.sources-nav-item').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    const panel = btn.getAttribute('data-panel');
+                const newBtn = btn.cloneNode(true);
+                btn.parentNode.replaceChild(newBtn, btn);
+                newBtn.addEventListener('click', () => {
+                    const panel = newBtn.getAttribute('data-panel');
                     if (panel) this.handleTabSwitch(panel);
                 });
             });
+        }
+
+        // --- Tab Switching Logic (Dual Strategy: Global + Local) ---
+
+        // 1. Local Listener: Try to attach directly to the element if found
+        // This handles cases where bubbling might be blocked or delayed
+        const tabsGroup = this.drawer?.querySelector('#knowledge-search-tabs');
+        if (tabsGroup) {
+            // Remove old listener to be safe (though cloning/innerHTML usually wipes it)
+            tabsGroup.removeEventListener('sl-tab-show', this._handleLocalTabShow);
+
+            this._handleLocalTabShow = (event) => {
+                console.log('SourcesSidebar: Local listener caught tab switch', event.detail);
+                this._processTabSwitch(event.detail.name);
+            };
+            tabsGroup.addEventListener('sl-tab-show', this._handleLocalTabShow);
+            console.log('SourcesSidebar: Attached local listener to #knowledge-search-tabs');
+        }
+
+        // 2. Global Document Listener: Backup for dynamic elements
+        if (!this._documentTabListenerAttached) {
+            this._handleDocumentTabShow = (event) => {
+                const target = event.target;
+                // Log all tab shows to debug
+                if (event.type === 'sl-tab-show') {
+                    // console.log('SourcesSidebar: Document saw sl-tab-show from', target);
+                }
+
+                // Check if the event originated from our specific tab group
+                if (target?.id === 'knowledge-search-tabs') {
+                    console.log(`SourcesSidebar: Global listener caught tab switch -> '${event.detail.name}'`);
+                    this._processTabSwitch(event.detail.name);
+                }
+            };
+
+            document.addEventListener('sl-tab-show', this._handleDocumentTabShow);
+            this._documentTabListenerAttached = true;
+            console.log('SourcesSidebar: Attached global document listener for sl-tab-show');
+        }
+    }
+
+    /**
+     * Process tab switch logic
+     */
+    _processTabSwitch(name) {
+        if (!name) return;
+
+        // Prevent double processing if both listeners catch it (debounce/flag)
+        const now = Date.now();
+        if (this._lastProcessedTab === name && (now - this._lastProcessedTime < 500)) {
+            // console.log(`SourcesSidebar: Ignoring duplicate event for '${name}'`);
+            return;
+        }
+        this._lastProcessedTab = name;
+        this._lastProcessedTime = now;
+
+        if (this.unifiedSearchResults) {
+            const existingData = this.unifiedSearchResults.data?.results?.[name]?.data;
+            const hasData = existingData && existingData.length > 0;
+
+            console.log(`SourcesSidebar: Processing '${name}'. Has Data: ${hasData}`);
+
+            // Fetch if no data is present
+            if (!hasData) {
+                console.log(`SourcesSidebar: Data missing for '${name}', triggering searchAction...`);
+                this.triggerSearch(name);
+            }
         }
     }
 
@@ -477,6 +739,11 @@ class SourcesSidebar {
         if (this.drawer && document.body.contains(this.drawer)) {
             document.body.removeChild(this.drawer);
         }
+        // Remove global listener
+        if (this._documentTabListenerAttached && this._handleDocumentTabShow) {
+            document.removeEventListener('sl-tab-show', this._handleDocumentTabShow);
+            this._documentTabListenerAttached = false;
+        }
     }
 }
 
@@ -489,4 +756,3 @@ export default function SourcesSidebarInstance() {
     }
     return sourcesSidebarInstance;
 }
-

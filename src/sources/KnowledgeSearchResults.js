@@ -10,12 +10,14 @@ class KnowledgeSearchResults {
      * Render knowledge search results
      * @param {Object} params - { unifiedSearchResults, answerSources }
      */
-    static render({ unifiedSearchResults, answerSources = null }) {
+    /**
+     * Render knowledge search results
+     * @param {Object} params - { unifiedSearchResults, answerSources, activeTab }
+     */
+    static render({ unifiedSearchResults, answerSources = null, activeTab = null, loadingTabs = new Set() }) {
         // Debug: Log the data structure
-        console.log('KnowledgeSearchResults.render - unifiedSearchResults:', unifiedSearchResults);
-        console.log('KnowledgeSearchResults.render - data.tab:', unifiedSearchResults?.data?.tab);
-        console.log('KnowledgeSearchResults.render - data.results:', unifiedSearchResults?.data?.results);
-        
+        // console.log('KnowledgeSearchResults.render - unifiedSearchResults:', unifiedSearchResults);
+
         if (!unifiedSearchResults?.data?.results) {
             return '<div class="empty-field-wrapper"><span class="empty-text">No search results available</span></div>';
         }
@@ -24,39 +26,32 @@ class KnowledgeSearchResults {
         if (unifiedSearchResults?.data?.tab?.length) {
             let tabsHtml = '';
             let panelsHtml = '';
-            
+
             // Render tabs dynamically from response data
-            // Tabs are created from unifiedSearchResults.data.tab array
             unifiedSearchResults.data.tab.forEach((tab, index) => {
                 const tabData = unifiedSearchResults.data.results?.[tab?.key];
-                console.log(`Tab ${index} (${tab?.key}):`, {
-                    tab,
-                    tabData,
-                    hasData: !!tabData?.data,
-                    dataLength: tabData?.data?.length
-                });
-                
+
                 const tabKey = tab.key || `tab-${index}`;
                 const tabName = tab.name || 'Untitled';
                 const tabIcon = tab.iconUrl || tab.icon || '';
                 const tabCount = tab.doc_count || 0;
-                const isFirstTab = index === 0;
-                
-                // Tab navigation - render dynamically from response
-                // Activate first tab by default
+
+                // Determine active state: match provided activeTab, or default to first tab
+                const isActive = activeTab ? tabKey === activeTab : index === 0;
+
+                // Tab navigation
                 tabsHtml += `
-                    <sl-tab slot="nav" panel="${encodeHtml(tabKey)}" ${isFirstTab ? 'active' : ''}>
+                    <sl-tab slot="nav" panel="${encodeHtml(tabKey)}" ${isActive ? 'active' : ''}>
                         ${tabIcon ? `<img src="${encodeHtml(tabIcon)}" alt="${encodeHtml(tabName)}" style="width: 16px; height: 16px; margin-right: 6px; vertical-align: middle;" />` : ''}
                         <span>${encodeHtml(tabName)}</span>
                         <!-- ${tabCount > 0 ? `<span style="margin-left: 4px;">(${tabCount})</span>` : ''} -->
                     </sl-tab>
                 `;
-                
-                // Tab panel content - render results for this tab
-                // Activate first panel by default
+
+                // Tab panel content
                 panelsHtml += `
-                    <sl-tab-panel name="${encodeHtml(tabKey)}" ${isFirstTab ? 'active' : ''}>
-                        ${this.renderTabContent(tabData, tab, answerSources)}
+                    <sl-tab-panel name="${encodeHtml(tabKey)}" ${isActive ? 'active' : ''}>
+                        ${this.renderTabContent(tabData, tab, answerSources, loadingTabs.has(tabKey))}
                     </sl-tab-panel>
                 `;
             });
@@ -97,20 +92,19 @@ class KnowledgeSearchResults {
     /**
      * Render tab content
      */
-    static renderTabContent(tabData, tab, answerSources = null) {
-        console.log('renderTabContent - tabData:', tabData);
-        console.log('renderTabContent - tab:', tab);
-        console.log('renderTabContent - tabData?.data:', tabData?.data);
-        console.log('renderTabContent - tabData?.data length:', tabData?.data?.length);
-        
+    static renderTabContent(tabData, tab, answerSources, isLoading = false) {
+        // Show loading spinner if tab is fetching data
+        if (isLoading) {
+            console.log(`KnowledgeSearchResults: Rendering loading state for tab '${tab?.key}'`);
+            return '<div class="loading-spinner-wrapper" style="display:flex;justify-content:center;padding:20px;width:100%;"><span>Loading results...</span></div>';
+        }
+
         if (!tabData?.data || !Array.isArray(tabData.data) || tabData.data.length === 0) {
-            console.log('renderTabContent - No data or empty array, returning empty message');
+            // console.log('renderTabContent - No data or empty array, returning empty message');
             return '<div class="empty-field-wrapper"><span class="empty-text">No results found</span></div>';
         }
 
         const resultsHtml = this.renderResultsList(tabData.data, answerSources);
-        console.log('renderTabContent - resultsHtml length:', resultsHtml?.length);
-        console.log('renderTabContent - resultsHtml preview:', resultsHtml?.substring(0, 200));
         return `<div class="tab-content-wrapper"><div class="tab-content">${resultsHtml}</div></div>`;
     }
 
@@ -131,7 +125,7 @@ class KnowledgeSearchResults {
         if (item?.extIcon && item?.iconUrl) {
             const ext = item?.ext || getFileExtension(item?.title || item?.file_title || '');
             const extIconUrl = getExtIcon(ext);
-            
+
             return `
                 <div class="extIcon">
                     <img src="${encodeHtml(extIconUrl)}" alt="" />
@@ -146,7 +140,7 @@ class KnowledgeSearchResults {
         if (item?.extIcon) {
             const ext = item?.ext || getFileExtension(item?.title || item?.file_title || '');
             const extIconUrl = getExtIcon(ext);
-            
+
             return `
                 <div class="extIcon">
                     <img src="${encodeHtml(extIconUrl)}" alt="" />
@@ -190,16 +184,16 @@ class KnowledgeSearchResults {
         }
 
         let html = '';
-        
+
         results.forEach((result, index) => {
             let title = result?.title || result?.file_title || 'Untitled';
             let desc = result?.desc || result?.content || '';
-            
+
             // Handle file type
             if (result?.sys_content_type === 'file') {
                 title = result?.file_title || result?.title || 'Untitled';
             }
-            
+
             // Handle content array
             if (result?.hasOwnProperty('content')) {
                 if (Array.isArray(result?.content)) {
@@ -208,12 +202,12 @@ class KnowledgeSearchResults {
                     desc = result?.content || '';
                 }
             }
-            
+
             const url = result?.redirectUrl?.dweb || result?.redirectUrl?.dWeb || result?.webViewLink || result?.url;
             const iconHtml = this.getResultDataIcon(result);
-            const isAnsweredSource = (result?.contentId && allSourceIds.has(result.contentId)) || 
-                                     (result?.docId && allSourceIds.has(result.docId));
-            
+            const isAnsweredSource = (result?.contentId && allSourceIds.has(result.contentId)) ||
+                (result?.docId && allSourceIds.has(result.docId));
+
             html += `
                 <div class="content-wrapper" ${url ? `onclick="window.open('${encodeHtml(url)}', '_blank')"` : ''}>
                     <span class="icon-wrapper">${iconHtml}</span>
