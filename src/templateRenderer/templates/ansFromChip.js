@@ -825,18 +825,32 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 		`;
 	}
 
-	const setContextChip = () => {
-		const messageId = item?.messageId || item?.id;
-		const displayMenu = !item?.isTask && !item?.noResultFound && item?.viewType !== "list" && (item?.type === "search" || item?.type === "followup");
-		const isMultiSource = item?.sources?.length > 1;
-		// Match Kora-React: button has 'hide' class when displayMenu is false, and 'multiSource' class when multiple sources
-		const hideClass = displayMenu ? '' : 'hide';
-		const multiSourceClass = isMultiSource ? 'multiSource' : '';
-		return `
-			<div class="setContextButton optionWrapper ${multiSourceClass} ${hideClass}" id="setContextButton-${messageId}" title="Set as Context: Set the sources as context and ask queries.">
-				${setContextIcon({ size: 16, color: "#667085" })}
-				${isMultiSource ? `<div class="cheveron-icon"><svg width="8" height="8" viewBox="0 0 8 8" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2 3L4 5L6 3" stroke="#344054" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/></svg></div>` : ''}
-			</div>
+const setContextChip = () => {
+    const messageId = item?.messageId || item?.id;
+    const displayMenu = !item?.isTask && !item?.noResultFound && item?.viewType !== "list" && (item?.type === "search" || item?.type === "followup");
+    const isMultiSource = item?.sources?.length > 1;
+    // Match Kora-React: button has 'hide' class when displayMenu is false, and 'multiSource' class when multiple sources
+    const hideClass = displayMenu ? '' : 'hide';
+    const multiSourceClass = isMultiSource ? 'multiSource' : '';
+    return `
+            <div class="setContextButton optionWrapper ${multiSourceClass} ${hideClass}" id="setContextButton-${messageId}" title="Set as Context: Set the sources as context and ask queries.">
+                ${setContextIcon({ size: 16, color: "#667085" })}
+                ${isMultiSource ? `<div class=\"cheveron-icon\"><svg width=\"8\" height=\"8\" viewBox=\"0 0 8 8\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M2 3L4 5L6 3\" stroke=\"#344054\" stroke-width=\"1.33333\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg></div>` : ''}
+            </div>
+            ${isMultiSource ? `
+            <div id="setContextDropdown-${messageId}" class="setContextDropdown" style="display:none; position:absolute; background:#fff; border:1px solid #e5e7eb; border-radius:6px; padding:6px; z-index:999;">
+                ${item?.sources?.map((src, idx) => {
+                    const isSelected = ((item?.context?.sources || [])?.some(s => s?.docId === src?.docId)) ? true : false;
+                    const label = src?.title || src?.source;
+                    const baseStyle = 'padding:6px 8px; cursor:pointer; white-space:nowrap; display:flex; align-items:center; gap:6px;';
+                    const style = isSelected ? baseStyle + ' background-color:#f0fff4;' : baseStyle;
+                    return `<div class="dropdown-item ${isSelected ? 'selected' : ''}" data-source-index="${idx}" style="${style}">
+                        <span>${label}</span>
+                        ${isSelected ? `<span style="margin-left:auto; color:#10B981;">${tickMarkIcon({ size: 10, color: '#10B981' })}</span>` : ''}
+                    </div>`;
+                }).join('')}
+            </div>
+            ` : ''}
 		`;
 	}
 

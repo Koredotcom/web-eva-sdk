@@ -435,17 +435,47 @@ const AnsFromChipFunctionality = ({ item }) => {
 	
 
 	const knowledgeChipLogic = () => {
-		if (item?.sources?.length > 1) {
-			let chip = document.getElementById(`ansFromChip-${item?.id}`);
-			if (chip && !chip.eventListenerAdded) {
-				chip.addEventListener("click", (e) => {
-					e?.preventDefault();
-					e?.stopPropagation();
-					showDataAction();
-				});
-				chip.eventListenerAdded = true;
-			}
-		}
+        if (item?.sources?.length > 1) {
+            let chip = document.getElementById(`ansFromChip-${item?.id}`);
+            if (chip && !chip.eventListenerAdded) {
+                chip.addEventListener("click", (e) => {
+                    e?.preventDefault();
+                    e?.stopPropagation();
+                    showDataAction();
+                });
+                chip.eventListenerAdded = true;
+            }
+        }
+
+        // Multi-source dropdown logic: show a dropdown for selecting context sources when there are multiple sources
+        if (item?.sources?.length > 1) {
+            const messageId = item?.messageId || item?.id;
+            const dropdown = document.getElementById(`setContextDropdown-${messageId}`);
+            const btn = document.getElementById(`setContextButton-${messageId}`);
+            if (btn && dropdown && !btn._evaDropdownBound) {
+                btn.addEventListener('click', (ev) => {
+                    ev.preventDefault();
+                    ev.stopPropagation();
+                    const isVisible = dropdown.style.display === 'block';
+                    dropdown.style.display = isVisible ? 'none' : 'block';
+                });
+                btn._evaDropdownBound = true;
+            }
+            // Bind each dropdown item to set the corresponding source as context
+            item?.sources?.forEach((src, idx) => {
+                const itemEl = dropdown?.querySelector(`.dropdown-item[data-source-index="${idx}"]`);
+                if (itemEl && !itemEl._evaItemBound) {
+                    itemEl.addEventListener('click', (ev) => {
+                        ev.preventDefault();
+                        ev.stopPropagation();
+                        const fakeEvent = { preventDefault: () => {}, stopPropagation: () => {} };
+                        onSetAsSource(fakeEvent, src);
+                        if (dropdown) dropdown.style.display = 'none';
+                    });
+                    itemEl._evaItemBound = true;
+                }
+            });
+        }
 
 		if (item?.showMultiSourceList) {
 			item?.sources?.map((data, i) => {
