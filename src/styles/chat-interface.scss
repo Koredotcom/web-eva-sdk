@@ -6409,6 +6409,7 @@ sl-drawer.sources-sidebar-drawer {
                     @include scrollbar;
                     max-height: 100%;
                     overflow-y: auto;
+                    overflow-x: hidden;
                     &.fullWidth, &.skeleton {
                         width: 70%;
                     }
