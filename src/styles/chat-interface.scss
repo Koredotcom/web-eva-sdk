@@ -5823,7 +5823,9 @@ sl-dialog.gpt-form-dialog {
             flex-direction: column;
             gap: 0.75rem;
             cursor: pointer;
-            width: 14rem;
+            flex: 1;
+            min-width: 0;
+            //width: 14rem;
             &:hover {
                 background: #f5f5f5;
             }

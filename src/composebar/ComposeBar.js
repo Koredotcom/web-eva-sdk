@@ -425,6 +425,16 @@ class ComposeBar {
             return;
         }
 
+        // Hide container if there are no quick actions
+        if (!this.quickActions || this.quickActions.length === 0) {
+            quickRepliesContainer.innerHTML = '';
+            hideElementImmediately(quickRepliesContainer);
+            return;
+        }
+
+        // Ensure visible when quick actions exist
+        showElementImmediately(quickRepliesContainer, 'flex');
+
         const quickRepliesHtml = this.quickActions.map(action => {
             return `<div class="eva-quick-reply-chip" data-action-id="${action.id}">${action.label}</div>`;
         }).join('');
@@ -2171,6 +2181,10 @@ class ComposeBar {
 
             this.attachments = this.attachments.filter(f => String(f?.uID || f?.componentId || f?.docId) !== String(uid));
             this.renderAttachments();
+
+            // Requirement: when an attachment pill is removed, hide quick replies
+            this.quickActions = [];
+            this.renderQuickReplies();
 
         } catch (err) {
             console.warn('Failed to remove attachment:', err);
