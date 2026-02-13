@@ -50,7 +50,9 @@ class ComposeBar {
         this.currentAnswerResponse = null;
         this.showBotComposeBarHeader = false;
         this.botEndConversationLoader = false;
+        this.bannerClosedByUser = false;
         this.endConversationHandler = this.handleEndConversation.bind(this);
+        this.closeBannerHandler = this.handleCloseBanner.bind(this);
         this.detailsToggleHandler = this.handleDetailsToggle.bind(this);
         this.isMSEnv = isMSEnv();
         this.callbacks = {
@@ -224,7 +226,7 @@ class ComposeBar {
                                 this.contextChipData = null;
                             }
                         }                        
-                        if (this.contextChipData) {                            
+                        if (this.contextChipData && !this.bannerClosedByUser) {
                             setTimeout(() => {
                                 const contextChipOnComposebarDiv = this.container.querySelector('.composebar-bot-input-wrapper');
                                 if (contextChipOnComposebarDiv) {
@@ -431,6 +433,15 @@ class ComposeBar {
         // Don't disable the button element itself (disabled blocks hover/focus so tooltip won't show).
         // Instead, mark state for click handler to guard.
         attachmentBtn.setAttribute('data-upload-in-progress', inProgress ? 'true' : 'false');
+    /**
+     * Show or hide quick replies container based on whether user has entered text
+     */
+    }
+    updateQuickRepliesVisibility() {
+        const quickRepliesContainer = this.container.querySelector('[data-eva-quick-replies]');
+        if (!quickRepliesContainer) return;
+        const hasText = this.input.trim().length > 0;
+        quickRepliesContainer.style.display = hasText ? 'none' : '';
     }
 
     renderQuickReplies() {
@@ -462,6 +473,7 @@ class ComposeBar {
         quickRepliesContainer.innerHTML = quickRepliesHtml;
         // Attach event listeners for quick reply clicks
         this.attachQuickReplyEventListeners();
+        this.updateQuickRepliesVisibility();
     }
 
     attachQuickReplyEventListeners() {
@@ -613,7 +625,14 @@ class ComposeBar {
         if (!composeBarWrapperDiv) return;
         const botInputHeaderDiv = composeBarWrapperDiv.querySelector('.bot-input-header'); 
         const answerContextChipContainer = this.container.querySelector('.response-as-context-truncated-text');
-        if(!contextChipData){            
+        if(!contextChipData){
+            this.bannerClosedByUser = false;
+            hideElementImmediately(composeBarWrapperDiv);
+            return;
+        }
+
+        /* Don't reopen banner if user explicitly closed it */
+        if (contextChipData?.isAgent && this.bannerClosedByUser) {
             hideElementImmediately(composeBarWrapperDiv);
             this.syncContextTrueClass(false);
             return;
@@ -817,7 +836,9 @@ class ComposeBar {
         if (endConversationBtn) {
             endConversationBtn.innerHTML = this.botEndConversationLoader ? '<div class="waloader"></div>' : `${createCloseIcon({ size: 10, color: "#667085" })}`;
             endConversationBtn.removeEventListener('click', this.endConversationHandler);
-            endConversationBtn.addEventListener('click', this.endConversationHandler);
+            endConversationBtn.removeEventListener('click', this.closeBannerHandler);
+            // Close button only closes the banner; does not stop response or clear context
+            endConversationBtn.addEventListener('click', this.closeBannerHandler);
         }
 
     }
@@ -855,6 +876,41 @@ class ComposeBar {
         return attachmentIcon({ size: 16, color: "#0F0F0F" });
     }
 
+    /**
+     * Show the compose bar banner for a selected agent/flow (e.g. when chosen from agents or flows list).
+     */
+    showBannerForSelectedAgent(agent) {
+        if (!agent) return;
+        this.contextChipData = { ...agent, isAgent: true };
+        this.selectedAgent = agent;
+        this.bannerClosedByUser = false;
+        const composeBarWrapperDiv = this.container.querySelector('.composebar-bot-input-wrapper');
+        if (composeBarWrapperDiv) {
+            showElementImmediately(composeBarWrapperDiv, 'block');
+            this.updateBotHeaderContent(this.contextChipData);
+            this.updatePlaceholder();
+        }
+    }
+
+    /**
+     * Trigger stop API and close the banner simultaneously (fire-and-forget API + hide).
+     */
+    handleCloseBanner() {
+        this.bannerClosedByUser = true;
+        const composeBarWrapperDiv = this.container.querySelector('.composebar-bot-input-wrapper');
+        const state = store.getState().global;
+        const currentQuestion = state.currentQuestion;
+        const question = state.questions[currentQuestion.reqId];
+        if (this.selectedAgent?.agentType === 'botAgent' && question?.status === 'threadRunning') {
+            this.chatInterface.stopBotAnswer();
+        } else {
+            this.fileUploaderInterface.clearContext();
+        }
+        if (composeBarWrapperDiv) {
+            hideElementImmediately(composeBarWrapperDiv);
+        }
+    }
+
     handleEndConversation() {
         if (this.selectedAgent?.agentType === 'botAgent') {
             this.botEndConversationLoader = true;
@@ -879,6 +935,18 @@ class ComposeBar {
 
         const detailsContent = composeBarWrapper.querySelector('.details-content');
         const moreDetailsText = composeBarWrapper.querySelector('.more-details-text');
+        const state = store.getState().global;
+        let getDescription = "";
+         const agentId = state.selectedContext?.data?.sources?.[0]?.source;
+        for (let key in state.allAgents.data) {
+            const agents = state.allAgents.data[key];
+            const agentFound = agents.find(el => el.id === agentId)
+            if (agentFound) {
+                getDescription = agentFound.description || "";
+                break; // Stop searching once found
+            }
+        }
+        // const enabledContextDescription = enabledContext?.description || '';
         
         if (!detailsContent || !moreDetailsText) return;
 
@@ -893,6 +961,7 @@ class ComposeBar {
             // Don't hide wrapper - keep it visible so user can access "Show Details" button
         } else {
             // Currently hiding details, user wants to show them
+            detailsContent.textContent = getDescription;
             detailsContent.style.display = 'block';
             moreDetailsText.textContent = 'Hide Details';
             composeBarWrapper.classList.remove('details-hidden');
@@ -935,6 +1004,8 @@ class ComposeBar {
             .replace(/'/g, '&#39;');
 
         const uploadInProgress = (this.attachments || []).some(a => !!a?.loading);
+        const enabledAgents = store.getState().global.enabledAgents?.find((el) => el.id === store.getState()?.global.selectedContext?.data?.sources?.[0]?.source);
+
 
         this.container.innerHTML = `
             <div class="ComposeBarContainer new-layout">
@@ -972,7 +1043,7 @@ class ComposeBar {
                                     </button>
                                 </div>
                             </div> 
-                            <div class="details-content"></div>
+                            <div class="details-content">${enabledAgents?.description}</div>
                                               
                         </div>                        
                         
@@ -1293,12 +1364,7 @@ class ComposeBar {
      */
     handleInputChange(event) {
         this.input = event.target.value;
-        if (this.quickActions?.length > 0) {
-            this.quickActions = [];
-            setTimeout(() => {
-                this.renderQuickReplies();
-            }, 0);
-        }
+        this.updateQuickRepliesVisibility();
         this.autoResize(event.target);
         this.updateMicrophoneButton();
 
@@ -1639,6 +1705,7 @@ class ComposeBar {
             this.input = '';
             this.autoResize(textarea);
             this.updateMicrophoneButton();
+            this.updateQuickRepliesVisibility();
         } else {
             console.log('textarea not found!');
         }
@@ -1952,12 +2019,13 @@ class ComposeBar {
 
         // Continue with agent invocation
         if (this.selectedAgent) {
+            const agent = this.selectedAgent;
             try {
-                InvokeAgent(this.selectedAgent);
+                InvokeAgent(agent);
+                this.showBannerForSelectedAgent(agent);
             } catch (e) {
-                console.error(`InvokeAgent failed for ${this.selectedAgent.name}`, e);
+                console.error(`InvokeAgent failed for ${agent.name}`, e);
             }
-            this.selectedAgent = null;
         }
     }
 
@@ -2092,6 +2160,7 @@ class ComposeBar {
                 } else {
                     this.commonAgents = [];
                     try { InvokeAgent(agent); } catch (e) { console.error('InvokeAgent failed', e); }
+                    this.showBannerForSelectedAgent(agent);
                 }
                 this.handleCloseDialog();
             });

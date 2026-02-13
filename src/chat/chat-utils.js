@@ -130,6 +130,7 @@ export const constructQuestionPostCall = (data, qId) => {
 
     // let followupFromSuggestionModal = data?.params?.suggestionContext;
     let question = questions?.[qId]
+    const originalQuestion = question?.question;
     delete question?.loading;
     
     // Preserve context data in question object (including originalContext for renderReferenceToResponseContext)
@@ -379,6 +380,10 @@ export const constructQuestionPostCall = (data, qId) => {
     //         })
     //     }
     // }    
+
+    if (!question?.question || String(question.question).trim() === "") {
+        question.question = originalQuestion;
+    }
 
     if(data?.error){
         questions[qId] = {
