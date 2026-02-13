@@ -46,6 +46,12 @@ class ComposeBar {
         // Used to temporarily hide quick replies after attachment-pill removal
         this.suppressQuickReplies = false;
         this._lastAttachmentPillsCount = 0;
+        // Attachment-session quick reply lock:
+        // once an answer completes with an attachment context, keep quick replies hidden
+        // until the attachment is removed and a new attachment/session is attached again.
+        this._attachmentQuickRepliesLocked = false;
+        this._attachmentSessionId = null;
+        this._prevIsLoading = false;
 
         // Details section UI state (for composebar-bot-input-wrapper)
         this.detailsExpanded = false;
@@ -90,12 +96,30 @@ class ComposeBar {
                 this.unsubscribe = this.chatInterface.subscribe((questions, searchResponse, moreAvailable, errorStates, quickActions) => {
                     // Toggle loading state based on async status
                     const isLoading = searchResponse?.status === 'loading';
+                    const wasLoading = !!this._prevIsLoading;
+                    this._prevIsLoading = !!isLoading;
                     if (Object.values(questions)?.some(question => question?.loading)) {
                         this.currentAnswerResponse = null;
                     } else {
                         this.currentAnswerResponse = searchResponse?.data;
                     }
                     this.setLoading(!!isLoading);
+                    const selectedSources = store.getState()?.global?.selectedContext?.data?.sources || [];
+                    const hasAttachmentContext = selectedSources.some(
+                        (s) => s?.source === 'attachment' || s?.type === 'attachment',
+                    );
+                    // Lock quick replies once an answer completes for an attachment context.
+                    if (wasLoading && !isLoading && hasAttachmentContext) {
+                        this._attachmentQuickRepliesLocked = true;
+                    }
+                    // If attachment context is cleared, unlock.
+                    if (!hasAttachmentContext) {
+                        this._attachmentQuickRepliesLocked = false;
+                    }
+                    // Keep quick replies in sync with latest answer payload.
+                    // Hide while loading/typing is handled by updateQuickRepliesVisibility().
+                    this.quickActions = Array.isArray(quickActions) ? quickActions : [];
+                    this.renderQuickReplies();
                     if (Object.keys(questions).length > 0) {
                         this.questions = questions;
                         // this.showBotComposeBarHeader = Object.values(questions)?.find(question => question?.status === 'threadRunning');
@@ -197,6 +221,22 @@ class ComposeBar {
                             this.suppressQuickReplies = false;
                         }
                         this._lastAttachmentPillsCount = nextAttachmentCount;
+
+                        // Attachment-session quick reply lock reset logic:
+                        // - If attachment context is cleared, unlock and forget session id
+                        // - If a new session id appears (reattach), unlock for the new session
+                        const nextSessionId = sessionId || selectedContext?.sessionId || null;
+                        if (!hasContextSet || nextAttachmentCount === 0) {
+                            this._attachmentQuickRepliesLocked = false;
+                            this._attachmentSessionId = null;
+                        } else {
+                            if (nextSessionId && nextSessionId !== this._attachmentSessionId) {
+                                this._attachmentQuickRepliesLocked = false;
+                            }
+                            if (nextSessionId) {
+                                this._attachmentSessionId = nextSessionId;
+                            }
+                        }
 
                         this.attachments = filesOnly;
                         this.quickActions = quickActions || [];
@@ -441,15 +481,25 @@ class ComposeBar {
         // Don't disable the button element itself (disabled blocks hover/focus so tooltip won't show).
         // Instead, mark state for click handler to guard.
         attachmentBtn.setAttribute('data-upload-in-progress', inProgress ? 'true' : 'false');
+    }
+
     /**
      * Show or hide quick replies container based on whether user has entered text
+     * (and while an answer is loading).
      */
-    }
     updateQuickRepliesVisibility() {
         const quickRepliesContainer = this.container.querySelector('[data-eva-quick-replies]');
         if (!quickRepliesContainer) return;
         const hasText = this.input.trim().length > 0;
-        quickRepliesContainer.style.display = hasText ? 'none' : '';
+        const selectedSources = store.getState()?.global?.selectedContext?.data?.sources || [];
+        const hasAttachmentContext = selectedSources.some(
+            (s) => s?.source === 'attachment' || s?.type === 'attachment',
+        );
+        const shouldHide =
+            hasText ||
+            this.isLoading ||
+            (hasAttachmentContext && this._attachmentQuickRepliesLocked);
+        quickRepliesContainer.style.display = shouldHide ? 'none' : '';
     }
 
     renderQuickReplies() {
@@ -459,6 +509,18 @@ class ComposeBar {
         }
 
         if (this.suppressQuickReplies) {
+            quickRepliesContainer.innerHTML = '';
+            hideElementImmediately(quickRepliesContainer);
+            return;
+        }
+
+        // If we completed an answer while an attachment context is active, keep quick replies hidden
+        // until the attachment is removed and a new attachment/session is attached again.
+        const selectedSources = store.getState()?.global?.selectedContext?.data?.sources || [];
+        const hasAttachmentContext = selectedSources.some(
+            (s) => s?.source === 'attachment' || s?.type === 'attachment',
+        );
+        if (hasAttachmentContext && this._attachmentQuickRepliesLocked) {
             quickRepliesContainer.innerHTML = '';
             hideElementImmediately(quickRepliesContainer);
             return;
