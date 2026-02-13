@@ -46,7 +46,9 @@ class ComposeBar {
         this.currentAnswerResponse = null;
         this.showBotComposeBarHeader = false;
         this.botEndConversationLoader = false;
+        this.bannerClosedByUser = false;
         this.endConversationHandler = this.handleEndConversation.bind(this);
+        this.closeBannerHandler = this.handleCloseBanner.bind(this);
         this.detailsToggleHandler = this.handleDetailsToggle.bind(this);
         this.isMSEnv = isMSEnv();
         this.callbacks = {
@@ -166,7 +168,7 @@ class ComposeBar {
                                 this.contextChipData = null;
                             }
                         }                        
-                        if (this.contextChipData) {                            
+                        if (this.contextChipData && !this.bannerClosedByUser) {
                             setTimeout(() => {
                                 const contextChipOnComposebarDiv = this.container.querySelector('.composebar-bot-input-wrapper');
                                 if (contextChipOnComposebarDiv) {
@@ -320,6 +322,16 @@ class ComposeBar {
         this.attachAttachmentEventListeners();
     }
 
+    /**
+     * Show or hide quick replies container based on whether user has entered text
+     */
+    updateQuickRepliesVisibility() {
+        const quickRepliesContainer = this.container.querySelector('[data-eva-quick-replies]');
+        if (!quickRepliesContainer) return;
+        const hasText = this.input.trim().length > 0;
+        quickRepliesContainer.style.display = hasText ? 'none' : '';
+    }
+
     renderQuickReplies() {
         const quickRepliesContainer = this.container.querySelector('[data-eva-quick-replies]');
         if (!quickRepliesContainer) {
@@ -333,6 +345,7 @@ class ComposeBar {
         quickRepliesContainer.innerHTML = quickRepliesHtml;
         // Attach event listeners for quick reply clicks
         this.attachQuickReplyEventListeners();
+        this.updateQuickRepliesVisibility();
     }
 
     attachQuickReplyEventListeners() {
@@ -413,7 +426,14 @@ class ComposeBar {
         if (!composeBarWrapperDiv) return;
         const botInputHeaderDiv = composeBarWrapperDiv.querySelector('.bot-input-header'); 
         const answerContextChipContainer = this.container.querySelector('.response-as-context-truncated-text');
-        if(!contextChipData){            
+        if(!contextChipData){
+            this.bannerClosedByUser = false;
+            hideElementImmediately(composeBarWrapperDiv);
+            return;
+        }
+
+        /* Don't reopen banner if user explicitly closed it */
+        if (contextChipData?.isAgent && this.bannerClosedByUser) {
             hideElementImmediately(composeBarWrapperDiv);
             return;
         }
@@ -488,7 +508,9 @@ class ComposeBar {
         if (endConversationBtn) {
             endConversationBtn.innerHTML = this.botEndConversationLoader ? '<div class="waloader"></div>' : `${createCloseIcon({ size: 10, color: "#667085" })}`;
             endConversationBtn.removeEventListener('click', this.endConversationHandler);
-            endConversationBtn.addEventListener('click', this.endConversationHandler);
+            endConversationBtn.removeEventListener('click', this.closeBannerHandler);
+            // Close button only closes the banner; does not stop response or clear context
+            endConversationBtn.addEventListener('click', this.closeBannerHandler);
         }
 
     }
@@ -524,6 +546,38 @@ class ComposeBar {
             return `<img src="images/MS-Icons/attachment-ms.svg" alt="Attach" width="20" height="20" />`;
         }
         return attachmentIcon({ size: 16, color: "#0F0F0F" });
+    }
+
+    /**
+     * Show the compose bar banner for a selected agent/flow (e.g. when chosen from agents or flows list).
+     */
+    showBannerForSelectedAgent(agent) {
+        if (!agent) return;
+        this.contextChipData = { ...agent, isAgent: true };
+        this.selectedAgent = agent;
+        this.bannerClosedByUser = false;
+        const composeBarWrapperDiv = this.container.querySelector('.composebar-bot-input-wrapper');
+        if (composeBarWrapperDiv) {
+            showElementImmediately(composeBarWrapperDiv, 'block');
+            this.updateBotHeaderContent(this.contextChipData);
+            this.updatePlaceholder();
+        }
+    }
+
+    /**
+     * Trigger stop API and close the banner simultaneously (fire-and-forget API + hide).
+     */
+    handleCloseBanner() {
+        this.bannerClosedByUser = true;
+        const composeBarWrapperDiv = this.container.querySelector('.composebar-bot-input-wrapper');
+        if (this.selectedAgent?.agentType === 'botAgent') {
+            this.chatInterface.stopBotAnswer();
+        } else {
+            this.fileUploaderInterface.clearContext();
+        }
+        if (composeBarWrapperDiv) {
+            hideElementImmediately(composeBarWrapperDiv);
+        }
     }
 
     handleEndConversation() {
@@ -941,12 +995,7 @@ class ComposeBar {
      */
     handleInputChange(event) {
         this.input = event.target.value;
-        if (this.quickActions?.length > 0) {
-            this.quickActions = [];
-            setTimeout(() => {
-                this.renderQuickReplies();
-            }, 0);
-        }
+        this.updateQuickRepliesVisibility();
         this.autoResize(event.target);
         this.updateMicrophoneButton();
 
@@ -1280,6 +1329,7 @@ class ComposeBar {
             this.input = '';
             this.autoResize(textarea);
             this.updateMicrophoneButton();
+            this.updateQuickRepliesVisibility();
         } else {
             console.log('textarea not found!');
         }
@@ -1593,12 +1643,13 @@ class ComposeBar {
 
         // Continue with agent invocation
         if (this.selectedAgent) {
+            const agent = this.selectedAgent;
             try {
-                InvokeAgent(this.selectedAgent);
+                InvokeAgent(agent);
+                this.showBannerForSelectedAgent(agent);
             } catch (e) {
-                console.error(`InvokeAgent failed for ${this.selectedAgent.name}`, e);
+                console.error(`InvokeAgent failed for ${agent.name}`, e);
             }
-            this.selectedAgent = null;
         }
     }
 
@@ -1733,6 +1784,7 @@ class ComposeBar {
                 } else {
                     this.commonAgents = [];
                     try { InvokeAgent(agent); } catch (e) { console.error('InvokeAgent failed', e); }
+                    this.showBannerForSelectedAgent(agent);
                 }
                 this.handleCloseDialog();
             });
