@@ -550,6 +550,18 @@ class ComposeBar {
 
         const detailsContent = composeBarWrapper.querySelector('.details-content');
         const moreDetailsText = composeBarWrapper.querySelector('.more-details-text');
+        const state = store.getState().global;
+        let getDescription = "";
+         const agentId = state.selectedContext?.data?.sources?.[0]?.source;
+        for (let key in state.allAgents.data) {
+            const agents = state.allAgents.data[key];
+            const agentFound = agents.find(el => el.id === agentId)
+            if (agentFound) {
+                getDescription = agentFound.description || "";
+                break; // Stop searching once found
+            }
+        }
+        // const enabledContextDescription = enabledContext?.description || '';
         
         if (!detailsContent || !moreDetailsText) return;
 
@@ -564,6 +576,7 @@ class ComposeBar {
             // Don't hide wrapper - keep it visible so user can access "Show Details" button
         } else {
             // Currently hiding details, user wants to show them
+            detailsContent.textContent = getDescription;
             detailsContent.style.display = 'block';
             moreDetailsText.textContent = 'Hide Details';
             composeBarWrapper.classList.remove('details-hidden');
@@ -605,6 +618,8 @@ class ComposeBar {
             .replace(/"/g, '&quot;')
             .replace(/'/g, '&#39;');
 
+        const enabledAgents = store.getState().global.enabledAgents?.find((el) => el.id === store.getState()?.global.selectedContext?.data?.sources?.[0]?.source)
+
 
         this.container.innerHTML = `
             <div class="ComposeBarContainer new-layout">
@@ -642,7 +657,7 @@ class ComposeBar {
                                     </button>
                                 </div>
                             </div> 
-                            <div class="details-content"></div>
+                            <div class="details-content">${enabledAgents?.description}</div>
                                               
                         </div>                        
                         
