@@ -115,6 +115,7 @@ export const constructQuestionPostCall = (data, qId) => {
 
     // let followupFromSuggestionModal = data?.params?.suggestionContext;
     let question = questions?.[qId]
+    const originalQuestion = question?.question;
     delete question?.loading;
 
 	if (!activeBoardId) {
@@ -390,7 +391,20 @@ export const constructQuestionPostCall = (data, qId) => {
     //         })
     //     }
     // }    
-    questions[qId] = {...question, apiSuccess: true};
+
+    if (!question?.question || String(question.question).trim() === "") {
+        question.question = originalQuestion;
+    }
+
+    if(data?.error){
+        questions[qId] = {
+            ...question,
+            error: question?.status !== 'terminated' // Terminated status is when user interrupted the answer generation. Error is when there is a server driven error.
+          };
+          
+    }else{  
+        questions[qId] = {...question, apiSuccess: true};
+    }
 
     // updateState({
     //     searchResultData: data?.res,
