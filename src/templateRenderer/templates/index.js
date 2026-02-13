@@ -107,16 +107,19 @@ export function renderQuestionBubble(data, userIconTemplate = false, displayTime
     
     // Render response context preview above the question (when GPT agent response is set as context)
     const responseContextPreview = renderReferenceToResponseContext(data);
-    const responseContextPreviewIcon = responseContextPreview ? CurvedArrowForPreview({ size: 12, color: "#101828" }) : "";
+    const responseContextPreviewIcon = (responseContextPreview || attachmentPreview)
+        ? CurvedArrowForPreview({ size: 12, color: "#101828" })
+        : "";
+
+    // <div class="user-content">
+    //     ${userIconTemplate ? renderUserIconTemplate() : ""}
+    //     ${displayTimestamp ? renderQuestionBubbleTimeStamp(timestamp) : ""}
+    // </div>
     
-	return `
-        ${attachmentPreview}        
+	return `                
         <div class="message-bubble question ${data?.isTask ? 'task-item' : ''}">
-            <div class="message-content">  
-                <div class="user-content">
-                    ${userIconTemplate ? renderUserIconTemplate() : ""}
-                    ${displayTimestamp ? renderQuestionBubbleTimeStamp(timestamp) : ""}
-                </div>
+            <div class="message-content">
+                ${attachmentPreview}
                 ${responseContextPreview}                
                 <div class="question-content">
                     ${copyQuestion.render(data)}  
@@ -200,14 +203,19 @@ export function renderLoading(
         
         // Render response context preview above the question (when GPT agent response is set as context)
         const responseContextPreview = renderReferenceToResponseContext(data);
-        const responseContextPreviewIcon = responseContextPreview ? CurvedArrowForPreview({ size: 12, color: "#101828" }) : "";
-        html = ` ${attachmentPreview}            
+        const responseContextPreviewIcon = (responseContextPreview || attachmentPreview)
+            ? CurvedArrowForPreview({ size: 12, color: "#101828" })
+            : "";
+
+        // <div class="user-content">
+        //     ${userIconTemplate ? renderUserIconTemplate() : ""}
+        //     ${displayTimestamp ? renderQuestionBubbleTimeStamp(data.timestamp) : ""}
+        // </div>
+
+        html = `             
             <div class="message-bubble question">
-                    <div class="message-content"> 
-                        <div class="user-content">
-                            ${userIconTemplate ? renderUserIconTemplate() : ""}
-                            ${displayTimestamp ? renderQuestionBubbleTimeStamp(data.timestamp) : ""}
-                        </div>
+                    <div class="message-content">                        
+                        ${attachmentPreview}
                         ${responseContextPreview}                        
                         <div class="question-content">
                             ${copyQuestion.render(data)}

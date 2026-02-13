@@ -786,7 +786,7 @@ class ComposeBar {
         if (env === 'MS') {
             return `<img src="images/MS-Icons/send-ms.svg" alt="Send" width="20" height="20" />`;
         }
-        return arrowCirlceUpIcon({ size: 20, color: "#101828" });
+        return arrowCirlceUpIcon({ size: 26, color: "#101828" });
     }
 
 
@@ -1383,17 +1383,24 @@ class ComposeBar {
         const scrollHeight = composeTextarea.scrollHeight;
         const newHeight = Math.min(scrollHeight, 150) + 'px';
         composeTextarea.style.height = newHeight;
-        
-        // Get the computed height after setting it
+
+        // Determine "multiline" based on actual textarea metrics, not a fixed rem.
+        // (Fixed 1.5rem breaks when CSS sets a taller single-line textarea via padding/min-height.)
         const computedStyle = getComputedStyle(composeTextarea);
-        const currentHeight = parseFloat(computedStyle.height);
-        
-        // Convert 1.5rem to pixels (1rem = root font size, typically 16px)
-        const rootFontSize = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
-        const singleLineHeight = 1.5 * rootFontSize; // 1.5rem in pixels (single line height)
-        
-        // When single line goes to multiline, add class to eva-input-container
-        if (currentHeight > singleLineHeight) {
+        const paddingTop = parseFloat(computedStyle.paddingTop) || 0;
+        const paddingBottom = parseFloat(computedStyle.paddingBottom) || 0;
+        const fontSize = parseFloat(computedStyle.fontSize) || 16;
+        let lineHeight = parseFloat(computedStyle.lineHeight);
+        if (!Number.isFinite(lineHeight)) {
+            // `line-height: normal` fallback
+            lineHeight = fontSize * 1.2;
+        }
+
+        // For a true single-line textarea, scrollHeight ~= lineHeight + vertical padding
+        const singleLineScrollHeight = lineHeight + paddingTop + paddingBottom;
+        const isMultiline = scrollHeight > (singleLineScrollHeight + 1); // +1px tolerance
+
+        if (isMultiline) {
             inputContainer.classList.add('textarea-multiline');
         } else {
             // Remove class when it reverts back to single line
