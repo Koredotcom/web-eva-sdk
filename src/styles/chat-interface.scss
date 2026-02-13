@@ -3535,8 +3535,8 @@ html, body {
                     }
                 }
                 .search-results-ans-block {
-                    .inline-flex-wrapper {
-                        .normal-text {
+                    .results-chip-block {
+                        .chip-text {
                             max-width: 100%;
                         }
                     }
@@ -3552,7 +3552,6 @@ html, body {
                     .results-chip-block {
                         padding: 0.375rem 0.75rem;
                         border-radius: 6.25rem;
-                        background: transparent;
                         display: inline-flex;
                         align-items: center;
                         gap: 0.5rem;
@@ -3572,26 +3571,6 @@ html, body {
                             display: flex;
                             flex-shrink: 0;
                         }
-                    }
-                    
-                    .inline-flex-wrapper {
-                        display: inline-flex;
-                        align-items: center;
-                        padding: 0.375rem 0.75rem;
-                        background: transparent;
-                        border-radius: 6.25rem;
-                        cursor: pointer;
-                        max-width: 100%;
-                        @include typography-regular(0.875rem,400,1.25rem);
-                        color: $wa-gray-950;
-                
-                        &:hover {
-                            background: $wa-gray-100;
-                        }
-                        .icon-cls {
-                            display: flex;
-                            flex-shrink: 0;
-                        }                        
                     }
                     .icon-block {
                         @include krflexContainer($items:center);
