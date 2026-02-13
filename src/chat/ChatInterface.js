@@ -159,6 +159,15 @@ const ChatInterface = (props) => {
             params.parentMsgId = arg?.parentMsgId
           }
         }
+
+        if(arg?.from === 'mcpAgent'){
+          params.agentType = "mcpAgent"
+          params.reqId = getCidByMessageId(state.questions, payload?.messageId)
+          replaceExistingQsn = true
+          if(arg?.isTask){
+            params.parentMsgId = arg?.parentMsgId
+          }
+        }
       }
 
       if(!isEmpty(state.customData)){
@@ -214,6 +223,9 @@ const ChatInterface = (props) => {
 			}
 		}
 
+    if(arg?.from === 'mcpAgent'){
+      delete payload.context
+    }
     console.log("custom data payload in chat interface line no 206", payload.customData)
 
 		const Res = await store.dispatch(advanceSearch({ params, payload, userId: state?.profile?.data?.id, multiIntentExecution: arg?.multiIntentExecution }))

@@ -428,7 +428,7 @@ const MultiResponse = () => {
         payload.messageId = item?.messageId // Corrected to use item instead of question
         // console.log(payload)
 
-        let obj = { createIssue: true, from: "gptAgent", botQuestionId: item?.id } // Corrected to use item instead of question
+        let obj = { createIssue: true, from: "gptAgent", botQuestionId: item?.id } // Corrected to use item instead of question        
         if (item?.isTask) { // Corrected to use item instead of question               
             obj.isTask = true
             obj.parentMsgId = item?.parentMsgId
