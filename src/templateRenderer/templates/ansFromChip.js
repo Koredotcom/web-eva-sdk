@@ -9,31 +9,31 @@ import store from "../../redux/store";
 const isMSEnv = () => store.getState()?.global?.env === 'MS';
 
 const getThumbsUpIcon = (filled = false) => {
-    if (isMSEnv()) {
-        return `<img src="images/MS-Icons/thumbs-up-ms.svg" alt="Thumbs Up" width="16" height="16" />`;
-    }
-    return filled ? createThumbsUpFilled({ size: 16, color: "#12B76A" }) : createThumbsUp({ size: 16, color: "#667085" });
+	if (isMSEnv()) {
+		return `<img src="images/MS-Icons/thumbs-up-ms.svg" alt="Thumbs Up" width="16" height="16" />`;
+	}
+	return filled ? createThumbsUpFilled({ size: 16, color: "#12B76A" }) : createThumbsUp({ size: 16, color: "#667085" });
 };
 
 const getExportWordIcon = () => {
-    if (isMSEnv()) {
-        return `<img src="images/MS-Icons/share-ms.svg" alt="Export doc" width="16" height="16" />`;
-    }
-    return createExport({ size: 16, color: "#667085" });
+	if (isMSEnv()) {
+		return `<img src="images/MS-Icons/share-ms.svg" alt="Export doc" width="16" height="16" />`;
+	}
+	return createExport({ size: 16, color: "#667085" });
 };
 
 const getThumbsDownIcon = (filled = false) => {
-    if (isMSEnv()) {
-        return `<img src="images/MS-Icons/thumbs-down-ms.svg" alt="Thumbs Down" width="16" height="16" />`;
-    }
-    return filled ? createThumbsDownFilled({ size: 16, color: "#F04438" }) : createThumbsDown({ size: 16, color: "#667085" });
+	if (isMSEnv()) {
+		return `<img src="images/MS-Icons/thumbs-down-ms.svg" alt="Thumbs Down" width="16" height="16" />`;
+	}
+	return filled ? createThumbsDownFilled({ size: 16, color: "#F04438" }) : createThumbsDown({ size: 16, color: "#667085" });
 };
 
 const getThreeDotIcon = () => {
-    if (isMSEnv()) {
-        return `<img src="images/MS-Icons/dots-vertical.svg" alt="More options" width="16" height="16" />`;
-    }
-    return EllipsisVertical({ size: 16, color: "#667085" });
+	if (isMSEnv()) {
+		return `<img src="images/MS-Icons/dots-vertical.svg" alt="More options" width="16" height="16" />`;
+	}
+	return EllipsisVertical({ size: 16, color: "#667085" });
 };
 import { updateChatData } from "../../redux/globalSlice";
 import { cloneDeep } from "lodash";
@@ -167,14 +167,14 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 	const singleSourceChipRenderer = (source) => {
 		// const attachment = source?.source === 'attachment';
 
-		const warning = source?.warning;				
+		const warning = source?.warning;
 		let icon = renderIcons(
 			source.source,
 			source.extIcon || source.iconUrl,
 			source.providerIcon || source.icon
 		).outerHTML;
-		if(isMSEnv()){
-			if(source?.source === 'llm' || source?.source === 'customQnAAPI' || source?.source === 'web') {
+		if (isMSEnv()) {
+			if (source?.source === 'llm' || source?.source === 'customQnAAPI' || source?.source === 'web') {
 				icon = `<img src="images/MS-Icons/aims-favicon.svg" alt="AIMS" width="16" height="16" />`;
 			}
 		}
@@ -189,7 +189,7 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
                         ${icon}
                     </div>
                     <span class="krSpecName">${htmlDecode(
-				 chipTitle || "No subject"
+				chipTitle || "No subject"
 			)}</span>                    
                 </span>
 				${warning
@@ -277,7 +277,7 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 				});
 			} else {
 				dataList.map((data, i) => {
-				body += `<div class="threadListItem" key="${i}">
+					body += `<div class="threadListItem" key="${i}">
                                 <div class='leftCol'>
                                 ${renderIcons(data?.source, null)?.outerHTML}
                             </div>
@@ -351,7 +351,7 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 				identifier = source?.iconUrl || source?.extIcon || source?.source;
 			}
 			if (!acc.find(existing => {
-				const existingIdentifier = agentId === 'webSearch' 
+				const existingIdentifier = agentId === 'webSearch'
 					? (existing?.domainIcon?.iconUrl || null)
 					: (existing?.iconUrl || existing?.extIcon || existing?.source);
 				return existingIdentifier === identifier;
@@ -372,7 +372,7 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 				} else {
 					iconSrc = source?.iconUrl || source?.extIcon;
 				}
-				
+
 				if (iconSrc) {
 					return `<img src="${encodeHtml(iconSrc)}" alt="" class="source-avatar"/>`;
 				} else {
@@ -397,19 +397,19 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 			const sourceType = source?.source;
 			const attachment = sourceType === 'attachment';
 			const defaultRag = sourceType === 'accountKnowledge';
-			
+
 			// GPT form template case
 			if (source?.templateType === 'gpt_form_template') {
 				const documentIcon = `<svg width="14px" height="14px" viewBox="0 0 16 20" fill="none" xmlns="http://www.w3.org/2000/svg">
 					<path d="M9.84975 1.89124V5.33335C9.84975 5.80006 9.84975 6.03342 9.94058 6.21168C10.0205 6.36848 10.148 6.49596 10.3048 6.57586C10.483 6.66669 10.7164 6.66669 11.1831 6.66669H14.6252M9.84975 14.1666H4.84975M11.5164 10.8333H4.84975M14.8498 8.32348V14.3333C14.8498 15.7334 14.8498 16.4335 14.5773 16.9683C14.3376 17.4387 13.9551 17.8211 13.4847 18.0608C12.95 18.3333 12.2499 18.3333 10.8498 18.3333H5.51642C4.11629 18.3333 3.41622 18.3333 2.88144 18.0608C2.41104 17.8211 2.02859 17.4387 1.7889 16.9683C1.51642 16.4335 1.51642 15.7334 1.51642 14.3333V5.66663C1.51642 4.26649 1.51642 3.56643 1.7889 3.03165C2.02859 2.56124 2.41104 2.17879 2.88144 1.93911C3.41622 1.66663 4.11629 1.66663 5.51642 1.66663H8.1929C8.80438 1.66663 9.11011 1.66663 9.39783 1.7357C9.65292 1.79694 9.89678 1.89795 10.1205 2.03503C10.3728 2.18963 10.5889 2.40582 11.0213 2.8382L13.6782 5.49505C14.1106 5.92743 14.3267 6.14362 14.4814 6.39591C14.6184 6.61959 14.7194 6.86346 14.7807 7.11855C14.8498 7.40627 14.8498 7.712 14.8498 8.32348Z" stroke="#79716B" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
 				</svg>`;
-				
+
 				const hasContextFields = (Object.keys(item?.content?.formData?.contextFields || {}))?.length > 0;
-				const hasRequestParamsWithFields = item?.content?.formData?.requestParams?.some(param => 
+				const hasRequestParamsWithFields = item?.content?.formData?.requestParams?.some(param =>
 					Object.keys(param?.fields || {})?.length > 0
 				);
 				const hasNoContent = !hasContextFields && !hasRequestParamsWithFields;
-				
+
 				return `
 					<div class="gpt-agents-source-chip ${hasNoContent ? 'no-content' : ''}" style="display: flex; align-items: center; gap: 6px;">
 						<div class="icon-cls">${documentIcon}</div>
@@ -417,7 +417,7 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 					</div>
 				`;
 			}
-			
+
 			// Get icon
 			const iconSrc = source?.iconUrl || source?.extIcon;
 			const iconEl = renderIcons(
@@ -428,13 +428,13 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 				source?.isSupervisor
 			);
 			const iconHtml = iconEl?.outerHTML || '';
-			
+
 			// Attachment or defaultRag without hasData
 			if (!item.hasData && (attachment || defaultRag)) {
-				const avatarHtml = iconSrc ? 
+				const avatarHtml = iconSrc ?
 					`<img src="${encodeHtml(iconSrc)}" alt="" class="avatar-sources-chip" style="width: 16px; height: 16px; border-radius: 50%;" />` :
 					`<span class="sourceIcon">${iconHtml}</span>`;
-				
+
 				return `
 					<div class="sourceChipItemText buttonchip" style="display: flex; align-items: center; gap: 6px;">
 						${avatarHtml}
@@ -442,14 +442,14 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 					</div>
 				`;
 			}
-			
+
 			// hasData case
 			if (item.hasData) {
 				if (isSearchResults) {
-					const avatarHtml = iconSrc ? 
+					const avatarHtml = iconSrc ?
 						`<img src="${encodeHtml(iconSrc)}" alt="" style="width: 16px; height: 16px; border-radius: 50%;" />` :
 						`<span class="sourceIcon">${iconHtml}</span>`;
-					
+
 					// For single source, show "Source" (singular), not "Sources"
 					return `
 						<div class="sourceChipItemText buttonchip" style="display: flex; align-items: center; gap: 6px;">
@@ -462,7 +462,7 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 					const checkListIcon = `<svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
 						<path d="M13 6.00016L5 6.00016M13 2.00016L5 2.00016M13 10.0002L5 10.0002M2.33333 6.00016C2.33333 6.36835 2.03486 6.66683 1.66667 6.66683C1.29848 6.66683 1 6.36835 1 6.00016C1 5.63197 1.29848 5.3335 1.66667 5.3335C2.03486 5.3335 2.33333 5.63197 2.33333 6.00016ZM2.33333 2.00016C2.33333 2.36835 2.03486 2.66683 1.66667 2.66683C1.29848 2.66683 1 2.36835 1 2.00016C1 1.63197 1.29848 1.3335 1.66667 1.3335C2.03486 1.3335 2.33333 1.63197 2.33333 2.00016ZM2.33333 10.0002C2.33333 10.3684 2.03486 10.6668 1.66667 10.6668C1.29848 10.6668 1 10.3684 1 10.0002C1 9.63197 1.29848 9.3335 1.66667 9.3335C2.03486 9.3335 2.33333 9.63197 2.33333 10.0002Z" stroke="#79716B" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
 					</svg>`;
-					
+
 					return `
 						<div class="sourceChipItemText buttonchip">
 							<span class="sourceIcon">${checkListIcon}</span>
@@ -471,12 +471,12 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 					`;
 				}
 			}
-			
+
 			// DEFAULT CASE - Handles all other scenarios including file sources
-			const avatarHtml = iconSrc ? 
+			const avatarHtml = iconSrc ?
 				`<img src="${encodeHtml(iconSrc)}" alt="" style="width: 16px; height: 16px; border-radius: 50%;" />` :
 				`<span class="sourceIcon">${iconHtml}</span>`;
-			
+
 			return `
 				<div class="sourceChipItemText buttonchip">
 					${avatarHtml}
@@ -523,7 +523,7 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 		// For web-eva-sdk, we'll show sources when there are sources (let sourcesChipTagRefactored handle invalid scenarios)
 		const sources = item?.sources || [];
 		const hasSources = sources.length > 0;
-		
+
 		// Get sources chip HTML (will be empty string if invalid scenarios)
 		const sourcesChipHtml = sourcesChipTagRefactored();
 		const hasSourcesChip = sourcesChipHtml.trim().length > 0;
@@ -533,13 +533,13 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 		if (hasSourcesChip || hasRelatedSearchResults) {
 			body += `<div class="ansFromChip widthChip" id="ansFromChip-${item?.id}">`;
 			body += `<div class="sourceGroup-item">`;
-			
+
 			if (hasSourcesChip) {
 				body += sourcesChipHtml;
 			}
-			
+
 			body += renderRelatedSearchResults();
-			
+
 			body += `</div>`;
 			body += `</div>`;
 		}
@@ -698,9 +698,9 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 					if (data.toLowerCase() === "prompt") {
 						const parsed = parameter?.fields?.prompt?.value || parameter?.fields?.prompt;
 						const editorId = `quill-prompt-editor-${item?.id}-${Date.now()}`;
-						
+
 						html += `<div id="${editorId}" class="quill-prompt-container" style="height: 200px; border: 1px solid #ccc;"></div>`;
-												
+
 						initializeQuillEditor(editorId, parsed);
 					} else {
 						const field = parameter?.fields?.[data];
@@ -792,7 +792,7 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 				</div>
 			</div>`;
 	};
-	
+
 	const copyAnswerChip = () => {
 		return `
 			<div class="copyAnswerButton"title="Copy Response" id="copyAnswerButton-${item?.messageId}">
@@ -825,14 +825,14 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 		`;
 	}
 
-const setContextChip = () => {
-    const messageId = item?.messageId || item?.id;
-    const displayMenu = !item?.isTask && !item?.noResultFound && item?.viewType !== "list" && (item?.type === "search" || item?.type === "followup");
-    const isMultiSource = item?.sources?.length > 1;
-    // Match Kora-React: button has 'hide' class when displayMenu is false, and 'multiSource' class when multiple sources
-    const hideClass = displayMenu ? '' : 'hide';
-    const multiSourceClass = isMultiSource ? 'multiSource' : '';
-    return `
+	const setContextChip = () => {
+		const messageId = item?.messageId || item?.id;
+		const displayMenu = !item?.isTask && !item?.noResultFound && item?.viewType !== "list" && (item?.type === "search" || item?.type === "followup");
+		const isMultiSource = item?.sources?.length > 1;
+		// Match Kora-React: button has 'hide' class when displayMenu is false, and 'multiSource' class when multiple sources
+		const hideClass = displayMenu ? '' : 'hide';
+		const multiSourceClass = isMultiSource ? 'multiSource' : '';
+		return `
             <div class="setContextButton optionWrapper ${multiSourceClass} ${hideClass}" id="setContextButton-${messageId}" title="Set as Context: Set the sources as context and ask queries.">
                 ${setContextIcon({ size: 16, color: "#667085" })}
                 ${isMultiSource ? `<div class=\"cheveron-icon\"><svg width=\"8\" height=\"8\" viewBox=\"0 0 8 8\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M2 3L4 5L6 3\" stroke=\"#344054\" stroke-width=\"1.33333\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg></div>` : ''}
@@ -840,18 +840,22 @@ const setContextChip = () => {
             ${isMultiSource ? `
             <div id="setContextDropdown-${messageId}" class="setContextDropdown" style="display:none; position:absolute; background:#fff; border:1px solid #e5e7eb; border-radius:6px; padding:6px; z-index:999;">
                 ${item?.sources?.map((src, idx) => {
-                    const selectedSources = item?.context?.sources || [];
-                    const isSelected = selectedSources?.some(s => (
-                        s?.docId === src?.docId || s?.docId === src?.id || s?.id === src?.docId || s?.id === src?.id
-                    ));
-                    const label = src?.title || src?.source;
-                    const baseStyle = 'padding:6px 8px; cursor:pointer; white-space:nowrap; display:flex; align-items:center; justify-content: space-between; width:100%;';
-                    const style = isSelected ? baseStyle + ' background-color:#f0fff4;' : baseStyle;
-                    return `<div class="dropdown-item ${isSelected ? 'selected' : ''}" data-source-index="${idx}" style="${style}">
+			// Use global selectedContext to determine if source is selected (matching Kora-React behavior)
+			const globalSC = store.getState()?.global?.selectedContext;
+			// Handle both async structure (with .data) and direct structure
+			const selectedSources = globalSC?.data?.sources || globalSC?.sources || [];
+
+			const isSelected = selectedSources?.some(s => (
+				s?.docId === src?.docId || s?.docId === src?.id || s?.id === src?.docId || s?.id === src?.id
+			));
+			const label = src?.title || src?.source;
+			const baseStyle = 'padding:6px 8px; cursor:pointer; white-space:nowrap; display:flex; align-items:center; justify-content: space-between; width:100%;';
+			const style = isSelected ? baseStyle + ' background-color:#f0fff4;' : baseStyle;
+			return `<div class="dropdown-item ${isSelected ? 'selected' : ''}" data-source-index="${idx}" style="${style}">
                         <span>${label}</span>
                         ${isSelected ? `<span>${tickMarkIcon({ size: 10, color: '#10B981' })}</span>` : ''}
                     </div>`;
-                }).join('')}
+		}).join('')}
             </div>
             ` : ''}
 		`;
@@ -927,11 +931,11 @@ const setContextChip = () => {
 	/*need to creata a menufunction that displays a shoelace menu on clicking */
 	const threeDotMenu = () => {
 		const messageId = item?.messageId || item?.id;
-		
-		
+
+
 		// Get available integration actions
 		const availableActions = getAvailableActions();
-		
+
 		// Generate Shoelace menu items for integration actions
 		const integrationMenuItems = availableActions.map(action => `
 			<button class="menu-item" data-menu-action="${action.appId}" data-action-type="integration">
@@ -943,7 +947,7 @@ const setContextChip = () => {
 				</div>
 			</button>
 		`).join('');
-		
+
 		return `
 			<div class="three-dot-menu-container">
 				<sl-dropdown>
@@ -955,11 +959,11 @@ const setContextChip = () => {
 			</div>
 		`;
 	}
-	
+
 
 	const renderChip = () => {
 		let state = store.getState()?.global;
-		let chipHTML = "";		
+		let chipHTML = "";
 		let chatFilterGroupHTML = "";
 		if (regeneratingAnswer) {
 			chipHTML = regeneratingChipRenderer();
@@ -978,9 +982,9 @@ const setContextChip = () => {
 			// 			source.providerIcon || source.icon
 			// 		).outerHTML;
 			// 		const title = htmlDecode(source?.title || item?.title || "No subject");
-					
+
 			// 		let html = `
-	        //             <sl-dialog class="gpt-form-dialog" id="gptDialog-${item?.id}" label="">
+			//             <sl-dialog class="gpt-form-dialog" id="gptDialog-${item?.id}" label="">
 			// 				<div class="gpt-form-dialog-header">
 			// 					<div class="left-section">
 			// 						<div class="gpt-form-dialog-header-icon">
@@ -994,16 +998,16 @@ const setContextChip = () => {
 			// 						${Close({ size: 12, color: "#667085" })}
 			// 					</div>
 			// 				</div>
-	        //                 <div class="formModalContent">
-	        //                     ${multiAnswerChipRenderer()}
-	        //                 </div>
-	        //             </sl-dialog>
-	        //         `;
+			//                 <div class="formModalContent">
+			//                     ${multiAnswerChipRenderer()}
+			//                 </div>
+			//             </sl-dialog>
+			//         `;
 			// 		const container = document.createElement("div");
 			// 		container.innerHTML = html;
 			// 		const dialog = container.firstElementChild;
 			// 		document.body.appendChild(dialog);
-					
+
 			// 		// Add close button functionality
 			// 		const closeButton = document.getElementById(`closeDialog-${item?.id}`);
 			// 		if (closeButton) {
@@ -1011,17 +1015,17 @@ const setContextChip = () => {
 			// 				dialog.hide();
 			// 			});
 			// 		}
-					
+
 			// 		// Show the dialog
 			// 		dialog.show();
-					
-					
+
+
 			// 		dialog.addEventListener('sl-hide', () => {
 			// 			// Update state to set showGPTDialog = false
 			// 			try {							
 			// 				let _questions = cloneDeep(state?.questions);
 			// 				let constId = item?.reqId || item?.id;
-							
+
 			// 				if (_questions[constId]) {
 			// 					_questions[constId].showGPTDialog = false;
 			// 					store.dispatch(updateChatData(_questions));
@@ -1030,7 +1034,7 @@ const setContextChip = () => {
 			// 			} catch (error) {
 			// 				console.error('Error updating showGPTDialog state:', error);
 			// 			}
-						
+
 			// 			// Remove dialog from DOM after state update
 			// 			setTimeout(() => {
 			// 				if (document.body.contains(dialog)) {
@@ -1066,14 +1070,14 @@ const setContextChip = () => {
 		const isThreadView = item?.viewType === "threadView";
 		const isBotTemplate = item?.templateType === "bot_template";
 		const isEnterpriseKnowledge = item?.sources?.[0]?.isSupervisor || item?.isSupervisor;
-		
+
 		// Match Kora-React conditions: MenuOptions is shown when: !!item?.sources?.length && (item?.viewType !== "threadView" && item?.templateType !== "bot_template" && !isEnterpriseKnowledge)
 		// And Set as Context is shown when: !llm && !testAgentFlow && showSetAsSource && !isPersonalKnowledge
 		// Note: Kora-React does NOT check disableSetAsContext - it's always shown when conditions are met
 		// The disableSetAsContext flag is an SDK-specific feature flag that can be used to disable it if needed
-		const shouldShowSetAsContext = hasSources && !isThreadView && !isBotTemplate && !isEnterpriseKnowledge && 
-		                                !llm && !testAgentFlow && showSetAsSource && !isPersonalKnowledge;
-		
+		const shouldShowSetAsContext = hasSources && !isThreadView && !isBotTemplate && !isEnterpriseKnowledge &&
+			!llm && !testAgentFlow && showSetAsSource && !isPersonalKnowledge;
+
 		// Debug logging
 		console.log('Set as Context conditions check:', {
 			hasSources,
@@ -1091,7 +1095,7 @@ const setContextChip = () => {
 			viewType: item?.viewType,
 			templateType: item?.templateType
 		});
-		
+
 		if (shouldShowSetAsContext) {
 			actionChipsHTML += setContextChip();
 			console.log('Set as Context button added to actionChipsHTML for item:', item?.id);
@@ -1119,9 +1123,9 @@ const setContextChip = () => {
 		// Line 1213: <div className={`ansFromChip${...}`}> contains <MenuOptions />
 		// So we need to wrap actionChipsHTML in a separate ansFromChip div, similar to Kora-React structure
 		// Only add the wrapper if we have action chips to show
-		if (actionChipsHTML.includes('setContextButton') || actionChipsHTML.includes('copyAnswerButton') || 
-		    actionChipsHTML.includes('exportWordButton') || actionChipsHTML.includes('feedbackChip') || 
-		    actionChipsHTML.includes('three-dot-menu-container')) {
+		if (actionChipsHTML.includes('setContextButton') || actionChipsHTML.includes('copyAnswerButton') ||
+			actionChipsHTML.includes('exportWordButton') || actionChipsHTML.includes('feedbackChip') ||
+			actionChipsHTML.includes('three-dot-menu-container')) {
 			// Wrap action chips in a separate ansFromChip div (matching Kora-React structure)
 			const actionChipsWrapper = `<div class="ansFromChip">${actionChipsHTML}</div>`;
 			chipHTML += actionChipsWrapper;
@@ -1132,7 +1136,7 @@ const setContextChip = () => {
 
 		// Generate the chat filter group content for the drawer (forDrawer: true so content is always built regardless of showData)
 		// For search_results template type, do NOT render chatFilterGroup in main area - results should only appear in SourcesSidebar
-		if((item?.hasData || item?.sources?.[0]?.source === "customQnAAPI") && item?.templateType !== "search_results") {
+		if ((item?.hasData || item?.sources?.[0]?.source === "customQnAAPI") && item?.templateType !== "search_results") {
 			chatFilterGroupHTML = chatFilterGroupRenderer({ forDrawer: true });
 		}
 
@@ -1144,7 +1148,7 @@ const setContextChip = () => {
 				</sl-drawer>`;
 			return `<div class="answerFromChipDiv">${chipHTML}${drawerHTML}</div>`;
 		}
-		
+
 		return `<div class="answerFromChipDiv">${chipHTML}</div>`;
 	};
 
