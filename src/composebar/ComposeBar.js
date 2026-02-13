@@ -46,11 +46,16 @@ class ComposeBar {
         // Used to temporarily hide quick replies after attachment-pill removal
         this.suppressQuickReplies = false;
         this._lastAttachmentPillsCount = 0;
+
+        // Details section UI state (for composebar-bot-input-wrapper)
+        this.detailsExpanded = false;
+        this._detailsAgentId = null;
         this.selectedCommonAgent = null;
         this.currentAnswerResponse = null;
         this.showBotComposeBarHeader = false;
         this.botEndConversationLoader = false;
         this.bannerClosedByUser = false;
+        this.bannerClosedAgentId = null;
         this.endConversationHandler = this.handleEndConversation.bind(this);
         this.closeBannerHandler = this.handleCloseBanner.bind(this);
         this.detailsToggleHandler = this.handleDetailsToggle.bind(this);
@@ -278,6 +283,9 @@ class ComposeBar {
                     hideElementImmediately(answerContextChipContainer);
                 }
                 this.syncContextTrueClass(false);
+                // Context cleared → allow banner to show again next time
+                this.bannerClosedByUser = false;
+                this.bannerClosedAgentId = null;
             }
         });
 
@@ -627,15 +635,22 @@ class ComposeBar {
         const answerContextChipContainer = this.container.querySelector('.response-as-context-truncated-text');
         if(!contextChipData){
             this.bannerClosedByUser = false;
+            this.bannerClosedAgentId = null;
             hideElementImmediately(composeBarWrapperDiv);
             return;
         }
 
-        /* Don't reopen banner if user explicitly closed it */
+        /* Don't reopen banner if user explicitly closed it for the SAME agent */
         if (contextChipData?.isAgent && this.bannerClosedByUser) {
-            hideElementImmediately(composeBarWrapperDiv);
-            this.syncContextTrueClass(false);
-            return;
+            const currentAgentId = contextChipData?.source || contextChipData?.docId || contextChipData?.id;
+            if (this.bannerClosedAgentId && currentAgentId && this.bannerClosedAgentId === currentAgentId) {
+                hideElementImmediately(composeBarWrapperDiv);
+                this.syncContextTrueClass(false);
+                return;
+            }
+            // Different agent selected → allow banner to show again
+            this.bannerClosedByUser = false;
+            this.bannerClosedAgentId = null;
         }
 
         // Get selectedContext from store to check for setViaMenuOptions/setViaGptAgent
@@ -664,13 +679,8 @@ class ComposeBar {
                                      isMcpAgent) &&
                                     (selectedContext?.setViaMenuOptions || selectedContext?.setViaGptAgent);
         
-        // Check if should return null (matching Kora-React conditions from singleChipRenderer)
-        // If selectedContext?.type === "commonAgent" || selectedContext?.sources?.[0]?.isSupervisor || selectedContext?.type === "agent" || props?.from === "testAgent"
-        // In ComposeBar context, we don't have props?.from === "testAgent", so we check the others
-        // This check comes SECOND in Kora-React's singleChipRenderer (else if)
-        const shouldReturnNull = selectedContext?.type === "commonAgent" || 
-                                 selectedContext?.sources?.[0]?.isSupervisor || 
-                                 selectedContext?.type === "agent";
+        // Check if should return null (supervisor contexts shouldn't render a chip here)
+        const shouldReturnNull = selectedContext?.sources?.[0]?.isSupervisor;
         
         // If GPT agent response, show response preview (matching Kora-React: return responseSelectedAsContext(source))
         if (isGptAgentResponse) {
@@ -745,6 +755,8 @@ class ComposeBar {
         const nameElement = composeBarWrapperDiv.querySelector('.bot-input-header-left-text');
         
         if (contextChipData?.isAgent) {  
+            // Ensure wrapper is visible when an agent is selected (common agent / agent context)
+            showElementImmediately(composeBarWrapperDiv, 'block');
             if(botInputHeaderDiv){
                 showElementImmediately(botInputHeaderDiv, 'flex');
             }          
@@ -752,6 +764,23 @@ class ComposeBar {
                 hideElementImmediately(answerContextChipContainer);
             }                       
             this.syncContextTrueClass(false);
+
+            // Reset details only when a NEW agent is selected (avoid auto-collapse on subsequent updates)
+            try {
+                const state = store.getState()?.global;
+                const currentAgentId = state?.selectedContext?.data?.sources?.[0]?.source
+                    || contextChipData?.source
+                    || contextChipData?.docId
+                    || contextChipData?.id;
+
+                if (currentAgentId && currentAgentId !== this._detailsAgentId) {
+                    this._detailsAgentId = currentAgentId;
+                    this.detailsExpanded = false;
+                    // Don't set text here; `handleDetailsToggle` sets it when expanding.
+                }
+                this.setupDetailsToggle();
+            } catch (e) { /* noop */ }
+
             if (iconElement) {
                 const agentIcon = contextChipData?.icon;
                 if (agentIcon) {
@@ -895,17 +924,44 @@ class ComposeBar {
     /**
      * Trigger stop API and close the banner simultaneously (fire-and-forget API + hide).
      */
-    handleCloseBanner() {
+    handleCloseBanner(e) {
+        // Prevent the click from triggering any other handlers (e.g., details toggle)
+        try {
+            e?.stopPropagation?.();
+            e?.preventDefault?.();
+        } catch (err) { /* noop */ }
+
         this.bannerClosedByUser = true;
+        try {
+            const state = store.getState()?.global;
+            const source = state?.selectedContext?.data?.sources?.[0];
+            this.bannerClosedAgentId =
+                source?.source ||
+                source?.docId ||
+                source?.id ||
+                this.selectedAgent?.id ||
+                this.selectedAgent?.docId ||
+                null;
+        } catch (err) {
+            this.bannerClosedAgentId = null;
+        }
         const composeBarWrapperDiv = this.container.querySelector('.composebar-bot-input-wrapper');
         const state = store.getState().global;
         const currentQuestion = state.currentQuestion;
         const question = state.questions[currentQuestion.reqId];
-        if (this.selectedAgent?.agentType === 'botAgent' && question?.status === 'threadRunning') {
+        if ((this.selectedAgent?.agentType === 'botAgent' || this.selectedAgent?.type === 'botAgent') && question?.status === 'threadRunning') {
             this.chatInterface.stopBotAnswer();
         } else {
             this.fileUploaderInterface.clearContext();
         }
+
+        // Reset selection state so re-selecting an agent works reliably
+        this.selectedAgent = null;
+        this.selectedCommonAgent = null;
+        this.contextChipData = null;
+        this.detailsExpanded = false;
+        this._detailsAgentId = null;
+
         if (composeBarWrapperDiv) {
             hideElementImmediately(composeBarWrapperDiv);
         }
@@ -950,24 +1006,12 @@ class ComposeBar {
         
         if (!detailsContent || !moreDetailsText) return;
 
-        // Check if details are currently visible
-        const isDetailsVisible = detailsContent.style.display !== 'none';
-        
-        if (isDetailsVisible) {
-            // Currently showing details, user wants to hide them
-            detailsContent.style.display = 'none';
-            moreDetailsText.textContent = 'Show Details';
-            composeBarWrapper.classList.add('details-hidden');
-            // Don't hide wrapper - keep it visible so user can access "Show Details" button
-        } else {
-            // Currently hiding details, user wants to show them
+        // Toggle state (persisted) and sync UI
+        this.detailsExpanded = !this.detailsExpanded;
+        if (this.detailsExpanded) {
             detailsContent.textContent = getDescription;
-            detailsContent.style.display = 'block';
-            moreDetailsText.textContent = 'Hide Details';
-            composeBarWrapper.classList.remove('details-hidden');
-            // Ensure wrapper is visible when showing details
-            showElementImmediately(composeBarWrapper, 'block');
         }
+        this.syncDetailsUI();
     }
 
     /**
@@ -978,17 +1022,43 @@ class ComposeBar {
         if (!composeBarWrapper) return;
 
         const infoDetailsDiv = composeBarWrapper.querySelector('.info-details');
-        if (infoDetailsDiv) {
-            infoDetailsDiv.removeEventListener('click', this.detailsToggleHandler);
-            infoDetailsDiv.addEventListener('click', this.detailsToggleHandler);
-            
-            // Ensure details content starts hidden and add corresponding class
-            const detailsContent = composeBarWrapper.querySelector('.details-content');
-            if (detailsContent) {
-                detailsContent.style.display = 'none';
-                composeBarWrapper.classList.add('details-hidden');
-                // Note: Don't hide wrapper initially - it needs to be visible for user to access "Show Details"
-            }
+        const detailsSectionBtn = composeBarWrapper.querySelector('.details-section');
+
+        const attach = (el) => {
+            if (!el) return;
+            el.removeEventListener('click', this.detailsToggleHandler);
+            el.addEventListener('click', this.detailsToggleHandler);
+        };
+
+        // Allow clicking either the text ("Show Details") or the button area.
+        attach(infoDetailsDiv);
+        attach(detailsSectionBtn);
+
+        // Do NOT force-collapse here; just sync to current state
+        this.syncDetailsUI();
+    }
+
+    /**
+     * Sync the details section DOM to `this.detailsExpanded` state.
+     * This prevents "opens then immediately collapses" when listeners are re-attached.
+     */
+    syncDetailsUI() {
+        const composeBarWrapper = this.container?.querySelector?.('.composebar-bot-input-wrapper');
+        if (!composeBarWrapper) return;
+
+        const detailsContent = composeBarWrapper.querySelector('.details-content');
+        const moreDetailsText = composeBarWrapper.querySelector('.more-details-text');
+        if (!detailsContent || !moreDetailsText) return;
+
+        if (this.detailsExpanded) {
+            detailsContent.style.display = 'block';
+            moreDetailsText.textContent = 'Hide Details';
+            composeBarWrapper.classList.remove('details-hidden');
+            showElementImmediately(composeBarWrapper, 'block');
+        } else {
+            detailsContent.style.display = 'none';
+            moreDetailsText.textContent = 'Show Details';
+            composeBarWrapper.classList.add('details-hidden');
         }
     }
 
@@ -1352,6 +1422,10 @@ class ComposeBar {
             this.fileUploaderInterface.clearContext();
         }
         this.selectedAgent = null;
+        this.selectedCommonAgent = null;
+        this.contextChipData = null;
+        this.detailsExpanded = false;
+        this._detailsAgentId = null;
         this.setCommonAgents();
         this.renderCommonAgents();
         /*update the placeholder name to default */
@@ -1742,6 +1816,17 @@ class ComposeBar {
         
         const commonAgentsDialog = dialog.querySelector('[data-eva-common-agents-dialog]');
         if (!commonAgentsDialog) return;
+
+        // Always derive common agents from store so dialog doesn't go empty
+        // when an agent context is selected (selectedContext exists).
+        try {
+            const state = store.getState();
+            const commonAgentsFromStore =
+                state?.global?.allAgents?.data?.commonAgents?.filter(agent => !agent.disabled) || [];
+            this.commonAgents = commonAgentsFromStore;
+        } catch (e) {
+            // keep existing this.commonAgents
+        }
         
         // Render common agents directly in the dialog
         commonAgentsDialog.innerHTML = this.commonAgents.map(agent => {
