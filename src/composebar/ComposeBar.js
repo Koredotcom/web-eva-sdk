@@ -261,6 +261,7 @@ class ComposeBar {
                 if (answerContextChipContainer) {
                     hideElementImmediately(answerContextChipContainer);
                 }
+                this.syncContextTrueClass(false);
             }
         });
 
@@ -387,8 +388,35 @@ class ComposeBar {
             }
         }
 
+        // Disable attachment button + update tooltip while upload is in progress
+        this.syncAttachmentUploadState();
+
         // Reattach event listeners for remove buttons
         this.attachAttachmentEventListeners();
+    }
+
+    isAttachmentUploadInProgress() {
+        return (this.attachments || []).some(a => !!a?.loading);
+    }
+
+    syncAttachmentUploadState() {
+        const attachmentBtn = this.container?.querySelector?.('[data-eva-attachment]');
+        if (!attachmentBtn) return;
+
+        const tooltip = attachmentBtn.closest('sl-tooltip');
+        const tooltipContentEl = tooltip?.querySelector?.('[data-eva-attachment-tooltip-content]');
+
+        const inProgress = this.isAttachmentUploadInProgress();
+
+        if (tooltipContentEl) {
+            tooltipContentEl.innerHTML = inProgress
+                ? 'Please wait. Upload is in progress'
+                : '5 attachments, max 10MB each. <br/>PDF, XLS, DOC, CSV, TXT formats.';
+        }
+
+        // Don't disable the button element itself (disabled blocks hover/focus so tooltip won't show).
+        // Instead, mark state for click handler to guard.
+        attachmentBtn.setAttribute('data-upload-in-progress', inProgress ? 'true' : 'false');
     }
 
     renderQuickReplies() {
@@ -396,6 +424,16 @@ class ComposeBar {
         if (!quickRepliesContainer) {
             return;
         }
+
+        // Hide container if there are no quick actions
+        if (!this.quickActions || this.quickActions.length === 0) {
+            quickRepliesContainer.innerHTML = '';
+            hideElementImmediately(quickRepliesContainer);
+            return;
+        }
+
+        // Ensure visible when quick actions exist
+        showElementImmediately(quickRepliesContainer, 'flex');
 
         const quickRepliesHtml = this.quickActions.map(action => {
             return `<div class="eva-quick-reply-chip" data-action-id="${action.id}">${action.label}</div>`;
@@ -530,6 +568,25 @@ class ComposeBar {
         return div.innerHTML;
     }
 
+    /**
+     * When response-as-context chip is visible, mark compose bar input container
+     * and hide `.composebar-bot-input-wrapper.details-hidden`.
+     */
+    syncContextTrueClass(isVisible) {
+        const inputContainer = this.container?.querySelector?.('.eva-input-container');
+        if (inputContainer) {
+            inputContainer.classList.toggle('context-true', !!isVisible);
+        }
+
+        // Requirement: hide "composebar-bot-input-wrapper details-hidden" when context-true
+        if (!!isVisible) {
+            const botWrapper = this.container?.querySelector?.('.composebar-bot-input-wrapper');
+            if (botWrapper?.classList?.contains('details-hidden')) {
+                hideElementImmediately(botWrapper);
+            }
+        }
+    }
+
     updateBotHeaderContent(contextChipData) {
         console.log("contextChipData in updateBotHeaderContent", contextChipData);
         const composeBarWrapperDiv = this.container.querySelector('.composebar-bot-input-wrapper');  
@@ -538,6 +595,7 @@ class ComposeBar {
         const answerContextChipContainer = this.container.querySelector('.response-as-context-truncated-text');
         if(!contextChipData){            
             hideElementImmediately(composeBarWrapperDiv);
+            this.syncContextTrueClass(false);
             return;
         }
 
@@ -586,6 +644,7 @@ class ComposeBar {
             if(answerContextChipContainer){
                 // Show the container (matching Kora-React)
                 showElementImmediately(answerContextChipContainer, 'flex');
+                this.syncContextTrueClass(true);
                 // Render response selected as context
                 this.responseSelectedAsContext(source);
                 
@@ -599,6 +658,7 @@ class ComposeBar {
                                 this.fileUploaderInterface.clearContext({});
                             }
                             hideElementImmediately(answerContextChipContainer);
+                            this.syncContextTrueClass(false);
                             // Also hide the wrapper when context is cleared
                             hideElementImmediately(composeBarWrapperDiv);
                         });
@@ -621,6 +681,7 @@ class ComposeBar {
             if (composeBarWrapperDiv) {
                 hideElementImmediately(composeBarWrapperDiv);
             }
+            this.syncContextTrueClass(false);
             return;
         }
 
@@ -630,6 +691,7 @@ class ComposeBar {
             if (answerContextChipContainer) {
                 hideElementImmediately(answerContextChipContainer);
             }
+            this.syncContextTrueClass(false);
             // For attachments, we don't show the response-as-context-truncated-text
             // The attachment pill (eva-attachment-pill) is handled separately
             // Just hide the wrapper if no other context chip is needed
@@ -650,6 +712,7 @@ class ComposeBar {
             if(answerContextChipContainer){
                 hideElementImmediately(answerContextChipContainer);
             }                       
+            this.syncContextTrueClass(false);
             if (iconElement) {
                 const agentIcon = contextChipData?.icon;
                 if (agentIcon) {
@@ -671,6 +734,7 @@ class ComposeBar {
                 if (answerContextChipContainer) {
                     hideElementImmediately(answerContextChipContainer);
                 }
+                this.syncContextTrueClass(false);
                 // Hide the wrapper for attachments (attachments are shown via eva-attachment-pill)
                 if (composeBarWrapperDiv) {
                     hideElementImmediately(composeBarWrapperDiv);
@@ -687,6 +751,7 @@ class ComposeBar {
             }                        
             if(answerContextChipContainer){
                 showElementImmediately(answerContextChipContainer, 'flex');
+                this.syncContextTrueClass(true);
                 // Hide the bot input wrapper when response context is shown
                 hideElementImmediately(composeBarWrapperDiv);
                     /*set answer inside response-as-context-truncated-text */
@@ -707,6 +772,7 @@ class ComposeBar {
                     answerContextCloseBtn.addEventListener('click', () => {
                         this.fileUploaderInterface.clearContext({});
                         hideElementImmediately(answerContextChipContainer);
+                        this.syncContextTrueClass(false);
                         // Hide the bot input wrapper as well when response context is closed
                         hideElementImmediately(composeBarWrapperDiv);
                     });
@@ -757,7 +823,7 @@ class ComposeBar {
         if (env === 'MS') {
             return `<img src="images/MS-Icons/send-ms.svg" alt="Send" width="20" height="20" />`;
         }
-        return arrowCirlceUpIcon({ size: 20, color: "#101828" });
+        return arrowCirlceUpIcon({ size: 26, color: "#101828" });
     }
 
 
@@ -848,6 +914,7 @@ class ComposeBar {
             .replace(/"/g, '&quot;')
             .replace(/'/g, '&#39;');
 
+        const uploadInProgress = (this.attachments || []).some(a => !!a?.loading);
 
         this.container.innerHTML = `
             <div class="ComposeBarContainer new-layout">
@@ -915,7 +982,9 @@ class ComposeBar {
                             </div>
                             <div class="right-actions">
                                 <sl-tooltip>
-                                    <div slot="content" class="caTooltips">5 attachments, max 10MB each. <br/>PDF, XLS, DOC, CSV, TXT formats.</div>
+                                    <div slot="content" class="caTooltips" data-eva-attachment-tooltip-content>
+                                        ${uploadInProgress ? 'Please wait. Upload is in progress' : '5 attachments, max 10MB each. <br/>PDF, XLS, DOC, CSV, TXT formats.'}
+                                    </div>
                                     <button class="eva-input-action-btn attachment-btn" data-eva-attachment>
                                         ${this.getAttachmentButtonIcon()}
                                     </button>
@@ -1081,7 +1150,42 @@ class ComposeBar {
 
         // Attachment button event
         if (attachmentBtn) {
-            attachmentBtn.addEventListener('click', () => this.handleAttachment());
+            attachmentBtn.addEventListener('click', () => {
+                const inProgressAttr = attachmentBtn.getAttribute('data-upload-in-progress') === 'true';
+                const inProgress = inProgressAttr || this.isAttachmentUploadInProgress();
+
+                // If upload is in progress, block opening dialog and show tooltip message.
+                if (inProgress) {
+                    try {
+                        const tooltip = attachmentBtn.closest('sl-tooltip');
+                        if (tooltip && typeof tooltip.show === 'function') {
+                            tooltip.show();
+                        }
+                        // Auto-hide after a short delay so it doesn't stick.
+                        setTimeout(() => {
+                            try {
+                                if (tooltip && typeof tooltip.hide === 'function') {
+                                    tooltip.hide();
+                                }
+                            } catch (e) { /* noop */ }
+                        }, 1500);
+                    } catch (e) { /* noop */ }
+                    return;
+                }
+
+                // Shoelace tooltip can remain open on click due to focus.
+                // Hide it immediately on click for better UX.
+                try {
+                    const tooltip = attachmentBtn.closest('sl-tooltip');
+                    if (tooltip && typeof tooltip.hide === 'function') {
+                        tooltip.hide();
+                    }
+                } catch (e) { /* noop */ }
+
+                try { attachmentBtn.blur(); } catch (e) { /* noop */ }
+
+                this.handleAttachment();
+            });
         }
 
         if (uploadFileBtn) {
@@ -1354,17 +1458,24 @@ class ComposeBar {
         const scrollHeight = composeTextarea.scrollHeight;
         const newHeight = Math.min(scrollHeight, 150) + 'px';
         composeTextarea.style.height = newHeight;
-        
-        // Get the computed height after setting it
+
+        // Determine "multiline" based on actual textarea metrics, not a fixed rem.
+        // (Fixed 1.5rem breaks when CSS sets a taller single-line textarea via padding/min-height.)
         const computedStyle = getComputedStyle(composeTextarea);
-        const currentHeight = parseFloat(computedStyle.height);
-        
-        // Convert 1.5rem to pixels (1rem = root font size, typically 16px)
-        const rootFontSize = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
-        const singleLineHeight = 1.5 * rootFontSize; // 1.5rem in pixels (single line height)
-        
-        // When single line goes to multiline, add class to eva-input-container
-        if (currentHeight > singleLineHeight) {
+        const paddingTop = parseFloat(computedStyle.paddingTop) || 0;
+        const paddingBottom = parseFloat(computedStyle.paddingBottom) || 0;
+        const fontSize = parseFloat(computedStyle.fontSize) || 16;
+        let lineHeight = parseFloat(computedStyle.lineHeight);
+        if (!Number.isFinite(lineHeight)) {
+            // `line-height: normal` fallback
+            lineHeight = fontSize * 1.2;
+        }
+
+        // For a true single-line textarea, scrollHeight ~= lineHeight + vertical padding
+        const singleLineScrollHeight = lineHeight + paddingTop + paddingBottom;
+        const isMultiline = scrollHeight > (singleLineScrollHeight + 1); // +1px tolerance
+
+        if (isMultiline) {
             inputContainer.classList.add('textarea-multiline');
         } else {
             // Remove class when it reverts back to single line
@@ -2070,6 +2181,10 @@ class ComposeBar {
 
             this.attachments = this.attachments.filter(f => String(f?.uID || f?.componentId || f?.docId) !== String(uid));
             this.renderAttachments();
+
+            // Requirement: when an attachment pill is removed, hide quick replies
+            this.quickActions = [];
+            this.renderQuickReplies();
 
         } catch (err) {
             console.warn('Failed to remove attachment:', err);
