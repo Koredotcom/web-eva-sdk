@@ -432,11 +432,11 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 			// Attachment or defaultRag without hasData
 			if (!item.hasData && (attachment || defaultRag)) {
 				const avatarHtml = iconSrc ?
-					`<img src="${encodeHtml(iconSrc)}" alt="" class="avatar-sources-chip" style="width: 16px; height: 16px; border-radius: 50%;" />` :
+					`<img src="${encodeHtml(iconSrc)}" alt="" class="avatar-sources-chip"/>` :
 					`<span class="sourceIcon">${iconHtml}</span>`;
 
 				return `
-					<div class="sourceChipItemText buttonchip" style="display: flex; align-items: center; gap: 6px;">
+					<div class="sourceChipItemText buttonchip">
 						${avatarHtml}
 						<span class="sourceTitle">Source</span>
 					</div>
@@ -447,12 +447,12 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 			if (item.hasData) {
 				if (isSearchResults) {
 					const avatarHtml = iconSrc ?
-						`<img src="${encodeHtml(iconSrc)}" alt="" style="width: 16px; height: 16px; border-radius: 50%;" />` :
+						`<img src="${encodeHtml(iconSrc)}" alt="" class="avatar-sources-chip"/>` :
 						`<span class="sourceIcon">${iconHtml}</span>`;
 
 					// For single source, show "Source" (singular), not "Sources"
 					return `
-						<div class="sourceChipItemText buttonchip" style="display: flex; align-items: center; gap: 6px;">
+						<div class="sourceChipItemText buttonchip">
 							${avatarHtml}
 							<span class="sourceTitle">Source</span>
 						</div>
@@ -474,7 +474,7 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 
 			// DEFAULT CASE - Handles all other scenarios including file sources
 			const avatarHtml = iconSrc ?
-				`<img src="${encodeHtml(iconSrc)}" alt="" style="width: 16px; height: 16px; border-radius: 50%;" />` :
+				`<img src="${encodeHtml(iconSrc)}" alt="" class="avatar-sources-chip"/>` :
 				`<span class="sourceIcon">${iconHtml}</span>`;
 
 			return `
@@ -503,8 +503,8 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 
 		return `
 			<div class="search-results-ans-block" data-open-sources="searchResults">
-				<div class="inline-flex-wrapper">
-					<span class="normal-text">Related Search Results</span>
+				<div class="results-chip-block">
+					<span class="chip-text">Related Search Results</span>
 					<span class="icon-cls">
 						<svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
 							<path d="M5.83325 14.1667L14.1666 5.83334M14.1666 5.83334H5.83325M14.1666 5.83334V14.1667" stroke="#A9A29D" stroke-width="1.66667" stroke-linecap="round" stroke-linejoin="round"/>
@@ -1143,7 +1143,7 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 		// When chatFilterGroup exists, show it in a Shoelace drawer (opened by clicking left-splitter-opener), aligned to viewport
 		if (chatFilterGroupHTML) {
 			const drawerHTML = `
-				<sl-drawer id="ansFromChip-drawer-${item?.id}" label="Sources" placement="end" class="ansFromChip-drawer" style="--size: 35vw;">
+				<sl-drawer id="ansFromChip-drawer-${item?.id}" label="Sources" placement="end" class="ansFromChip-drawer" style="--size: 45vw;">
 					<div class="ansFromChip-drawer-body">${chatFilterGroupHTML}</div>
 				</sl-drawer>`;
 			return `<div class="answerFromChipDiv">${chipHTML}${drawerHTML}</div>`;
