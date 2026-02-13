@@ -43,6 +43,9 @@ class ComposeBar {
         this.selectedAgent = null;
         this.attachments = [];
         this.quickActions = [];
+        // Used to temporarily hide quick replies after attachment-pill removal
+        this.suppressQuickReplies = false;
+        this._lastAttachmentPillsCount = 0;
         this.selectedCommonAgent = null;
         this.currentAnswerResponse = null;
         this.showBotComposeBarHeader = false;
@@ -177,6 +180,17 @@ class ComposeBar {
                         // If no context is set, don't show any attachment pills (even if loading)
                         // The loader should only appear temporarily during upload, and disappear if context isn't set
                         
+                        // Track attachment-pill count changes (used to hide quick replies on removal)
+                        const nextAttachmentCount = (filesOnly || []).length;
+                        const prevAttachmentCount = this._lastAttachmentPillsCount || 0;
+                        if (nextAttachmentCount < prevAttachmentCount) {
+                            this.suppressQuickReplies = true;
+                        } else if (nextAttachmentCount > prevAttachmentCount) {
+                            // If a new attachment is added, allow quick replies again
+                            this.suppressQuickReplies = false;
+                        }
+                        this._lastAttachmentPillsCount = nextAttachmentCount;
+
                         this.attachments = filesOnly;
                         this.quickActions = quickActions || [];
                         // Only render attachments if context is set
@@ -422,6 +436,12 @@ class ComposeBar {
     renderQuickReplies() {
         const quickRepliesContainer = this.container.querySelector('[data-eva-quick-replies]');
         if (!quickRepliesContainer) {
+            return;
+        }
+
+        if (this.suppressQuickReplies) {
+            quickRepliesContainer.innerHTML = '';
+            hideElementImmediately(quickRepliesContainer);
             return;
         }
 
@@ -2180,9 +2200,11 @@ class ComposeBar {
             }
 
             this.attachments = this.attachments.filter(f => String(f?.uID || f?.componentId || f?.docId) !== String(uid));
+            this._lastAttachmentPillsCount = (this.attachments || []).length;
             this.renderAttachments();
 
             // Requirement: when an attachment pill is removed, hide quick replies
+            this.suppressQuickReplies = true;
             this.quickActions = [];
             this.renderQuickReplies();
 
