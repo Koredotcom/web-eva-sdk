@@ -3519,6 +3519,20 @@ html, body {
                             }
                             &:hover {
                                 background: $wa-gray-200;
+                            }                            
+                            .avatar-sources-chip {
+                                width: 1rem;
+                                height: 1rem;
+                                border: .0625rem solid #e5e5e5;
+                                border-radius: 50%;
+                                background-color: #fff;
+                                overflow: hidden;
+                                &:nth-child(2) {
+                                    margin-left: -0.5rem;
+                                }
+                                &:nth-child(3) {
+                                    margin-left: -0.5rem;
+                                }
                             }
                             .sourceIcon {
                                 display: flex;
