@@ -1816,6 +1816,17 @@ class ComposeBar {
         
         const commonAgentsDialog = dialog.querySelector('[data-eva-common-agents-dialog]');
         if (!commonAgentsDialog) return;
+
+        // Always derive common agents from store so dialog doesn't go empty
+        // when an agent context is selected (selectedContext exists).
+        try {
+            const state = store.getState();
+            const commonAgentsFromStore =
+                state?.global?.allAgents?.data?.commonAgents?.filter(agent => !agent.disabled) || [];
+            this.commonAgents = commonAgentsFromStore;
+        } catch (e) {
+            // keep existing this.commonAgents
+        }
         
         // Render common agents directly in the dialog
         commonAgentsDialog.innerHTML = this.commonAgents.map(agent => {
