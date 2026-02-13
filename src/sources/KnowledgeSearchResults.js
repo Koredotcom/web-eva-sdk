@@ -48,7 +48,7 @@ class KnowledgeSearchResults {
                     <sl-tab slot="nav" panel="${encodeHtml(tabKey)}" ${isFirstTab ? 'active' : ''}>
                         ${tabIcon ? `<img src="${encodeHtml(tabIcon)}" alt="${encodeHtml(tabName)}" style="width: 16px; height: 16px; margin-right: 6px; vertical-align: middle;" />` : ''}
                         <span>${encodeHtml(tabName)}</span>
-                        ${tabCount > 0 ? `<span style="margin-left: 4px;">(${tabCount})</span>` : ''}
+                        <!-- ${tabCount > 0 ? `<span style="margin-left: 4px;">(${tabCount})</span>` : ''} -->
                     </sl-tab>
                 `;
                 

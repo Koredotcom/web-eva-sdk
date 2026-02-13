@@ -337,7 +337,7 @@ class SourcesSidebar {
         // Return header without tabs - tabs will be in the main render method
         return `
             <div class="right-panel-header">
-                <span class="close-icon" id="sources-sidebar-close">${createCloseIcon({ size: 16, color: "#667085" })}</span>
+                <span class="close-icon" id="sources-sidebar-close">${createCloseIcon({ size: 10, color: "#667085" })}</span>
                 ${showSwitchTabs || showMoreSearchResults ? '' : `<span class="search-header">${headerTitle || 'Data'}</span>`}
             </div>
         `;

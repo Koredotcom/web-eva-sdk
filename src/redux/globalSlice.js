@@ -66,7 +66,7 @@ const initialState = {
   chatInterfaceElements:{
     disableAppAvatar: false,
   },
-  env: 'MS',
+  env: 'Kore',
   answerSources: null,
   unifiedSearchResults: null
 };

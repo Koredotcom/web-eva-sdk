@@ -140,11 +140,13 @@ html, body {
         }
     }
     .chatInterfaceSec {
-        width: calc(100% - 16.25rem);
         padding: 1rem 0;        
         display: flex;
         flex-direction: column;
         position: relative;
+        width: 100%;
+        flex-grow: 1;
+        min-width: 0;
 
         .chatSec {
             flex-grow: 1;
@@ -3401,7 +3403,39 @@ html, body {
                             .p-avatar {
                                 display: flex;
                                 align-items: center;
-                                gap: 0.25rem;
+                                img {
+                                    width: 1rem;
+                                    height: 1rem;
+                                    border: .0625rem solid #e5e5e5;
+                                    border-radius: 50%;
+                                    background-color: #fff;
+                                    overflow: hidden;
+                                    &:nth-child(2) {
+                                        margin-left: -0.5rem;
+                                    }
+                                    &:nth-child(3) {
+                                        margin-left: -0.5rem;
+                                    }
+                                }
+                                .sourceIcon {
+                                    display: flex;
+                                    align-items: center;
+                                    flex-shrink: 0;
+                                    width: 1rem;
+                                    max-height: 1rem;
+                                    object-fit: contain;
+                                    max-width: 100%;
+                                    border: .0625rem solid #e5e5e5;
+                                    border-radius: 50%;
+                                    background-color: #fff;
+                                    overflow: hidden;
+                                    &:nth-child(2) {
+                                        margin-left: -0.5rem;
+                                    }
+                                    &:nth-child(3) {
+                                        margin-left: -0.5rem;
+                                    }
+                                }
                             }
                             .sourceChipItemText {
                                 @include typography-regular(0.875rem,400,1.25rem);
@@ -3411,6 +3445,32 @@ html, body {
                             }
                             &:hover {
                                 background: $wa-gray-200;
+                            }
+                        }
+
+                        .sourceChipItemText {
+                            display: flex;
+                            align-items: center;
+                            gap: 0.5rem;
+                            cursor: pointer;
+                            &.buttonchip {
+                                padding: .375rem .75rem;
+                                border-radius: 6.25rem;
+                                background: $wa-gray-100;
+                            }
+                            &:hover {
+                                background: $wa-gray-200;
+                            }
+                            .sourceIcon {
+                                display: flex;
+                                align-items: center;
+                                flex-shrink: 0;
+                            }
+                            .sourceTitle {
+                                @include typography-regular(0.875rem,400,1.25rem);
+                                color: $wa-gray-950;
+                                @include ellipsisText;
+                                max-width: 10rem;
                             }
                         }
                     }
@@ -6507,7 +6567,7 @@ sl-drawer.sources-sidebar-drawer {
             position: absolute;
             z-index: 2;
             inset-inline-start: -1rem;
-            top: 1.25rem;
+            top: 1rem;
             &:hover {
                 background: $wa-gray-100;
             }
@@ -6520,6 +6580,7 @@ sl-drawer.sources-sidebar-drawer {
         position: relative;
         overflow-y: auto;
         @include scrollbar;
+        max-height: calc(100% - 3.125rem);
         .detailed-view-btn {
             width: 1.5rem;
             height: 1.5rem;

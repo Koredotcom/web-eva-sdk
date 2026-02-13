@@ -374,10 +374,10 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 				}
 				
 				if (iconSrc) {
-					return `<img src="${encodeHtml(iconSrc)}" alt="" class="source-avatar" style="width: 20px; height: 20px; border-radius: 50%;" />`;
+					return `<img src="${encodeHtml(iconSrc)}" alt="" class="source-avatar"/>`;
 				} else {
 					const iconEl = renderIcons(source?.source, source?.extIcon, null, source?.iconUrl, source?.isSupervisor);
-					return `<span class="sourceIcon" style="width: 20px; height: 20px; display: inline-flex; align-items: center; justify-content: center; margin-right: -8px;">${iconEl?.outerHTML || ''}</span>`;
+					return `<span class="sourceIcon">${iconEl?.outerHTML || ''}</span>`;
 				}
 			}).join('');
 
@@ -460,11 +460,11 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 				} else {
 					// CheckList icon for hasData non-search-results
 					const checkListIcon = `<svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
-						<path d="M11.6667 3.5L5.25 9.91667L2.33333 7" stroke="#79716B" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+						<path d="M13 6.00016L5 6.00016M13 2.00016L5 2.00016M13 10.0002L5 10.0002M2.33333 6.00016C2.33333 6.36835 2.03486 6.66683 1.66667 6.66683C1.29848 6.66683 1 6.36835 1 6.00016C1 5.63197 1.29848 5.3335 1.66667 5.3335C2.03486 5.3335 2.33333 5.63197 2.33333 6.00016ZM2.33333 2.00016C2.33333 2.36835 2.03486 2.66683 1.66667 2.66683C1.29848 2.66683 1 2.36835 1 2.00016C1 1.63197 1.29848 1.3335 1.66667 1.3335C2.03486 1.3335 2.33333 1.63197 2.33333 2.00016ZM2.33333 10.0002C2.33333 10.3684 2.03486 10.6668 1.66667 10.6668C1.29848 10.6668 1 10.3684 1 10.0002C1 9.63197 1.29848 9.3335 1.66667 9.3335C2.03486 9.3335 2.33333 9.63197 2.33333 10.0002Z" stroke="#79716B" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
 					</svg>`;
 					
 					return `
-						<div class="sourceChipItemText buttonchip" style="display: flex; align-items: center; gap: 6px;">
+						<div class="sourceChipItemText buttonchip">
 							<span class="sourceIcon">${checkListIcon}</span>
 							<span class="sourceTitle">${htmlDecode(source?.title || 'Data')}</span>
 						</div>
@@ -478,7 +478,7 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 				`<span class="sourceIcon">${iconHtml}</span>`;
 			
 			return `
-				<div class="sourceChipItemText buttonchip" style="display: flex; align-items: center; gap: 6px;">
+				<div class="sourceChipItemText buttonchip">
 					${avatarHtml}
 					<span class="sourceTitle">${htmlDecode(source?.title || 'Source')}</span>
 				</div>
@@ -950,81 +950,81 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 			chipHTML = tableChipRenderer();
 		} else {
 			chipHTML = knowledgeChipRenderer();
-			if (item?.showGPTDialog) {
-				// Check if dialog already exists to prevent duplicates
-				const existingDialog = document.getElementById(`gptDialog-${item?.id}`);
-				if (!existingDialog) {
-					const source = item?.sources?.[0] || {};
-					const icon = renderIcons(
-						source.source,
-						source.extIcon || source.iconUrl,
-						source.providerIcon || source.icon
-					).outerHTML;
-					const title = htmlDecode(source?.title || item?.title || "No subject");
+			// if (item?.showGPTDialog) {
+			// 	// Check if dialog already exists to prevent duplicates
+			// 	const existingDialog = document.getElementById(`gptDialog-${item?.id}`);
+			// 	if (!existingDialog) {
+			// 		const source = item?.sources?.[0] || {};
+			// 		const icon = renderIcons(
+			// 			source.source,
+			// 			source.extIcon || source.iconUrl,
+			// 			source.providerIcon || source.icon
+			// 		).outerHTML;
+			// 		const title = htmlDecode(source?.title || item?.title || "No subject");
 					
-					let html = `
-	                    <sl-dialog class="gpt-form-dialog" id="gptDialog-${item?.id}" label="">
-							<div class="gpt-form-dialog-header">
-								<div class="left-section">
-									<div class="gpt-form-dialog-header-icon">
-										${icon}
-									</div>
-									<div class="gpt-form-dialog-header-title">
-										${title}
-									</div>
-								</div>
-								<div class="right-section" id="closeDialog-${item?.id}">
-									${Close({ size: 12, color: "#667085" })}
-								</div>
-							</div>
-	                        <div class="formModalContent">
-	                            ${multiAnswerChipRenderer()}
-	                        </div>
-	                    </sl-dialog>
-	                `;
-					const container = document.createElement("div");
-					container.innerHTML = html;
-					const dialog = container.firstElementChild;
-					document.body.appendChild(dialog);
+			// 		let html = `
+	        //             <sl-dialog class="gpt-form-dialog" id="gptDialog-${item?.id}" label="">
+			// 				<div class="gpt-form-dialog-header">
+			// 					<div class="left-section">
+			// 						<div class="gpt-form-dialog-header-icon">
+			// 							${icon}
+			// 						</div>
+			// 						<div class="gpt-form-dialog-header-title">
+			// 							${title}
+			// 						</div>
+			// 					</div>
+			// 					<div class="right-section" id="closeDialog-${item?.id}">
+			// 						${Close({ size: 12, color: "#667085" })}
+			// 					</div>
+			// 				</div>
+	        //                 <div class="formModalContent">
+	        //                     ${multiAnswerChipRenderer()}
+	        //                 </div>
+	        //             </sl-dialog>
+	        //         `;
+			// 		const container = document.createElement("div");
+			// 		container.innerHTML = html;
+			// 		const dialog = container.firstElementChild;
+			// 		document.body.appendChild(dialog);
 					
-					// Add close button functionality
-					const closeButton = document.getElementById(`closeDialog-${item?.id}`);
-					if (closeButton) {
-						closeButton.addEventListener('click', () => {
-							dialog.hide();
-						});
-					}
+			// 		// Add close button functionality
+			// 		const closeButton = document.getElementById(`closeDialog-${item?.id}`);
+			// 		if (closeButton) {
+			// 			closeButton.addEventListener('click', () => {
+			// 				dialog.hide();
+			// 			});
+			// 		}
 					
-					// Show the dialog
-					dialog.show();
+			// 		// Show the dialog
+			// 		dialog.show();
 					
 					
-					dialog.addEventListener('sl-hide', () => {
-						// Update state to set showGPTDialog = false
-						try {							
-							let _questions = cloneDeep(state?.questions);
-							let constId = item?.reqId || item?.id;
+			// 		dialog.addEventListener('sl-hide', () => {
+			// 			// Update state to set showGPTDialog = false
+			// 			try {							
+			// 				let _questions = cloneDeep(state?.questions);
+			// 				let constId = item?.reqId || item?.id;
 							
-							if (_questions[constId]) {
-								_questions[constId].showGPTDialog = false;
-								store.dispatch(updateChatData(_questions));
-								console.log('Dialog closed - showGPTDialog set to false for:', constId);
-							}
-						} catch (error) {
-							console.error('Error updating showGPTDialog state:', error);
-						}
+			// 				if (_questions[constId]) {
+			// 					_questions[constId].showGPTDialog = false;
+			// 					store.dispatch(updateChatData(_questions));
+			// 					console.log('Dialog closed - showGPTDialog set to false for:', constId);
+			// 				}
+			// 			} catch (error) {
+			// 				console.error('Error updating showGPTDialog state:', error);
+			// 			}
 						
-						// Remove dialog from DOM after state update
-						setTimeout(() => {
-							if (document.body.contains(dialog)) {
-								document.body.removeChild(dialog);
-							}
-						}, 300);
-					});
-				} else {
-					existingDialog.show();
-				}
-			}
+			// 			// Remove dialog from DOM after state update
+			// 			setTimeout(() => {
+			// 				if (document.body.contains(dialog)) {
+			// 					document.body.removeChild(dialog);
+			// 				}
+			// 			}, 300);
+			// 		});
+			// 	} else {
+			// 		existingDialog.show();
+			// 	}
+			// }
 		}
 		let actionChipsHTML = `<div class="answerActionChips">`;
 		// Add copy answer chip if answer exists
