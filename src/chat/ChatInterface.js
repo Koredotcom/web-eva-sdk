@@ -381,6 +381,8 @@ const ChatInterface = (props) => {
 
       if (detail?.data?.status === 'completed' || detail?.data?.status === 'aborted') {
         question.streamingStatus = detail?.data?.status // 'completed' or 'aborted'
+        question.apiSuccess = true
+        question.status = detail?.data?.status
 
         const questions = cloneDeep(state.questions)
         questions[detail?.data?.reqId] = question

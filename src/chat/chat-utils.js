@@ -358,7 +358,7 @@ export const constructQuestionPostCall = (data, qId) => {
           };
           
     }else{  
-        questions[qId] = {...question, apiSuccess: true};
+        questions[qId] = {...question, apiSuccess: data?.payload?.status === 'completed'};
     }
 
     // updateState({
