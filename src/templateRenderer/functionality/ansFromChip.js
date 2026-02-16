@@ -9,6 +9,7 @@ import { submitUserFeedback } from "../../Feedback";
 import customMarkdownRenderer from "../utils/customMarkdownRenderer";
 import chatInterface from "../../chat/ChatInterface";
 import SourcesSidebarInstance from "../../sources/SourcesSidebar.js";
+import { renderIcons } from "../../utils/helpers";
 import { tickMarkIcon } from "../icons-library";
 
 const AnsFromChipFunctionality = ({ item }) => {
@@ -298,11 +299,43 @@ const AnsFromChipFunctionality = ({ item }) => {
 				(ag) => ag?.id === data?.source
 			);
 			let sourceType = isAgentSetAsSource ? "agent" : null;
-			sessionItemHandler({
+
+			let obj = {
 				item: data,
 				duplicateErr: true,
 				type: sourceType,
-			});
+				viewType: item?.viewType,
+				invokeFrom: 'menuOptions',
+				setViaMenuOptions: true
+			};
+
+			const currentSelectedContext = state.selectedContext?.data;
+			const currentSessionMessageId = currentSelectedContext?.messageId;
+			const thisMessageId = item?.id || item?.messageId;
+
+			// For search results, follow Kora-React's additive/replacement patterns
+			if (item?.templateType === 'search_results' || item?.type === 'search' || item?.templateType === 'search_answer') {
+				// Set discardPrevSession ONLY if this is a NEW message interaction.
+				// If we are already selecting items for THIS message, discardPrevSession should be false to allow additive selection.
+				obj.discardPrevSession = (!!currentSessionMessageId && currentSessionMessageId !== thisMessageId);
+				obj.type = (data?.source === 'attachment') ? 'attachment' : 'accountKnowledge';
+
+				// Always pass messageId and boardId for tracking in Redux, 
+				// but tell sessionItemHandler to skip them in the API payload for multi-source search results
+				// to prevent the backend from automatically adding all sources of the message.
+				obj.messageId = thisMessageId;
+				obj.boardId = item?.boardId;
+				if (item?.sources?.length > 1) {
+					obj.skipPayloadMessageId = true;
+				}
+			} else {
+				// Default followup behavior
+				obj.boardId = item?.boardId;
+				obj.messageId = thisMessageId;
+			}
+
+			console.log(`[onSetAsSource] Item: ${thisMessageId}, discardPrevSession: ${obj.discardPrevSession}, data:`, data);
+			sessionItemHandler(obj);
 		}
 	};
 
@@ -450,94 +483,103 @@ const AnsFromChipFunctionality = ({ item }) => {
 
 		// Multi-source dropdown logic: show a dropdown for selecting context sources when there are multiple sources
 		if (item?.sources?.length > 1) {
-			const messageId = item?.messageId || item?.id;
+			const messageId = item?.id || item?.messageId;
 			const dropdown = document.getElementById(`setContextDropdown-${messageId}`);
+			if (dropdown && !dropdown._evaDropdownBound) {
+				console.log('[Dropdown] Binding events for messageId:', messageId);
+
+				// Handle item selection via sl-select
+				dropdown.addEventListener('sl-select', (event) => {
+					const itemEl = event.detail.item;
+					const idxStr = itemEl.getAttribute('data-source-index');
+					console.log(`Dropdown sl-select on message ${messageId}, index: ${idxStr}`);
+					if (idxStr === null) return;
+
+					const idx = parseInt(idxStr);
+					const src = item?.sources?.[idx];
+					if (src) {
+						console.log(`Selected source at index ${idx} for message ${messageId}:`, src.title || src.source);
+						const fakeEvent = { preventDefault: () => { }, stopPropagation: () => { } };
+						onSetAsSource(fakeEvent, src);
+					}
+				});
+
+				// Update selection state when dropdown is about to show
+				dropdown.addEventListener('sl-show', () => {
+					console.log('Dropdown showing, updating selection UI');
+					try {
+						const globalSC = store.getState()?.global?.selectedContext;
+						const selectedSources = globalSC?.data?.sources || globalSC?.sources || [];
+
+						const menuItems = dropdown.querySelectorAll('sl-menu-item');
+						menuItems.forEach((itemEl) => {
+							const idxStr = itemEl.getAttribute('data-source-index');
+							if (idxStr === null) return;
+
+							const idx = parseInt(idxStr);
+							const src = item?.sources?.[idx];
+							if (!src) return;
+
+							const isSelected = selectedSources?.some(s => {
+								const sId = String(s?.docId || s?.id || s?.uID || s?.componentId || s?.contentId || '');
+								const srcId = String(src?.docId || src?.id || src?.uID || src?.componentId || src?.contentId || '');
+								const idMatch = !!sId && !!srcId && sId === srcId;
+								const nameMatch = !!s?.title && s?.title === src?.title;
+								return idMatch || nameMatch;
+							});
+
+							// Update selection state UI
+							if (isSelected) {
+								itemEl.classList.add('selected');
+							} else {
+								itemEl.classList.remove('selected');
+							}
+							// Remove built-in check attribute to avoid double ticks
+							itemEl.removeAttribute('checked');
+
+							// Update Prefix (Icon)
+							const prefix = itemEl.querySelector('[slot="prefix"]');
+							if (prefix) {
+								const renderedIconDiv = renderIcons(src?.source, src?.extIcon, null, src?.iconUrl, src?.isSupervisor);
+								prefix.innerHTML = renderedIconDiv?.outerHTML || '';
+							}
+
+							// Update Suffix (Tick mark)
+							let suffix = itemEl.querySelector('[slot="suffix"]');
+							if (isSelected) {
+								if (!suffix) {
+									suffix = document.createElement('span');
+									suffix.setAttribute('slot', 'suffix');
+									suffix.className = 'tick-wrapper';
+									itemEl.appendChild(suffix);
+								}
+								suffix.innerHTML = tickMarkIcon({ size: 10, color: '#10B981' });
+							} else if (suffix) {
+								suffix.remove();
+							}
+						});
+					} catch (err) {
+						console.error('Error updating context dropdown selection:', err);
+					}
+				});
+
+				dropdown._evaDropdownBound = true;
+			}
+		}
+
+		// Single-source "Set as Context" button logic
+		if (item?.sources?.length === 1) {
+			const messageId = item?.messageId || item?.id;
 			const btn = document.getElementById(`setContextButton-${messageId}`);
-			if (btn && dropdown && !btn._evaDropdownBound) {
+			if (btn && !btn._evaSingleBound) {
 				btn.addEventListener('click', (ev) => {
 					ev.preventDefault();
 					ev.stopPropagation();
-					const isVisible = dropdown.style.display === 'block';
-
-					if (!isVisible) {
-						try {
-							const globalSC = store.getState()?.global?.selectedContext;
-							// Handle both async structure (with .data) and direct structure
-							const selectedSources = globalSC?.data?.sources || globalSC?.sources || [];
-
-							console.log('SetContext Dropdown Debug:', {
-								messageId,
-								globalSC,
-								selectedSources,
-								itemSources: item?.sources
-							});
-
-							const dropdownItems = dropdown.querySelectorAll('.dropdown-item');
-
-							dropdownItems.forEach((itemEl) => {
-								const idxStr = itemEl.getAttribute('data-source-index');
-								if (idxStr === null) return;
-
-								const idx = parseInt(idxStr);
-								const src = item?.sources?.[idx];
-								if (!src) return;
-
-								const isSelected = selectedSources.some(s => (
-									s?.docId === src?.docId || s?.docId === src?.id || s?.id === src?.docId || s?.id === src?.id
-								));
-
-								console.log(`Checking source [${idx}]:`, {
-									srcTitle: src?.title,
-									srcDocId: src?.docId,
-									isSelected
-								});
-
-								const baseStyle = 'padding:6px 8px; cursor:pointer; white-space:nowrap; display:flex; align-items:center; justify-content: space-between; width:100%;';
-								const style = isSelected ? baseStyle + ' background-color:#f0fff4;' : baseStyle;
-								itemEl.setAttribute('style', style);
-
-								const tickMark = itemEl.querySelector('.wa-tickMarkIcon');
-								if (isSelected) {
-									itemEl.classList.add('selected');
-									if (!tickMark) {
-										const span = document.createElement('span');
-										span.innerHTML = tickMarkIcon({ size: 10, color: '#10B981' });
-										span.classList.add('wa-tickMarkIcon'); // Add class to identify it
-										itemEl.appendChild(span);
-									}
-								} else {
-									itemEl.classList.remove('selected');
-									if (tickMark) {
-										// Remove the wrapper span (whether it's the original or our dynamically added one)
-										const wrapper = tickMark.closest('span');
-										if (wrapper) wrapper.remove();
-										else tickMark.remove();
-									}
-								}
-							});
-						} catch (err) {
-							console.error('Error updating context dropdown:', err);
-						}
-					}
-
-					dropdown.style.display = isVisible ? 'none' : 'block';
+					console.log('Single source context button clicked');
+					onSetAsSource(ev, item.sources[0]);
 				});
-				btn._evaDropdownBound = true;
+				btn._evaSingleBound = true;
 			}
-			// Bind each dropdown item to set the corresponding source as context
-			item?.sources?.forEach((src, idx) => {
-				const itemEl = dropdown?.querySelector(`.dropdown-item[data-source-index="${idx}"]`);
-				if (itemEl && !itemEl._evaItemBound) {
-					itemEl.addEventListener('click', (ev) => {
-						ev.preventDefault();
-						ev.stopPropagation();
-						const fakeEvent = { preventDefault: () => { }, stopPropagation: () => { } };
-						onSetAsSource(fakeEvent, src);
-						if (dropdown) dropdown.style.display = 'none';
-					});
-					itemEl._evaItemBound = true;
-				}
-			});
 		}
 
 		if (item?.showMultiSourceList) {
@@ -588,15 +630,21 @@ const AnsFromChipFunctionality = ({ item }) => {
 			if (chip && !chip.eventListenerAdded) {
 				// Add listener to the chip element (capture phase to catch event early)
 				chip.addEventListener("click", (e) => {
+					// IGNORE clicks if they originate from action chips (context, feedback, copy, etc.)
+					if (e.target.closest('.answerActionChips')) {
+						return;
+					}
+
 					e?.preventDefault();
 					e?.stopPropagation();
 					showDataAction();
 				}, true);
 
 				// Add listener to all child elements (icon, text span, etc.)				
-				const childElements = chip.querySelectorAll('*');
+				const childElements = chip.querySelectorAll('*:not(.answerActionChips *)');
 				childElements.forEach((child) => {
 					child.addEventListener("click", (e) => {
+						if (e.target.closest('.answerActionChips')) return;
 						e?.stopPropagation();
 						e?.preventDefault();
 						showDataAction();
@@ -607,6 +655,11 @@ const AnsFromChipFunctionality = ({ item }) => {
 				const parent = chip.parentElement;
 				if (parent && !parent.eventListenerAdded) {
 					parent.addEventListener("click", (e) => {
+						// IGNORE clicks from action chips
+						if (e.target.closest('.answerActionChips')) {
+							return;
+						}
+
 						e?.preventDefault();
 						e?.stopPropagation();
 						showDataAction();
@@ -1032,84 +1085,6 @@ const AnsFromChipFunctionality = ({ item }) => {
 			}
 		}
 
-		// Add Set as Context button click handler
-		// Check conditions matching Kora-React: !llm && !testAgentFlow && showSetAsSource && !isPersonalKnowledge
-		const llm = item?.sources?.[0]?.source === "llm";
-		const showSetAsSource = item?.sources?.[0]?.canSetAsSourceContext !== false;
-		const state = store.getState()?.global;
-		const testAgentFlow = state?.ansFromChipElements?.testAgentFlow || false;
-		const isPersonalKnowledge = item?.context?.provider === "personalKnowledge";
-
-		// Only add handler if conditions match (same as Kora-React MenuOptions)
-		if (!llm && !testAgentFlow && showSetAsSource && !isPersonalKnowledge) {
-			let setContextButton = document.getElementById(
-				`setContextButton-${item?.messageId || item?.id}`
-			);
-			if (setContextButton && !setContextButton.eventListenerAdded) {
-				setContextButton.addEventListener("click", (e) => {
-					e?.preventDefault();
-					e?.stopPropagation();
-
-					// Match Kora-React's handleSetAsContextClick logic
-					const selectedContext = state?.selectedContext?.data;
-					const removingSources = selectedContext?.sources?.map(el => el?.docId) || [];
-					const clickedSource = item?.sources?.[0];
-					const selectedSources = selectedContext?.sources || [];
-					const isAlreadySelected = !!clickedSource && selectedSources.some(s => (
-						s?.docId === clickedSource?.docId ||
-						s?.docId === clickedSource?.id ||
-						s?.id === clickedSource?.docId ||
-						s?.id === clickedSource?.id
-					));
-
-					// If multiple sources, show dropdown menu (for now, just use first source - multi-source dropdown can be added later)
-					if (item?.sources?.length > 1) {
-						// TODO: Implement multi-source dropdown menu similar to Kora-React's Menu component
-						// For now, use the first source
-						setContextData(e, item);
-						return;
-					}
-
-					// If there are existing sources to remove, call sessionItemHandler with different structure
-					if (removingSources?.length > 0) {
-						const _selectedContext = { ...item?.context, messageId: item?.messageId, sources: item?.sources, viewType: item?.viewType };
-						const enabledUserAgents = state?.allAgents?.data?.agents?.filter(a => !!a?.enabled) || [];
-						const _agents = cloneDeep(enabledUserAgents);
-						const isAgentSetAsSource = _agents.find(ag => ag.id === item?.sources?.[0]?.source);
-						const sourceType = isAgentSetAsSource ? "agent" : null;
-
-						// If user clicks the same context source again, do NOT remove it.
-						// Instead, show the duplicate message ("Source is Already Added") and skip API call.
-						if (isAlreadySelected) {
-							sessionItemHandler({
-								item: clickedSource,
-								duplicateErr: true,
-								type: sourceType,
-								invokeFrom: 'menuOptions',
-							});
-							return;
-						}
-
-						const obj = {
-							item: clickedSource,
-							boardId: item?.boardId,
-							messageId: item?.messageId,
-							invokeFrom: 'menuOptions',
-							viewType: item?.viewType,
-							type: sourceType,
-							context: _selectedContext,
-							setViaMenuOptions: true
-						};
-
-						sessionItemHandler(obj);
-					} else {
-						// Otherwise, call setContextData directly
-						setContextData(e, item);
-					}
-				});
-				setContextButton.eventListenerAdded = true;
-			}
-		}
 
 		// Add three dot menu functionality
 		const messageId = item?.messageId || item?.reqId;
