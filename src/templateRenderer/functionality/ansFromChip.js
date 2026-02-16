@@ -1053,6 +1053,14 @@ const AnsFromChipFunctionality = ({ item }) => {
 					// Match Kora-React's handleSetAsContextClick logic
 					const selectedContext = state?.selectedContext?.data;
 					const removingSources = selectedContext?.sources?.map(el => el?.docId) || [];
+					const clickedSource = item?.sources?.[0];
+					const selectedSources = selectedContext?.sources || [];
+					const isAlreadySelected = !!clickedSource && selectedSources.some(s => (
+						s?.docId === clickedSource?.docId ||
+						s?.docId === clickedSource?.id ||
+						s?.id === clickedSource?.docId ||
+						s?.id === clickedSource?.id
+					));
 
 					// If multiple sources, show dropdown menu (for now, just use first source - multi-source dropdown can be added later)
 					if (item?.sources?.length > 1) {
@@ -1070,8 +1078,20 @@ const AnsFromChipFunctionality = ({ item }) => {
 						const isAgentSetAsSource = _agents.find(ag => ag.id === item?.sources?.[0]?.source);
 						const sourceType = isAgentSetAsSource ? "agent" : null;
 
+						// If user clicks the same context source again, do NOT remove it.
+						// Instead, show the duplicate message ("Source is Already Added") and skip API call.
+						if (isAlreadySelected) {
+							sessionItemHandler({
+								item: clickedSource,
+								duplicateErr: true,
+								type: sourceType,
+								invokeFrom: 'menuOptions',
+							});
+							return;
+						}
+
 						const obj = {
-							item: item?.sources?.[0],
+							item: clickedSource,
 							boardId: item?.boardId,
 							messageId: item?.messageId,
 							invokeFrom: 'menuOptions',
