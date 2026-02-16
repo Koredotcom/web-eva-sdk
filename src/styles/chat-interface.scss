@@ -8959,3 +8959,46 @@ sl-dropdown.setContextDropdown {
         }
     }
 }
+
+.normal-link {
+    font-family: Inter;
+    font-weight: 500;
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+    color: var(--colors-gray-true-500, #737373) !important;
+    text-decoration: underline !important;
+    &:hover {
+      color: var(--colors-blue-light-600, #0086C9) !important;
+    }
+}
+.special-link {
+    background: $wa-gray-100;
+    border-radius: 6.25rem;
+    padding: 0.25rem 0.5rem;
+    @include typography-regular(0.625rem,400,0.75rem);
+    color: $wa-gray-500 !important;
+    max-width: 9.375rem;
+    display: inline-block;
+    @include ellipsisText;
+    vertical-align: middle;
+    &:hover {
+        background: $wa-gray-200;
+        color: var(--colors-blue-light-600, #0086C9) !important;
+    }
+    &.email {
+        background: none;
+        font-family: Inter;
+        font-weight: 500;
+        font-size: 0.875rem;
+        line-height: 1.25rem;
+        color: var(--colors-gray-true-500, #737373) !important;
+        text-decoration: underline !important;
+        max-width: none;
+        padding: 0;
+        text-wrap: wrap;
+        border-radius: 0;
+        &:hover {
+            color: var(--colors-blue-light-600, #0086C9) !important;
+        }
+    }
+}
