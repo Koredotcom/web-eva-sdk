@@ -126,35 +126,24 @@ const BotConversation = (args) => {
             }
         }
         if(detail?.action === "update"){         
-            /*reqId only comes when updating the parentMessage clo */   
-            // if (detail?.message?.hasOwnProperty('reqId') && Object.keys(questions || {}).length > 0) {
-            //     const currentQuestion = Object.values(questions).find(ques => ques.reqId === detail.message.reqId)
-            //     if(currentQuestion?.historicalData){
-            //         question = questions?.[currentQuestion?.id]
-            //     }else{
-            //         question = questions?.[currentQuestion?.reqId]
-            //     }                                
-            // }else{
-                
-            // }     
             if(Object.keys(questions || {}).length === 0){
                 return;
             }            
-            const questionKey = resolveQuestionKeyByMessageId(detail?.message?.pId)
             question = questions[detail?.message?.pId] /*in order to update the already existing messages of botConversation, we will depend on pId */
-            const check = Object.values(questions)?.find(el => el?.messageId === detail?.message?.pId);
+            // const check = Object.values(questions)?.find(el => el?.messageId === detail?.message?.pId);
             if(question){//found the question with pId, so need to update the conversation present in botConversation
-                question.botConversation[detail?.message?.messageId] = detail?.message
-                
-            }else if(check){
-                const currentQuestion = store.getState().global.currentQuestion;
-               if(currentQuestion?.isTask) {
-                   const stepIndex = currentQuestion?.stepIndex;
-                   setTimeout(() => {
-                       MultiIntentExecution().runNextTask(stepIndex, detail?.message?.status , currentQuestion)
-                   }, 1000);
-               }
-
+                if(question.messageId === detail?.message?.messageId){
+                    question.botConversation[detail?.message?.messageId] = detail?.message;
+                    if(question.isTask && detail?.message?.status === "completed"){
+                            const stepIndex = question?.stepIndex;
+                            setTimeout(() => {
+                                MultiIntentExecution().runNextTask(stepIndex, detail?.message?.status , question)
+                            }, 1000);
+                    }
+                }
+                else{
+                    question.botConversation[detail?.message?.messageId] = detail?.message
+                }
             }
             else{
                 const fallbackKey = resolveQuestionKeyByReqId(detail?.message?.pId)
@@ -167,16 +156,7 @@ const BotConversation = (args) => {
                 }             
                 question = {...question, 'answer': detail?.message?.answer, 'status': detail?.message?.status}
             }
-            
-            
-            /*should retain the id of the question when accessing from history */
-            // if(question?.historicalData){
-            //     const questionHistoryId = question.id
-            //     question = { ...question, ...detail?.message }
-            //     question.id = questionHistoryId
-            // }else{
-            //     // question = { ...question, ...detail?.message }
-            // }  
+
             if(state?.enableDebugging){
                 console.log("question after update: ", question)
             }         
@@ -240,7 +220,7 @@ const BotConversation = (args) => {
             })
         );
 
-        constructQuestionPostCall(res, data?.cId);
+        constructQuestionPostCall(res, data?.cId , 'bot');
 };
 
 
