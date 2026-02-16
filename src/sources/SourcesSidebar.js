@@ -20,6 +20,9 @@ class SourcesSidebar {
         this.config = config;
         this.element = null;
         this.drawer = null;
+        this.overlay = null;
+        this._overlayListenerAttached = false;
+        this._escapeListenerAttached = false;
         this.unifiedSearchResults = null;
         this.answerSources = null; // Store answer sources separately
         this.activeInnerTab = null; // Track active inner tab
@@ -42,11 +45,19 @@ class SourcesSidebar {
             drawer.setAttribute('class', 'sources-sidebar-drawer');
             drawer.style.setProperty('--size', '40%');
             drawer.setAttribute('no-header', 'true');
+            // Ensure the drawer renders within its container (Shoelace option)
+            drawer.setAttribute('contained', '');
             document.body.appendChild(drawer);
             this.drawer = drawer;
         } else {
             this.drawer = document.getElementById('sources-sidebar-drawer');
+            // Ensure attribute exists even if the drawer was created earlier
+            this.drawer?.setAttribute?.('contained', '');
         }
+
+        // Contained drawers are intentionally non-modal in Shoelace (no backdrop).
+        // If we still want an overlay/backdrop, we provide one ourselves.
+        this.ensureOverlay();
 
         // Subscribe to Redux store for answerSources updates
         this.unsubscribe = store.subscribe(() => {
@@ -173,6 +184,7 @@ class SourcesSidebar {
             } catch (e) {
                 this.drawer.setAttribute('open', '');
             }
+            this.showOverlay();
         }
     }
 
@@ -190,6 +202,59 @@ class SourcesSidebar {
             } catch (e) {
                 this.drawer.removeAttribute('open');
             }
+        }
+        this.hideOverlay();
+    }
+
+    /**
+     * Create (or reuse) a custom overlay for contained drawers.
+     * Shoelace's contained drawers don't render an overlay by design.
+     */
+    ensureOverlay() {
+        if (this.overlay && document.body.contains(this.overlay)) return;
+
+        let overlay = document.getElementById('sources-sidebar-overlay');
+        if (!overlay) {
+            overlay = document.createElement('div');
+            overlay.id = 'sources-sidebar-overlay';
+            overlay.className = 'sources-sidebar-overlay';
+            overlay.setAttribute('aria-hidden', 'true');
+            document.body.appendChild(overlay);
+        }
+
+        this.overlay = overlay;
+
+        if (!this._overlayListenerAttached) {
+            this._overlayClickHandler = () => this.closeSourcesPanel();
+            this.overlay.addEventListener('click', this._overlayClickHandler);
+            this._overlayListenerAttached = true;
+        }
+    }
+
+    showOverlay() {
+        // Only needed when the drawer is contained (Shoelace disables overlay + ESC in that mode)
+        if (!this.drawer?.hasAttribute?.('contained')) return;
+        this.ensureOverlay();
+        this.overlay?.classList?.add('is-open');
+
+        if (!this._escapeListenerAttached) {
+            this._escapeHandler = (e) => {
+                if (e?.key === 'Escape' && this.drawer?.hasAttribute?.('open')) {
+                    this.closeSourcesPanel();
+                }
+            };
+            document.addEventListener('keydown', this._escapeHandler);
+            this._escapeListenerAttached = true;
+        }
+    }
+
+    hideOverlay() {
+        if (!this.drawer?.hasAttribute?.('contained')) return;
+        this.overlay?.classList?.remove('is-open');
+
+        if (this._escapeListenerAttached && this._escapeHandler) {
+            document.removeEventListener('keydown', this._escapeHandler);
+            this._escapeListenerAttached = false;
         }
     }
 
@@ -738,6 +803,17 @@ class SourcesSidebar {
         }
         if (this.drawer && document.body.contains(this.drawer)) {
             document.body.removeChild(this.drawer);
+        }
+        if (this.overlay && document.body.contains(this.overlay)) {
+            if (this._overlayListenerAttached && this._overlayClickHandler) {
+                this.overlay.removeEventListener('click', this._overlayClickHandler);
+                this._overlayListenerAttached = false;
+            }
+            document.body.removeChild(this.overlay);
+        }
+        if (this._escapeListenerAttached && this._escapeHandler) {
+            document.removeEventListener('keydown', this._escapeHandler);
+            this._escapeListenerAttached = false;
         }
         // Remove global listener
         if (this._documentTabListenerAttached && this._handleDocumentTabShow) {

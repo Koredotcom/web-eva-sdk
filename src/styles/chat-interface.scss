@@ -858,9 +858,6 @@ html, body {
                         gap: 0.5rem;
                         display: none;
                         flex-shrink: 0;
-                        &.isGsheetExt {
-                            /*width: 13.125rem;*/
-                        }
                         .dtAction {
                             width: 1.75rem;
                             height: 1.75rem;
@@ -6345,7 +6342,29 @@ sl-drawer.sources-sidebar-drawer::part(panel) {
     overflow: unset;
 }
 
+// Custom backdrop overlay for contained SourcesSidebar drawer.
+// Shoelace contained drawers intentionally don't render an overlay.
+.sources-sidebar-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    // Keep the backdrop above app content but below the drawer panel
+    z-index: 1040;
+    display: none;
+}
+
+.sources-sidebar-overlay.is-open {
+    display: block;
+}
+
 sl-drawer.sources-sidebar-drawer {
+    // Ensure the drawer renders above the custom overlay (z-index needs to be on parts that are positioned)
+    &::part(base) {
+        z-index: 1050;
+    }
+    &::part(panel) {
+        z-index: 1051;
+    }
 
     .sources-top-section {
         height: 100%;
