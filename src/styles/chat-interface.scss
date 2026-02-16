@@ -6340,6 +6340,7 @@ sl-drawer.sources-sidebar-drawer::part(body) {
 
 sl-drawer.sources-sidebar-drawer::part(panel) {
     overflow: unset;
+    --size: 60%;
 }
 
 // Custom backdrop overlay for contained SourcesSidebar drawer.
