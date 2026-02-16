@@ -3434,7 +3434,7 @@ body {
                     &::part(panel) {
                         padding: .5rem;
                         max-height: 16.25rem;
-                        width: 15.625rem;
+                        //width: 15.625rem;
                         border-radius: .75rem;
                         background: #fff;
                         border: .0625rem solid #e5e5e5;
@@ -3454,6 +3454,7 @@ body {
                             &::part(base) {
                                 padding: 6px 8px;
                                 border-radius: 6px;
+                                width: 11.875rem;
                             }
 
                             // sl-menu-item is a shadow DOM component; internal `.menu-item__*` classes can't be styled from outside.
