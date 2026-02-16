@@ -3440,6 +3440,14 @@ body {
                         border: .0625rem solid #e5e5e5;
                         box-shadow: 0px 24px 48px -12px rgba(16, 24, 40, .1803921569);                        
                     }
+                    &.active {
+                        background: #f5f5f5;
+                        &::slot(trigger) {
+                            .setContextButton {
+                                background: #f5f5f5;
+                            }
+                        }
+                    }
 
                     sl-menu {
                         border: none;

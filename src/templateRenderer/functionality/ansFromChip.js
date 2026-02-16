@@ -527,6 +527,17 @@ const AnsFromChipFunctionality = ({ item }) => {
 			if (dropdown && !dropdown._evaDropdownBound) {
 				console.log('[Dropdown] Binding events for messageId:', messageId);
 
+				// Toggle active state for styling while open
+				dropdown.addEventListener('sl-show', () => {
+					dropdown.classList.add('active');
+				});
+				dropdown.addEventListener('sl-hide', () => {
+					dropdown.classList.remove('active');
+				});
+				dropdown.addEventListener('sl-after-hide', () => {
+					dropdown.classList.remove('active');
+				});
+
 				// Handle item selection via sl-select
 				dropdown.addEventListener('sl-select', (event) => {
 					const itemEl = event.detail.item;
