@@ -6345,6 +6345,7 @@ sl-drawer.sources-sidebar-drawer::part(panel) {
 // Custom backdrop overlay for contained SourcesSidebar drawer.
 // Shoelace contained drawers intentionally don't render an overlay.
 .sources-sidebar-overlay {
+    // Overlay should be scoped to the container element (for contained drawers)
     position: fixed;
     inset: 0;
     background: rgba(0, 0, 0, 0.4);
