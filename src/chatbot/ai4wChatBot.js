@@ -13,6 +13,7 @@ const state = {
   isOpen: false,
   isHistoryOpen: false,
   sourcesDrawerObserver: null,
+  composebarObserver: null,
   elements: {
     button: null,
     panel: null,
@@ -32,6 +33,66 @@ const state = {
 
 const ensureDomAvailable = () =>
   typeof window !== "undefined" && typeof document !== "undefined";
+
+const QUESTIONS_WITH_BOT_WRAPPER_CLASS =
+  "eva-sdk-questions-container--with-bot-input-wrapper";
+
+const isElementVisible = (el) => {
+  if (!el) return false;
+  // offsetParent === null covers display:none and some detached cases
+  if (el.offsetParent !== null) return true;
+  const style = window.getComputedStyle?.(el);
+  if (!style) return false;
+  return (
+    style.display !== "none" &&
+    style.visibility !== "hidden" &&
+    style.opacity !== "0"
+  );
+};
+
+/**
+ * When composebar-bot-input-wrapper is present & visible, add a class on questions container.
+ */
+const syncQuestionsContainerClass = () => {
+  const root = state.elements.panel || document;
+  const botWrapper = root.querySelector?.(".composebar-bot-input-wrapper");
+  const questionsContainer =
+    root.querySelector?.(".questions-container") ||
+    root.querySelector?.("#questions-container") ||
+    document.querySelector?.(".questions-container") ||
+    document.querySelector?.("#questions-container");
+
+  if (!questionsContainer) return;
+
+  const enabled = !!botWrapper && isElementVisible(botWrapper);
+  questionsContainer.classList.toggle(QUESTIONS_WITH_BOT_WRAPPER_CLASS, enabled);
+};
+
+const ensureComposebarBotWrapperWatcher = () => {
+  if (state.composebarObserver) return;
+
+  // Initial sync (in case elements already exist)
+  try {
+    syncQuestionsContainerClass();
+  } catch (e) {
+    // ignore
+  }
+
+  const target = state.elements.panel || document.body;
+  const observer = new MutationObserver(() => {
+    // Keep this very cheap; the function does a few querySelector calls.
+    syncQuestionsContainerClass();
+  });
+
+  observer.observe(target, {
+    childList: true,
+    subtree: true,
+    attributes: true,
+    attributeFilter: ["class", "style", "hidden", "aria-hidden"],
+  });
+
+  state.composebarObserver = observer;
+};
 
 /**
  * Force Shoelace Sources drawer to use bottom placement.
@@ -335,6 +396,9 @@ const ensureElements = (config = {}) => {
   historyCloseButton.addEventListener("click", () => {
     closeHistory();
   });
+
+  // Keep questions container in sync with composebar header wrapper visibility
+  ensureComposebarBotWrapperWatcher();
 };
 
 const ensureChatContainer = (containerId) => {
@@ -430,6 +494,7 @@ export const open = () => {
 
   // Re-enforce in case something changed between sessions
   enforceSourcesDrawerBottomPlacement();
+  syncQuestionsContainerClass();
   state.isOpen = true;
   syncPanelState();
 };

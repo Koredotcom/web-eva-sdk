@@ -488,6 +488,12 @@
   }
   .questions-container {
     scrollbar-gutter: stable;
+    overscroll-behavior: contain;
+    &.eva-sdk-questions-container--with-bot-input-wrapper {
+      .message-container {
+        padding-bottom: 5.25rem !important;
+      }
+    }
   }
   .landing-page-container.results-page-container {
     .landing-page-content {
@@ -814,6 +820,7 @@
   border-radius: 16px;
 
   &.eva-sdk-chatbot-history-overlay--open {
+    z-index: 10;
     opacity: 1;
     pointer-events: auto;
     overscroll-behavior: contain;
