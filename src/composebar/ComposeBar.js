@@ -182,11 +182,11 @@ class ComposeBar {
                         // Get selectedContext from store to check if context is actually set
                         const state = store.getState()?.global;
                         const selectedContext = state?.selectedContext?.data;
-                        
+
                         // Only show attachment pills when context is actually set (matching Kora-React behavior)
                         // In Kora-React, attachment pills are only shown when selectedContext?.sources?.length >= 1
                         const hasContextSet = selectedContext?.sources?.length >= 1;
-                        
+
                         // Filter files: only show attachments that are actually set as context
                         // Don't show items that are only loading (not yet set as context)
                         let filesOnly = [];
@@ -196,8 +196,8 @@ class ComposeBar {
                                 ? sources.filter(source => {
                                     if (source.type === "attachment") {
                                         // Check if this source exists in selectedContext
-                                        const isInContext = selectedContext.sources.some(ctxSource => 
-                                            ctxSource?.docId === source?.docId || 
+                                        const isInContext = selectedContext.sources.some(ctxSource =>
+                                            ctxSource?.docId === source?.docId ||
                                             ctxSource?.uID === source?.uID ||
                                             ctxSource?.componentId === source?.componentId ||
                                             (ctxSource?.source === "attachment" && ctxSource?.title === source?.title)
@@ -210,7 +210,7 @@ class ComposeBar {
                         }
                         // If no context is set, don't show any attachment pills (even if loading)
                         // The loader should only appear temporarily during upload, and disappear if context isn't set
-                        
+
                         // Track attachment-pill count changes (used to hide quick replies on removal)
                         const nextAttachmentCount = (filesOnly || []).length;
                         const prevAttachmentCount = this._lastAttachmentPillsCount || 0;
@@ -255,7 +255,7 @@ class ComposeBar {
                                 }
                             }
                         }
-                        
+
                         // Handle context chip data (for non-attachment sources)
                         if (!hasContextSet) {
                             if (sources?.length > 0) {
@@ -270,7 +270,7 @@ class ComposeBar {
                             } else {
                                 this.contextChipData = null;
                             }
-                        }                        
+                        }
                         if (this.contextChipData && !this.bannerClosedByUser) {
                             setTimeout(() => {
                                 const contextChipOnComposebarDiv = this.container.querySelector('.composebar-bot-input-wrapper');
@@ -289,7 +289,7 @@ class ComposeBar {
                     } catch (err) {
                         console.warn('Failed processing file upload subscribe payload:', err);
                     }
-                }else{                                  
+                } else {
                     this.contextChipData = null;
                 }
 
@@ -298,13 +298,27 @@ class ComposeBar {
             console.warn('FileUpload init failed:', e);
         }
 
-        // Subscribe to selectedContext changes in Redux store
-        // This ensures the context chip updates when selectedContext changes (e.g., after API success)
+        // Subscribe to selectedContext updates to sync selection icons and context chip
         this.selectedContextUnsubscribe = store.subscribe(() => {
-            const state = store.getState()?.global;
-            const selectedContext = state?.selectedContext?.data;
-            
-            // Only update if selectedContext has sources (context is set)
+            const state = store.getState();
+            const globalState = state?.global;
+            const selectedContext = globalState?.selectedContext?.data;
+
+            // 1. Re-render update of recent files list selection icons if dialog is open
+            const attachmentDialog = this.container.querySelector('[data-eva-attachment-dialog]');
+            if (attachmentDialog?.hasAttribute('open')) {
+                const recentFilesListEl = this.container.querySelector('[data-eva-recent-files]');
+                if (recentFilesListEl) {
+                    renderRecentFiles(recentFilesListEl, {
+                        onFileAttach: (file) => this.handleFileAttachFromRecent(file),
+                        onFileRemove: (file) => this.handleFileRemoveFromRecent(file),
+                        onFileClose: () => this.handleCloseAttachmentDialog()
+                    });
+                }
+            }
+
+            // 2. React to selectedContext changes (e.g., after context API success)
+            // This ensures the context chip updates when context is set or cleared
             if (selectedContext?.sources?.length > 0) {
                 // Get the source to pass to updateBotHeaderContent
                 const source = selectedContext?.sources?.[0];
@@ -626,7 +640,7 @@ class ComposeBar {
         const state = store.getState()?.global;
         const selectedContext = state?.selectedContext?.data;
         const questions = state?.questions || this.questions;
-        
+
         // Find the response by searching through questions for matching messageId
         let response = null;
         if (selectedContext?.messageId && questions) {
@@ -646,9 +660,9 @@ class ComposeBar {
         const questionText = response?.question || '';
 
         const answerContextChipContainer = this.container.querySelector('.response-as-context-truncated-text');
-        const answerContextChipText = this.container.querySelector('.response-as-context-question-text') || 
-                                      this.container.querySelector('.answer-context-chip-text');
-        
+        const answerContextChipText = this.container.querySelector('.response-as-context-question-text') ||
+            this.container.querySelector('.answer-context-chip-text');
+
         if (answerContextChipContainer && answerContextChipText) {
             // Set the question and answer preview (matching Kora-React structure)
             if (questionText) {
@@ -691,11 +705,11 @@ class ComposeBar {
 
     updateBotHeaderContent(contextChipData) {
         console.log("contextChipData in updateBotHeaderContent", contextChipData);
-        const composeBarWrapperDiv = this.container.querySelector('.composebar-bot-input-wrapper');  
+        const composeBarWrapperDiv = this.container.querySelector('.composebar-bot-input-wrapper');
         if (!composeBarWrapperDiv) return;
-        const botInputHeaderDiv = composeBarWrapperDiv.querySelector('.bot-input-header'); 
+        const botInputHeaderDiv = composeBarWrapperDiv.querySelector('.bot-input-header');
         const answerContextChipContainer = this.container.querySelector('.response-as-context-truncated-text');
-        if(!contextChipData){
+        if (!contextChipData) {
             this.bannerClosedByUser = false;
             this.bannerClosedAgentId = null;
             hideElementImmediately(composeBarWrapperDiv);
@@ -720,30 +734,30 @@ class ComposeBar {
         const selectedContext = state?.selectedContext?.data;
         const currentQuestion = state?.currentQuestion;
         const questions = state?.questions || this.questions;
-        
+
         // Get source from selectedContext (matching Kora-React: source = selectedContext?.sources?.[0])
         // If selectedContext doesn't have sources, fall back to contextChipData
         const source = selectedContext?.sources?.[0] || contextChipData;
-        
+
         // Check if source is an attachment (matching Kora-React: const attachment = source?.source === "attachment")
         const isAttachment = source?.source === "attachment" || source?.type === "attachment";
-        
+
         // Check for mcpAgent from currentQuestion (matching Kora-React: questions?.[currentQuestion]?.context?.agentType === "mcpAgent")
         const isMcpAgent = currentQuestion && questions?.[currentQuestion]?.context?.agentType === "mcpAgent";
-        
+
         // Check if this is a GPT agent response selected as context
         // Matching Kora-React exactly: (source?.templateType === 'gpt_form_template' || source?.agentType === 'gptAgent' || isMcpAgent) && (selectedContext?.setViaMenuOptions || selectedContext?.setViaGptAgent)
         // This check comes FIRST in Kora-React's singleChipRenderer
         // IMPORTANT: Only show response-as-context-truncated-text for GPT agent responses, NOT for attachments
-        const isGptAgentResponse = !isAttachment && 
-                                    (source?.templateType === 'gpt_form_template' || 
-                                     source?.agentType === 'gptAgent' || 
-                                     isMcpAgent) &&
-                                    (selectedContext?.setViaMenuOptions || selectedContext?.setViaGptAgent);
-        
+        const isGptAgentResponse = !isAttachment &&
+            (source?.templateType === 'gpt_form_template' ||
+                source?.agentType === 'gptAgent' ||
+                isMcpAgent) &&
+            (selectedContext?.setViaMenuOptions || selectedContext?.setViaGptAgent);
+
         // Check if should return null (supervisor contexts shouldn't render a chip here)
         const shouldReturnNull = selectedContext?.sources?.[0]?.isSupervisor;
-        
+
         // If GPT agent response, show response preview (matching Kora-React: return responseSelectedAsContext(source))
         if (isGptAgentResponse) {
             if (botInputHeaderDiv) {
@@ -751,14 +765,14 @@ class ComposeBar {
             }
             // Show the wrapper first so the context chip container is visible
             showElementImmediately(composeBarWrapperDiv, 'block');
-            
-            if(answerContextChipContainer){
+
+            if (answerContextChipContainer) {
                 // Show the container (matching Kora-React)
                 showElementImmediately(answerContextChipContainer, 'flex');
                 this.syncContextTrueClass(true);
                 // Render response selected as context
                 this.responseSelectedAsContext(source);
-                
+
                 // Attach close button handler (matching Kora-React: renderCloseBtn)
                 const answerContextCloseBtn = answerContextChipContainer.querySelector('.srCicon');
                 if (answerContextCloseBtn) {
@@ -779,7 +793,7 @@ class ComposeBar {
             }
             return; // Early return after showing GPT agent response preview
         }
-        
+
         // If should return null (commonAgent, supervisor, or agent type), don't show anything
         // Matching Kora-React: else if(...) return null
         if (shouldReturnNull) {
@@ -815,16 +829,16 @@ class ComposeBar {
         /*check whether contextChipData is holding agent or answer */
         const iconElement = composeBarWrapperDiv.querySelector('.icon-image img');
         const nameElement = composeBarWrapperDiv.querySelector('.bot-input-header-left-text');
-        
-        if (contextChipData?.isAgent) {  
+
+        if (contextChipData?.isAgent) {
             // Ensure wrapper is visible when an agent is selected (common agent / agent context)
             showElementImmediately(composeBarWrapperDiv, 'block');
-            if(botInputHeaderDiv){
+            if (botInputHeaderDiv) {
                 showElementImmediately(botInputHeaderDiv, 'flex');
-            }          
-            if(answerContextChipContainer){
+            }
+            if (answerContextChipContainer) {
                 hideElementImmediately(answerContextChipContainer);
-            }                       
+            }
             this.syncContextTrueClass(false);
 
             // Reset details only when a NEW agent is selected (avoid auto-collapse on subsequent updates)
@@ -874,27 +888,27 @@ class ComposeBar {
                 }
                 return; // Early return for attachments
             }
-            
+
             // For other non-agent contexts (not attachments), show the answer context chip
             if (botInputHeaderDiv) {
                 hideElementImmediately(botInputHeaderDiv);
-            }                        
-            if(answerContextChipContainer){
+            }
+            if (answerContextChipContainer) {
                 showElementImmediately(answerContextChipContainer, 'flex');
                 this.syncContextTrueClass(true);
                 // Hide the bot input wrapper when response context is shown
                 hideElementImmediately(composeBarWrapperDiv);
-                    /*set answer inside response-as-context-truncated-text */
-                    const answerContextChipText = this.container.querySelector('.response-as-context-question-text') || 
-                                                  this.container.querySelector('.answer-context-chip-text');  
-                    const currentQuestionsLength = Object.values(this.questions)?.length;
-                    const currentAnswer = Object.values(this.questions)?.[currentQuestionsLength - 1]?.answer || 'Answer Context';
-                    if (answerContextChipText) {
-                        answerContextChipText.innerText = markdownToPlainText(currentAnswer);
-                    }
-                    // answerContextChipText.innerHTML = this.answerContextHTML(markdownToPlainText(currentAnswer));
-                
-            }            
+                /*set answer inside response-as-context-truncated-text */
+                const answerContextChipText = this.container.querySelector('.response-as-context-question-text') ||
+                    this.container.querySelector('.answer-context-chip-text');
+                const currentQuestionsLength = Object.values(this.questions)?.length;
+                const currentAnswer = Object.values(this.questions)?.[currentQuestionsLength - 1]?.answer || 'Answer Context';
+                if (answerContextChipText) {
+                    answerContextChipText.innerText = markdownToPlainText(currentAnswer);
+                }
+                // answerContextChipText.innerHTML = this.answerContextHTML(markdownToPlainText(currentAnswer));
+
+            }
             // composeBarWrapperDiv.innerHTML = this.answerContextHTML(markdownToPlainText(currentAnswer));
             const answerContextCloseBtn = this.container.querySelector('.srCicon');
             if (answerContextCloseBtn) {
@@ -920,7 +934,7 @@ class ComposeBar {
 
         const endConversationBtn = composeBarWrapperDiv.querySelector('.bot-input-header-right-text');
         const agentDetailsBtn = composeBarWrapperDiv.querySelector('.details-section');
-        
+
         if (!agentDetailsBtn) return;
 
 
@@ -1055,7 +1069,7 @@ class ComposeBar {
         const moreDetailsText = composeBarWrapper.querySelector('.more-details-text');
         const state = store.getState().global;
         let getDescription = "";
-         const agentId = state.selectedContext?.data?.sources?.[0]?.source;
+        const agentId = state.selectedContext?.data?.sources?.[0]?.source;
         for (let key in state.allAgents.data) {
             const agents = state.allAgents.data[key];
             const agentFound = agents.find(el => el.id === agentId)
@@ -1065,7 +1079,7 @@ class ComposeBar {
             }
         }
         // const enabledContextDescription = enabledContext?.description || '';
-        
+
         if (!detailsContent || !moreDetailsText) return;
 
         // Toggle state (persisted) and sync UI
@@ -1661,11 +1675,11 @@ class ComposeBar {
         // Target the textarea with class "eva-compose-textarea" (rows='1', single line initially)
         const composeTextarea = this.container.querySelector('.eva-compose-textarea');
         if (!composeTextarea) return;
-        
+
         // Get the input container to add class when textarea becomes multiline
         const inputContainer = this.container.querySelector('.eva-input-container');
         if (!inputContainer) return;
-        
+
         // Temporarily remove the class to measure in base layout state
         // This prevents layout shift from affecting the measurement
         const hadMultilineClass = inputContainer.classList.contains('textarea-multiline');
@@ -1674,7 +1688,7 @@ class ComposeBar {
             // Force a reflow to ensure layout has updated before measuring
             void inputContainer.offsetHeight;
         }
-        
+
         // Measure scrollHeight in the base layout state (without multiline class)
         composeTextarea.style.height = 'auto';
         const scrollHeight = composeTextarea.scrollHeight;
@@ -1875,7 +1889,7 @@ class ComposeBar {
     updateCommonAgentsInDialog() {
         const dialog = this.container.querySelector('[data-eva-dialog]');
         if (!dialog) return;
-        
+
         const commonAgentsDialog = dialog.querySelector('[data-eva-common-agents-dialog]');
         if (!commonAgentsDialog) return;
 
@@ -1889,7 +1903,7 @@ class ComposeBar {
         } catch (e) {
             // keep existing this.commonAgents
         }
-        
+
         // Render common agents directly in the dialog
         commonAgentsDialog.innerHTML = this.commonAgents.map(agent => {
             return `<div class="agents-action-item ${this.selectedCommonAgent?.id === agent.id ? 'active' : ''}" data-eva-common-agents-action data-agent-id="${agent.id}">
