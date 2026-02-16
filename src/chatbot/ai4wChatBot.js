@@ -12,6 +12,7 @@ const state = {
   initialized: false,
   isOpen: false,
   isHistoryOpen: false,
+  sourcesDrawerObserver: null,
   elements: {
     button: null,
     panel: null,
@@ -31,6 +32,36 @@ const state = {
 
 const ensureDomAvailable = () =>
   typeof window !== "undefined" && typeof document !== "undefined";
+
+/**
+ * Force Shoelace Sources drawer to use bottom placement.
+ * Note: The drawer is created elsewhere (SourcesSidebar), so we enforce it here at runtime.
+ */
+const enforceSourcesDrawerBottomPlacement = () => {
+  const drawer = document.getElementById("sources-sidebar-drawer");
+  if (!drawer) return false;
+
+  // Shoelace supports: start | end | top | bottom
+  drawer.setAttribute("placement", "bottom");
+  return true;
+};
+
+/**
+ * Observe DOM for Sources drawer creation and enforce placement.
+ */
+const ensureSourcesDrawerPlacementWatcher = () => {
+  if (state.sourcesDrawerObserver) return;
+
+  // Apply immediately if it already exists
+  enforceSourcesDrawerBottomPlacement();
+
+  const observer = new MutationObserver(() => {
+    enforceSourcesDrawerBottomPlacement();
+  });
+
+  observer.observe(document.body, { childList: true, subtree: true });
+  state.sourcesDrawerObserver = observer;
+};
 
 const createButton = (label) => {
   const button = document.createElement("button");
@@ -371,6 +402,7 @@ export const init = (config = {}) => {
 
   ensureElements(config);
   ensureChatContainer(containerId);
+  ensureSourcesDrawerPlacementWatcher();
 
   initializeSDK({
     ...config,
@@ -396,6 +428,8 @@ export const open = () => {
     return;
   }
 
+  // Re-enforce in case something changed between sessions
+  enforceSourcesDrawerBottomPlacement();
   state.isOpen = true;
   syncPanelState();
 };

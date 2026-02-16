@@ -58,6 +58,10 @@
   border: 1px solid #eeeeee;
   font-family: Inter;
 
+  .attachment-preview-container {
+    width: 95%;
+  }
+
   .landing-page-content {
     .landing-page-content-container {
       .compose-bar-container, .recent-agents-parent-container {
@@ -152,6 +156,26 @@
       border-radius: 16px;
     }
   }
+
+  /* Sources sidebar drawer as a bottom sheet (CSS-only) */
+  sl-drawer.sources-sidebar-drawer {
+    &::part(panel) {
+      height: 100%;
+    } 
+    &::part(base) {
+      border-radius: 16px;      
+    }
+    .right-panel-header {
+      .close-icon {
+        right: 1rem;
+        left: inherit;
+      }
+    }
+  }
+  .sources-sidebar-overlay {
+    border-radius: 16px;
+  }
+
   .multiIntentExecution {
     .tasksToRun {
       .taskItems {
