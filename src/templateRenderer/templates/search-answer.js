@@ -2,29 +2,13 @@ import { MessageRenderer } from "../../plugins/Markdown/message-renderer";
 import { encodeHtml } from "../utils/helper";
 
 function render(data) {
-    const showSources = data.hasData && data?.data?.length > 0;
-    const drawerId = `sources-drawer-${data.id}`;
-
+    // For search_results template type, only render the answer text
+    // Search results should NOT be displayed in the main answer area
+    // They should only appear in the SourcesSidebar when "Related Search Results" is clicked
+    
     let html = `
         <div class="search-answer-container">
             ${renderAnswer(data)}
-            
-            ${showSources ? `
-                <div class="sources-button-container" style="display:none">
-                    <button 
-                        class="sources-btn" 
-                        onclick="openSourcesDrawer('${drawerId}')"
-                        style="padding: 8px 16px; border: 1px solid #0066cc; border-radius: 4px; background: #f0f7ff; color: #0066cc; cursor: pointer; font-weight: 500; transition: all 0.2s;"
-                        onmouseover="this.style.background='#0066cc'; this.style.color='white';"
-                        onmouseout="this.style.background='#f0f7ff'; this.style.color='#0066cc';">
-                        ${data?.sources?.[0]?.name}
-                    </button>
-                </div>
-                
-                <sl-drawer id="${drawerId}" label="Sources" placement="end" style="--size: 35vw;">
-                    ${renderSourcesForDrawer(data)}
-                </sl-drawer>
-            ` : ''}
         </div>
     `;
 

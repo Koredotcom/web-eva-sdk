@@ -148,7 +148,7 @@ const ChatInterfaceDemo = () => {
         <History />
         {/* <RecentFilesDemo /> */}
         {/* <Notifications /> */}
-        <Agents />
+        {/* <Agents /> */}
       </div>
       
       <div className="chatInterfaceSec">

@@ -194,7 +194,69 @@ const FileUpload = (props) => {
             // Returning as an object with success as false for the client to know that the request could not be completed
             return resp;
         } else {
-            removeCurentFile({state, item : args, removingSource : true})
+            // Find the corresponding source from selectedContext.sources to get the correct docId
+            // The file object might not have docId directly, but it should be in selectedContext.sources
+            const sources = state?.selectedContext?.data?.sources || [];
+            let matchingSource = null;
+            
+            if (args?.source === "attachment" || !args?.source) {
+                // For attachments, match by multiple possible identifiers
+                // Check docId first (most reliable), then id, uID, componentId, mediaName
+                matchingSource = sources.find(s => {
+                    if (s?.source !== "attachment") return false;
+                    
+                    // Match by docId (preferred)
+                    if (args?.docId && s?.docId === args?.docId) return true;
+                    if (args?.docId && s?.id === args?.docId) return true;
+                    
+                    // Match by id
+                    if (args?.id && s?.id === args?.id) return true;
+                    if (args?.id && s?.docId === args?.id) return true;
+                    
+                    // Match by uID
+                    if (args?.uID && s?.uID === args?.uID) return true;
+                    if (args?.uID && s?.id === args?.uID) return true;
+                    if (args?.uID && s?.docId === args?.uID) return true;
+                    
+                    // Match by componentId
+                    if (args?.componentId && s?.componentId === args?.componentId) return true;
+                    if (args?.componentId && s?.id === args?.componentId) return true;
+                    if (args?.componentId && s?.docId === args?.componentId) return true;
+                    
+                    // Match by mediaName (fallback for attachments)
+                    if (args?.mediaName && s?.mediaName === args?.mediaName) return true;
+                    
+                    return false;
+                });
+            } else {
+                // For other sources, match by docId
+                matchingSource = sources.find(s => 
+                    s?.docId === args?.docId || s?.id === args?.docId
+                );
+            }
+            
+            // Use the matching source if found (it has the correct docId), otherwise use args
+            const itemToRemove = matchingSource ? cloneDeep(matchingSource) : args;
+            
+            // Ensure docId is present (required for API call)
+            // Priority: docId > id > contentId
+            if (!itemToRemove?.docId) {
+                itemToRemove.docId = itemToRemove?.docId || itemToRemove?.id || itemToRemove?.contentId;
+            }
+            
+            // Ensure source type is set
+            if (!itemToRemove?.source && args?.source) {
+                itemToRemove.source = args.source;
+            } else if (!itemToRemove?.source && matchingSource?.source) {
+                itemToRemove.source = matchingSource.source;
+            }
+            
+            if (!itemToRemove?.docId) {
+                console.error('Cannot remove attachment: docId not found', { args, matchingSource, sources });
+                return;
+            }
+            
+            removeCurentFile({state, item : itemToRemove, removingSource : true})
         }
     }
 

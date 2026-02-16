@@ -9,31 +9,31 @@ import store from "../../redux/store";
 const isMSEnv = () => store.getState()?.global?.env === 'MS';
 
 const getThumbsUpIcon = (filled = false) => {
-    if (isMSEnv()) {
-        return `<img src="${resolveSdkAssetPath("images/MS-Icons/thumbs-up-ms.svg")}" alt="Thumbs Up" width="16" height="16" />`;
-    }
-    return filled ? createThumbsUpFilled({ size: 16, color: "#12B76A" }) : createThumbsUp({ size: 16, color: "#667085" });
+	if (isMSEnv()) {
+		return `<img src="images/MS-Icons/thumbs-up-ms.svg" alt="Thumbs Up" width="16" height="16" />`;
+	}
+	return filled ? createThumbsUpFilled({ size: 16, color: "#12B76A" }) : createThumbsUp({ size: 16, color: "#667085" });
 };
 
 const getExportWordIcon = () => {
-    if (isMSEnv()) {
-        return `<img src="${resolveSdkAssetPath("images/MS-Icons/share-ms.svg")}" alt="Export doc" width="16" height="16" />`;
-    }
-    return createExport({ size: 16, color: "#667085" });
+	if (isMSEnv()) {
+		return `<img src="images/MS-Icons/share-ms.svg" alt="Export doc" width="16" height="16" />`;
+	}
+	return createExport({ size: 16, color: "#667085" });
 };
 
 const getThumbsDownIcon = (filled = false) => {
-    if (isMSEnv()) {
-        return `<img src="${resolveSdkAssetPath("images/MS-Icons/thumbs-down-ms.svg")}" alt="Thumbs Down" width="16" height="16" />`;
-    }
-    return filled ? createThumbsDownFilled({ size: 16, color: "#F04438" }) : createThumbsDown({ size: 16, color: "#667085" });
+	if (isMSEnv()) {
+		return `<img src="images/MS-Icons/thumbs-down-ms.svg" alt="Thumbs Down" width="16" height="16" />`;
+	}
+	return filled ? createThumbsDownFilled({ size: 16, color: "#F04438" }) : createThumbsDown({ size: 16, color: "#667085" });
 };
 
 const getThreeDotIcon = () => {
-    if (isMSEnv()) {
-        return `<img src="${resolveSdkAssetPath("images/MS-Icons/dots-vertical.svg")}" alt="More options" width="16" height="16" />`;
-    }
-    return EllipsisVertical({ size: 16, color: "#667085" });
+	if (isMSEnv()) {
+		return `<img src="images/MS-Icons/dots-vertical.svg" alt="More options" width="16" height="16" />`;
+	}
+	return EllipsisVertical({ size: 16, color: "#667085" });
 };
 import { updateChatData } from "../../redux/globalSlice";
 import { cloneDeep } from "lodash";
@@ -167,15 +167,15 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 	const singleSourceChipRenderer = (source) => {
 		// const attachment = source?.source === 'attachment';
 
-		const warning = source?.warning;				
+		const warning = source?.warning;
 		let icon = renderIcons(
 			source.source,
 			source.extIcon || source.iconUrl,
 			source.providerIcon || source.icon
 		).outerHTML;
-		if(isMSEnv()){
-			if(source?.source === 'llm' || source?.source === 'customQnAAPI' || source?.source === 'web') {
-				icon = `<img src="${resolveSdkAssetPath("images/MS-Icons/aims-favicon.svg")}" alt="AIMS" width="16" height="16" />`;
+		if (isMSEnv()) {
+			if (source?.source === 'llm' || source?.source === 'customQnAAPI' || source?.source === 'web') {
+				icon = `<img src="images/MS-Icons/aims-favicon.svg" alt="AIMS" width="16" height="16" />`;
 			}
 		}
 
@@ -189,7 +189,7 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
                         ${icon}
                     </div>
                     <span class="krSpecName">${htmlDecode(
-				 chipTitle || "No subject"
+				chipTitle || "No subject"
 			)}</span>                    
                 </span>
 				${warning
@@ -200,15 +200,29 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
         `;
 	};
 
-	const chatFilterGroupRenderer = () => {
-		if (!item?.showData) {
+	const chatFilterGroupRenderer = (options = {}) => {
+		const { forDrawer = false } = options;
+		if (!forDrawer && !item?.showData) {
 			return '';
 		}
+
+		// Normalize to array: item.data can be array or object
+		const getDataList = () => {
+			if (Array.isArray(item?.data)) return item.data;
+			if (item?.data && typeof item.data === 'object') return Object.values(item.data);
+			return [];
+		};
+		const getContentLinksList = () => {
+			const links = item?.content?.payload?.text?.body?.content_links_for_answer;
+			if (Array.isArray(links)) return links;
+			if (links && typeof links === 'object') return Object.values(links);
+			return [];
+		};
 
 		let body = `<div class="chatFilterGroup">`;
 		body += `<div class="threadListGroup">`;
 		if (item?.sources?.[0]?.source === "customQnAAPI") {
-			item?.content?.payload?.text?.body?.content_links_for_answer?.map((data, i) => {
+			getContentLinksList().map((data, i) => {
 				body += `<div class="threadListItem" key="${i}">
 	<div class="rightCol">
 		<div class="leftDetails">
@@ -246,8 +260,24 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 			});
 		}
 		else {
-			item?.data?.map((data, i) => {
-				body += `<div class="threadListItem" key="${i}">
+			const dataList = getDataList();
+			if (dataList.length === 0 && (item?.sources?.length > 0)) {
+				// Fallback: show source chips when no thread data
+				item.sources.forEach((source, i) => {
+					const title = source?.name || source?.title || source?.source || 'Source';
+					const icon = renderIcons(source?.source, source?.extIcon || source?.iconUrl, source?.providerIcon || source?.icon)?.outerHTML || '';
+					body += `<div class="threadListItem" key="src-${i}">
+						<div class="leftCol">${icon}</div>
+						<div class="rightCol">
+							<div class="leftDetails">
+								<div class="namgeGroup"><div class="name">${htmlDecode(title)}</div></div>
+							</div>
+						</div>
+					</div>`;
+				});
+			} else {
+				dataList.map((data, i) => {
+					body += `<div class="threadListItem" key="${i}">
                                 <div class='leftCol'>
                                 ${renderIcons(data?.source, null)?.outerHTML}
                             </div>
@@ -281,7 +311,8 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
                                 </div>
                             </div>
                         </div>`;
-			});
+				});
+			}
 		}
 		body += `</div>`;
 		body += `</div>`;
@@ -289,33 +320,381 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 		return body;
 	};
 
+	/**
+	 * Render sources chip tag (similar to sourcesChipTagRefactored in Kora-React)
+	 * Shows sources chip when multiple sources exist
+	 */
+	const sourcesChipTagRefactored = () => {
+		const sources = item?.sources || [];
+		if (sources.length === 0) return '';
+
+		// Check invalid scenarios
+		const firstSource = sources[0];
+		const sourceType = firstSource?.source;
+		if (sources.length === 1 && !firstSource?.hasOwnProperty('redirectUrl') && sourceType === 'llm') {
+			return '';
+		}
+		if (item?.viewType === "threadView") {
+			return '';
+		}
+
+		const isMultiSource = sources.length > 1;
+		const isSearchResults = item?.templateType === 'search_results';
+
+		// Get unique sources (handle webSearch agentId case)
+		const agentId = item?.agentId;
+		const uniqueSources = sources.reduce((acc, source) => {
+			let identifier;
+			if (agentId === 'webSearch') {
+				identifier = source?.domainIcon?.iconUrl || null;
+			} else {
+				identifier = source?.iconUrl || source?.extIcon || source?.source;
+			}
+			if (!acc.find(existing => {
+				const existingIdentifier = agentId === 'webSearch'
+					? (existing?.domainIcon?.iconUrl || null)
+					: (existing?.iconUrl || existing?.extIcon || existing?.source);
+				return existingIdentifier === identifier;
+			})) {
+				acc.push(source);
+			}
+			return acc;
+		}, []);
+
+		// Render multi-source chip
+		const renderMultiSourceChip = () => {
+			const sourcesToShow = uniqueSources.slice(0, 3);
+			const avatarsHtml = sourcesToShow.map((source, index) => {
+				// Handle webSearch agentId case
+				let iconSrc;
+				if (agentId === 'webSearch') {
+					iconSrc = source?.domainIcon?.iconUrl || null;
+				} else {
+					iconSrc = source?.iconUrl || source?.extIcon;
+				}
+
+				if (iconSrc) {
+					return `<img src="${encodeHtml(iconSrc)}" alt="" class="source-avatar"/>`;
+				} else {
+					const iconEl = renderIcons(source?.source, source?.extIcon, null, source?.iconUrl, source?.isSupervisor);
+					return `<span class="sourceIcon">${iconEl?.outerHTML || ''}</span>`;
+				}
+			}).join('');
+
+			return `
+				<div class="sourceChipItemTextGroup">
+					<div class="p-avatar">
+						${avatarsHtml}
+					</div>
+					<span class="sourceChipItemText">Sources</span>
+				</div>
+			`;
+		};
+
+		// Render single source chip
+		const renderSingleSourceChip = () => {
+			const source = firstSource;
+			const sourceType = source?.source;
+			const attachment = sourceType === 'attachment';
+			const defaultRag = sourceType === 'accountKnowledge';
+
+			// GPT form template case
+			if (source?.templateType === 'gpt_form_template') {
+				const documentIcon = `<svg width="14px" height="14px" viewBox="0 0 16 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+					<path d="M9.84975 1.89124V5.33335C9.84975 5.80006 9.84975 6.03342 9.94058 6.21168C10.0205 6.36848 10.148 6.49596 10.3048 6.57586C10.483 6.66669 10.7164 6.66669 11.1831 6.66669H14.6252M9.84975 14.1666H4.84975M11.5164 10.8333H4.84975M14.8498 8.32348V14.3333C14.8498 15.7334 14.8498 16.4335 14.5773 16.9683C14.3376 17.4387 13.9551 17.8211 13.4847 18.0608C12.95 18.3333 12.2499 18.3333 10.8498 18.3333H5.51642C4.11629 18.3333 3.41622 18.3333 2.88144 18.0608C2.41104 17.8211 2.02859 17.4387 1.7889 16.9683C1.51642 16.4335 1.51642 15.7334 1.51642 14.3333V5.66663C1.51642 4.26649 1.51642 3.56643 1.7889 3.03165C2.02859 2.56124 2.41104 2.17879 2.88144 1.93911C3.41622 1.66663 4.11629 1.66663 5.51642 1.66663H8.1929C8.80438 1.66663 9.11011 1.66663 9.39783 1.7357C9.65292 1.79694 9.89678 1.89795 10.1205 2.03503C10.3728 2.18963 10.5889 2.40582 11.0213 2.8382L13.6782 5.49505C14.1106 5.92743 14.3267 6.14362 14.4814 6.39591C14.6184 6.61959 14.7194 6.86346 14.7807 7.11855C14.8498 7.40627 14.8498 7.712 14.8498 8.32348Z" stroke="#79716B" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+				</svg>`;
+
+				const hasContextFields = (Object.keys(item?.content?.formData?.contextFields || {}))?.length > 0;
+				const hasRequestParamsWithFields = item?.content?.formData?.requestParams?.some(param =>
+					Object.keys(param?.fields || {})?.length > 0
+				);
+				const hasNoContent = !hasContextFields && !hasRequestParamsWithFields;
+
+				return `
+					<div class="gpt-agents-source-chip ${hasNoContent ? 'no-content' : ''}" style="display: flex; align-items: center; gap: 6px;">
+						<div class="icon-cls">${documentIcon}</div>
+						<div class="sourceTitle">${htmlDecode(source?.title || 'Data')}</div>
+					</div>
+				`;
+			}
+
+			// Get icon
+			const iconSrc = source?.iconUrl || source?.extIcon;
+			const iconEl = renderIcons(
+				sourceType,
+				source?.extIcon || null,
+				null,
+				source?.iconUrl || source?.icon,
+				source?.isSupervisor
+			);
+			const iconHtml = iconEl?.outerHTML || '';
+
+			// Attachment or defaultRag without hasData
+			if (!item.hasData && (attachment || defaultRag)) {
+				const avatarHtml = iconSrc ?
+					`<img src="${encodeHtml(iconSrc)}" alt="" class="avatar-sources-chip"/>` :
+					`<span class="sourceIcon">${iconHtml}</span>`;
+
+				return `
+					<div class="sourceChipItemText buttonchip">
+						${avatarHtml}
+						<span class="sourceTitle">Source</span>
+					</div>
+				`;
+			}
+
+			// hasData case
+			if (item.hasData) {
+				if (isSearchResults) {
+					const avatarHtml = iconSrc ?
+						`<img src="${encodeHtml(iconSrc)}" alt="" class="avatar-sources-chip"/>` :
+						`<span class="sourceIcon">${iconHtml}</span>`;
+
+					// For single source, show "Source" (singular), not "Sources"
+					return `
+						<div class="sourceChipItemText buttonchip">
+							${avatarHtml}
+							<span class="sourceTitle">Source</span>
+						</div>
+					`;
+				} else {
+					// CheckList icon for hasData non-search-results
+					const checkListIcon = `<svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+						<path d="M13 6.00016L5 6.00016M13 2.00016L5 2.00016M13 10.0002L5 10.0002M2.33333 6.00016C2.33333 6.36835 2.03486 6.66683 1.66667 6.66683C1.29848 6.66683 1 6.36835 1 6.00016C1 5.63197 1.29848 5.3335 1.66667 5.3335C2.03486 5.3335 2.33333 5.63197 2.33333 6.00016ZM2.33333 2.00016C2.33333 2.36835 2.03486 2.66683 1.66667 2.66683C1.29848 2.66683 1 2.36835 1 2.00016C1 1.63197 1.29848 1.3335 1.66667 1.3335C2.03486 1.3335 2.33333 1.63197 2.33333 2.00016ZM2.33333 10.0002C2.33333 10.3684 2.03486 10.6668 1.66667 10.6668C1.29848 10.6668 1 10.3684 1 10.0002C1 9.63197 1.29848 9.3335 1.66667 9.3335C2.03486 9.3335 2.33333 9.63197 2.33333 10.0002Z" stroke="#79716B" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+					</svg>`;
+
+					return `
+						<div class="sourceChipItemText buttonchip">
+							<span class="sourceIcon">${checkListIcon}</span>
+							<span class="sourceTitle">${htmlDecode(source?.title || 'Data')}</span>
+						</div>
+					`;
+				}
+			}
+
+			// DEFAULT CASE - Handles all other scenarios including file sources
+			const avatarHtml = iconSrc ?
+				`<img src="${encodeHtml(iconSrc)}" alt="" class="avatar-sources-chip"/>` :
+				`<span class="sourceIcon">${iconHtml}</span>`;
+
+			return `
+				<div class="sourceChipItemText buttonchip">
+					${avatarHtml}
+					<span class="sourceTitle">${htmlDecode(source?.title || 'Source')}</span>
+				</div>
+			`;
+		};
+
+		return `
+			<div class="sourcesChip"">
+				<div class="sourceChipItem" data-open-sources="sources">
+					${isMultiSource ? renderMultiSourceChip() : renderSingleSourceChip()}
+				</div>
+				${isSearchResults ? `<div class="lineSeperator">|</div>` : ''}
+			</div>
+		`;
+	};
+
+	/**
+	 * Render "Related Search Results" button
+	 */
+	const renderRelatedSearchResults = () => {
+		if (item?.templateType !== "search_results") return '';
+
+		return `
+			<div class="search-results-ans-block" data-open-sources="searchResults">
+				<div class="results-chip-block">
+					<span class="chip-text">Related Search Results</span>
+					<span class="icon-cls">
+						<svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+							<path d="M5.83325 14.1667L14.1666 5.83334M14.1666 5.83334H5.83325M14.1666 5.83334V14.1667" stroke="#A9A29D" stroke-width="1.66667" stroke-linecap="round" stroke-linejoin="round"/>
+						</svg>
+					</span>
+				</div>
+			</div>
+		`;
+	};
+
+	const agentMetaDetailsRenderer = () => {
+		// Extract agent metadata from context.sources if not already present
+		// This handles cases where the backend sends agent info in context instead of agentMetaDetails
+		let agentMetaDetails = item?.agentMetaDetails;
+		let supervisorAgent = item?.supervisorAgent;
+
+		// If agentMetaDetails is not populated, try to extract from context.sources
+		if (item?.agentId && !agentMetaDetails && item?.context?.sources) {
+			const agentSource = item.context.sources.find(s => s.source === item.agentId || s.provider === item.agentId);
+			if (agentSource) {
+				agentMetaDetails = {
+					name: agentSource.title,
+					icon: agentSource.icon,
+					isSupervisor: agentSource.isSupervisor || false,
+					agentType: agentSource.agentType
+				};
+				// If it's a supervisor agent, also populate supervisorAgent
+				if (agentSource.isSupervisor) {
+					supervisorAgent = {
+						name: agentSource.title,
+						icon: agentSource.icon
+					};
+				}
+			}
+		}
+
+		// 1. Special Case: Attachments (agentId === 'attachment')
+		// This is a special pseudo-agent ID used when answer comes from user-uploaded attachments
+		if (item?.agentId === 'attachment') {
+			// Attachments Icon - try to use renderIcons, fallback to SVG
+			let icon = '';
+			try {
+				const iconEl = renderIcons('attachment', null, null);
+				icon = iconEl?.outerHTML || '';
+			} catch (e) { }
+
+			// Fallback SVG if renderIcons fails
+			if (!icon) {
+				icon = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#667085" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>`;
+			}
+
+			return `
+				<div class="agentMetaDetailsWrapper singleSourceWrapper">
+					<span class="agentMetaDetailsLabel">Answer from:</span>
+					<span class="agentMetaDetailsImage contextIcon">${icon}</span>
+					<span class="agentMetaDetailsName">Attachments</span>
+				</div>
+			`;
+		}
+
+		// 2. Agent Case (real agents, not 'attachment')
+		// Match Kora-React logic: lines 1354-1385 in index.js
+		if (item?.agentId) {
+			// Use the local agentMetaDetails variable (extracted above if needed)
+			const isSupervisor = agentMetaDetails?.isSupervisor;
+
+			// Determine icon and name based on supervisor status
+			const iconUrl = isSupervisor ? supervisorAgent?.icon : agentMetaDetails?.icon;
+			const name = isSupervisor ? supervisorAgent?.name : agentMetaDetails?.name;
+
+			let iconHtml = '';
+			if (iconUrl) {
+				iconHtml = `<span class="agentMetaDetailsImage"><img src="${encodeHtml(iconUrl)}" alt="agent" /></span>`;
+			}
+
+			// If agentMetaDetails is not available yet, show skeleton loader (like Kora-React)
+			if (!agentMetaDetails || !name) {
+				return `
+					<div class="agentMetaDetailsWrapper">
+						<span class="agentMetaDetailsLabel">Answer from:</span>
+						<span class="agentMetaDetailsLoading">
+							<span style="display:inline-block;width:7.5rem;height:1.25rem;background:#e0e0e0;border-radius:0.75rem;"></span>
+						</span>
+					</div>
+				`;
+			}
+
+			return `
+				<div class="agentMetaDetailsWrapper">
+					<span class="agentMetaDetailsLabel">Answer from:</span>
+					${iconHtml}
+					<span class="agentMetaDetailsName">${htmlDecode(name)}</span>
+				</div>
+			`;
+		}
+
+		// 3. Personal Hub Case
+		// Match Kora-React logic: lines 1386-1406 in index.js
+		// Check context?.provider === 'personalKnowledge' (NOT context?.type)
+		const contextData = item?.context;
+		const isPersonalKnowledge = contextData?.provider === 'personalKnowledge';
+
+		// Additional conditions from Kora-React (line 1391):
+		// Don't show if: not historical/apiSuccess, has error, or no answer/citationAnswers
+		if (isPersonalKnowledge) {
+			// Check if we should render based on item state
+			if ((!item?.historicalData && !item?.apiSuccess) || item?.error || (!item?.answer && !item?.citationAnswers)) {
+				return '';
+			}
+
+			// Personal Hub Icon (Folder) - using same SVG as Kora-React
+			const folderIcon = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6938EF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>`;
+
+			return `
+				<div class="agentMetaDetailsWrapper personalKnowledgeWrapper">
+					<span class="agentMetaDetailsLabel">Answer from:</span>
+					<span class="folderIconSmall">${folderIcon}</span>
+					<span class="agentMetaDetailsName">Personal Hub</span>
+				</div>
+			`;
+		}
+
+		// No agent or personal hub - return empty
+		// Note: Single source "Answer from: [Source]" is handled by AnsFromChip component,
+		// not by this agentMetaDetailsRenderer
+		return '';
+	};
+
 	const knowledgeChipRenderer = () => {
 		let body = "";
 
-		if (
-			(!!item?.data?.length || item?.hasData) &&
-			!item?.citationAnswers?.length
-		) {
-			body += `<div class="leftWrapperBlockCntr"><span class="ansFrom">Answer from10 :</span>`;
-		} else {
-			body += ansFromChip();
+		// Determine if we should show sources chip
+		const sources = item?.sources || [];
+
+		// Get sources chip HTML
+		const sourcesChipHtml = sourcesChipTagRefactored();
+		const hasSourcesChip = sourcesChipHtml.trim().length > 0;
+		const hasRelatedSearchResults = item?.templateType === "search_results";
+
+		// Add sources chip and Related Search Results button container
+		if (hasSourcesChip || hasRelatedSearchResults) {
+			body += `<div class="ansFromChip widthChip" id="ansFromChip-${item?.id}">`;
+			body += `<div class="sourceGroup-item">`;
+
+			if (hasSourcesChip) {
+				body += sourcesChipHtml;
+			}
+
+			body += renderRelatedSearchResults();
+
+			body += `</div>`;
+			body += `</div>`;
 		}
 
-		if (item?.sources?.length > 1 && item?.showMultiSourceList) {
-			const multiSourceList = item?.sources
-				?.map(
-					(_, i) => `
-                <div class="multiSourceListItem" key="${i}" id = "multiSourceListItem-${item?.id}-${_?.docId}">${_?.title}</div>
-                <button class="askFollowupButton" id = "askFollowupButton-${item?.id}-${_?.docId}">Ask Followup</button>
-            `
-				)
-				.join("");
+		// Render Agent/PersonalHub/Attribution details below the sources pill
+		body += agentMetaDetailsRenderer();
 
-			body += `<div class="MultiSourceListView">${multiSourceList}</div>`;
-		}
+		// Legacy/Fallback logic (Only if NO sources chip was shown, AND not covered above?)
+		// If hasSourcesChip is FALSE, we might still want to show something?
+		// Existing logic:
+		if (!hasSourcesChip) {
+			// Check if agentMetaDetailsRenderer returned empty? 
+			// If agentMetaDetailsRenderer rendered something, we might not want sourceChipRender?
+			// But sourceChipRender is specific about 'left-splitter-opener'.
 
-		if (item?.sources?.length === 1) {
-			body += singleSourceChipRenderer(item.sources[0]);
+			// For now, preserving existing fallback behavior mostly, but if agentMetaDetailsRenderer covers it, we might double render?
+			// item.sources.length===1 is covered by agentMetaDetailsRenderer. 
+			// But sourceChipRender handles 'hasData' split panels.
+
+			// If we entered agentMetaDetailsRenderer (e.g. single source), we probably don't need sourceChipRender unless it offers more functionality (like split panel opener).
+			// sourceChipRender has "left-splitter-opener".
+
+			if (
+				(!!item?.data?.length || item?.hasData) &&
+				!item?.citationAnswers?.length &&
+				item?.templateType !== "search_results"
+			) {
+				body += `<div class="leftWrapperBlockCntr new-layout">`;
+			}
+			// Only render sourceChipRender if we didn't render agent details? Or render both?
+			// sourceChipRender seems to rely on 'ansFromChip-wrapper' structure.
+			// Let's keep it for now to avoid breaking other views, but it might need cleanup.
+			body += sourceChipRender();
+			if (
+				(!!item?.data?.length || item?.hasData) &&
+				!item?.citationAnswers?.length &&
+				item?.templateType !== "search_results"
+			) {
+				body += `</div>`;
+			}
 		}
 
 		return `<div class="ansFromChip">${body}</div>`;
@@ -451,9 +830,9 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 					if (data.toLowerCase() === "prompt") {
 						const parsed = parameter?.fields?.prompt?.value || parameter?.fields?.prompt;
 						const editorId = `quill-prompt-editor-${item?.id}-${Date.now()}`;
-						
+
 						html += `<div id="${editorId}" class="quill-prompt-container" style="height: 200px; border: 1px solid #ccc;"></div>`;
-												
+
 						initializeQuillEditor(editorId, parsed);
 					} else {
 						const field = parameter?.fields?.[data];
@@ -495,7 +874,57 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 
 		return html;
 	};
-	
+
+	const sourceChipRender = () => {
+		const sources = item?.sources || [];
+		if (sources.length === 0) {
+			return null;
+		}
+		const sourceChips = sources.map((source) => {
+			const warning = source?.warning;
+			let iconHtml = "";
+			try {
+				const iconEl = renderIcons(
+					source.source,
+					source.extIcon || source.iconUrl,
+					source.providerIcon || source.icon
+				);
+				iconHtml = iconEl?.outerHTML || "";
+			} catch (e) {
+				iconHtml = "";
+			}
+			if (isMSEnv()) {
+				if (source?.source === "llm" || source?.source === "customQnAAPI" || source?.source === "web") {
+					iconHtml = `<img src="images/MS-Icons/aims-favicon.svg" alt="AIMS" width="16" height="16" />`;
+				}
+			}
+			const chipTitle = source?.title?.[0]?.toUpperCase() + source?.title?.slice(1) || source?.source || "No subject";
+			return `
+            <div class="leftWrapperBlock">
+				<span class="koraSpecDr${warning ? " fromWarning" : ""}">
+                    <div class="contextIcon">${iconHtml}</div>
+                    <span class="krSpecName">${htmlDecode(chipTitle || "No subject")}</span>
+                </span>
+				 ${warning ? `<div class="warningText">${warning}</div>` : ""}
+            </div>`;
+		}).join("");
+		return `
+			<div id="ansFromChip-${item?.id}" class="ansFromChip-wrapper">
+				<div class="left-splitter-opener">
+					${sourceChips}
+				</div>
+				<div class="chip-wrapper">
+					<span class="ansFrom">Answer from :</span>
+					<div class="chip-item">
+						<div class="img-cls">
+							<img src="${item?.context?.sources?.[0]?.icon}" />
+						</div>
+						<span class="text-cls">${htmlDecode(item?.context?.sources?.[0]?.title || "No subject")}</span>
+					</div>
+				</div>
+			</div>`;
+	};
+
 	const copyAnswerChip = () => {
 		return `
 			<div class="copyAnswerButton"title="Copy Response" id="copyAnswerButton-${item?.messageId}">
@@ -529,8 +958,38 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 	}
 
 	const setContextChip = () => {
+		const messageId = item?.messageId || item?.id;
+		const displayMenu = !item?.isTask && !item?.noResultFound && item?.viewType !== "list" && (item?.type === "search" || item?.type === "followup");
+		const isMultiSource = item?.sources?.length > 1;
+		// Match Kora-React: button has 'hide' class when displayMenu is false, and 'multiSource' class when multiple sources
+		const hideClass = displayMenu ? '' : 'hide';
+		const multiSourceClass = isMultiSource ? 'multiSource' : '';
 		return `
-			<div class="setContextButton" id="setContextButton-${item?.messageId}" title="Set as Context">${setContextIcon({ size: 16, color: "#667085" })}</div>
+            <div class="setContextButton optionWrapper ${multiSourceClass} ${hideClass}" id="setContextButton-${messageId}" title="Set as Context: Set the sources as context and ask queries.">
+                ${setContextIcon({ size: 16, color: "#667085" })}
+                ${isMultiSource ? `<div class=\"cheveron-icon\"><svg width=\"8\" height=\"8\" viewBox=\"0 0 8 8\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M2 3L4 5L6 3\" stroke=\"#344054\" stroke-width=\"1.33333\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg></div>` : ''}
+            </div>
+            ${isMultiSource ? `
+            <div id="setContextDropdown-${messageId}" class="setContextDropdown" style="display:none; position:absolute; background:#fff; border:1px solid #e5e7eb; border-radius:6px; padding:6px; z-index:999;">
+                ${item?.sources?.map((src, idx) => {
+			// Use global selectedContext to determine if source is selected (matching Kora-React behavior)
+			const globalSC = store.getState()?.global?.selectedContext;
+			// Handle both async structure (with .data) and direct structure
+			const selectedSources = globalSC?.data?.sources || globalSC?.sources || [];
+
+			const isSelected = selectedSources?.some(s => (
+				s?.docId === src?.docId || s?.docId === src?.id || s?.id === src?.docId || s?.id === src?.id
+			));
+			const label = src?.title || src?.source;
+			const baseStyle = 'padding:6px 8px; cursor:pointer; white-space:nowrap; display:flex; align-items:center; justify-content: space-between; width:100%;';
+			const style = isSelected ? baseStyle + ' background-color:#f0fff4;' : baseStyle;
+			return `<div class="dropdown-item ${isSelected ? 'selected' : ''}" data-source-index="${idx}" style="${style}">
+                        <span>${label}</span>
+                        ${isSelected ? `<span>${tickMarkIcon({ size: 10, color: '#10B981' })}</span>` : ''}
+                    </div>`;
+		}).join('')}
+            </div>
+            ` : ''}
 		`;
 	}
 
@@ -604,11 +1063,11 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 	/*need to creata a menufunction that displays a shoelace menu on clicking */
 	const threeDotMenu = () => {
 		const messageId = item?.messageId || item?.id;
-		
-		
+
+
 		// Get available integration actions
 		const availableActions = getAvailableActions();
-		
+
 		// Generate Shoelace menu items for integration actions
 		const integrationMenuItems = availableActions.map(action => `
 			<button class="menu-item" data-menu-action="${action.appId}" data-action-type="integration">
@@ -620,7 +1079,7 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 				</div>
 			</button>
 		`).join('');
-		
+
 		return `
 			<div class="three-dot-menu-container">
 				<sl-dropdown>
@@ -632,11 +1091,11 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 			</div>
 		`;
 	}
-	
+
 
 	const renderChip = () => {
 		let state = store.getState()?.global;
-		let chipHTML = "";		
+		let chipHTML = "";
 		let chatFilterGroupHTML = "";
 		if (regeneratingAnswer) {
 			chipHTML = regeneratingChipRenderer();
@@ -644,81 +1103,81 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 			chipHTML = tableChipRenderer();
 		} else {
 			chipHTML = knowledgeChipRenderer();
-			if (item?.showGPTDialog) {
-				// Check if dialog already exists to prevent duplicates
-				const existingDialog = document.getElementById(`gptDialog-${item?.id}`);
-				if (!existingDialog) {
-					const source = item?.sources?.[0] || {};
-					const icon = renderIcons(
-						source.source,
-						source.extIcon || source.iconUrl,
-						source.providerIcon || source.icon
-					).outerHTML;
-					const title = htmlDecode(source?.title || item?.title || "No subject");
-					
-					let html = `
-	                    <sl-dialog class="gpt-form-dialog" id="gptDialog-${item?.id}" label="">
-							<div class="gpt-form-dialog-header">
-								<div class="left-section">
-									<div class="gpt-form-dialog-header-icon">
-										${icon}
-									</div>
-									<div class="gpt-form-dialog-header-title">
-										${title}
-									</div>
-								</div>
-								<div class="right-section" id="closeDialog-${item?.id}">
-									${Close({ size: 12, color: "#667085" })}
-								</div>
-							</div>
-	                        <div class="formModalContent">
-	                            ${multiAnswerChipRenderer()}
-	                        </div>
-	                    </sl-dialog>
-	                `;
-					const container = document.createElement("div");
-					container.innerHTML = html;
-					const dialog = container.firstElementChild;
-					document.body.appendChild(dialog);
-					
-					// Add close button functionality
-					const closeButton = document.getElementById(`closeDialog-${item?.id}`);
-					if (closeButton) {
-						closeButton.addEventListener('click', () => {
-							dialog.hide();
-						});
-					}
-					
-					// Show the dialog
-					dialog.show();
-					
-					
-					dialog.addEventListener('sl-hide', () => {
-						// Update state to set showGPTDialog = false
-						try {							
-							let _questions = cloneDeep(state?.questions);
-							let constId = item?.reqId || item?.id;
-							
-							if (_questions[constId]) {
-								_questions[constId].showGPTDialog = false;
-								store.dispatch(updateChatData(_questions));
-								console.log('Dialog closed - showGPTDialog set to false for:', constId);
-							}
-						} catch (error) {
-							console.error('Error updating showGPTDialog state:', error);
-						}
-						
-						// Remove dialog from DOM after state update
-						setTimeout(() => {
-							if (document.body.contains(dialog)) {
-								document.body.removeChild(dialog);
-							}
-						}, 300);
-					});
-				} else {
-					existingDialog.show();
-				}
-			}
+			// if (item?.showGPTDialog) {
+			// 	// Check if dialog already exists to prevent duplicates
+			// 	const existingDialog = document.getElementById(`gptDialog-${item?.id}`);
+			// 	if (!existingDialog) {
+			// 		const source = item?.sources?.[0] || {};
+			// 		const icon = renderIcons(
+			// 			source.source,
+			// 			source.extIcon || source.iconUrl,
+			// 			source.providerIcon || source.icon
+			// 		).outerHTML;
+			// 		const title = htmlDecode(source?.title || item?.title || "No subject");
+
+			// 		let html = `
+			//             <sl-dialog class="gpt-form-dialog" id="gptDialog-${item?.id}" label="">
+			// 				<div class="gpt-form-dialog-header">
+			// 					<div class="left-section">
+			// 						<div class="gpt-form-dialog-header-icon">
+			// 							${icon}
+			// 						</div>
+			// 						<div class="gpt-form-dialog-header-title">
+			// 							${title}
+			// 						</div>
+			// 					</div>
+			// 					<div class="right-section" id="closeDialog-${item?.id}">
+			// 						${Close({ size: 12, color: "#667085" })}
+			// 					</div>
+			// 				</div>
+			//                 <div class="formModalContent">
+			//                     ${multiAnswerChipRenderer()}
+			//                 </div>
+			//             </sl-dialog>
+			//         `;
+			// 		const container = document.createElement("div");
+			// 		container.innerHTML = html;
+			// 		const dialog = container.firstElementChild;
+			// 		document.body.appendChild(dialog);
+
+			// 		// Add close button functionality
+			// 		const closeButton = document.getElementById(`closeDialog-${item?.id}`);
+			// 		if (closeButton) {
+			// 			closeButton.addEventListener('click', () => {
+			// 				dialog.hide();
+			// 			});
+			// 		}
+
+			// 		// Show the dialog
+			// 		dialog.show();
+
+
+			// 		dialog.addEventListener('sl-hide', () => {
+			// 			// Update state to set showGPTDialog = false
+			// 			try {							
+			// 				let _questions = cloneDeep(state?.questions);
+			// 				let constId = item?.reqId || item?.id;
+
+			// 				if (_questions[constId]) {
+			// 					_questions[constId].showGPTDialog = false;
+			// 					store.dispatch(updateChatData(_questions));
+			// 					console.log('Dialog closed - showGPTDialog set to false for:', constId);
+			// 				}
+			// 			} catch (error) {
+			// 				console.error('Error updating showGPTDialog state:', error);
+			// 			}
+
+			// 			// Remove dialog from DOM after state update
+			// 			setTimeout(() => {
+			// 				if (document.body.contains(dialog)) {
+			// 					document.body.removeChild(dialog);
+			// 				}
+			// 			}, 300);
+			// 		});
+			// 	} else {
+			// 		existingDialog.show();
+			// 	}
+			// }
 		}
 		let actionChipsHTML = `<div class="answerActionChips">`;
 		// Add copy answer chip if answer exists
@@ -730,8 +1189,50 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 		if (item?.answer && !state?.ansFromChipElements?.disableExporttoWordDoc) {
 			actionChipsHTML += exportWordChip();
 		}
-		if (item?.sources?.[0]?.canSetAsSourceContext !== false && !state?.ansFromChipElements?.disableSetAsContext) {
+		// Add Set as Context button with conditions matching Kora-React MenuOptions
+		// Conditions: !llm && !testAgentFlow && showSetAsSource && !isPersonalKnowledge
+		// Also need to check: item has sources, not threadView, not bot_template, not isEnterpriseKnowledge
+		const llm = item?.sources?.[0]?.source === "llm";
+		// canSetAsSourceContext defaults to true if undefined (only false when explicitly set to false)
+		const showSetAsSource = item?.sources?.[0]?.canSetAsSourceContext !== false;
+		const testAgentFlow = state?.ansFromChipElements?.testAgentFlow || false;
+		const isPersonalKnowledge = item?.context?.provider === "personalKnowledge";
+		const displayMenu = !item?.isTask && !item?.noResultFound && item?.viewType !== "list" && (item?.type === "search" || item?.type === "followup");
+		const hasSources = !!item?.sources?.length;
+		const isThreadView = item?.viewType === "threadView";
+		const isBotTemplate = item?.templateType === "bot_template";
+		const isEnterpriseKnowledge = item?.sources?.[0]?.isSupervisor || item?.isSupervisor;
+
+		// Match Kora-React conditions: MenuOptions is shown when: !!item?.sources?.length && (item?.viewType !== "threadView" && item?.templateType !== "bot_template" && !isEnterpriseKnowledge)
+		// And Set as Context is shown when: !llm && !testAgentFlow && showSetAsSource && !isPersonalKnowledge
+		// Note: Kora-React does NOT check disableSetAsContext - it's always shown when conditions are met
+		// The disableSetAsContext flag is an SDK-specific feature flag that can be used to disable it if needed
+		const shouldShowSetAsContext = hasSources && !isThreadView && !isBotTemplate && !isEnterpriseKnowledge &&
+			!llm && !testAgentFlow && showSetAsSource && !isPersonalKnowledge;
+
+		// Debug logging
+		console.log('Set as Context conditions check:', {
+			hasSources,
+			isThreadView,
+			isBotTemplate,
+			isEnterpriseKnowledge,
+			llm,
+			testAgentFlow,
+			showSetAsSource,
+			isPersonalKnowledge,
+			disableSetAsContext: state?.ansFromChipElements?.disableSetAsContext,
+			shouldShowSetAsContext,
+			itemId: item?.id,
+			sources: item?.sources,
+			viewType: item?.viewType,
+			templateType: item?.templateType
+		});
+
+		if (shouldShowSetAsContext) {
 			actionChipsHTML += setContextChip();
+			console.log('Set as Context button added to actionChipsHTML for item:', item?.id);
+		} else {
+			console.log('Set as Context button NOT added - conditions not met for item:', item?.id);
 		}
 
 		if (!item?.disableFeedback && !state?.ansFromChipElements?.disableFeedback) {
@@ -746,37 +1247,50 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 
 		actionChipsHTML += `</div>`;
 
-		// Insert action chips inside .ansFromChip if present
-		if (chipHTML.includes('class="ansFromChip"')) {
-			const tempDiv = document.createElement('div');
-			tempDiv.innerHTML = chipHTML;
-			const ansFromChipDiv = tempDiv.querySelector('.ansFromChip');
-			if (ansFromChipDiv) {
-				ansFromChipDiv.insertAdjacentHTML('beforeend', actionChipsHTML);
-				chipHTML = tempDiv.innerHTML;
-			}
+		// Debug: Log actionChipsHTML content
+		console.log('actionChipsHTML content:', actionChipsHTML);
+		console.log('chipHTML includes ansFromChip:', chipHTML.includes('class="ansFromChip"'));
+
+		// In Kora-React, MenuOptions (which contains Set as Context) is in a SEPARATE ansFromChip div
+		// Line 1213: <div className={`ansFromChip${...}`}> contains <MenuOptions />
+		// So we need to wrap actionChipsHTML in a separate ansFromChip div, similar to Kora-React structure
+		// Only add the wrapper if we have action chips to show
+		if (actionChipsHTML.includes('setContextButton') || actionChipsHTML.includes('copyAnswerButton') ||
+			actionChipsHTML.includes('exportWordButton') || actionChipsHTML.includes('feedbackChip') ||
+			actionChipsHTML.includes('three-dot-menu-container')) {
+			// Wrap action chips in a separate ansFromChip div (matching Kora-React structure)
+			const actionChipsWrapper = `<div class="ansFromChip">${actionChipsHTML}</div>`;
+			chipHTML += actionChipsWrapper;
+			console.log('Action chips wrapper added to chipHTML');
 		} else {
-			chipHTML += actionChipsHTML;
+			console.log('No action chips to add');
 		}
 
-		// Generate the chat filter group content 
-		if(item?.hasData || item?.sources?.[0]?.source === "customQnAAPI") {
-			chatFilterGroupHTML = chatFilterGroupRenderer();
+		// Generate the chat filter group content for the drawer (forDrawer: true so content is always built regardless of showData)
+		// For search_results template type, do NOT render chatFilterGroup in main area - results should only appear in SourcesSidebar
+		if ((item?.hasData || item?.sources?.[0]?.source === "customQnAAPI") && item?.templateType !== "search_results") {
+			chatFilterGroupHTML = chatFilterGroupRenderer({ forDrawer: true });
 		}
-		
-		// Add chatFilterGroup inside answerFromChipDiv but outside chipHTML
-		const chatFilterGroupWrapper = chatFilterGroupHTML ? `<div>${chatFilterGroupHTML}</div>` : '';
-		
-		return `<div class="answerFromChipDiv">${chipHTML}${chatFilterGroupWrapper}</div>`;
+
+		// When chatFilterGroup exists, show it in a Shoelace drawer (opened by clicking left-splitter-opener), aligned to viewport
+		if (chatFilterGroupHTML) {
+			const drawerHTML = `
+				<sl-drawer id="ansFromChip-drawer-${item?.id}" label="Sources" placement="end" class="ansFromChip-drawer" style="--size: 45vw;">
+					<div class="ansFromChip-drawer-body">${chatFilterGroupHTML}</div>
+				</sl-drawer>`;
+			return `<div class="answerFromChipDiv">${chipHTML}${drawerHTML}</div>`;
+		}
+
+		return `<div class="answerFromChipDiv">${chipHTML}</div>`;
 	};
 
-	// Initialize functionality after DOM insertion
+	// Initialize functionality after DOM insertion (delay so chip/split panel are in the DOM)
 	setTimeout(() => {
 		AnsFromChipFunctionality({
 			item: item,
 			regeneratingAnswer: regeneratingAnswer,
 		});
-	}, 100);
+	}, 200);
 
 	return renderChip();
 };

@@ -11,39 +11,49 @@ class WebSocketClient {
         this.socket = null;
         this.url = null;
         this.options = null;
-        this._presenceRefreshPromise = null;
-        this._lastPresenceRefreshAt = 0;
+        // Prevent spamming presence/start on reconnect loops
+        this._presenceStartPromise = null;
+        this._lastPresenceStartAt = 0;
+        this._presenceStartMinIntervalMs = 5000;
     }
 
-    shouldRefreshPresence(errorOrReason) {
-        const text = String(errorOrReason?.message || errorOrReason || "").toLowerCase();
-        // Only refresh presence when it likely helps (auth/token issues).
-        return (
-            text.includes("unauthor") ||
-            text.includes("forbidden") ||
-            text.includes("token") ||
-            text.includes("jwt") ||
-            text.includes("auth")
-        );
-    }
-
-    async refreshPresenceToken() {
-        // Avoid spamming /presence/start during socket reconnect loops.
-        const MIN_INTERVAL_MS = 60_000;
+    async ensurePresenceToken({ force = false } = {}) {
         const now = Date.now();
-        if (this._presenceRefreshPromise) return this._presenceRefreshPromise;
-        if (now - this._lastPresenceRefreshAt < MIN_INTERVAL_MS) return;
+        const currentToken = store.getState().global?.presenceStart?.data?.sToken;
 
-        this._lastPresenceRefreshAt = now;
-        this._presenceRefreshPromise = store
-            .dispatch(presenceStart())
-            .catch(() => {
-                // Ignore; reconnect logic will keep trying the socket.
-            })
-            .finally(() => {
-                this._presenceRefreshPromise = null;
-            });
-        return this._presenceRefreshPromise;
+        // Always throttle refresh calls (even if forced) to avoid request storms.
+        // If we have a token and we've refreshed recently, reuse it.
+        if (currentToken && (now - this._lastPresenceStartAt) < this._presenceStartMinIntervalMs) {
+            return currentToken;
+        }
+
+        // De-dupe in-flight refresh calls.
+        if (this._presenceStartPromise) {
+            try {
+                await this._presenceStartPromise;
+            } catch (e) { /* noop */ }
+            return store.getState().global?.presenceStart?.data?.sToken;
+        }
+
+        // If not forcing and we already have a token, allow using it without refreshing.
+        if (!force && currentToken) {
+            return currentToken;
+        }
+
+        this._presenceStartPromise = (async () => {
+            try {
+                await store.dispatch(presenceStart());
+            } finally {
+                this._lastPresenceStartAt = Date.now();
+                this._presenceStartPromise = null;
+            }
+        })();
+
+        try {
+            await this._presenceStartPromise;
+        } catch (e) { /* noop */ }
+
+        return store.getState().global?.presenceStart?.data?.sToken;
     }
 
     initialize({ url, options }) {
@@ -87,18 +97,19 @@ class WebSocketClient {
             });
             
             this.socket.on("disconnect", async (reason) => {
-                // Don't call presenceStart on every disconnect — it causes continuous API calls
-                // when the socket is unstable. Refresh only for likely auth/token issues.
-                if (this.shouldRefreshPresence(reason)) {
-                    await this.refreshPresenceToken();
-                }
+                // Don't refresh sToken on every disconnect. Socket.io will reconnect automatically.
+                // Only refresh on auth-related connect errors (handled below).
                 console.warn(`Socket disconnected: ${reason}`);
             });
 
             this.socket.on("connect_error", async (error) => {
-                // Don't call presenceStart for generic network/CORS errors. Only refresh if auth/token issue.
-                if (this.shouldRefreshPresence(error)) {
-                    await this.refreshPresenceToken();
+                // Only refresh token for auth/token related errors to avoid continuous /presence/start calls.
+                const msg = String(error?.message || '');
+                const isAuthError =
+                    /unauthorized|authentication|auth|token|stoken|jwt|invalid/i.test(msg);
+
+                if (isAuthError || !store.getState().global?.presenceStart?.data?.sToken) {
+                    await this.ensurePresenceToken({ force: true });
                 }
                 console.error(`Socket connection Error: ${error.message}`);
             });

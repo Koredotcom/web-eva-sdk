@@ -287,6 +287,7 @@ const ChatInterface = (props) => {
       const payload = {
         action : arg
       }
+      payload.question = arg.label
       initiateChatConversationAction({payload})
     }
 
@@ -579,18 +580,29 @@ const ChatInterface = (props) => {
     }
 
     const setAgentContext = (agent) => {
+      const agentData = agent?.data || agent;
+      const agentId = agentData?.id || agentData?.docId || agentData?.source;
+      const agentName = agentData?.name || agentData?.title || '';
+      const agentType = agentData?.agentType || 'commonAgent';
+      const sourceType = agentData?.type || agentData?.sourceType || 'searchAgent';
       const agentDetails = {
-			name: agent?.name,
-			docId: agent?.id,
-			source: agent?.id,
-			title: agent?.name,
-			icon: agent?.icon,
+			name: agentName,
+			docId: agentId,
+			source: agentId,
+			title: agentData?.title || agentName,
+			icon: agentData?.icon,
+			description: agentData?.description || agentData?.shortDescription || '',
+			shortDescription: agentData?.shortDescription || '',
 			isAgent: true,
+			agentType,
+			composeBar: agentData?.composeBar,
+			citationLabel: agentData?.citationLabel || agentName,
+			type: sourceType,
 		};
 		sessionItemHandler({
 			item: agentDetails,
 			invokeAgent: true,
-			type: "agent",
+			type: agentType,
       })
     }
 

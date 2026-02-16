@@ -3,12 +3,21 @@ import { toast } from "../../chat";
 import { resolveSdkAssetPath } from "../../utils/helpers";
 import store from "../../redux/store";
 
+const normalizeTextForComposeBar = (value) => {
+    // Remove leading/trailing whitespace and collapse internal newlines/indentation
+    // introduced by HTML formatting/indentation in templates.
+    return String(value || '')
+        .replace(/\u00A0/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+};
+
 const getCopyIcon = () => {
     const env = store.getState()?.global?.env;
     if (env === 'MS') {
         return `<img src="${resolveSdkAssetPath("images/MS-Icons/copy-ms.svg")}" alt="Copy" width="16" height="16" />`;
     }
-    return createCopyIcon({ size: 16, color: '#666', className: 'questcopy-icon' });
+    return createCopyIcon({ size: 16, color: '#667085', className: 'questcopy-icon' });
 };
 
 function render(data, type = 'question') {
@@ -43,10 +52,11 @@ function render(data, type = 'question') {
                 } else {
                     const messageText = document.getElementById(messageTextId);
                     if (messageText) {
-                        navigator.clipboard.writeText(messageText.textContent);
+                        const cleanedText = normalizeTextForComposeBar(messageText.textContent);
+                        navigator.clipboard.writeText(cleanedText);
                         const composeBarInput = document.querySelector('.eva-compose-textarea');
                         if (!composeBarInput?.value?.length) {
-                            composeBarInput.value = messageText.textContent;
+                            composeBarInput.value = cleanedText;
                             // Trigger input event to update ComposeBar's internal state                        
                             const inputEvent = new Event('input', { bubbles: true });
                             composeBarInput.dispatchEvent(inputEvent);

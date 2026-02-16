@@ -544,6 +544,7 @@ export function CurvedArrowForPreview ({ size = config.size, className = '' }) {
         <svg
             width="${size}"
             height="${size}"
+            class="wa-CurvedArrowForPreview"
             viewBox="0 0 12 12"
             fill="none"
             xmlns="http://www.w3.org/2000/svg">
