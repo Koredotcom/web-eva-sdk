@@ -3432,29 +3432,74 @@ body {
 
                 .setContextDropdown {
                     &::part(panel) {
+                        padding: .5rem;
+                        max-height: 16.25rem;
+                        //width: 15.625rem;
+                        border-radius: .75rem;
                         background: #fff;
-                        border: 1px solid #e5e7eb;
-                        border-radius: 8px;
-                        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+                        border: .0625rem solid #e5e5e5;
+                        box-shadow: 0px 24px 48px -12px rgba(16, 24, 40, .1803921569);                        
+                    }
+                    &.active {
+                        background: #f5f5f5;
+                        &::slot(trigger) {
+                            .setContextButton {
+                                background: #f5f5f5;
+                            }
+                        }
                     }
 
                     sl-menu {
                         border: none;
                         box-shadow: none;
                         background: transparent;
-                        padding: 0.25rem;
+                        padding: 0;
+                        display: flex;
+                        flex-direction: column;
+                        gap: 0.25rem;
 
                         sl-menu-item {
                             &::part(base) {
                                 padding: 6px 8px;
                                 border-radius: 6px;
+                                width: 11.875rem;
+                            }
+
+                            // sl-menu-item is a shadow DOM component; internal `.menu-item__*` classes can't be styled from outside.
+                            // Hide built-in check + chevron via exposed parts.
+                            &::part(checked-icon),
+                            &::part(submenu-icon) {
+                                display: none !important;
+                                width: 0 !important;
+                                height: 0 !important;
+                                padding: 0 !important;
+                                margin: 0 !important;
+                                overflow: hidden !important;
+                            }
+                            &::part(prefix) {
+                                flex-shrink: 0;
+                            }
+                            &::part(label) {
+                                flex-grow: 1;
+                                min-width: 0;
+                                @include ellipsisText;
+                                font-family: Inter;
+                                font-size: .875rem;
+                                font-style: normal;
+                                font-weight: 500;
+                                line-height: 1.25rem;
+                                letter-spacing: 0em;
+                                color: #141414;
+                            }
+                            &::part(suffix) {
+                                display: none;
                             }
 
                             &.selected {
-                                background-color: #f0fff4 !important;
+                                //background-color: #f0fff4 !important;
 
-                                &::part(base) {
-                                    background-color: #f0fff4 !important;
+                                &::part(suffix) {
+                                    display: flex;
                                 }
                             }
 
@@ -3497,11 +3542,11 @@ body {
                                 font-family: Inter;
                                 font-size: 0.875rem;
                                 font-weight: 500;
-                                color: #344054;
+                                color: #141414;
                                 white-space: nowrap;
                                 overflow: hidden;
                                 text-overflow: ellipsis;
-                                max-width: 15rem;
+                                max-width: 15rem;                                
                             }
 
                             .tick-wrapper {
@@ -8854,6 +8899,63 @@ sl-drawer.sources-sidebar-drawer {
             font-style: normal;
             font-weight: 500;
             line-height: 1.25rem;
+        }
+    }
+}
+
+sl-dropdown.setContextDropdown {
+    width: 2rem;
+    height: 2rem;
+    border-radius: 6.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    position: relative;
+
+    .setContextButton {
+        span, .cheveron-icon {
+            display: flex;
+        }
+    }
+}
+
+.table-wrapper {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+    @include scrollbar;
+    width: 100%;
+    max-width: 100%;
+    display: block;
+    margin: 0.75rem 0;
+
+    .table, .markdown-table {
+        width: 100%;
+        //min-width: max-content;
+        //border: 0.0625rem solid $wa-gray-200;
+        caption-side: bottom;
+        border-collapse: collapse;
+        vertical-align: top;            
+        display: table;
+
+        td, th {
+            padding: .375rem 0.75rem;
+            border: 0.0625rem solid $wa-gray-200;
+            // white-space: nowrap;
+            // min-width: fit-content;
+            //border-collapse: collapse;
+            min-width: 9.375rem;                        
+        }
+        
+        td {
+            @include typography-regular(0.875rem, 400, 1.25rem);
+            color: $wa-gray-950;
+        }
+
+        th {
+            @include typography-regular(0.875rem, 700, 1.25rem);
+            color: $wa-gray-950;
+            background-color: $wa-gray-100;
         }
     }
 }
