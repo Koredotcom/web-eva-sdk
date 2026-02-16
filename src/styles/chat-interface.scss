@@ -500,11 +500,15 @@ html, body {
 .answerFromChipDiv {   
     margin-bottom: 1rem;
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     flex-wrap: wrap;
     justify-content: space-between;
 
     .ansFromChip {
+        &:first-child, &:only-child {
+            flex-direction: column;
+            align-items: flex-start;
+        }
         .answerActionChips {
             .setContextButton {
                 width: auto !important;

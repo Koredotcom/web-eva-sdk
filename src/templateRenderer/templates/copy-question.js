@@ -16,7 +16,7 @@ const getCopyIcon = () => {
     if (env === 'MS') {
         return `<img src="images/MS-Icons/copy-ms.svg" alt="Copy" width="16" height="16" />`;
     }
-    return createCopyIcon({ size: 16, color: '#666', className: 'questcopy-icon' });
+    return createCopyIcon({ size: 16, color: '#667085', className: 'questcopy-icon' });
 };
 
 function render(data, type = 'question') {
