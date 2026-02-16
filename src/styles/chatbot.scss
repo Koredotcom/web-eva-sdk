@@ -116,7 +116,241 @@
         }
       }
     }
-   
+    .ansFromChip {
+      .sourceGroup-item {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        width: 100%;
+        //max-width: 70%;
+        .sourcesChip {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            //width: 60%;
+            .sourceChipItem {
+                // max-width: calc(100% - 1rem);
+                .gpt-agents-source-chip {
+                    display: flex;
+                    align-items: center;
+                    justify-content: flex-start;
+                    gap: 0.25rem;
+                    padding: 0.375rem 0.75rem;
+                    border-radius: 6.25rem;
+                    background: #F5F5F5;
+                    cursor: pointer;
+                    &:hover {
+                        background: #E5E5E5;
+                    }
+                    &.no-content {
+                        pointer-events: none;
+                    }
+                    .icon-cls {
+                        display: flex;
+                        align-items: center;
+                    }
+                    .sourceTitle {
+                        font-family: Inter;
+                        font-size: 0.875rem;
+                        font-style: normal;
+                        font-weight: 400;
+                        line-height: 1.25rem;
+                        letter-spacing: 0em;
+                        color: #0F0F0F;
+                        max-width: 11.375rem;
+                        text-overflow: ellipsis;
+                        overflow: hidden;
+                        white-space: nowrap;
+                    }
+                }
+                .sourceChipItemTextGroup {
+                    display: flex;
+                    align-items: center;
+                    gap: 0.5rem;
+                    padding: 0.375rem 0.75rem 0.375rem 0.5rem;
+                    border-radius: 6.25rem;
+                    background: #F5F5F5;
+                    cursor: pointer;
+                    .p-avatar {
+                        display: flex;
+                        align-items: center;
+                        img {
+                            width: 1rem;
+                            height: 1rem;
+                            border: .0625rem solid #e5e5e5;
+                            border-radius: 50%;
+                            background-color: #FFFFFF;
+                            overflow: hidden;
+                            &:nth-child(2) {
+                                margin-left: -0.5rem;
+                            }
+                            &:nth-child(3) {
+                                margin-left: -0.5rem;
+                            }
+                        }
+                        .sourceIcon {
+                            display: flex;
+                            align-items: center;
+                            flex-shrink: 0;
+                            width: 1rem;
+                            max-height: 1rem;
+                            object-fit: contain;
+                            max-width: 100%;
+                            border: .0625rem solid #e5e5e5;
+                            border-radius: 50%;
+                            background-color: #FFFFFF;
+                            overflow: hidden;
+                            &:nth-child(2) {
+                                margin-left: -0.5rem;
+                            }
+                            &:nth-child(3) {
+                                margin-left: -0.5rem;
+                            }
+                        }
+                    }
+                    .sourceChipItemText {
+                        font-family: Inter;
+                        font-size: 0.875rem;
+                        font-style: normal;
+                        font-weight: 400;
+                        line-height: 1.25rem;
+                        letter-spacing: 0em;
+                        color: #0F0F0F;
+                        max-width: 100%;
+                        text-overflow: ellipsis;
+                        overflow: hidden;
+                        white-space: nowrap;
+                    }
+                    &:hover {
+                        background: #E5E5E5;
+                    }
+                }
+
+                .sourceChipItemText {
+                    display: flex;
+                    align-items: center;
+                    gap: 0.5rem;
+                    cursor: pointer;
+                    &.buttonchip {
+                        padding: .375rem .75rem;
+                        border-radius: 6.25rem;
+                        background: #F5F5F5;
+                    }
+                    &:hover {
+                        background: #E5E5E5;
+                    }                            
+                    .avatar-sources-chip {
+                        width: 1rem;
+                        height: 1rem;
+                        border: .0625rem solid #e5e5e5;
+                        border-radius: 50%;
+                        background-color: #FFFFFF;
+                        overflow: hidden;
+                        &:nth-child(2) {
+                            margin-left: -0.5rem;
+                        }
+                        &:nth-child(3) {
+                            margin-left: -0.5rem;
+                        }
+                    }
+                    .sourceIcon {
+                        display: flex;
+                        align-items: center;
+                        flex-shrink: 0;
+                    }
+                    .sourceTitle {
+                        font-family: Inter;
+                        font-size: 0.875rem;
+                        font-style: normal;
+                        font-weight: 400;
+                        line-height: 1.25rem;
+                        letter-spacing: 0em;
+                        color: #0F0F0F;
+                        text-overflow: ellipsis;
+                        overflow: hidden;
+                        white-space: nowrap;
+                        max-width: 10rem;
+                    }
+                }
+            }
+        }
+        .search-results-ans-block {
+            .results-chip-block {
+                .chip-text {
+                    max-width: 100%;
+                }
+            }
+        }
+
+        .lineSeperator {
+            color: #E5E5E5;
+        }
+
+        .search-results-ans-block {
+            display: flex;
+            align-items: center;
+        
+            .results-chip-block {
+                padding: 0.375rem 0.75rem;
+                border-radius: 6.25rem;
+                display: inline-flex;
+                align-items: center;
+                gap: 0.5rem;
+                cursor: pointer;
+                background: #F5F5F5;
+                &:hover {
+                    background: #E5E5E5;
+                }
+        
+                .chip-text {
+                    font-family: Inter;
+                    font-size: 0.875rem;
+                    font-style: normal;
+                    font-weight: 400;
+                    line-height: 1.25rem;
+                    letter-spacing: 0em;
+                    color: #0F0F0F;
+                    max-width: 100%;
+                    text-overflow: ellipsis;
+                    overflow: hidden;
+                    white-space: nowrap;
+                }
+                .icon-cls {
+                    display: flex;
+                    flex-shrink: 0;
+                }
+            }
+            .icon-block {
+                display: flex;
+                align-items: center;
+                flex-shrink: 0;
+            }
+            .normal-text {
+                font-family: Inter;
+                font-size: 0.875rem;
+                font-style: normal;
+                font-weight: 400;
+                line-height: 1.25rem;
+                letter-spacing: 0em;
+                color: #0F0F0F;
+                margin-inline-end: 0.25rem;
+                flex-shrink: 0;
+            }
+            .bold-text {
+                font-family: Inter;
+                font-size: 0.75rem;
+                font-style: normal;
+                font-weight: 600;
+                line-height: 1.125rem;
+                letter-spacing: 0em;
+                color: #141414;
+                margin-inline-end: 0.5rem;
+                max-width: calc(100% - 9.375rem);
+                min-width: 5rem;
+            }
+        }
+      }
+    }   
   }
   .message-bubble.answer .answerCntr .search-answer-container .message-renderer {
     max-width: 100%;
