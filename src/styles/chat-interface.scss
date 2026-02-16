@@ -8919,3 +8919,43 @@ sl-dropdown.setContextDropdown {
         }
     }
 }
+
+.table-wrapper {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+    @include scrollbar;
+    width: 100%;
+    max-width: 100%;
+    display: block;
+    margin: 0.75rem 0;
+
+    .table, .markdown-table {
+        width: 100%;
+        //min-width: max-content;
+        //border: 0.0625rem solid $wa-gray-200;
+        caption-side: bottom;
+        border-collapse: collapse;
+        vertical-align: top;            
+        display: table;
+
+        td, th {
+            padding: .375rem 0.75rem;
+            border: 0.0625rem solid $wa-gray-200;
+            // white-space: nowrap;
+            // min-width: fit-content;
+            //border-collapse: collapse;
+            min-width: 9.375rem;                        
+        }
+        
+        td {
+            @include typography-regular(0.875rem, 400, 1.25rem);
+            color: $wa-gray-950;
+        }
+
+        th {
+            @include typography-regular(0.875rem, 700, 1.25rem);
+            color: $wa-gray-950;
+            background-color: $wa-gray-100;
+        }
+    }
+}
