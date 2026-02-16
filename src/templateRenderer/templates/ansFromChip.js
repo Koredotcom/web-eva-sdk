@@ -958,38 +958,51 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 	}
 
 	const setContextChip = () => {
-		const messageId = item?.messageId || item?.id;
+		const messageId = item?.id || item?.messageId;
 		const displayMenu = !item?.isTask && !item?.noResultFound && item?.viewType !== "list" && (item?.type === "search" || item?.type === "followup");
 		const isMultiSource = item?.sources?.length > 1;
-		// Match Kora-React: button has 'hide' class when displayMenu is false, and 'multiSource' class when multiple sources
 		const hideClass = displayMenu ? '' : 'hide';
 		const multiSourceClass = isMultiSource ? 'multiSource' : '';
-		return `
-            <div class="setContextButton optionWrapper ${multiSourceClass} ${hideClass}" id="setContextButton-${messageId}" title="Set as Context: Set the sources as context and ask queries.">
-                ${setContextIcon({ size: 16, color: "#667085" })}
-                ${isMultiSource ? `<div class=\"cheveron-icon\"><svg width=\"8\" height=\"8\" viewBox=\"0 0 8 8\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M2 3L4 5L6 3\" stroke=\"#344054\" stroke-width=\"1.33333\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg></div>` : ''}
-            </div>
-            ${isMultiSource ? `
-            <div id="setContextDropdown-${messageId}" class="setContextDropdown" style="display:none; position:absolute; background:#fff; border:1px solid #e5e7eb; border-radius:6px; padding:6px; z-index:999;">
-                ${item?.sources?.map((src, idx) => {
-			// Use global selectedContext to determine if source is selected (matching Kora-React behavior)
-			const globalSC = store.getState()?.global?.selectedContext;
-			// Handle both async structure (with .data) and direct structure
-			const selectedSources = globalSC?.data?.sources || globalSC?.sources || [];
 
-			const isSelected = selectedSources?.some(s => (
-				s?.docId === src?.docId || s?.docId === src?.id || s?.id === src?.docId || s?.id === src?.id
-			));
-			const label = src?.title || src?.source;
-			const baseStyle = 'padding:6px 8px; cursor:pointer; white-space:nowrap; display:flex; align-items:center; justify-content: space-between; width:100%;';
-			const style = isSelected ? baseStyle + ' background-color:#f0fff4;' : baseStyle;
-			return `<div class="dropdown-item ${isSelected ? 'selected' : ''}" data-source-index="${idx}" style="${style}">
-                        <span>${label}</span>
-                        ${isSelected ? `<span>${tickMarkIcon({ size: 10, color: '#10B981' })}</span>` : ''}
-                    </div>`;
-		}).join('')}
+		const buttonHtml = `
+            <div class="setContextButton optionWrapper ${multiSourceClass}" id="setContextButton-${messageId}" title="Set as Context: Set the sources as context and ask queries.">
+                <span style="pointer-events: none;">${setContextIcon({ size: 16, color: "#667085" })}</span>
+                ${isMultiSource ? `<div class="cheveron-icon" style="pointer-events: none;"><svg width="8" height="8" viewBox="0 0 8 8" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2 3L4 5L6 3" stroke="#344054" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/></svg></div>` : ''}
             </div>
-            ` : ''}
+        `;
+
+		if (!isMultiSource) {
+			return `<div class="${hideClass}">${buttonHtml}</div>`;
+		}
+
+		return `
+            <sl-dropdown id="setContextDropdown-${messageId}" class="setContextDropdown ${hideClass}" hoist>
+                <div slot="trigger" style="cursor: pointer;">
+                    ${buttonHtml}
+                </div>
+                <sl-menu class="setContextMenu">
+					${item?.sources?.map((src, idx) => {
+			const globalSC = store.getState()?.global?.selectedContext;
+			const selectedSources = globalSC?.data?.sources || globalSC?.sources || [];
+			const isSelected = selectedSources?.some(s => {
+				const sId = String(s?.docId || s?.id || s?.uID || s?.componentId || s?.contentId || '');
+				const srcId = String(src?.docId || src?.id || src?.uID || src?.componentId || src?.contentId || '');
+				const idMatch = !!sId && !!srcId && sId === srcId;
+				const nameMatch = !!s?.title && s?.title === src?.title;
+				return idMatch || nameMatch;
+			});
+			const label = src?.title || src?.source;
+			const iconHtml = renderIcons(src?.source, src?.extIcon, null, src?.iconUrl, src?.isSupervisor)?.outerHTML || '';
+
+			return `
+                            <sl-menu-item class="dropdown-item ${isSelected ? 'selected' : ''}" data-source-index="${idx}">
+                                <div slot="prefix" class="source-icon-wrapper">${iconHtml}</div>
+                                <span class="source-label">${label}</span>
+                                ${isSelected ? `<span slot="suffix" class="tick-wrapper">${tickMarkIcon({ size: 10, color: '#10B981' })}</span>` : ''}
+                            </sl-menu-item>`;
+		}).join('')}
+                </sl-menu>
+            </sl-dropdown>
 		`;
 	}
 
