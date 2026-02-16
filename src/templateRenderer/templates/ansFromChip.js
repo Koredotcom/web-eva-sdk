@@ -981,26 +981,28 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
                     ${buttonHtml}
                 </div>
                 <sl-menu class="setContextMenu">
-					${item?.sources?.map((src, idx) => {
-			const globalSC = store.getState()?.global?.selectedContext;
-			const selectedSources = globalSC?.data?.sources || globalSC?.sources || [];
-			const isSelected = selectedSources?.some(s => {
-				const sId = String(s?.docId || s?.id || s?.uID || s?.componentId || s?.contentId || '');
-				const srcId = String(src?.docId || src?.id || src?.uID || src?.componentId || src?.contentId || '');
-				const idMatch = !!sId && !!srcId && sId === srcId;
-				const nameMatch = !!s?.title && s?.title === src?.title;
-				return idMatch || nameMatch;
-			});
-			const label = src?.title || src?.source;
-			const iconHtml = renderIcons(src?.source, src?.extIcon, null, src?.iconUrl, src?.isSupervisor)?.outerHTML || '';
+                ${(() => {
+				const seen = new Set();
+				return item?.sources?.filter(src => {
+					// Create a unique identifier for the source to prevent duplicates in the dropdown
+					const id = src?.docId || src?.id || src?.uID || src?.componentId || src?.contentId || src?.title || JSON.stringify(src);
+					if (seen.has(id)) return false;
+					seen.add(id);
+					return true;
+				}).map((src, idx) => {
+					// We do NOT check selection state here during initial render.
+					// The selection state is dynamic and checked in the 'sl-show' event handler
+					// in AnsFromChipFunctionality to ensure it reflects the latest Redux state.
+					const label = src?.title || src?.source;
+					const iconHtml = renderIcons(src?.source, src?.extIcon, null, src?.iconUrl, src?.isSupervisor)?.outerHTML || '';
 
-			return `
-                            <sl-menu-item class="dropdown-item ${isSelected ? 'selected' : ''}" data-source-index="${idx}">
-                                <div slot="prefix" class="source-icon-wrapper">${iconHtml}</div>
-                                <span class="source-label">${label}</span>
-                                ${isSelected ? `<span slot="suffix" class="tick-wrapper">${tickMarkIcon({ size: 10, color: '#475467' })}</span>` : ''}
-                            </sl-menu-item>`;
-		}).join('')}
+					return `
+                        <sl-menu-item class="dropdown-item" data-source-index="${idx}">
+                            <div slot="prefix" class="source-icon-wrapper">${iconHtml}</div>
+                            <span class="source-label">${label}</span>
+                        </sl-menu-item>`;
+				}).join('');
+			})()}
                 </sl-menu>
             </sl-dropdown>
 		`;

@@ -4,6 +4,7 @@ import { cloneDeep, debounce } from "lodash";
 import { setErrorState } from "../redux/globalSlice";
 import ReactDOM from "react-dom/server";
 import { getSuggestedContactListNew } from "../redux/actions/global.action";
+import { attachmentIcon } from "../templateRenderer/icons-library";
 
 export const Timedifference = (time) => {
     let daysdiff = new Date().getDate() - new Date(time).getDate();
@@ -109,7 +110,7 @@ export const renderIcons = (provider, extIcon, providerIcon, iconUrl, isSupervis
 
     const state = store.getState().global
     const { enabledAgents, config } = state;
-    const sourcesConfig = config?.source;
+    const sourcesConfig = config?.source || config?.data?.source;
 
     let icon = sourcesConfig?.[provider]?.icon ||
         (provider === 'attachment' && sourcesConfig?.["accountKnowledge"]?.icon) ||
@@ -134,6 +135,8 @@ export const renderIcons = (provider, extIcon, providerIcon, iconUrl, isSupervis
         renderIconContent = `<img class="backgroundIcon" src="${extIcon}" />`;
     } else if (!!extIcon && !providerIcon && !iconUrl) {
         renderIconContent = `<img class="backgroundIcon" src="${extIcon}" />`;
+    } else if (!icon && provider === 'attachment') {
+        renderIconContent = attachmentIcon({ className: "backgroundIcon" });
     } else {
         renderIconContent = icon ? `<img src="${icon}" class="backgroundIcon" />` : '';
         if (iconUrl) {

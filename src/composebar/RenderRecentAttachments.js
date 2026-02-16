@@ -78,7 +78,7 @@ const renderRecentFilesList = (targetEl, files, listType = 'recent', options = {
             const idMatch = selectedId && fileId && selectedId === fileId;
             const nameMatch = (f?.title === file?.name || f?.title === file?.fileName) && (f?.title && (file?.name || file?.fileName));
 
-            return idMatch || nameMatch;
+            return idMatch;
         });
 
         let selectionIconHtml = '';

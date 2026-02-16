@@ -574,8 +574,8 @@ const AnsFromChipFunctionality = ({ item }) => {
 								const sId = String(s?.docId || s?.id || s?.uID || s?.componentId || s?.contentId || '');
 								const srcId = String(src?.docId || src?.id || src?.uID || src?.componentId || src?.contentId || '');
 								const idMatch = !!sId && !!srcId && sId === srcId;
-								const nameMatch = !!s?.title && s?.title === src?.title;
-								return idMatch || nameMatch;
+								// Only match by ID to ensure accuracy
+								return idMatch;
 							});
 
 							// Update selection state UI
