@@ -64,22 +64,26 @@ const multiIntentExecutionFunc = (item) => {
         if(hasEditTask){
             hasEditTask.type = "draft"
         }
-        let currentExecutionPipeline = question?.executionPipeline?.filter(el => el?.type !== "addTask") || item?.executionPipeline?.filter(el => el?.type !== "addTask") || []
-        
+        const addedTaskIndex = question?.executionPipeline?.findIndex(el => el.type === "addTask");
+        let currentExecutionPipeline = question?.executionPipeline || item?.executionPipeline || [];
         if (isEmpty(question?.savedExecutionPipeline)) {
           _questions[questionId] = {
             ...question,
             savedExecutionPipeline: currentExecutionPipeline
           };
         } else {
-          currentExecutionPipeline = question?.savedExecutionPipeline;
+          if(addedTaskIndex !== -1 && index > 0 && addedTaskIndex < index){
+             index-=1;
+             currentExecutionPipeline.splice(addedTaskIndex, 1);
+          }
+          else currentExecutionPipeline = question?.savedExecutionPipeline;
         }
 
         let newTask = {
           _id: index, // temp id, it will get replaced with backend id later
           utterance: '',
           headerMsg: 'Oh, it seems I have missed a step. My apologies. Please describe and add the steps.',
-          step: `Step ${hasAddTask ? index : index+1}`,
+          step: `Step ${index+1}`,
           type: 'addTask' 
         }
 
@@ -202,11 +206,18 @@ const multiIntentExecutionFunc = (item) => {
     const editTask = (index, task) => {
       const _questions = cloneDeep(state?.questions);
       let currentExecutionPipeline = cloneDeep(_questions[item?.reqId]?.executionPipeline);
+      const addTaskIndexExists = currentExecutionPipeline?.findIndex(el => el?.type === 'addTask');
 
       if(isEmpty(_questions[item?.reqId]?.savedExecutionPipeline)){
         _questions[item?.reqId].savedExecutionPipeline = currentExecutionPipeline;
-      }else{
-        currentExecutionPipeline = _questions[item?.reqId].savedExecutionPipeline;
+      }
+      else{
+        if( addTaskIndexExists !== -1 && addTaskIndexExists < index && index > 0){
+          index-=1;
+          currentExecutionPipeline.splice(addTaskIndexExists, 1);
+
+        }
+        else currentExecutionPipeline = _questions[item?.reqId].savedExecutionPipeline;
       }
 
       let _task = {...task, type : 'modify', step : `Step ${index+1}`}
