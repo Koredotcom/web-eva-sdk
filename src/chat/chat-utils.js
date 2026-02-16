@@ -116,7 +116,7 @@ export const constructQuestionInitial = (args) => {
 	return uniqueMsgId;
 };
 
-export const constructQuestionPostCall = (data, qId) => {
+export const constructQuestionPostCall = (data, qId, isBot = false) => {
 
     // data.payload = contains api response
     // data.meta.arg = contains passed params and payload
@@ -357,7 +357,12 @@ export const constructQuestionPostCall = (data, qId) => {
         // question.question = data?.res?.question
     }
 
-    if(data?.payload?.viewType === "threadView" && (!data?.payload?.hasOwnProperty('thread'))){
+    if(isBot === 'bot'){
+        question.botConversation[data?.payload?.messageId] = data?.payload;
+    }
+
+
+    else if(data?.payload?.viewType === "threadView" && (!data?.payload?.hasOwnProperty('thread'))){
         question = {...question, ...data?.payload}
     }
 
