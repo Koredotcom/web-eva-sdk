@@ -515,16 +515,131 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 		`;
 	};
 
+	const agentMetaDetailsRenderer = () => {
+		// Extract agent metadata from context.sources if not already present
+		// This handles cases where the backend sends agent info in context instead of agentMetaDetails
+		let agentMetaDetails = item?.agentMetaDetails;
+		let supervisorAgent = item?.supervisorAgent;
+
+		// If agentMetaDetails is not populated, try to extract from context.sources
+		if (item?.agentId && !agentMetaDetails && item?.context?.sources) {
+			const agentSource = item.context.sources.find(s => s.source === item.agentId || s.provider === item.agentId);
+			if (agentSource) {
+				agentMetaDetails = {
+					name: agentSource.title,
+					icon: agentSource.icon,
+					isSupervisor: agentSource.isSupervisor || false,
+					agentType: agentSource.agentType
+				};
+				// If it's a supervisor agent, also populate supervisorAgent
+				if (agentSource.isSupervisor) {
+					supervisorAgent = {
+						name: agentSource.title,
+						icon: agentSource.icon
+					};
+				}
+			}
+		}
+
+		// 1. Special Case: Attachments (agentId === 'attachment')
+		// This is a special pseudo-agent ID used when answer comes from user-uploaded attachments
+		if (item?.agentId === 'attachment') {
+			// Attachments Icon - try to use renderIcons, fallback to SVG
+			let icon = '';
+			try {
+				const iconEl = renderIcons('attachment', null, null);
+				icon = iconEl?.outerHTML || '';
+			} catch (e) { }
+
+			// Fallback SVG if renderIcons fails
+			if (!icon) {
+				icon = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#667085" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>`;
+			}
+
+			return `
+				<div class="agentMetaDetailsWrapper singleSourceWrapper">
+					<span class="agentMetaDetailsLabel">Answer from:</span>
+					<span class="agentMetaDetailsImage contextIcon">${icon}</span>
+					<span class="agentMetaDetailsName">Attachments</span>
+				</div>
+			`;
+		}
+
+		// 2. Agent Case (real agents, not 'attachment')
+		// Match Kora-React logic: lines 1354-1385 in index.js
+		if (item?.agentId) {
+			// Use the local agentMetaDetails variable (extracted above if needed)
+			const isSupervisor = agentMetaDetails?.isSupervisor;
+
+			// Determine icon and name based on supervisor status
+			const iconUrl = isSupervisor ? supervisorAgent?.icon : agentMetaDetails?.icon;
+			const name = isSupervisor ? supervisorAgent?.name : agentMetaDetails?.name;
+
+			let iconHtml = '';
+			if (iconUrl) {
+				iconHtml = `<span class="agentMetaDetailsImage"><img src="${encodeHtml(iconUrl)}" alt="agent" /></span>`;
+			}
+
+			// If agentMetaDetails is not available yet, show skeleton loader (like Kora-React)
+			if (!agentMetaDetails || !name) {
+				return `
+					<div class="agentMetaDetailsWrapper">
+						<span class="agentMetaDetailsLabel">Answer from:</span>
+						<span class="agentMetaDetailsLoading">
+							<span style="display:inline-block;width:7.5rem;height:1.25rem;background:#e0e0e0;border-radius:0.75rem;"></span>
+						</span>
+					</div>
+				`;
+			}
+
+			return `
+				<div class="agentMetaDetailsWrapper">
+					<span class="agentMetaDetailsLabel">Answer from:</span>
+					${iconHtml}
+					<span class="agentMetaDetailsName">${htmlDecode(name)}</span>
+				</div>
+			`;
+		}
+
+		// 3. Personal Hub Case
+		// Match Kora-React logic: lines 1386-1406 in index.js
+		// Check context?.provider === 'personalKnowledge' (NOT context?.type)
+		const contextData = item?.context;
+		const isPersonalKnowledge = contextData?.provider === 'personalKnowledge';
+
+		// Additional conditions from Kora-React (line 1391):
+		// Don't show if: not historical/apiSuccess, has error, or no answer/citationAnswers
+		if (isPersonalKnowledge) {
+			// Check if we should render based on item state
+			if ((!item?.historicalData && !item?.apiSuccess) || item?.error || (!item?.answer && !item?.citationAnswers)) {
+				return '';
+			}
+
+			// Personal Hub Icon (Folder) - using same SVG as Kora-React
+			const folderIcon = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6938EF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>`;
+
+			return `
+				<div class="agentMetaDetailsWrapper personalKnowledgeWrapper">
+					<span class="agentMetaDetailsLabel">Answer from:</span>
+					<span class="folderIconSmall">${folderIcon}</span>
+					<span class="agentMetaDetailsName">Personal Hub</span>
+				</div>
+			`;
+		}
+
+		// No agent or personal hub - return empty
+		// Note: Single source "Answer from: [Source]" is handled by AnsFromChip component,
+		// not by this agentMetaDetailsRenderer
+		return '';
+	};
+
 	const knowledgeChipRenderer = () => {
 		let body = "";
 
 		// Determine if we should show sources chip
-		// Similar to Kora-React: showSources = !!botMsg?.sources?.length && !isSuperSearchAgent && isEnterpriseKnowledge
-		// For web-eva-sdk, we'll show sources when there are sources (let sourcesChipTagRefactored handle invalid scenarios)
 		const sources = item?.sources || [];
-		const hasSources = sources.length > 0;
 
-		// Get sources chip HTML (will be empty string if invalid scenarios)
+		// Get sources chip HTML
 		const sourcesChipHtml = sourcesChipTagRefactored();
 		const hasSourcesChip = sourcesChipHtml.trim().length > 0;
 		const hasRelatedSearchResults = item?.templateType === "search_results";
@@ -544,10 +659,24 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 			body += `</div>`;
 		}
 
-		// Do NOT show ansFromChip-wrapper (from sourceChipRender) when we're showing Sources button
-		// Only show sourceChipRender when we don't have Sources chip
+		// Render Agent/PersonalHub/Attribution details below the sources pill
+		body += agentMetaDetailsRenderer();
+
+		// Legacy/Fallback logic (Only if NO sources chip was shown, AND not covered above?)
+		// If hasSourcesChip is FALSE, we might still want to show something?
+		// Existing logic:
 		if (!hasSourcesChip) {
-			// For search_results template type, do NOT render data wrapper - results should only appear in SourcesSidebar
+			// Check if agentMetaDetailsRenderer returned empty? 
+			// If agentMetaDetailsRenderer rendered something, we might not want sourceChipRender?
+			// But sourceChipRender is specific about 'left-splitter-opener'.
+
+			// For now, preserving existing fallback behavior mostly, but if agentMetaDetailsRenderer covers it, we might double render?
+			// item.sources.length===1 is covered by agentMetaDetailsRenderer. 
+			// But sourceChipRender handles 'hasData' split panels.
+
+			// If we entered agentMetaDetailsRenderer (e.g. single source), we probably don't need sourceChipRender unless it offers more functionality (like split panel opener).
+			// sourceChipRender has "left-splitter-opener".
+
 			if (
 				(!!item?.data?.length || item?.hasData) &&
 				!item?.citationAnswers?.length &&
@@ -555,6 +684,9 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 			) {
 				body += `<div class="leftWrapperBlockCntr new-layout">`;
 			}
+			// Only render sourceChipRender if we didn't render agent details? Or render both?
+			// sourceChipRender seems to rely on 'ansFromChip-wrapper' structure.
+			// Let's keep it for now to avoid breaking other views, but it might need cleanup.
 			body += sourceChipRender();
 			if (
 				(!!item?.data?.length || item?.hasData) &&
