@@ -13,6 +13,45 @@ import { renderIcons } from "../../utils/helpers";
 import { tickMarkIcon } from "../icons-library";
 
 const AnsFromChipFunctionality = ({ item }) => {
+	/**
+	 * Force-hide Shoelace menu-item chevron via JS.
+	 * Some builds/themes can make the chevron difficult to override with CSS alone.
+	 */
+	const hideShoelaceMenuItemChevron = async (menuItemEl) => {
+		try {
+			// Wait for the component to finish rendering (best-effort)
+			if (menuItemEl?.updateComplete && typeof menuItemEl.updateComplete.then === "function") {
+				await menuItemEl.updateComplete;
+			}
+		} catch (e) { }
+
+		try {
+			const sr = menuItemEl?.shadowRoot;
+			if (!sr) return;
+
+			// Try multiple selectors across Shoelace versions/builds
+			const chevron =
+				sr.querySelector('.menu-item__chevron') ||
+				sr.querySelector('[part="submenu-icon"]') ||
+				sr.querySelector('[exportparts~="submenu-icon"]') ||
+				sr.querySelector('sl-icon[part="submenu-icon"]');
+
+			if (chevron) {
+				chevron.style.display = "none";
+				chevron.setAttribute?.("hidden", "true");
+				chevron.setAttribute?.("aria-hidden", "true");
+			}
+
+			// Extra safety: sometimes the icon lives inside the suffix container
+			const suffix = sr.querySelector('[part="suffix"]');
+			if (suffix && suffix.querySelector('.menu-item__chevron, [part="submenu-icon"]')) {
+				suffix.style.display = "none";
+				suffix.setAttribute?.("hidden", "true");
+				suffix.setAttribute?.("aria-hidden", "true");
+			}
+		} catch (e) { }
+	};
+
 	const getRelevantQuestionsData = async () => {
 		let state = store.getState()?.global;
 		let _questions = cloneDeep(state?.questions);
@@ -505,20 +544,20 @@ const AnsFromChipFunctionality = ({ item }) => {
 				});
 
 				// Update selection state when dropdown is about to show
-				dropdown.addEventListener('sl-show', () => {
+				dropdown.addEventListener('sl-show', async () => {
 					console.log('Dropdown showing, updating selection UI');
 					try {
 						const globalSC = store.getState()?.global?.selectedContext;
 						const selectedSources = globalSC?.data?.sources || globalSC?.sources || [];
 
 						const menuItems = dropdown.querySelectorAll('sl-menu-item');
-						menuItems.forEach((itemEl) => {
+						for (const itemEl of menuItems) {
 							const idxStr = itemEl.getAttribute('data-source-index');
-							if (idxStr === null) return;
+							if (idxStr === null) continue;
 
 							const idx = parseInt(idxStr);
 							const src = item?.sources?.[idx];
-							if (!src) return;
+							if (!src) continue;
 
 							const isSelected = selectedSources?.some(s => {
 								const sId = String(s?.docId || s?.id || s?.uID || s?.componentId || s?.contentId || '');
@@ -553,11 +592,14 @@ const AnsFromChipFunctionality = ({ item }) => {
 									suffix.className = 'tick-wrapper';
 									itemEl.appendChild(suffix);
 								}
-								suffix.innerHTML = tickMarkIcon({ size: 10, color: '#10B981' });
+								suffix.innerHTML = tickMarkIcon({ size: 10, color: '#475467' });
 							} else if (suffix) {
 								suffix.remove();
 							}
-						});
+
+							// Force-hide the built-in chevron in the sl-menu-item shadow DOM
+							await hideShoelaceMenuItemChevron(itemEl);
+						}
 					} catch (err) {
 						console.error('Error updating context dropdown selection:', err);
 					}

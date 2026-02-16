@@ -998,7 +998,7 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
                             <sl-menu-item class="dropdown-item ${isSelected ? 'selected' : ''}" data-source-index="${idx}">
                                 <div slot="prefix" class="source-icon-wrapper">${iconHtml}</div>
                                 <span class="source-label">${label}</span>
-                                ${isSelected ? `<span slot="suffix" class="tick-wrapper">${tickMarkIcon({ size: 10, color: '#10B981' })}</span>` : ''}
+                                ${isSelected ? `<span slot="suffix" class="tick-wrapper">${tickMarkIcon({ size: 10, color: '#475467' })}</span>` : ''}
                             </sl-menu-item>`;
 		}).join('')}
                 </sl-menu>
