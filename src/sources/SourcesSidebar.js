@@ -20,6 +20,7 @@ class SourcesSidebar {
         this.config = config;
         this.element = null;
         this.drawer = null;
+        this.container = null;
         this.overlay = null;
         this._overlayListenerAttached = false;
         this._escapeListenerAttached = false;
@@ -37,6 +38,9 @@ class SourcesSidebar {
      * Initialize the sidebar drawer
      */
     init() {
+        this.container = this.resolveContainerElement();
+        this.ensureContainerIsPositioned(this.container);
+
         // Create drawer if it doesn't exist
         if (!document.getElementById('sources-sidebar-drawer')) {
             const drawer = document.createElement('sl-drawer');
@@ -47,17 +51,22 @@ class SourcesSidebar {
             drawer.setAttribute('no-header', 'true');
             // Ensure the drawer renders within its container (Shoelace option)
             drawer.setAttribute('contained', '');
-            document.body.appendChild(drawer);
+            // IMPORTANT: contained drawers must be placed inside the container element (not directly in <body>)
+            this.container.appendChild(drawer);
             this.drawer = drawer;
         } else {
             this.drawer = document.getElementById('sources-sidebar-drawer');
             // Ensure attribute exists even if the drawer was created earlier
             this.drawer?.setAttribute?.('contained', '');
+            // Ensure it is contained to the target element (move it if needed)
+            if (this.drawer && this.container && this.drawer.parentElement !== this.container) {
+                this.container.appendChild(this.drawer);
+            }
         }
 
         // Contained drawers are intentionally non-modal in Shoelace (no backdrop).
         // If we still want an overlay/backdrop, we provide one ourselves.
-        this.ensureOverlay();
+        this.ensureOverlay(this.container);
 
         // Subscribe to Redux store for answerSources updates
         this.unsubscribe = store.subscribe(() => {
@@ -210,8 +219,11 @@ class SourcesSidebar {
      * Create (or reuse) a custom overlay for contained drawers.
      * Shoelace's contained drawers don't render an overlay by design.
      */
-    ensureOverlay() {
-        if (this.overlay && document.body.contains(this.overlay)) return;
+    ensureOverlay(containerEl = null) {
+        const container = containerEl || this.container || this.resolveContainerElement();
+        this.ensureContainerIsPositioned(container);
+
+        if (this.overlay && container?.contains?.(this.overlay)) return;
 
         let overlay = document.getElementById('sources-sidebar-overlay');
         if (!overlay) {
@@ -219,7 +231,10 @@ class SourcesSidebar {
             overlay.id = 'sources-sidebar-overlay';
             overlay.className = 'sources-sidebar-overlay';
             overlay.setAttribute('aria-hidden', 'true');
-            document.body.appendChild(overlay);
+            container.appendChild(overlay);
+        } else if (container && overlay.parentElement !== container) {
+            // Move existing overlay into the container
+            container.appendChild(overlay);
         }
 
         this.overlay = overlay;
@@ -234,7 +249,7 @@ class SourcesSidebar {
     showOverlay() {
         // Only needed when the drawer is contained (Shoelace disables overlay + ESC in that mode)
         if (!this.drawer?.hasAttribute?.('contained')) return;
-        this.ensureOverlay();
+        this.ensureOverlay(this.container);
         this.overlay?.classList?.add('is-open');
 
         if (!this._escapeListenerAttached) {
@@ -255,6 +270,52 @@ class SourcesSidebar {
         if (this._escapeListenerAttached && this._escapeHandler) {
             document.removeEventListener('keydown', this._escapeHandler);
             this._escapeListenerAttached = false;
+        }
+    }
+
+    /**
+     * Resolve the container element that will contain the drawer.
+     * We avoid appending the drawer directly to <body>.
+     */
+    resolveContainerElement() {
+        const candidate =
+            // Prefer an explicitly provided container
+            (this.config?.container instanceof HTMLElement && this.config.container) ||
+            (this.config?.containerEl instanceof HTMLElement && this.config.containerEl) ||
+            (this.config?.rootEl instanceof HTMLElement && this.config.rootEl) ||
+            // Common containers across demo + SDK parent component
+            document.getElementById('parent-home-container') ||
+            document.querySelector('.landing-page-container') ||
+            document.querySelector('.chatInterfaceSec') ||
+            document.querySelector('.chatInterfaceDemo') ||
+            document.getElementById('chatSec') ||
+            document.getElementById('chat-sec-container') ||
+            document.getElementById('root');
+
+        if (candidate) return candidate;
+
+        // Last resort: create a dedicated SDK container inside <body>
+        let sdkContainer = document.getElementById('eva-sdk-container');
+        if (!sdkContainer) {
+            sdkContainer = document.createElement('div');
+            sdkContainer.id = 'eva-sdk-container';
+            document.body.appendChild(sdkContainer);
+        }
+        return sdkContainer;
+    }
+
+    /**
+     * Shoelace requires the parent to be position: relative for contained drawers.
+     */
+    ensureContainerIsPositioned(container) {
+        if (!container || container === document.body) return;
+        try {
+            const pos = window.getComputedStyle(container).position;
+            if (!pos || pos === 'static') {
+                container.style.position = 'relative';
+            }
+        } catch (e) {
+            // ignore
         }
     }
 
@@ -801,15 +862,15 @@ class SourcesSidebar {
         if (this.unsubscribe) {
             this.unsubscribe();
         }
-        if (this.drawer && document.body.contains(this.drawer)) {
-            document.body.removeChild(this.drawer);
+        if (this.drawer && this.drawer.parentElement) {
+            this.drawer.parentElement.removeChild(this.drawer);
         }
-        if (this.overlay && document.body.contains(this.overlay)) {
+        if (this.overlay && this.overlay.parentElement) {
             if (this._overlayListenerAttached && this._overlayClickHandler) {
                 this.overlay.removeEventListener('click', this._overlayClickHandler);
                 this._overlayListenerAttached = false;
             }
-            document.body.removeChild(this.overlay);
+            this.overlay.parentElement.removeChild(this.overlay);
         }
         if (this._escapeListenerAttached && this._escapeHandler) {
             document.removeEventListener('keydown', this._escapeHandler);
