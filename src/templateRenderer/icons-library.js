@@ -1,8 +1,8 @@
 const config = {
-    color: '#667085',
-    color1: '#667085',
-    color2: '#667085',
-    size: 20
+  color: '#667085',
+  color1: '#667085',
+  color2: '#667085',
+  size: 20
 };
 
 export function createDeleteIcon({ size = config.size, color = config.color, className = '' }) {
@@ -162,7 +162,7 @@ export function CheveronDownIcon({ size = config.size, color = config.color, cla
 }
 
 export function cheveronRightIcon({ size = config.size, color = config.color, className = '' } = {}) {
-    return `
+  return `
     <svg width="${size}" height="${size}" viewBox="0 0 7 10" fill="none" xmlns="http://www.w3.org/2000/svg" class="wa-CheveronRight ${className}">
       <path d="M1.59277 8.8623L5.59277 4.8623L1.59277 0.862305" stroke="${color}" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round" />
     </svg>
@@ -371,7 +371,7 @@ export function JiraCommentsIcon({ size = config.size, className = '' }) {
   `
 }
 
-export function RightArrow({ size = config.size, color = config.color, className = '' }) {  
+export function RightArrow({ size = config.size, color = config.color, className = '' }) {
   return `
       <svg width="${size}" height="${size}" className="wa-RightArrow ${className}" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M1.33337 6.00016H10.6667M10.6667 6.00016L6.00004 1.3335M10.6667 6.00016L6.00004 10.6668" stroke="${color}" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round" />
@@ -379,7 +379,7 @@ export function RightArrow({ size = config.size, color = config.color, className
   `
 }
 
-export function CheckCircle({ size = config.size, color = config.color, className = '' }) {  
+export function CheckCircle({ size = config.size, color = config.color, className = '' }) {
   return `
       <svg width="${size}" height="${size}" className="wa-CheckCircle ${className}" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
         <g clipPath="url(#clip0_200_6980)">
@@ -394,7 +394,7 @@ export function CheckCircle({ size = config.size, color = config.color, classNam
   `
 }
 
-export function MaximizeIcon({ size = config.size, color = config.color, className = '' }) {  
+export function MaximizeIcon({ size = config.size, color = config.color, className = '' }) {
   return `
       <svg width="${size}" height="${size}" className="wa-MaximizeIcon ${className}" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
         <g id="maximize-01">
@@ -403,7 +403,7 @@ export function MaximizeIcon({ size = config.size, color = config.color, classNa
   `
 }
 
-export function MinimizeIcon({ size = config.size, color = config.color, className = '' }) {  
+export function MinimizeIcon({ size = config.size, color = config.color, className = '' }) {
   return `
       <svg width="${size}" height="${size}" className="wa-MinimizeIcon ${className}" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M1.66667 8.33333H5.66667M5.66667 8.33333V12.3333M5.66667 8.33333L1 13M12.3333 5.66667H8.33333M8.33333 5.66667V1.66667M8.33333 5.66667L13 1" stroke="${color}" stroke-width="1.33" stroke-linecap="round" stroke-linejoin="round" />
@@ -411,7 +411,7 @@ export function MinimizeIcon({ size = config.size, color = config.color, classNa
   `
 }
 
-export function RadioButtonChecked({ size = config.size, color = config.color, className = '' }) {  
+export function RadioButtonChecked({ size = config.size, color = config.color, className = '' }) {
   return `
       <svg width="${size}" height="${size}" className="wa-RadioButtonChecked ${className}" viewBox="0 0 16 17" fill="none" xmlns="http://www.w3.org/2000/svg">
         <rect x="0.5" y="1" width="15" height="15" rx="7.5" fill="#12B76A" />
@@ -421,7 +421,7 @@ export function RadioButtonChecked({ size = config.size, color = config.color, c
   `
 }
 
-export function PlusIcon({ size = config.size, color = config.color, className = '' }) {  
+export function PlusIcon({ size = config.size, color = config.color, className = '' }) {
   return `
       <svg width="${size}" height="${size}" className="wa-PlusIcon ${className}" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M6.84976 1.33329C6.84976 0.965103 6.55129 0.666626 6.1831 0.666626C5.81491 0.666626 5.51643 0.965103 5.51643 1.33329V5.33329H1.51643C1.14824 5.33329 0.849762 5.63177 0.849762 5.99996C0.849762 6.36815 1.14824 6.66663 1.51643 6.66663H5.51643V10.6666C5.51643 11.0348 5.81491 11.3333 6.1831 11.3333C6.55129 11.3333 6.84976 11.0348 6.84976 10.6666V6.66663H10.8498C11.218 6.66663 11.5164 6.36815 11.5164 5.99996C11.5164 5.63177 11.218 5.33329 10.8498 5.33329H6.84976V1.33329Z" fill="${color}" />
@@ -429,7 +429,7 @@ export function PlusIcon({ size = config.size, color = config.color, className =
   `
 }
 
-export function ExportIcon({ size = config.size, color = config.color, className = '' }) {  
+export function ExportIcon({ size = config.size, color = config.color, className = '' }) {
   return `
       <svg width="${size}" height="${size}" className="wa-ExportIcon ${className}" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M13 9V9.8C13 10.9201 13 11.4802 12.782 11.908C12.5903 12.2843 12.2843 12.5903 11.908 12.782C11.4802 13 10.9201 13 9.8 13H4.2C3.07989 13 2.51984 13 2.09202 12.782C1.71569 12.5903 1.40973 12.2843 1.21799 11.908C1 11.4802 1 10.9201 1 9.8V9M10.3333 4.33333L7 1M7 1L3.66667 4.33333M7 1V9" stroke="${color}" stroke-width="1.33" stroke-linecap="round" stroke-linejoin="round" />
@@ -437,7 +437,7 @@ export function ExportIcon({ size = config.size, color = config.color, className
   `
 }
 
-export function ToastWarningIcon({ size = config.size }) {  
+export function ToastWarningIcon({ size = config.size }) {
   return `
       <svg width="${size}" height="${size}" className="wa-ToastWarningIcon" viewBox="0 0 46 46" fill="none" xmlns="http://www.w3.org/2000/svg">
         <rect x="3" y="3" width="40" height="40" rx="20" fill="#FEF0C7"/>
@@ -454,7 +454,7 @@ export function ToastWarningIcon({ size = config.size }) {
   `
 }
 
-export function DragHandleIcon({ size = config.size, color = config.color, className = '' }) {  
+export function DragHandleIcon({ size = config.size, color = config.color, className = '' }) {
   return `
       <svg width="${size}" height="${size}" className="wa-DragHandleIcon ${className}" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M6 4C6 4.55228 5.55228 5 5 5C4.44772 5 4 4.55228 4 4C4 3.44772 4.44772 3 5 3C5.55228 3 6 3.44772 6 4Z" fill="${color}"/>
@@ -467,7 +467,7 @@ export function DragHandleIcon({ size = config.size, color = config.color, class
   `
 }
 
-export function EditIcon({ size = config.size, color = config.color, className = '' }) {  
+export function EditIcon({ size = config.size, color = config.color, className = '' }) {
   return `
       <svg width="${size}" height="${size}" className="wa-EditIcon ${className}" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M18 10L14 6M2.49997 21.5L5.88434 21.124C6.29783 21.078 6.50457 21.055 6.69782 20.9925C6.86926 20.937 7.03242 20.8586 7.18286 20.7594C7.35242 20.6475 7.49951 20.5005 7.7937 20.2063L21 7C22.1046 5.89543 22.1046 4.10457 21 3C19.8954 1.89543 18.1046 1.89543 17 3L3.7937 16.2063C3.49952 16.5005 3.35242 16.6475 3.24061 16.8171C3.1414 16.9676 3.06298 17.1307 3.00748 17.3022C2.94493 17.4954 2.92195 17.7021 2.87601 18.1156L2.49997 21.5Z" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
@@ -475,7 +475,7 @@ export function EditIcon({ size = config.size, color = config.color, className =
   `
 }
 
-export function HistoryIcon({ size = config.size, color = config.color, className = '' }) {  
+export function HistoryIcon({ size = config.size, color = config.color, className = '' }) {
   return `
       <svg width="${size}" height="${size}" className="wa-HistoryIcon ${className}" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M18.9166 9.58333L17.2505 11.25L15.5833 9.58333M17.4542 10.8333C17.4845 10.5597 17.5 10.2817 17.5 10C17.5 5.85786 14.1421 2.5 10 2.5C5.85786 2.5 2.5 5.85786 2.5 10C2.5 14.1421 5.85786 17.5 10 17.5C12.3561 17.5 14.4584 16.4136 15.8333 14.7144M10 5.83333V10L12.5 11.6667" stroke="${color}" stroke-width="1.66667" stroke-linecap="round" stroke-linejoin="round" />
@@ -483,7 +483,7 @@ export function HistoryIcon({ size = config.size, color = config.color, classNam
   `
 }
 
-export function AddStepFilledIcon({ size = config.size, color = config.color, className = '' }) {  
+export function AddStepFilledIcon({ size = config.size, color = config.color, className = '' }) {
   return `
       <svg width="${size}" height="${size}" className="wa-AddStepFilledIcon ${className}" viewBox="0 0 32 38" fill="none" xmlns="http://www.w3.org/2000/svg">
         <rect x="11.5" y="2.50879" width="16" height="16" transform="rotate(45 11.5 2.50879)" fill="#475467"/>
@@ -529,8 +529,8 @@ export function AgenticSearchIcon({ className = '', size = config.size, color = 
   `;
 }
 
-export function CurvedArrowForPreview ({ size = config.size, className = '' }) {
-    return`
+export function CurvedArrowForPreview({ size = config.size, className = '' }) {
+  return `
         <svg
             width="${size}"
             height="${size}"
@@ -543,4 +543,21 @@ export function CurvedArrowForPreview ({ size = config.size, className = '' }) {
                 fill="#737373"
             />
         </svg>
-    `;}
+    `;
+}
+
+export function ArrowUpRight({ className = '', size = config.size, color = config.color }) {
+  return `
+    <svg width="${size}" height="${size}" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" class="wa-ArrowUpRight ${className}">
+      <path d="M5.83325 14.1667L14.1666 5.83334M14.1666 5.83334H5.83325M14.1666 5.83334V14.1667" stroke="${color}" stroke-width="1.66667" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  `;
+}
+
+export function getMessageTextIcon({ size = config.size, color = config.color, className = '' } = {}) {
+  return `
+        <svg width="${size}" height="${size}" viewBox="0 0 12 13" fill="none" xmlns="http://www.w3.org/2000/svg" class="wa-MessageText ${className}">
+            <path d="M4 5.25003H6M4 7.00003H7.5M6 11C8.48528 11 10.5 8.98531 10.5 6.50003C10.5 4.01475 8.48528 2.00003 6 2.00003C3.51472 2.00003 1.5 4.01475 1.5 6.50003C1.5 7.0986 1.61687 7.66988 1.82903 8.19229C1.86964 8.29227 1.88994 8.34226 1.899 8.38267C1.90786 8.4222 1.9111 8.45145 1.9111 8.49196C1.91111 8.53338 1.90359 8.57849 1.88855 8.66871L1.59206 10.4476C1.56102 10.6339 1.54549 10.7271 1.57438 10.7944C1.59966 10.8534 1.64664 10.9004 1.70559 10.9257C1.77295 10.9545 1.86609 10.939 2.05238 10.908L3.83133 10.6115C3.92154 10.5964 3.96665 10.5889 4.00807 10.5889C4.04858 10.5889 4.07783 10.5922 4.11736 10.601C4.15777 10.6101 4.20776 10.6304 4.30775 10.671C4.83015 10.8832 5.40143 11 6 11Z" stroke="${color}" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+    `;
+}

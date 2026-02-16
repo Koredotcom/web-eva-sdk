@@ -3,13 +3,15 @@ import store from '../redux/store.js';
 import { createCloseIcon } from '../templateRenderer/icons-library.js';
 import { upgradeCustomElements } from '../templateRenderer/templateRenderer.js';
 import { setUnifiedSearchResults } from '../redux/globalSlice.js';
-import { advanceSearch, searchResultFilters } from '../redux/actions/global.action.js';
+import { advanceSearch, searchResultFilters, getRegeneratedAnswer } from '../redux/actions/global.action.js';
+import { sessionItemHandler } from '../utils/searchSession.js';
 import RenderAttachments from './RenderAttachments.js';
 import GPTFormSummary from './GPTFormSummary.js';
 import TableDataSummary from './TableDataSummary.js';
 import BotSummary from './BotSummary.js';
 import KnowledgeSearchResults from './KnowledgeSearchResults.js';
 import ResultTemplate from './ResultTemplate.js';
+import GetDownloadUrl from '../files/getDownloadUrl.js';
 
 /**
  * SourcesSidebar - A vanilla JS implementation of the Sources Sidebar
@@ -787,6 +789,61 @@ class SourcesSidebar {
             });
         }
 
+        // Handle "Set as Context" clicks
+        const askFollowupBtns = this.drawer?.querySelectorAll('.ask-followup-btn');
+        if (askFollowupBtns?.length) {
+            askFollowupBtns.forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const resultKey = btn.getAttribute('data-result-key');
+                    const resultId = btn.getAttribute('data-result-id');
+                    this.handleAskFollowup(resultKey, resultId);
+                });
+            });
+        }
+
+        // Handle "Get Answer" clicks
+        const getAnswerBtns = this.drawer?.querySelectorAll('.get-answer-btn');
+        if (getAnswerBtns?.length) {
+            getAnswerBtns.forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const resultKey = btn.getAttribute('data-result-key');
+                    const resultId = btn.getAttribute('data-result-id');
+                    this.handleGetAnswer(resultKey, resultId);
+                });
+            });
+        }
+
+        // Handle "Open Source" clicks
+        const openUrlBtns = this.drawer?.querySelectorAll('.open-source-btn');
+        if (openUrlBtns?.length) {
+            openUrlBtns.forEach(btn => {
+                btn.addEventListener('click', async (e) => {
+                    e.stopPropagation();
+                    let url = btn.getAttribute('data-url');
+                    const docId = btn.getAttribute('data-result-id');
+                    const sourceType = btn.getAttribute('data-source-type');
+
+                    if (!url && docId && (sourceType === 'attachment' || sourceType === 'accountKnowledge')) {
+                        // Fallback: try to get download URL if it's an attachment
+                        try {
+                            const res = await GetDownloadUrl({ id: docId, docId });
+                            url = res?.data?.downloadUrl;
+                        } catch (err) {
+                            console.error("SourcesSidebar: Failed to get download URL", err);
+                        }
+                    }
+
+                    if (url && url !== 'undefined') {
+                        window.open(url, '_blank')?.focus();
+                    } else {
+                        console.warn("SourcesSidebar: No valid URL found for redirection");
+                    }
+                });
+            });
+        }
+
         // --- Tab Switching Logic (Dual Strategy: Global + Local) ---
 
         // 1. Local Listener: Try to attach directly to the element if found
@@ -824,6 +881,80 @@ class SourcesSidebar {
             this._documentTabListenerAttached = true;
             console.log('SourcesSidebar: Attached global document listener for sl-tab-show');
         }
+    }
+
+    /**
+     * Handle "Set as Context" click
+     */
+    handleAskFollowup(resultKey, resultId) {
+        console.log(`SourcesSidebar: Handle "Set as Context" for ${resultId} in tab ${resultKey}`);
+        const result = this.findResultById(resultKey, resultId);
+        if (!result) return;
+
+        const state = store.getState()?.global;
+        const userId = state?.profile?.id || state?.profile?.data?.id || window.sdkConfig?.userId;
+
+        sessionItemHandler({
+            dispatch: store.dispatch,
+            discardPrevSession: true,
+            type: result?.source || result?.sourceType || 'accountKnowledge',
+            item: result,
+            appContext: {
+                userId: userId,
+                selectedContext: state?.selectedContext
+            }
+        });
+    }
+
+    /**
+     * Handle "Get Answer" click
+     */
+    handleGetAnswer(resultKey, resultId) {
+        console.log(`SourcesSidebar: Handle "Get Answer" for ${resultId} in tab ${resultKey}`);
+        const result = this.findResultById(resultKey, resultId);
+        if (!result) return;
+
+        const state = store.getState()?.global;
+        const payload = {
+            source: "accountKnowledge",
+            sources: [result]
+        };
+
+        store.dispatch(getRegeneratedAnswer({
+            userId: state?.profile?.id,
+            payload: payload
+        }));
+    }
+
+    /**
+     * Helper to find a result item by ID in the unified search results
+     */
+    findResultById(tabKey, id) {
+        let results = [];
+
+        // 1. Check in unified search results (More search results tab)
+        if (this.unifiedSearchResults?.data?.results) {
+            if (tabKey && this.unifiedSearchResults.data.results[tabKey]) {
+                const tabResults = this.unifiedSearchResults.data.results[tabKey].data || [];
+                results = [...results, ...tabResults];
+            } else {
+                Object.values(this.unifiedSearchResults.data.results).forEach(tabData => {
+                    if (tabData?.data) results = [...results, ...tabData.data];
+                });
+            }
+        }
+
+        // 2. Check in answer sources (Sources tab)
+        if (this.answerSources) {
+            if (this.answerSources.sources) {
+                results = [...results, ...this.answerSources.sources];
+            }
+            if (this.answerSources.data && Array.isArray(this.answerSources.data)) {
+                results = [...results, ...this.answerSources.data];
+            }
+        }
+
+        return results.find(r => r.docId === id || r.contentId === id || r.id === id);
     }
 
     /**

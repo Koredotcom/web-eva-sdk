@@ -1,5 +1,6 @@
 import { cloneDeep } from 'lodash';
 import { encodeHtml, renderIcons, getFileExtension, getExtIcon } from '../utils/helpers.js';
+import { setContextIcon, getMessageTextIcon, ArrowUpRight } from '../templateRenderer/icons-library.js';
 import store from '../redux/store.js';
 import moment from 'moment';
 
@@ -12,7 +13,7 @@ const formatTimeAgoOrDate = (timestamp) => {
         const date = moment(timestamp);
         const now = moment();
         const diffInDays = now.diff(date, 'days');
-        
+
         if (diffInDays === 0) {
             return date.format('h:mm A');
         } else if (diffInDays === 1) {
@@ -60,7 +61,7 @@ class RenderAttachments {
 
         // Render each source group
         let html = '<div class="tab-content-wrapper"><div class="tab-content">';
-        
+
         groupedSourcesWithSnippets.forEach((sourceData) => {
             const source = sourceData.source;
             const snippets = sourceData.snippets;
@@ -136,6 +137,27 @@ class RenderAttachments {
         }
 
         // Regular grouping logic
+        // For search_answer templateType, render sources directly as snippets
+        if (data?.templateType === 'search_answer') {
+            const sourceMap = new Map();
+            const seenSourceIds = new Set();
+
+            data.sources.forEach((source) => {
+                const sourceId = source?.docId || source?.contentId || source?.id;
+                if (!sourceId) return;
+
+                if (seenSourceIds.has(sourceId)) return;
+                seenSourceIds.add(sourceId);
+
+                sourceMap.set(sourceId, {
+                    source: source,
+                    snippets: [source] // Match Kora-React: use source as snippet for search_answer
+                });
+            });
+
+            return Array.from(sourceMap.values());
+        }
+
         const sourceMap = new Map();
         const seenSourceIds = new Set();
 
@@ -183,8 +205,8 @@ class RenderAttachments {
             title = el?.file_title || el?.title;
         }
 
-        const searchData = store.getState()?.global?.unifiedSearchResults || 
-                          (data?.templateType === "search_results" ? data : null);
+        const searchData = store.getState()?.global?.unifiedSearchResults ||
+            (data?.templateType === "search_results" ? data : null);
         const elSourceName = searchData?.data?.tab?.find(t => t?.key === el?.sourceType)?.name;
         const selectedTab = searchData?.data?.tab?.[0]?.key || 'all';
 
@@ -243,43 +265,84 @@ class RenderAttachments {
         }
 
         const hasUrl = el?.redirectUrl?.dweb || el?.redirectUrl?.dWeb || el?.webViewLink || el?.url;
-        const onClickHandler = hasUrl 
-            ? `onclick="window.open('${encodeHtml(hasUrl)}', '_blank')"`
-            : '';
+
+        // Match Kora-React logic for hover options
+        const canSetAsSourceContext = el?.canSetAsSourceContext !== false;
+        const canRegenerateAnswer = !isSearchAnswer && (el?.canRegenerateAnswer !== false);
+        const isAnsweredSource = sourceIds.includes(el?.contentId || el?.docId);
 
         return `
-            <div class="content-wrapper" ${onClickHandler}>
-                <span class="icon-wrapper">${iconHtml}</span>
+            <div class="content-wrapper">
+                <span class="icon-wrapper" ${hasUrl ? `onclick="window.open('${encodeHtml(hasUrl)}', '_blank')"` : ''}>${iconHtml}</span>
                 <div class="content-desc">
                     <div class="content-header">
                         <div class="options-name-wrapper">
-                            <span class="content-name">${encodeHtml(title)}</span>
-                            ${sourceIds?.includes(el?.contentId || el?.docId) 
-                                ? '<div class="options-wrapper answerSourceChip">Answered Source</div>' 
-                                : ''}
+                            <div style="display:flex; justify-content:space-between; align-items:center; width: 100%;">
+                                <span class="content-name" ${hasUrl ? `onclick="window.open('${encodeHtml(hasUrl)}', '_blank')"` : ''}>${encodeHtml(title)}</span>
+                                <div class="hover-options">
+                                    ${isAnsweredSource
+                ? '<div class="options-wrapper answerSourceChip">Answered Source</div>'
+                : ''}
+                                    
+                                    ${canRegenerateAnswer ? `
+                                        <sl-tooltip content="Get Answer">
+                                            <div class="options-wrapper get-answer-btn" data-result-key="${encodeHtml(el?.sourceType || '')}" data-result-id="${encodeHtml(el?.docId || el?.contentId || '')}">
+                                                <span>Get Answer</span>
+                                                ${getMessageTextIcon({ size: 12, color: '#667085' })}
+                                            </div>
+                                        </sl-tooltip>` : ''}
+
+                                    ${isSearchAnswer && canSetAsSourceContext ? `
+                                        <sl-tooltip content="Set as context">
+                                            <div class="options-wrapper ask-followup-btn" data-result-key="${encodeHtml(el?.sourceType || el?.type || el?.source || '')}" data-result-id="${encodeHtml(el?.docId || el?.contentId || el?.id || '')}">
+                                                <span>Set as context</span>
+                                            </div>
+                                        </sl-tooltip>
+                                        <sl-tooltip content="Open in new tab">
+                                            <div class="options-wrapper open-source-btn" data-url="${encodeHtml(hasUrl || '')}" data-result-id="${encodeHtml(el?.docId || el?.contentId || el?.id || '')}" data-source-type="${encodeHtml(el?.type || el?.source || '')}">
+                                                ${ArrowUpRight({ size: 16, color: '#667085' })}
+                                            </div>
+                                        </sl-tooltip>` : ''}
+
+                                    ${!isSearchAnswer && canSetAsSourceContext ? `
+                                        <sl-tooltip content="Set as context">
+                                            <div class="options-wrapper ask-followup-btn" data-result-key="${encodeHtml(el?.sourceType || '')}" data-result-id="${encodeHtml(el?.docId || el?.contentId || '')}">
+                                                <span>Set as context</span>
+                                                ${setContextIcon({ size: 12, color: '#667085' })}
+                                            </div>
+                                        </sl-tooltip>` : ''}
+
+                                    ${!isSearchAnswer && hasUrl ? `
+                                        <sl-tooltip content="Open in new tab">
+                                            <div class="options-wrapper open-source-btn" data-url="${encodeHtml(hasUrl)}" data-result-id="${encodeHtml(el?.docId || el?.contentId || '')}" data-source-type="${encodeHtml(el?.type || el?.source || '')}">
+                                                ${ArrowUpRight({ size: 16, color: '#667085' })}
+                                            </div>
+                                        </sl-tooltip>` : ''}
+                                </div>
+                            </div>
                         </div>
-                        <div class="desc">${description || ''}</div>
+                        <div class="desc" ${hasUrl ? `onclick="window.open('${encodeHtml(hasUrl)}', '_blank')"` : ''}>${description || ''}</div>
                     </div>
-                    ${(!!el?.meta || isSearchAnswer) 
-                        ? `
+                    ${(!!el?.meta || isSearchAnswer)
+                ? `
                             <div class="metaDescription">
                                 ${isSearchAnswer
-                                    ? `
+                    ? `
                                         ${ownerName ? `<span>Created by: ${encodeHtml(ownerName)}</span>` : ''}
                                         ${modifiedTime ? `<span>${ownerName ? ', ' : ''}Last Edited ${formatTimeAgoOrDate(modifiedTime)}</span>` : ''}
                                     `
-                                    : el?.meta?.updatedBy && el?.meta?.updatedOn
-                                        ? `
+                    : el?.meta?.updatedBy && el?.meta?.updatedOn
+                        ? `
                                             ${selectedTab === 'all' ? `<span>${elSourceName || el?.sourceType}</span>` : ''}
                                             ${el?.meta.updatedBy ? `<span> • ${encodeHtml(el.meta.updatedBy)}</span>` : ''}
                                             ${el?.meta.updatedOn ? `<span> • Updated on ${formatTimeAgoOrDate(el.meta.updatedOn)}</span>` : ''}
                                         `
-                                        : ''
-                                }
+                        : ''
+                }
                             </div>
                         `
-                        : ''
-                    }
+                : ''
+            }
                 </div>
             </div>
             <div class="line-seperator"></div>
