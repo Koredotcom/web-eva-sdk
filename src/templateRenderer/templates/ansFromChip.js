@@ -522,20 +522,58 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 		let supervisorAgent = item?.supervisorAgent;
 
 		// If agentMetaDetails is not populated, try to extract from context.sources
-		if (item?.agentId && !agentMetaDetails && item?.context?.sources) {
-			const agentSource = item.context.sources.find(s => s.source === item.agentId || s.provider === item.agentId);
-			if (agentSource) {
-				agentMetaDetails = {
-					name: agentSource.title,
-					icon: agentSource.icon,
-					isSupervisor: agentSource.isSupervisor || false,
-					agentType: agentSource.agentType
-				};
-				// If it's a supervisor agent, also populate supervisorAgent
-				if (agentSource.isSupervisor) {
-					supervisorAgent = {
+		if (item?.agentId && !agentMetaDetails) {
+			// 1. Try item.context.sources
+			if (item?.context?.sources) {
+				const agentSource = item.context.sources.find(s => s.source === item.agentId || s.provider === item.agentId);
+				if (agentSource) {
+					agentMetaDetails = {
 						name: agentSource.title,
-						icon: agentSource.icon
+						icon: agentSource.icon,
+						isSupervisor: agentSource.isSupervisor || false,
+						agentType: agentSource.agentType
+					};
+					if (agentSource.isSupervisor) {
+						supervisorAgent = {
+							name: agentSource.title,
+							icon: agentSource.icon
+						};
+					}
+				}
+			}
+
+			// 2. Try global allAgents list (Best for canonical Name & Icon)
+			if (!agentMetaDetails) {
+				const state = store.getState();
+				const allAgents = state?.global?.allAgents?.data?.agents || [];
+				// Match against _id, appId, or id
+				const agentDef = allAgents.find(a => a._id === item.agentId || a.appId === item.agentId || a.id === item.agentId);
+
+				if (agentDef) {
+					agentMetaDetails = {
+						name: agentDef.name,
+						icon: agentDef.icon || agentDef.iconUrl,
+						isSupervisor: false,
+						agentType: agentDef.type
+					};
+				}
+			}
+
+			// 3. Try item.sources (Primary fallback if global list fails)
+			if (!agentMetaDetails && item?.sources) {
+				const agentSource = item.sources.find(s => s.source === item.agentId || s.provider === item.agentId || s.id === item.agentId);
+				if (agentSource) {
+					// Use intent name if available and source title has " form" suffix (common in gpt_form_template)
+					let name = agentSource.title || agentSource.name;
+					if (item.intent && name?.toLowerCase().endsWith(' form')) {
+						name = item.intent;
+					}
+
+					agentMetaDetails = {
+						name: name,
+						icon: agentSource.icon || agentSource.iconUrl,
+						isSupervisor: agentSource.isSupervisor || false,
+						agentType: agentSource.agentType
 					};
 				}
 			}
