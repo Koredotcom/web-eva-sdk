@@ -508,5 +508,89 @@ export function markdownToPlainText(md) {
     return trimWithEllipsis(text).trim();
 }
 
-const trimWithEllipsis = (str, max = 100) =>
-    str.length > max ? str.slice(0, max) + "..." : str;
+const trimWithEllipsis = (str, max=100) =>
+  str.length > max ? str.slice(0, max) + "..." : str;
+
+/**
+ * Section keys for segregated history (display order).
+ */
+export const HISTORY_SECTIONS = {
+    TODAY: "Today",
+    YESTERDAY: "Yesterday",
+    LAST_7_DAYS: "Last 7 days",
+    LAST_30_DAYS: "Last 30 days",
+    OLDER: "Older",
+};
+
+/* Returns YYYY-MM-DD for consistent string comparison. Uses en-CA in timezone when provided. */
+const getDateStringInZone = (date, timeZone) => {
+    if (timeZone) {
+        return date.toLocaleDateString("en-CA", { timeZone });
+    }
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, "0");
+    const d = String(date.getDate()).padStart(2, "0");
+    return `${y}-${m}-${d}`;
+};
+
+/* Normalize createdOn: API may return seconds (e.g. Unix) or milliseconds. */
+const normalizeCreatedOn = (ts) => {
+    if (ts == null || typeof ts !== "number") return ts;
+    if (ts < 1e12) return ts * 1000;
+    return ts;
+};
+
+export const segregateHistoryBySections = (items, timeZone) => {
+    const result = {
+        today: [],
+        yesterday: [],
+        last7Days: [],
+        last30Days: [],
+        older: [],
+    };
+    if (!Array.isArray(items) || items.length === 0) return result;
+
+    const now = new Date();
+    const todayStr = getDateStringInZone(now, timeZone);
+
+    const yesterdayDate = new Date(now);
+    yesterdayDate.setDate(yesterdayDate.getDate() - 1);
+    const yesterdayStr = getDateStringInZone(yesterdayDate, timeZone);
+
+    const sevenDaysAgoDate = new Date(now);
+    sevenDaysAgoDate.setDate(sevenDaysAgoDate.getDate() - 7);
+    const sevenDaysAgoStr = getDateStringInZone(sevenDaysAgoDate, timeZone);
+
+    const thirtyDaysAgoDate = new Date(now);
+    thirtyDaysAgoDate.setDate(thirtyDaysAgoDate.getDate() - 30);
+    const thirtyDaysAgoStr = getDateStringInZone(thirtyDaysAgoDate, timeZone);
+
+    for (const item of items) {
+        const raw = item?.createdOn;
+        if (raw == null) {
+            result.older.push(item);
+            continue;
+        }
+        const ts = normalizeCreatedOn(raw);
+        const itemDate = new Date(ts);
+        if (Number.isNaN(itemDate.getTime())) {
+            result.older.push(item);
+            continue;
+        }
+        const itemStr = getDateStringInZone(itemDate, timeZone);
+
+        if (itemStr === todayStr) {
+            result.today.push(item);
+        } else if (itemStr === yesterdayStr) {
+            result.yesterday.push(item);
+        } else if (itemStr >= sevenDaysAgoStr && itemStr < yesterdayStr) {
+            result.last7Days.push(item);
+        } else if (itemStr >= thirtyDaysAgoStr && itemStr < sevenDaysAgoStr) {
+            result.last30Days.push(item);
+        } else {
+            result.older.push(item);
+        }
+    }
+
+    return result;
+};

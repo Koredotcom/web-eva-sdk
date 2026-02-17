@@ -3,7 +3,6 @@ import { default as fileUpload } from "../Attachments/fileUpload.js";
 import store from "../redux/store.js";
 import { getFileExtension, resolveSdkAssetPath } from "../utils/helpers.js";
 import { attachmentIcon, createDeleteIcon, RadioButtonChecked, RadioButtonCheckedGrey } from "../templateRenderer/icons-library.js";
-import { getFileExtension } from "../utils/helpers.js";
 
 
 const formatFileSize = (bytes) => {
