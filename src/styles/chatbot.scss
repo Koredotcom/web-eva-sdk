@@ -58,6 +58,140 @@
   border: 1px solid #eeeeee;
   font-family: Inter;
 
+  .setContextDropdown {
+      &::part(panel) {
+        padding: .5rem;
+        max-height: 16.25rem;
+        //width: 15.625rem;
+        border-radius: .75rem;
+        background: #fff;
+        border: .0625rem solid #e5e5e5;
+        box-shadow: 0px 24px 48px -12px rgba(16, 24, 40, .1803921569);
+      }
+  
+      &.active {
+        background: #f5f5f5;
+  
+        &::slot(trigger) {
+          .setContextButton {
+            background: #f5f5f5;
+          }
+        }
+      }
+  
+      sl-menu {
+        border: none;
+        box-shadow: none;
+        background: transparent;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+  
+        sl-menu-item {
+          &::part(base) {
+            padding: 6px 8px;
+            border-radius: 6px;
+            width: 11.875rem;
+          }
+  
+          // sl-menu-item is a shadow DOM component; internal `.menu-item__*` classes can't be styled from outside.
+          // Hide built-in check + chevron via exposed parts.
+          &::part(checked-icon),
+          &::part(submenu-icon) {
+            display: none !important;
+            width: 0 !important;
+            height: 0 !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            overflow: hidden !important;
+          }
+  
+          &::part(prefix) {
+            flex-shrink: 0;
+          }
+  
+          &::part(label) {
+            flex-grow: 1;
+            min-width: 0;
+            @include ellipsisText;
+            font-family: Inter;
+            font-size: .875rem;
+            font-style: normal;
+            font-weight: 500;
+            line-height: 1.25rem;
+            letter-spacing: 0em;
+            color: #141414;
+          }
+  
+          &::part(suffix) {
+            display: none;
+          }
+  
+          &.selected {
+            //background-color: #f0fff4 !important;
+  
+            &::part(suffix) {
+              display: flex;
+            }
+          }
+  
+          .source-icon-wrapper {
+            margin-right: 8px;
+            display: flex;
+            align-items: center;
+  
+            .srcimg {
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              width: 1.25rem;
+              height: 1.25rem;
+              position: relative;
+  
+              img {
+                width: 1.125rem;
+                height: 1.125rem;
+  
+                &.backgroundIcon {
+                  width: 1.125rem;
+                  height: 1.125rem;
+                }
+  
+                &.subIcon {
+                  position: absolute;
+                  bottom: -2px;
+                  right: -2px;
+                  width: 10px;
+                  height: 10px;
+                  background: white;
+                  border-radius: 2px;
+                }
+              }
+            }
+          }
+  
+          .source-label {
+            font-family: Inter;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #141414;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 15rem;
+          }
+  
+          .tick-wrapper {
+            display: flex;
+            align-items: center;
+            margin-left: auto;
+            padding-left: 8px;
+          }
+        }
+      }
+    }
+
   .attachment-preview-container {
     width: 95%;
   }
