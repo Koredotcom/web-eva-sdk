@@ -107,6 +107,52 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 		let body = "";
 
 		const source = item?.sources?.[0] || {};
+
+		// Special Case for Jira/Hubspot/Zendesk tables to match Kora-React layout
+		// Structure: [Source Chip] -> [Table] -> [Agent Footer]
+		const isJira = (item?.provider === 'jira' || source?.source === 'jira' || item?.context?.source === 'jira');
+		const isHubspot = (item?.provider === 'hubspot' || source?.source === 'hubspot' || item?.context?.source === 'hubspot');
+		const isZendesk = (item?.provider === 'zendesk' || source?.source === 'zendesk' || item?.context?.source === 'zendesk');
+
+		if (isJira || isHubspot || isZendesk) {
+			// 1. Render Source Chip (e.g. "List of issues" pill)
+			const sourcesChipHtml = sourcesChipTagRefactored();
+			if (sourcesChipHtml && sourcesChipHtml.trim().length > 0) {
+				body += `
+					<div class="sourceGroup-item">
+						${sourcesChipHtml}
+					</div>
+				`;
+			}
+
+			// 2. Render Table content
+			if (item?.showData) {
+				let payload = {
+					columnData: item?.data?.[0]?.columns,
+					rowData: item?.data?.[0]?.rows,
+					cso: item?.data?.[0]?.views?.[0]?.cso,
+					id: item?.id || item?.cId || item?.pId,
+					showAllData: item?.showAllData,
+				};
+				let html = htmlTableRenderer(payload);
+				body += html;
+
+				// 3. Relevant Questions (if applicable)
+				if (
+					item?.sources?.[0]?.canSetAsSourceContext !== false
+				) {
+					body += relevantQuestionsRenderer();
+				}
+			}
+
+			// 4. Render Agent Footer ("Answer from: Jira")
+			// We use agentMetaDetailsRenderer which we updated to handle Jira/Provider logic
+			body += agentMetaDetailsRenderer();
+
+			return `<div class="ansFromChip" id="ansFromChip-${item?.id}">${body}</div>`;
+		}
+
+		// Legacy Table Renderer for other types
 		const attachment = source.source === "attachment";
 		const icon = renderIcons(
 			source.source,
@@ -115,17 +161,17 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 		).outerHTML;
 
 		body += `
-            <div class="tableChipRenderer" id = "ansFromChip-${item?.id}">
-                <span class="datachip">${item?.sources?.length > 1 ? "Data:" : "Answer From:"
+				<div class="tableChipRenderer" id = "ansFromChip-${item?.id}">
+					<span class="datachip">${item?.sources?.length > 1 ? "Data:" : "Answer From:"
 			}</span>
-                <div class="contextIcon${attachment ? " attachment" : ""}">
-                    ${icon}
-                </div>
-                <span class="krSpecName">${htmlDecode(
+					<div class="contextIcon${attachment ? " attachment" : ""}">
+						${icon}
+					</div>
+					<span class="krSpecName">${htmlDecode(
 				source.title || ""
 			)}</span>
-            </div>
-        `;
+				</div>
+			`;
 
 		if (item?.showData) {
 			let payload = {
@@ -625,6 +671,34 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 					<span class="agentMetaDetailsLabel">Answer from:</span>
 					<span class="agentMetaDetailsImage contextIcon">${iconHtml}</span>
 					<span class="agentMetaDetailsName">Web</span>
+				</div>
+			`;
+		}
+
+		// 1.8 Special Case: Jira Search Answer (provider === 'jira' && hasData === true)
+		if (item?.provider === 'jira' && item?.hasData) {
+			let iconHtml = '';
+			try {
+				// Use 'jira' source type for icon
+				const iconEl = renderIcons('jira', null, null);
+				if (iconEl && iconEl.innerHTML && iconEl.innerHTML.trim() !== '') {
+					iconHtml = iconEl.outerHTML;
+				}
+			} catch (e) { }
+
+			// Fallback if renderIcons fails: standard blue diamond
+			if (!iconHtml) {
+				iconHtml = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M11.53 2.00016C11.53 2.00016 11.53 2.00016 11.53 2.00016ZM11.53 2.00016L2.36016 11.1702C2.12683 11.4035 2.00016 11.7168 2.00016 12.0435C2.00016 12.3702 2.12683 12.6835 2.36016 12.9168L11.53 22.0868C11.7633 22.3202 12.08 22.4502 12.41 22.4502C12.74 22.4502 13.0567 22.3202 13.29 22.0868L22.46 12.9168C22.6933 12.6835 22.82 12.3702 22.82 12.0435C22.82 11.7168 22.6933 11.4035 22.46 11.1702L13.29 2.00016C13.0567 1.76683 12.74 1.63683 12.41 1.63683C12.08 1.63683 11.7633 1.76683 11.53 2.00016Z" fill="#0052CC"/></svg>`;
+			}
+
+			// Use title case for provider name display
+			const providerName = item.provider.charAt(0).toUpperCase() + item.provider.slice(1);
+
+			return `
+				<div class="agentMetaDetailsWrapper jiraSearchWrapper">
+					<span class="agentMetaDetailsLabel">Answer from:</span>
+					<span class="agentMetaDetailsImage contextIcon">${iconHtml}</span>
+					<span class="agentMetaDetailsName">${providerName}</span>
 				</div>
 			`;
 		}
