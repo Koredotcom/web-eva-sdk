@@ -328,8 +328,8 @@ class RenderAttachments {
                             <div class="metaDescription">
                                 ${isSearchAnswer
                     ? `
-                                        ${ownerName ? `<span>Created by: ${encodeHtml(ownerName)}</span>` : ''}
-                                        ${modifiedTime ? `<span>${ownerName ? ', ' : ''}Last Edited on ${formatTimeAgoOrDate(modifiedTime)}</span>` : ''}
+                                        ${ownerName ? `<span>Created by: ${encodeHtml(ownerName)}${modifiedTime ? ', ' : ''}</span>` : ''}
+                                        ${modifiedTime ? `<span>Last Edited on ${formatTimeAgoOrDate(modifiedTime)}</span>` : ''}
                                     `
                     : el?.meta?.updatedBy && el?.meta?.updatedOn
                         ? `

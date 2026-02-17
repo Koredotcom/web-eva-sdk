@@ -45,6 +45,8 @@ const ChatInterfaceDemo = () => {
   const [announcements, setAnnouncements] = useState(null);
   const [showScrollToBottom, setShowScrollToBottom] = useState(false);
   const [wasScrollToBottomClicked, setWasScrollToBottomClicked] = useState(false);
+  const [isComposebarBotInputVisible, setIsComposebarBotInputVisible] = useState(false);
+  const [isComposebarBotInputExpanded, setIsComposebarBotInputExpanded] = useState(false);
 
   const chatInterface = useRef();
   const composeBarRef = useRef(); // Reference for the ComposeBar instance
@@ -90,6 +92,57 @@ const ChatInterfaceDemo = () => {
           // Initialize ComposeBar by passing the div id
       RenderComposeBar('eva-composebar');
       renderRecentAgents('recent-agents-container');
+  }, []);
+
+  useEffect(() => {
+    let observer = null;
+    let rafId = null;
+    let cancelled = false;
+
+    const getBotWrapper = () =>
+      document.querySelector('#eva-composebar .composebar-bot-input-wrapper');
+
+    const computeVisible = (el) => {
+      if (!el) return false;
+      const style = window.getComputedStyle(el);
+      if (style.display === 'none' || style.visibility === 'hidden') return false;
+      // getClientRects catches display:none and detached nodes reliably
+      return el.getClientRects().length > 0;
+    };
+
+    const sync = () => {
+      const el = getBotWrapper();
+      const isVisible = computeVisible(el);
+      setIsComposebarBotInputVisible(isVisible);
+      // Expanded means details are shown (i.e., "Hide Details" state)
+      setIsComposebarBotInputExpanded(
+        !!(isVisible && el && !el.classList.contains('details-hidden'))
+      );
+    };
+
+    const start = () => {
+      if (cancelled) return;
+      const el = getBotWrapper();
+
+      // Wrapper might not exist until RenderComposeBar injects markup
+      if (!el) {
+        rafId = window.requestAnimationFrame(start);
+        return;
+      }
+
+      sync();
+
+      observer = new MutationObserver(() => sync());
+      observer.observe(el, { attributes: true, attributeFilter: ['style', 'class'] });
+    };
+
+    start();
+
+    return () => {
+      cancelled = true;
+      if (rafId) window.cancelAnimationFrame(rafId);
+      if (observer) observer.disconnect();
+    };
   }, []);
 
   // Simple one-time check on mount to show scroll button if needed
@@ -173,7 +226,11 @@ const ChatInterfaceDemo = () => {
 
               return (
                 <div 
-                  className="chat-message-container"
+                  className={[
+                    'chat-message-container',
+                    isComposebarBotInputVisible ? 'composebar-bot-input-visible' : '',
+                    isComposebarBotInputExpanded ? 'composebar-bot-input-expanded' : '',
+                  ].filter(Boolean).join(' ')}
                   key={index}
                   dangerouslySetInnerHTML={{
                     __html: html.innerHTML,

@@ -543,6 +543,11 @@ body {
                 width: auto !important;
                 min-width: 2.5rem;
                 flex-shrink: 0;
+
+                span {
+                    display: flex;
+                    align-items: center;
+                }
             }
         }
     }
@@ -3324,6 +3329,9 @@ body {
             &:last-child {
                 margin-bottom: 3.5rem;
                 min-height: calc(-11rem + 100dvh);
+            }
+            &.composebar-bot-input-visible.composebar-bot-input-expanded {
+                margin-bottom: 6.5rem;
             }
         }
     }
