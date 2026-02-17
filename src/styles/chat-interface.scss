@@ -7340,6 +7340,12 @@ sl-drawer.sources-sidebar-drawer {
                                             &.answerSourceChip {
                                                 display: none;
                                             }
+                                            &.ask-followup-btn {
+                                                display: flex !important;
+                                            }
+                                            &.open-source-btn {
+                                                display: flex !important;
+                                            }
                                         }
                                     }
                                 }
@@ -7421,7 +7427,16 @@ sl-drawer.sources-sidebar-drawer {
                                     }
 
                                     .hover-options {
-                                        display: none;
+                                        //display: none;
+                                        &.answerSourceChip {
+                                            //display: none;
+                                        }
+                                        &.ask-followup-btn {
+                                            display: none;
+                                        }
+                                        &.open-source-btn {
+                                            display: none;
+                                        }
                                     }
 
                                     .options-wrapper {
@@ -7862,6 +7877,12 @@ sl-drawer.sources-sidebar-drawer {
                                             &.answerSourceChip {
                                                 display: none;
                                             }
+                                            &.ask-followup-btn {
+                                                display: flex !important;
+                                            }
+                                            &.open-source-btn {
+                                                display: flex !important;
+                                            }
                                         }
                                     }
                                 }
@@ -7952,7 +7973,18 @@ sl-drawer.sources-sidebar-drawer {
                                     }
 
                                     .hover-options {
-                                        display: none;
+                                        //display: none;
+                                        .options-wrapper {
+                                            &.answerSourceChip {
+                                                //display: none;
+                                            }
+                                            &.ask-followup-btn {
+                                                display: none;
+                                            }
+                                            &.open-source-btn {
+                                                display: none;
+                                            }
+                                        }
                                     }
 
                                     .options-wrapper {

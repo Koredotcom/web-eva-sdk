@@ -20,10 +20,10 @@ const formatTimeAgoOrDate = (timestamp) => {
             return 'Yesterday';
         } else if (diffInDays < 7) {
             return date.format('dddd');
-        } else if (diffInDays < 365) {
-            return date.format('MMM D');
         } else {
-            return date.format('MMM D, YYYY');
+            // Date format requirement: "11th Sept 2025"
+            // Moment's "MMM" yields "Sep" so we normalize it to "Sept".
+            return date.format('Do MMM YYYY').replace(/\bSep\b/, 'Sept');
         }
     } catch (e) {
         return timestamp;
@@ -329,7 +329,7 @@ class RenderAttachments {
                                 ${isSearchAnswer
                     ? `
                                         ${ownerName ? `<span>Created by: ${encodeHtml(ownerName)}</span>` : ''}
-                                        ${modifiedTime ? `<span>${ownerName ? ', ' : ''}Last Edited ${formatTimeAgoOrDate(modifiedTime)}</span>` : ''}
+                                        ${modifiedTime ? `<span>${ownerName ? ', ' : ''}Last Edited on ${formatTimeAgoOrDate(modifiedTime)}</span>` : ''}
                                     `
                     : el?.meta?.updatedBy && el?.meta?.updatedOn
                         ? `
