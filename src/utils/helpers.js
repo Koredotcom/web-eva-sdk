@@ -4,6 +4,7 @@ import { cloneDeep, debounce } from "lodash";
 import { setErrorState } from "../redux/globalSlice";
 import ReactDOM from "react-dom/server";
 import { getSuggestedContactListNew } from "../redux/actions/global.action";
+import { attachmentIcon } from "../templateRenderer/icons-library";
 
 export const Timedifference = (time) => {
     let daysdiff = new Date().getDate() - new Date(time).getDate();
@@ -39,7 +40,7 @@ export const getUID = function (len) {
 export const getFileExtension = (fileName) => {
     const parts = fileName?.split('.');
     if (parts?.length > 1 && parts[parts?.length - 1].trim() !== '') {
-        if(supportedImagesOfFileUpload.includes(parts[parts?.length - 1].toLowerCase())) {
+        if (supportedImagesOfFileUpload.includes(parts[parts?.length - 1].toLowerCase())) {
             return parts[parts?.length - 1].toLowerCase()
         }
         return 'default';
@@ -57,10 +58,10 @@ export const generateComponentId = () => {
 
 export const getQueryParams = (url) => {
     const queryParams = {};
-    const queryString = url.split('?')[1]; 
+    const queryString = url.split('?')[1];
 
     if (queryString) {
-        const paramPairs = queryString.split('&'); 
+        const paramPairs = queryString.split('&');
 
         paramPairs.forEach(pair => {
             const [key, value] = pair.split('='); // Split each parameter pair into key and value
@@ -110,9 +111,9 @@ export const getReqIdByMessageId = (messageId) => {
     let questions = cloneDeep(store.getState().global?.questions)
     for (const key in questions) {
         if (questions[key]?.messageId === messageId) {
-            return questions[key]?.historicalData ? questions[key]?.id 
-                                                  : questions[key]?.isTask ? questions[key]?.cId 
-                                                                           : questions[key]?.reqId;
+            return questions[key]?.historicalData ? questions[key]?.id
+                : questions[key]?.isTask ? questions[key]?.cId
+                    : questions[key]?.reqId;
         }
     }
     return null; // or an appropriate value if no match is found
@@ -127,11 +128,17 @@ export const getCidByReqId = (questions, reqId) => {
     return null;
 }
 
-export const renderIcons = (provider, extIcon, providerIcon) => { //providerIcon will be helpful for history, in case the existing connection is deleted and no connections left for that specific integration
+export const renderIcons = (provider, extIcon, providerIcon, iconUrl, isSupervisor) => { //providerIcon will be helpful for history, in case the existing connection is deleted and no connections left for that specific integration
 
     const state = store.getState().global
-    const { enabledAgents } = state;
-    let icon = enabledAgents?.find(skill => skill.id === provider || skill?.appId === provider)?.icon || providerIcon
+    const { enabledAgents, config } = state;
+    const sourcesConfig = config?.source || config?.data?.source;
+
+    let icon = sourcesConfig?.[provider]?.icon ||
+        (provider === 'attachment' && sourcesConfig?.["accountKnowledge"]?.icon) ||
+        enabledAgents?.find(skill => skill.id === provider || skill?.appId === provider)?.icon ||
+        providerIcon;
+
     if (!icon) {
         icon = enabledAgents?.find(item => item?.id === provider)?.icon
     }
@@ -139,20 +146,27 @@ export const renderIcons = (provider, extIcon, providerIcon) => { //providerIcon
     const Icondiv = document.createElement('div');
     Icondiv.className = 'srcimg';
 
-    const img = document.createElement('img');
-    img.src = icon;
-    img.className = 'backgroundIcon';
-    if(icon){
-        Icondiv.appendChild(img);
+    let renderIconContent = '';
+    if (provider === 'webSearch' && iconUrl) {
+        renderIconContent = `<img class="backgroundIcon" src="${iconUrl}" />`;
+    } else if (isSupervisor && iconUrl) {
+        renderIconContent = `<img class="backgroundIcon" src="${iconUrl}" />`;
+    } else if (iconUrl && provider === 'accountKnowledge') {
+        renderIconContent = `<img class="backgroundIcon" src="${iconUrl}" />`;
+    } else if (!iconUrl && provider === 'accountKnowledge' && extIcon) {
+        renderIconContent = `<img class="backgroundIcon" src="${extIcon}" />`;
+    } else if (!!extIcon && !providerIcon && !iconUrl) {
+        renderIconContent = `<img class="backgroundIcon" src="${extIcon}" />`;
+    } else if (!icon && provider === 'attachment') {
+        renderIconContent = attachmentIcon({ className: "backgroundIcon" });
+    } else {
+        renderIconContent = icon ? `<img src="${icon}" class="backgroundIcon" />` : '';
+        if (iconUrl) {
+            renderIconContent += `<img class="subIcon" src="${iconUrl}" />`;
+        }
     }
 
-    if (extIcon) {
-        const subImg = document.createElement('img');
-        subImg.src = extIcon; 
-        subImg.className = 'subIcon';
-        Icondiv.appendChild(subImg); 
-    }
-
+    Icondiv.innerHTML = renderIconContent;
     return Icondiv;
 }
 
@@ -180,55 +194,55 @@ export const getCurrentQuestion = (item) => {
 export const handleErrorState = (error, name = null) => {
     let currentErrorState = cloneDeep(store.getState().global.errorState) || [];
     let obj = {
-        error : error?.response?.data?.errors?.[0]
+        error: error?.response?.data?.errors?.[0]
     }
 
-    if(name) {
+    if (name) {
         obj.failedCall = name;
     }
 
-	currentErrorState.push(obj);
-	store.dispatch(setErrorState(currentErrorState));
+    currentErrorState.push(obj);
+    store.dispatch(setErrorState(currentErrorState));
 };
 
 export const convertTemplateToHtml = (element) => {
-	// Create a temporary div
-	const tempDiv = document.createElement("div");
+    // Create a temporary div
+    const tempDiv = document.createElement("div");
 
-	// Render React element to HTML string
-	const htmlString = ReactDOM.renderToString(element);
+    // Render React element to HTML string
+    const htmlString = ReactDOM.renderToString(element);
 
-	// Set the HTML string to the div
-	tempDiv.innerHTML = htmlString;
+    // Set the HTML string to the div
+    tempDiv.innerHTML = htmlString;
 
-	// Return the HTML string
-	return tempDiv.innerHTML;
+    // Return the HTML string
+    return tempDiv.innerHTML;
 };
 
 export function encodeHtml(text) {
-	text = text?.toString();
-	text = text?.replace(/&nbsp;/g, " ");
-	text = text?.replace(/&amp;/g, "&");
-	text = text?.replace(/&lt;/g, "<");
-	text = text?.replace(/&gt;/g, ">");
-	text = text?.replace(/&quot;/g, '"');
-	text = text?.replace(/&apos;/g, "'");
-	return text;
+    text = text?.toString();
+    text = text?.replace(/&nbsp;/g, " ");
+    text = text?.replace(/&amp;/g, "&");
+    text = text?.replace(/&lt;/g, "<");
+    text = text?.replace(/&gt;/g, ">");
+    text = text?.replace(/&quot;/g, '"');
+    text = text?.replace(/&apos;/g, "'");
+    return text;
 }
 
 export const formatToDDMMYY = (dateStr) => {
-	const date = new Date(dateStr);
-	if (isNaN(date)) return '';
-  
-	const dd = String(date.getDate()).padStart(2, '0');
-	const mm = String(date.getMonth() + 1).padStart(2, '0'); // Month is 0-based
-	const yy = String(date.getFullYear()).slice(-2);
-  
-	return `${dd}/${mm}/${yy}`;
-  };
+    const date = new Date(dateStr);
+    if (isNaN(date)) return '';
 
-  export const delayedSearchCallback = async (value, type) => {
-	let userId = store?.getState()?.global?.profile?.data?.id;
+    const dd = String(date.getDate()).padStart(2, '0');
+    const mm = String(date.getMonth() + 1).padStart(2, '0'); // Month is 0-based
+    const yy = String(date.getFullYear()).slice(-2);
+
+    return `${dd}/${mm}/${yy}`;
+};
+
+export const delayedSearchCallback = async (value, type) => {
+    let userId = store?.getState()?.global?.profile?.data?.id;
 
     if (type === 'getSuggestedContactList') {
         // store.dispatch(getSuggestedContactList(value?.value));
@@ -236,7 +250,7 @@ export const formatToDDMMYY = (dateStr) => {
         // store.dispatch(getContactList(value?.value));
         let params = {
             source: value?.connectionSource,
-			userId : userId,			
+            userId: userId,
         }
         let payload = {
             "dataType": "listPeople",
@@ -249,12 +263,12 @@ export const formatToDDMMYY = (dateStr) => {
                 "page": 0
             }
         }
-        const response = await store.dispatch(getSuggestedContactListNew({params, payload}))
+        const response = await store.dispatch(getSuggestedContactListNew({ params, payload }))
         return response?.payload?.choices;
     }
 }
 export const checkHistoryAccessed = (questions) => {
-    return Object.values(questions ||{}).every(q => q?.historicalData)
+    return Object.values(questions || {}).every(q => q?.historicalData)
 }
 
 // Placeholder functions for missing icons
@@ -300,25 +314,25 @@ export const isUserNearBottom = (el, threshold = 200) => {
 
 export const hideElementImmediately = (element, options = {}) => {
     if (!element) return;
-    
+
     const { enableLogging = false } = options;
-    
+
     // Clean up any pending show timeouts
     if (element._showTimeout) {
         clearTimeout(element._showTimeout);
         delete element._showTimeout;
     }
-    
+
     // Clean up any existing observer
     if (element._hideObserver) {
         element._hideObserver.disconnect();
         delete element._hideObserver;
     }
-        
+
     element.style.display = 'none';
     element.setAttribute('hidden', 'true');
     element.setAttribute('aria-hidden', 'true');
-    
+
     if (enableLogging) {
         console.log('Element hidden:', element);
     }
@@ -327,49 +341,49 @@ export const hideElementImmediately = (element, options = {}) => {
 
 export const showElementImmediately = (element, displayValue = 'block', enableLogging = false) => {
     if (!element) return;
-        
+
     if (element._showTimeout) {
         clearTimeout(element._showTimeout);
         delete element._showTimeout;
     }
-    
-    
+
+
     if (element._hideObserver) {
         element._hideObserver.disconnect();
         delete element._hideObserver;
     }
-    
-    
+
+
     element.style.display = displayValue;
     element.removeAttribute('hidden');
     element.removeAttribute('aria-hidden');
-        
+
 };
 
 export const showElementDelayed = (element, delay = 100, displayValue = 'block', enableLogging = false) => {
     if (!element) return;
-    
-    
-    
-    
+
+
+
+
     if (element._showTimeout) {
         clearTimeout(element._showTimeout);
         delete element._showTimeout;
-        
+
     }
-    
+
     // Mark element as intended to be visible (but delayed)
     element._intendedState = 'visible-delayed';
-    
+
     // Set up the timeout
     element._showTimeout = setTimeout(() => {
         if (element._intendedState === 'visible-delayed') { // Only show if not overridden
             showElementImmediately(element, displayValue, enableLogging);
         }
-        delete element._showTimeout; 
+        delete element._showTimeout;
     }, delay);
-    
-    
+
+
 };
 
 
@@ -396,17 +410,17 @@ export const quickShow = (target, displayValue = 'block', enableLogging = false)
 
 export const getIconsList = (agent = {}, icons = []) => {
     const intentList = icons;
-    if(intentList?.length === 0) {
-    agent?.config?.executionPipeline?.map((task, index) => {
-        task?.intents?.map((intent) => {
-            if (intentList?.find((i) => i?.agentMeta?.name === intent?.agentMeta?.name)) return;
-            intentList?.push(intent)
-        })
-    });
-}
-    
+    if (intentList?.length === 0) {
+        agent?.config?.executionPipeline?.map((task, index) => {
+            task?.intents?.map((intent) => {
+                if (intentList?.find((i) => i?.agentMeta?.name === intent?.agentMeta?.name)) return;
+                intentList?.push(intent)
+            })
+        });
+    }
+
     let html = '';
-    
+
     // Add first 3 icons
     intentList?.slice(0, 1).forEach((intent, idx) => {
         html += `            
@@ -415,7 +429,7 @@ export const getIconsList = (agent = {}, icons = []) => {
             </span>            
         `;
     });
-    
+
     // Add count indicator if more than 3 icons
     if (intentList?.length > 1) {
         html += `
@@ -424,12 +438,12 @@ export const getIconsList = (agent = {}, icons = []) => {
             </span>
         `;
     }
-    
+
     return html;
 }
 
 export const convertToTimeFormat = (isoDate) => {
-    if(!isoDate) return moment().local().format("hh:mm A");
+    if (!isoDate) return moment().local().format("hh:mm A");
     return moment().utc(isoDate).local().format("hh:mm A");
 }
 
@@ -494,89 +508,5 @@ export function markdownToPlainText(md) {
     return trimWithEllipsis(text).trim();
 }
 
-const trimWithEllipsis = (str, max=100) =>
-  str.length > max ? str.slice(0, max) + "..." : str;
-
-/**
- * Section keys for segregated history (display order).
- */
-export const HISTORY_SECTIONS = {
-    TODAY: "Today",
-    YESTERDAY: "Yesterday",
-    LAST_7_DAYS: "Last 7 days",
-    LAST_30_DAYS: "Last 30 days",
-    OLDER: "Older",
-};
-
-/* Returns YYYY-MM-DD for consistent string comparison. Uses en-CA in timezone when provided. */
-const getDateStringInZone = (date, timeZone) => {
-    if (timeZone) {
-        return date.toLocaleDateString("en-CA", { timeZone });
-    }
-    const y = date.getFullYear();
-    const m = String(date.getMonth() + 1).padStart(2, "0");
-    const d = String(date.getDate()).padStart(2, "0");
-    return `${y}-${m}-${d}`;
-};
-
-/* Normalize createdOn: API may return seconds (e.g. Unix) or milliseconds. */
-const normalizeCreatedOn = (ts) => {
-    if (ts == null || typeof ts !== "number") return ts;
-    if (ts < 1e12) return ts * 1000;
-    return ts;
-};
-
-export const segregateHistoryBySections = (items, timeZone) => {
-    const result = {
-        today: [],
-        yesterday: [],
-        last7Days: [],
-        last30Days: [],
-        older: [],
-    };
-    if (!Array.isArray(items) || items.length === 0) return result;
-
-    const now = new Date();
-    const todayStr = getDateStringInZone(now, timeZone);
-
-    const yesterdayDate = new Date(now);
-    yesterdayDate.setDate(yesterdayDate.getDate() - 1);
-    const yesterdayStr = getDateStringInZone(yesterdayDate, timeZone);
-
-    const sevenDaysAgoDate = new Date(now);
-    sevenDaysAgoDate.setDate(sevenDaysAgoDate.getDate() - 7);
-    const sevenDaysAgoStr = getDateStringInZone(sevenDaysAgoDate, timeZone);
-
-    const thirtyDaysAgoDate = new Date(now);
-    thirtyDaysAgoDate.setDate(thirtyDaysAgoDate.getDate() - 30);
-    const thirtyDaysAgoStr = getDateStringInZone(thirtyDaysAgoDate, timeZone);
-
-    for (const item of items) {
-        const raw = item?.createdOn;
-        if (raw == null) {
-            result.older.push(item);
-            continue;
-        }
-        const ts = normalizeCreatedOn(raw);
-        const itemDate = new Date(ts);
-        if (Number.isNaN(itemDate.getTime())) {
-            result.older.push(item);
-            continue;
-        }
-        const itemStr = getDateStringInZone(itemDate, timeZone);
-
-        if (itemStr === todayStr) {
-            result.today.push(item);
-        } else if (itemStr === yesterdayStr) {
-            result.yesterday.push(item);
-        } else if (itemStr >= sevenDaysAgoStr && itemStr < yesterdayStr) {
-            result.last7Days.push(item);
-        } else if (itemStr >= thirtyDaysAgoStr && itemStr < sevenDaysAgoStr) {
-            result.last30Days.push(item);
-        } else {
-            result.older.push(item);
-        }
-    }
-
-    return result;
-};
+const trimWithEllipsis = (str, max = 100) =>
+    str.length > max ? str.slice(0, max) + "..." : str;

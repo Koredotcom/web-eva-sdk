@@ -1,4 +1,5 @@
 import { encodeHtml, renderIcons, getFileExtension, getExtIcon } from '../utils/helpers.js';
+import { setContextIcon, getMessageTextIcon, ArrowUpRight } from '../templateRenderer/icons-library.js';
 import store from '../redux/store.js';
 
 /**
@@ -51,7 +52,7 @@ class KnowledgeSearchResults {
                 // Tab panel content
                 panelsHtml += `
                     <sl-tab-panel name="${encodeHtml(tabKey)}" ${isActive ? 'active' : ''}>
-                        ${this.renderTabContent(tabData, tab, answerSources, loadingTabs.has(tabKey))}
+                        ${this.renderTabContent(tabData, tab, answerSources, loadingTabs.has(tabKey), tabKey)}
                     </sl-tab-panel>
                 `;
             });
@@ -80,9 +81,9 @@ class KnowledgeSearchResults {
         if (!unifiedSearchResults?.data?.results) return [];
 
         let allResults = [];
-        Object.values(unifiedSearchResults.data.results).forEach(tabData => {
+        Object.entries(unifiedSearchResults.data.results).forEach(([tabKey, tabData]) => {
             if (tabData?.data && Array.isArray(tabData.data)) {
-                allResults = [...allResults, ...tabData.data];
+                allResults = [...allResults, ...tabData.data.map(r => ({ ...r, tabKey }))];
             }
         });
 
@@ -92,7 +93,7 @@ class KnowledgeSearchResults {
     /**
      * Render tab content
      */
-    static renderTabContent(tabData, tab, answerSources, isLoading = false) {
+    static renderTabContent(tabData, tab, answerSources, isLoading = false, tabKey = null) {
         // Show loading spinner if tab is fetching data
         if (isLoading) {
             console.log(`KnowledgeSearchResults: Rendering loading state for tab '${tab?.key}'`);
@@ -104,7 +105,7 @@ class KnowledgeSearchResults {
             return '<div class="empty-field-wrapper"><span class="empty-text">No results found</span></div>';
         }
 
-        const resultsHtml = this.renderResultsList(tabData.data, answerSources);
+        const resultsHtml = this.renderResultsList(tabData.data.map(r => ({ ...r, tabKey: tabKey || tab?.key })), answerSources);
         return `<div class="tab-content-wrapper"><div class="tab-content">${resultsHtml}</div></div>`;
     }
 
@@ -214,8 +215,33 @@ class KnowledgeSearchResults {
                     <div class="content-desc">
                         <div class="content-header">
                             <div class="options-name-wrapper">
-                                <span class="content-name">${encodeHtml(title)}</span>
-                                ${isAnsweredSource ? '<div class="options-wrapper answerSourceChip">Answered Source</div>' : ''}
+                                <div style="display:flex; flex-direction:column; gap:4px; width: 100%;">
+                                    <div style="display:flex; justify-content:space-between; align-items:center; width: 100%;">
+                                        <span class="content-name">${encodeHtml(title)}</span>
+                                            <div class="hover-options">
+                                                ${result?.canSetAsSourceContext !== false ? `
+                                                <sl-tooltip content="Set as context">
+                                                    <div class="options-wrapper ask-followup-btn" data-result-key="${encodeHtml(result?.tabKey || '')}" data-result-id="${encodeHtml(result?.docId || result?.contentId || '')}">
+                                                        <span>Set as context</span>
+                                                        ${setContextIcon({ size: 12, color: '#667085' })}
+                                                    </div>
+                                                </sl-tooltip>` : ''}
+                                                <sl-tooltip content="Get Answer">
+                                                    <div class="options-wrapper get-answer-btn" data-result-key="${encodeHtml(result?.tabKey || '')}" data-result-id="${encodeHtml(result?.docId || result?.contentId || '')}">
+                                                        <span>Get Answer</span>
+                                                        ${getMessageTextIcon({ size: 12, color: '#667085' })}
+                                                    </div>
+                                                </sl-tooltip>
+                                                ${url ? `
+                                                <sl-tooltip content="Open in new tab">
+                                                    <div class="options-wrapper open-source-btn" data-url="${encodeHtml(url)}" data-result-id="${encodeHtml(result?.docId || result?.contentId || '')}" data-source-type="${encodeHtml(result?.sourceType || result?.type || result?.source || '')}">
+                                                        ${ArrowUpRight({ size: 16, color: '#667085' })}
+                                                    </div>
+                                                </sl-tooltip>` : ''}
+                                            </div>
+                                    </div>
+                                    ${isAnsweredSource ? '<div class="options-wrapper answerSourceChip" style="width: fit-content;">Answered Source</div>' : ''}
+                                </div>
                             </div>
                             ${desc ? `<div class="desc">${typeof desc === 'string' ? encodeHtml(desc) : desc}</div>` : ''}
                         </div>
