@@ -565,7 +565,33 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 			`;
 		}
 
-		// 2. Agent Case (real agents, not 'attachment')
+		// 1.5 Special Case: Web Search (agentId === 'webSearch')
+		if (item?.agentId === 'webSearch') {
+			let iconHtml = '';
+			try {
+				// Use 'web' source type for icon
+				const iconEl = renderIcons('web', null, null);
+				// Check if iconEl actually has content to avoid rendering empty div
+				if (iconEl && iconEl.innerHTML && iconEl.innerHTML.trim() !== '') {
+					iconHtml = iconEl.outerHTML;
+				}
+			} catch (e) { }
+
+			// Fallback SVG if renderIcons fails or returns empty div (Globe icon)
+			if (!iconHtml) {
+				iconHtml = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#667085" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>`;
+			}
+
+			return `
+				<div class="agentMetaDetailsWrapper webSearchWrapper">
+					<span class="agentMetaDetailsLabel">Answer from:</span>
+					<span class="agentMetaDetailsImage contextIcon">${iconHtml}</span>
+					<span class="agentMetaDetailsName">Web</span>
+				</div>
+			`;
+		}
+
+		// 2. Agent Case (real agents, not 'attachment' or 'webSearch')
 		// Match Kora-React logic: lines 1354-1385 in index.js
 		if (item?.agentId) {
 			// Use the local agentMetaDetails variable (extracted above if needed)
@@ -665,7 +691,9 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 		// Legacy/Fallback logic (Only if NO sources chip was shown, AND not covered above?)
 		// If hasSourcesChip is FALSE, we might still want to show something?
 		// Existing logic:
-		if (!hasSourcesChip) {
+		// Legacy/Fallback logic (Only if NO sources chip was shown, AND NO agentId present)
+		// If agentId is present, agentMetaDetailsRenderer handles the "Answer from" label.
+		if (!hasSourcesChip && !item?.agentId) {
 			// Check if agentMetaDetailsRenderer returned empty? 
 			// If agentMetaDetailsRenderer rendered something, we might not want sourceChipRender?
 			// But sourceChipRender is specific about 'left-splitter-opener'.
