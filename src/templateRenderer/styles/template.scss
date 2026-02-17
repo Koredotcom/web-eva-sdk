@@ -1,4 +1,4 @@
-@import '../../../src/styles/mixins_new.scss';
+@use "../../styles/mixins_new.scss" as *;
 
 .kora-template {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,

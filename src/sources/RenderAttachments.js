@@ -221,7 +221,9 @@ class RenderAttachments {
 
         const questions = store.getState()?.global?.questions || {};
         const answerSources = store.getState()?.global?.answerSources;
-        const sourceIds = questions[answerSources?.id]?.sources?.map(s => s?.docId || s?.contentId);
+        const sourceIds = (answerSources?.id ? (questions[answerSources.id]?.sources || []) : [])
+            .map((s) => s?.docId || s?.contentId)
+            .filter(Boolean);
 
         // For search_answer templateType, format metadata from drive item structure
         const isSearchAnswer = data?.templateType === 'search_answer';
