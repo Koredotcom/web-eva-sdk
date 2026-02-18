@@ -1,4 +1,4 @@
-@import "../../src/styles/mixins_new.scss";
+@use "./mixins_new.scss" as *;
 
 #root {
     width: 100%;

@@ -1,4 +1,5 @@
-@import "../../src/styles/mixins_new.scss";
+@use "./variables_new.scss" as *;
+@use "./mixins_new.scss" as *;
 
 html,
 body {
@@ -158,6 +159,7 @@ body {
             flex-grow: 1;
             overflow: auto;
             position: relative;
+            scrollbar-gutter: stable;
         }
     }
 }
@@ -3229,6 +3231,7 @@ body {
                             font-family: Inter;
                             font-weight: 500;
                         }
+
                         &::part(input) {
                             color: #141414;
                             font-family: Inter;
@@ -3330,6 +3333,7 @@ body {
                 margin-bottom: 3.5rem;
                 min-height: calc(-11rem + 100dvh);
             }
+
             &.composebar-bot-input-visible.composebar-bot-input-expanded {
                 margin-bottom: 6.5rem;
             }
@@ -3482,10 +3486,12 @@ body {
                         border-radius: .75rem;
                         background: #fff;
                         border: .0625rem solid #e5e5e5;
-                        box-shadow: 0px 24px 48px -12px rgba(16, 24, 40, .1803921569);                        
+                        box-shadow: 0px 24px 48px -12px rgba(16, 24, 40, .1803921569);
                     }
+
                     &.active {
                         background: #f5f5f5;
+
                         &::slot(trigger) {
                             .setContextButton {
                                 background: #f5f5f5;
@@ -3520,9 +3526,11 @@ body {
                                 margin: 0 !important;
                                 overflow: hidden !important;
                             }
+
                             &::part(prefix) {
                                 flex-shrink: 0;
                             }
+
                             &::part(label) {
                                 flex-grow: 1;
                                 min-width: 0;
@@ -3535,6 +3543,7 @@ body {
                                 letter-spacing: 0em;
                                 color: #141414;
                             }
+
                             &::part(suffix) {
                                 display: none;
                             }
@@ -3590,7 +3599,7 @@ body {
                                 white-space: nowrap;
                                 overflow: hidden;
                                 text-overflow: ellipsis;
-                                max-width: 15rem;                                
+                                max-width: 15rem;
                             }
 
                             .tick-wrapper {
@@ -5625,15 +5634,21 @@ sl-dialog.gpt-form-dialog {
             }
 
             .taskItem {
-
                 min-height: 3rem;
                 border-radius: 0.625rem;
-
                 display: flex;
                 align-items: center;
                 position: relative;
                 cursor: pointer;
                 width: calc(100% - 1.375rem);
+
+                .answerFromChipDiv {
+                    .ansFromChip {
+                        .answerActionChips {
+                            display: none;
+                        }
+                    }
+                }
 
                 &.showCheveron {
                     opacity: 1;
@@ -5992,6 +6007,11 @@ sl-dialog.gpt-form-dialog {
                     gap: 0.5rem;
                     width: 100%;
                     padding: 0.75rem;
+                    
+                    &:hover {
+                        border-radius: .625rem;
+                        background-color: $wa-gray-50;
+                    }
                 }
 
                 .bottomCard {
@@ -6022,9 +6042,9 @@ sl-dialog.gpt-form-dialog {
 
                 &.loadingSkeleton {
                     flex-direction: column;
-                    cursor: default;
+                    cursor: pointer;
                     opacity: 1;
-                    width: 100%;
+                    //width: 100%;
 
                     &:hover {
 
@@ -7348,9 +7368,11 @@ sl-drawer.sources-sidebar-drawer {
                                             &.answerSourceChip {
                                                 display: none;
                                             }
+
                                             &.ask-followup-btn {
                                                 display: flex !important;
                                             }
+
                                             &.open-source-btn {
                                                 display: flex !important;
                                             }
@@ -7435,13 +7457,16 @@ sl-drawer.sources-sidebar-drawer {
                                     }
 
                                     .hover-options {
+
                                         //display: none;
                                         &.answerSourceChip {
                                             //display: none;
                                         }
+
                                         &.ask-followup-btn {
                                             display: none;
                                         }
+
                                         &.open-source-btn {
                                             display: none;
                                         }
@@ -7885,9 +7910,11 @@ sl-drawer.sources-sidebar-drawer {
                                             &.answerSourceChip {
                                                 display: none;
                                             }
+
                                             &.ask-followup-btn {
                                                 display: flex !important;
                                             }
+
                                             &.open-source-btn {
                                                 display: flex !important;
                                             }
@@ -7981,14 +8008,17 @@ sl-drawer.sources-sidebar-drawer {
                                     }
 
                                     .hover-options {
+
                                         //display: none;
                                         .options-wrapper {
                                             &.answerSourceChip {
                                                 //display: none;
                                             }
+
                                             &.ask-followup-btn {
                                                 display: none;
                                             }
+
                                             &.open-source-btn {
                                                 display: none;
                                             }
@@ -8990,7 +9020,9 @@ sl-dropdown.setContextDropdown {
     position: relative;
 
     .setContextButton {
-        span, .cheveron-icon {
+
+        span,
+        .cheveron-icon {
             display: flex;
         }
     }
@@ -9005,24 +9037,26 @@ sl-dropdown.setContextDropdown {
     display: block;
     margin: 0.75rem 0;
 
-    .table, .markdown-table {
+    .table,
+    .markdown-table {
         width: 100%;
         //min-width: max-content;
         //border: 0.0625rem solid $wa-gray-200;
         caption-side: bottom;
         border-collapse: collapse;
-        vertical-align: top;            
+        vertical-align: top;
         display: table;
 
-        td, th {
+        td,
+        th {
             padding: .375rem 0.75rem;
             border: 0.0625rem solid $wa-gray-200;
             // white-space: nowrap;
             // min-width: fit-content;
             //border-collapse: collapse;
-            min-width: 9.375rem;                        
+            min-width: 9.375rem;
         }
-        
+
         td {
             @include typography-regular(0.875rem, 400, 1.25rem);
             color: $wa-gray-950;
@@ -9043,24 +9077,28 @@ sl-dropdown.setContextDropdown {
     line-height: 1.25rem;
     color: var(--colors-gray-true-500, #737373) !important;
     text-decoration: underline !important;
+
     &:hover {
-      color: var(--colors-blue-light-600, #0086C9) !important;
+        color: var(--colors-blue-light-600, #0086C9) !important;
     }
 }
+
 .special-link {
     background: $wa-gray-100;
     border-radius: 6.25rem;
     padding: 0.25rem 0.5rem;
-    @include typography-regular(0.625rem,400,0.75rem);
+    @include typography-regular(0.625rem, 400, 0.75rem);
     color: $wa-gray-500 !important;
     max-width: 9.375rem;
     display: inline-block;
     @include ellipsisText;
     vertical-align: middle;
+
     &:hover {
         background: $wa-gray-200;
         color: var(--colors-blue-light-600, #0086C9) !important;
     }
+
     &.email {
         background: none;
         font-family: Inter;
@@ -9073,6 +9111,7 @@ sl-dropdown.setContextDropdown {
         padding: 0;
         text-wrap: wrap;
         border-radius: 0;
+
         &:hover {
             color: var(--colors-blue-light-600, #0086C9) !important;
         }

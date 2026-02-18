@@ -714,7 +714,8 @@ const multiIntentExecutionFunc = (item) => {
 
         const deleteBtn = document.getElementById(`deleteBtn-${task?._id}`);
         if(deleteBtn && !deleteBtn.eventListenerAdded){
-            deleteBtn.addEventListener("click", () => {
+            deleteBtn.addEventListener("click", (e) => {
+                e?.stopPropagation?.();
                 deleteExistingTask(index, task);
             });
             deleteBtn.eventListenerAdded = true;
@@ -722,7 +723,8 @@ const multiIntentExecutionFunc = (item) => {
 
         const editBtn = document.getElementById(`editBtn-${task?._id}`);
         if(editBtn && !editBtn.eventListenerAdded){
-            editBtn.addEventListener("click", () => {
+            editBtn.addEventListener("click", (e) => {
+                e?.stopPropagation?.();
                 editTask(index, task);
             });
             editBtn.eventListenerAdded = true;

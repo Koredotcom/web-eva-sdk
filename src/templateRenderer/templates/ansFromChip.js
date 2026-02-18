@@ -107,6 +107,52 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 		let body = "";
 
 		const source = item?.sources?.[0] || {};
+
+		// Special Case for Jira/Hubspot/Zendesk tables to match Kora-React layout
+		// Structure: [Source Chip] -> [Table] -> [Agent Footer]
+		const isJira = (item?.provider === 'jira' || source?.source === 'jira' || item?.context?.source === 'jira');
+		const isHubspot = (item?.provider === 'hubspot' || source?.source === 'hubspot' || item?.context?.source === 'hubspot');
+		const isZendesk = (item?.provider === 'zendesk' || source?.source === 'zendesk' || item?.context?.source === 'zendesk');
+
+		if (isJira || isHubspot || isZendesk) {
+			// 1. Render Source Chip (e.g. "List of issues" pill)
+			const sourcesChipHtml = sourcesChipTagRefactored();
+			if (sourcesChipHtml && sourcesChipHtml.trim().length > 0) {
+				body += `
+					<div class="sourceGroup-item">
+						${sourcesChipHtml}
+					</div>
+				`;
+			}
+
+			// 2. Render Table content
+			if (item?.showData) {
+				let payload = {
+					columnData: item?.data?.[0]?.columns,
+					rowData: item?.data?.[0]?.rows,
+					cso: item?.data?.[0]?.views?.[0]?.cso,
+					id: item?.id || item?.cId || item?.pId,
+					showAllData: item?.showAllData,
+				};
+				let html = htmlTableRenderer(payload);
+				body += html;
+
+				// 3. Relevant Questions (if applicable)
+				if (
+					item?.sources?.[0]?.canSetAsSourceContext !== false
+				) {
+					body += relevantQuestionsRenderer();
+				}
+			}
+
+			// 4. Render Agent Footer ("Answer from: Jira")
+			// We use agentMetaDetailsRenderer which we updated to handle Jira/Provider logic
+			body += agentMetaDetailsRenderer();
+
+			return `<div class="ansFromChip" id="ansFromChip-${item?.id}">${body}</div>`;
+		}
+
+		// Legacy Table Renderer for other types
 		const attachment = source.source === "attachment";
 		const icon = renderIcons(
 			source.source,
@@ -115,17 +161,17 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 		).outerHTML;
 
 		body += `
-            <div class="tableChipRenderer" id = "ansFromChip-${item?.id}">
-                <span class="datachip">${item?.sources?.length > 1 ? "Data:" : "Answer From:"
+				<div class="tableChipRenderer" id = "ansFromChip-${item?.id}">
+					<span class="datachip">${item?.sources?.length > 1 ? "Data:" : "Answer From:"
 			}</span>
-                <div class="contextIcon${attachment ? " attachment" : ""}">
-                    ${icon}
-                </div>
-                <span class="krSpecName">${htmlDecode(
+					<div class="contextIcon${attachment ? " attachment" : ""}">
+						${icon}
+					</div>
+					<span class="krSpecName">${htmlDecode(
 				source.title || ""
 			)}</span>
-            </div>
-        `;
+				</div>
+			`;
 
 		if (item?.showData) {
 			let payload = {
@@ -629,6 +675,34 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 			`;
 		}
 
+		// 1.8 Special Case: Jira Search Answer (provider === 'jira' && hasData === true)
+		if (item?.provider === 'jira' && item?.hasData) {
+			let iconHtml = '';
+			try {
+				// Use 'jira' source type for icon
+				const iconEl = renderIcons('jira', null, null);
+				if (iconEl && iconEl.innerHTML && iconEl.innerHTML.trim() !== '') {
+					iconHtml = iconEl.outerHTML;
+				}
+			} catch (e) { }
+
+			// Fallback if renderIcons fails: standard blue diamond
+			if (!iconHtml) {
+				iconHtml = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M11.53 2.00016C11.53 2.00016 11.53 2.00016 11.53 2.00016ZM11.53 2.00016L2.36016 11.1702C2.12683 11.4035 2.00016 11.7168 2.00016 12.0435C2.00016 12.3702 2.12683 12.6835 2.36016 12.9168L11.53 22.0868C11.7633 22.3202 12.08 22.4502 12.41 22.4502C12.74 22.4502 13.0567 22.3202 13.29 22.0868L22.46 12.9168C22.6933 12.6835 22.82 12.3702 22.82 12.0435C22.82 11.7168 22.6933 11.4035 22.46 11.1702L13.29 2.00016C13.0567 1.76683 12.74 1.63683 12.41 1.63683C12.08 1.63683 11.7633 1.76683 11.53 2.00016Z" fill="#0052CC"/></svg>`;
+			}
+
+			// Use title case for provider name display
+			const providerName = item.provider.charAt(0).toUpperCase() + item.provider.slice(1);
+
+			return `
+				<div class="agentMetaDetailsWrapper jiraSearchWrapper">
+					<span class="agentMetaDetailsLabel">Answer from:</span>
+					<span class="agentMetaDetailsImage contextIcon">${iconHtml}</span>
+					<span class="agentMetaDetailsName">${providerName}</span>
+				</div>
+			`;
+		}
+
 		// 2. Agent Case (real agents, not 'attachment' or 'webSearch')
 		// Match Kora-React logic: lines 1354-1385 in index.js
 		if (item?.agentId) {
@@ -1025,9 +1099,7 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 
 	const setContextChip = () => {
 		const messageId = item?.id || item?.messageId;
-		const displayMenu = !item?.isTask && !item?.noResultFound && item?.viewType !== "list" && (item?.type === "search" || item?.type === "followup");
 		const isMultiSource = item?.sources?.length > 1;
-		const hideClass = displayMenu ? '' : 'hide';
 		const multiSourceClass = isMultiSource ? 'multiSource' : '';
 
 		const buttonHtml = `
@@ -1038,11 +1110,11 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
         `;
 
 		if (!isMultiSource) {
-			return `<div class="${hideClass}">${buttonHtml}</div>`;
+			return `<div>${buttonHtml}</div>`;
 		}
 
 		return `
-            <sl-dropdown id="setContextDropdown-${messageId}" class="setContextDropdown ${hideClass}" hoist>
+            <sl-dropdown id="setContextDropdown-${messageId}" class="setContextDropdown" hoist>
                 <div slot="trigger" style="cursor: pointer;">
                     ${buttonHtml}
                 </div>
@@ -1144,7 +1216,6 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 	/*need to creata a menufunction that displays a shoelace menu on clicking */
 	const threeDotMenu = () => {
 		const messageId = item?.messageId || item?.id;
-
 
 		// Get available integration actions
 		const availableActions = getAvailableActions();
@@ -1260,91 +1331,93 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 			// 	}
 			// }
 		}
-		let actionChipsHTML = `<div class="answerActionChips">`;
-		// Add copy answer chip if answer exists
-		if (item?.answer) {
-			actionChipsHTML += copyAnswerChip();
-		}
+		// ============================================================
+		// ACTION CHIPS — Matching Kora-React's MenuOptions.jsx conditions
+		// ============================================================
 
-		// Add export to Word chip if answer exists
-		if (item?.answer && !state?.ansFromChipElements?.disableExporttoWordDoc) {
-			actionChipsHTML += exportWordChip();
-		}
-		// Add Set as Context button with conditions matching Kora-React MenuOptions
-		// Conditions: !llm && !testAgentFlow && showSetAsSource && !isPersonalKnowledge
-		// Also need to check: item has sources, not threadView, not bot_template, not isEnterpriseKnowledge
+		// --- Shared condition variables (matching Kora-React MenuOptions.jsx lines 1051-1057) ---
 		const llm = item?.sources?.[0]?.source === "llm";
-		// canSetAsSourceContext defaults to true if undefined (only false when explicitly set to false)
 		const showSetAsSource = item?.sources?.[0]?.canSetAsSourceContext !== false;
 		const testAgentFlow = state?.ansFromChipElements?.testAgentFlow || false;
 		const isPersonalKnowledge = item?.context?.provider === "personalKnowledge";
-		const displayMenu = !item?.isTask && !item?.noResultFound && item?.viewType !== "list" && (item?.type === "search" || item?.type === "followup");
 		const hasSources = !!item?.sources?.length;
 		const isThreadView = item?.viewType === "threadView";
 		const isBotTemplate = item?.templateType === "bot_template";
 		const isEnterpriseKnowledge = item?.sources?.[0]?.isSupervisor || item?.isSupervisor;
 
-		// Match Kora-React conditions: MenuOptions is shown when: !!item?.sources?.length && (item?.viewType !== "threadView" && item?.templateType !== "bot_template" && !isEnterpriseKnowledge)
-		// And Set as Context is shown when: !llm && !testAgentFlow && showSetAsSource && !isPersonalKnowledge
-		// Note: Kora-React does NOT check disableSetAsContext - it's always shown when conditions are met
-		// The disableSetAsContext flag is an SDK-specific feature flag that can be used to disable it if needed
-		const shouldShowSetAsContext = hasSources && !isThreadView && !isBotTemplate && !isEnterpriseKnowledge &&
-			!llm && !testAgentFlow && showSetAsSource && !isPersonalKnowledge;
+		// --- WRAPPER-LEVEL GATE (Kora-React index.js line 1212) ---
+		// The entire action chips block is only rendered when these are true:
+		// !!item?.sources?.length && viewType !== threadView && templateType !== bot_template && !isEnterpriseKnowledge
+		const shouldShowActionChips = hasSources && !isThreadView && !isBotTemplate && !isEnterpriseKnowledge;
 
-		// Debug logging
-		console.log('Set as Context conditions check:', {
-			hasSources,
-			isThreadView,
-			isBotTemplate,
-			isEnterpriseKnowledge,
-			llm,
-			testAgentFlow,
-			showSetAsSource,
-			isPersonalKnowledge,
-			disableSetAsContext: state?.ansFromChipElements?.disableSetAsContext,
-			shouldShowSetAsContext,
-			itemId: item?.id,
-			sources: item?.sources,
-			viewType: item?.viewType,
-			templateType: item?.templateType
-		});
+		if (shouldShowActionChips) {
+			let actionChipsHTML = `<div class="answerActionChips">`;
 
-		if (shouldShowSetAsContext) {
-			actionChipsHTML += setContextChip();
-			console.log('Set as Context button added to actionChipsHTML for item:', item?.id);
-		} else {
-			console.log('Set as Context button NOT added - conditions not met for item:', item?.id);
-		}
+			// displayMenu — Kora-React MenuOptions.jsx line 1056
+			// Controls visibility of Copy, Export, Set as Context, and Three-dot.
+			// When false (e.g. viewType "list" or type is not search/followup), 
+			// Kora-React hides these chips via CSS `hide` class. 
+			// In the SDK, we simply don't render them.
+			const type = item?.type || item?.entities?.type || (item?.templateType === "search_answer" ? "search" : null);
+			const displayMenu = !item?.isTask && !item?.noResultFound && item?.viewType !== "list" && (type === "search" || type === "followup");
 
-		if (!item?.disableFeedback && !state?.ansFromChipElements?.disableFeedback) {
-			actionChipsHTML += feedbackChip();
-		}
+			if (displayMenu) {
+				// 1. COPY ANSWER — shown when displayMenu && answer exists
+				if (item?.answer) {
+					actionChipsHTML += `
+						<div class="copyAnswerButton" title="Copy Response" id="copyAnswerButton-${item?.messageId}">
+						${copyQuestion.render(item, 'answer')}
+						</div>
+					`;
+				}
 
-		// Add three dot menu
-		const checkAvailableActions = getAvailableActions();
-		if (checkAvailableActions?.length > 0 && !state?.ansFromChipElements?.disableThreeDotMenu) {
-			actionChipsHTML += threeDotMenu();
-		}
+				// 2. EXPORT TO WORD — shown when displayMenu && answer exists
+				if (item?.answer && !state?.ansFromChipElements?.disableExporttoWordDoc) {
+					actionChipsHTML += `
+						<div class="exportWordButton" id="exportWordButton-${item?.messageId}" title="Export Response">${getExportWordIcon()}</div>
+					`;
+				}
 
-		actionChipsHTML += `</div>`;
+				// 3. SET AS CONTEXT (Kora-React MenuOptions.jsx lines 1117-1122)
+				// Conditions: !llm && !testAgentFlow && showSetAsSource && !isPersonalKnowledge
+				const shouldShowSetAsContext = !llm && !testAgentFlow && showSetAsSource && !isPersonalKnowledge;
+				if (shouldShowSetAsContext) {
+					actionChipsHTML += setContextChip();
+				}
+			}
 
-		// Debug: Log actionChipsHTML content
-		console.log('actionChipsHTML content:', actionChipsHTML);
-		console.log('chipHTML includes ansFromChip:', chipHTML.includes('class="ansFromChip"'));
+			// 4. FEEDBACK (Kora-React MenuOptions.jsx lines 1125-1132)
+			// NOT gated by displayMenu — feedback shows independently
+			// Conditions: !testAgentFlow && !disableFeedback && !isTask && response is complete
+			const isResponseComplete = item?.status === "completed" || !!item?.answer || !!item?.feedback;
+			const shouldShowFeedback = !testAgentFlow &&
+				!item?.disableFeedback && !state?.ansFromChipElements?.disableFeedback &&
+				isResponseComplete &&
+				!item?.isTask;
+			if (shouldShowFeedback) {
+				actionChipsHTML += feedbackChip();
+			}
 
-		// In Kora-React, MenuOptions (which contains Set as Context) is in a SEPARATE ansFromChip div
-		// Line 1213: <div className={`ansFromChip${...}`}> contains <MenuOptions />
-		// So we need to wrap actionChipsHTML in a separate ansFromChip div, similar to Kora-React structure
-		// Only add the wrapper if we have action chips to show
-		if (actionChipsHTML.includes('setContextButton') || actionChipsHTML.includes('copyAnswerButton') ||
-			actionChipsHTML.includes('exportWordButton') || actionChipsHTML.includes('feedbackChip') ||
-			actionChipsHTML.includes('three-dot-menu-container')) {
-			// Wrap action chips in a separate ansFromChip div (matching Kora-React structure)
-			const actionChipsWrapper = `<div class="ansFromChip">${actionChipsHTML}</div>`;
-			chipHTML += actionChipsWrapper;
-			console.log('Action chips wrapper added to chipHTML');
-		} else {
-			console.log('No action chips to add');
+			// 5. THREE-DOT ACTIONS MENU (Kora-React MenuOptions.jsx lines 1134-1147)
+			// Gated by displayMenu — same as Copy/Export/SetAsContext
+			// Conditions: !!actionsItems?.length && !testAgentFlow
+			if (displayMenu) {
+				const checkAvailableActions = getAvailableActions();
+				if (checkAvailableActions?.length > 0 && !testAgentFlow && !state?.ansFromChipElements?.disableThreeDotMenu) {
+					actionChipsHTML += threeDotMenu();
+				}
+			}
+
+			actionChipsHTML += `</div>`;
+
+			// Only add the wrapper if we actually have action chips to show
+			if (actionChipsHTML.includes('copyAnswerButton') || actionChipsHTML.includes('exportWordButton') ||
+				actionChipsHTML.includes('setContextButton') || actionChipsHTML.includes('setContextDropdown') ||
+				actionChipsHTML.includes('feedbackChip') || actionChipsHTML.includes('three-dot-menu-container')) {
+				// Wrap action chips in a separate ansFromChip div (matching Kora-React structure line 1213)
+				const actionChipsWrapper = `<div class="ansFromChip">${actionChipsHTML}</div>`;
+				chipHTML += actionChipsWrapper;
+			}
 		}
 
 		// Generate the chat filter group content for the drawer (forDrawer: true so content is always built regardless of showData)

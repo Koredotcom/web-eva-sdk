@@ -63,7 +63,7 @@ function render(data) {
                                 ${DragHandleIcon({ size: 14, color: "#9CA3AF" })}
                             </div>` : ''}
                             <div class="taskItem ${task?.showResponse ? 'loadingSkeleton' : ''}">
-                                <div class="topCard">
+                                <div class="topCard" ${((task?.status === "completed" || task?.status === "terminated") && items?.historicalData) ? `id="historyBtn-${task?._id}"` : ''}>
                                     <div class="leftBlock">                                                                            
                                 ${task?.loading ? `<div class="statusIcon">
                                     ${LoadingSpinner({ size: 16 })}    
@@ -97,7 +97,7 @@ function render(data) {
                                     ` : ''}                                    
                                     </div>
                                     ${((task?.status === "completed" || task.status === "terminated") && items?.historicalData) ? `
-                                        <div class="opItem" id="historyBtn-${task?._id}">${task?.showResponse ? `
+                                        <div class="opItem">${task?.showResponse ? `
                                             ${CheveronDownIcon({ size: 14, color: "#667085", rotation: 180 })}
                                         ` : `
                                             ${CheveronDownIcon({ size: 14, color: "#667085"})}

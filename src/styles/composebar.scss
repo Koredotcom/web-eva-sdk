@@ -1,4 +1,5 @@
-@import "../../src/styles/mixins_new.scss";
+@use "./variables_new.scss" as *;
+@use "./mixins_new.scss" as *;
 
 /**
  * ComposeBar CSS Styles

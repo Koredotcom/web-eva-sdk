@@ -24,7 +24,7 @@ function render(data, type = 'question') {
     messageTextId = `message-text-${data?.messageId || data?.reqId}`;
     copyButtonId = `copy-btn-${data?.messageId || data?.reqId}`;
     messageDivId = `copy-message-${data?.messageId || data?.reqId}`;
-    if (type === 'answer') {        
+    if (type === 'answer') {
         copyButtonId = `copyAnswerButton-${data?.messageId}`;
         messageDivId = `copyAnswerMessage-${data?.messageId}`;
     }
@@ -45,7 +45,7 @@ function render(data, type = 'question') {
                         navigator.clipboard.write([clipboardItem])
                             .then(() => console.log('Copied with formatting!'))
                             .catch(err => console.error('Clipboard copy failed:', err));
-                    }else{
+                    } else {
                         navigator.clipboard.writeText(data?.answer);
                     }
                 } else {
