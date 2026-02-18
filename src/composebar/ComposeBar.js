@@ -1022,9 +1022,10 @@ class ComposeBar {
             this.bannerClosedAgentId = null;
         }
         const composeBarWrapperDiv = this.container.querySelector('.composebar-bot-input-wrapper');
-        const state = store.getState().global;
-        const currentQuestion = state.currentQuestion;
-        const question = state.questions[currentQuestion.reqId];
+        const state = store.getState()?.global;
+        const currentQuestion = state?.currentQuestion;
+        const reqId = currentQuestion?.reqId;
+        const question = reqId ? state?.questions?.[reqId] : null;
         if ((this.selectedAgent?.agentType === 'botAgent' || this.selectedAgent?.type === 'botAgent') && question?.status === 'threadRunning') {
             this.chatInterface.stopBotAnswer();
         } else {
