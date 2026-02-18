@@ -508,6 +508,7 @@ const AnsFromChipFunctionality = ({ item }) => {
 
 
 	const knowledgeChipLogic = () => {
+		// Main "Answer From" chip click logic
 		if (item?.sources?.length > 1) {
 			let chip = document.getElementById(`ansFromChip-${item?.id}`);
 			if (chip && !chip.eventListenerAdded) {
@@ -519,161 +520,6 @@ const AnsFromChipFunctionality = ({ item }) => {
 				chip.eventListenerAdded = true;
 			}
 		}
-
-		// Multi-source dropdown logic: show a dropdown for selecting context sources when there are multiple sources
-		if (item?.sources?.length > 1) {
-			const messageId = item?.id || item?.messageId;
-			const dropdown = document.getElementById(`setContextDropdown-${messageId}`);
-			if (dropdown && !dropdown._evaDropdownBound) {
-				console.log('[Dropdown] Binding events for messageId:', messageId);
-
-				// Toggle active state for styling while open
-				dropdown.addEventListener('sl-show', () => {
-					dropdown.classList.add('active');
-				});
-				dropdown.addEventListener('sl-hide', () => {
-					dropdown.classList.remove('active');
-				});
-				dropdown.addEventListener('sl-after-hide', () => {
-					dropdown.classList.remove('active');
-				});
-
-				// Handle item selection via sl-select
-				dropdown.addEventListener('sl-select', (event) => {
-					const itemEl = event.detail.item;
-					const idxStr = itemEl.getAttribute('data-source-index');
-					console.log(`Dropdown sl-select on message ${messageId}, index: ${idxStr}`);
-					if (idxStr === null) return;
-
-					const idx = parseInt(idxStr);
-					const src = item?.sources?.[idx];
-					if (src) {
-						console.log(`Selected source at index ${idx} for message ${messageId}:`, src.title || src.source);
-						const fakeEvent = { preventDefault: () => { }, stopPropagation: () => { } };
-						onSetAsSource(fakeEvent, src);
-					}
-				});
-
-				// Update selection state when dropdown is about to show
-				dropdown.addEventListener('sl-show', async () => {
-					console.log('Dropdown showing, updating selection UI');
-					try {
-						const globalSC = store.getState()?.global?.selectedContext;
-						const selectedSources = globalSC?.data?.sources || globalSC?.sources || [];
-
-						const menuItems = dropdown.querySelectorAll('sl-menu-item');
-						for (const itemEl of menuItems) {
-							const idxStr = itemEl.getAttribute('data-source-index');
-							if (idxStr === null) continue;
-
-							const idx = parseInt(idxStr);
-							const src = item?.sources?.[idx];
-							if (!src) continue;
-
-							const isSelected = selectedSources?.some(s => {
-								const sId = String(s?.docId || s?.id || s?.uID || s?.componentId || s?.contentId || '');
-								const srcId = String(src?.docId || src?.id || src?.uID || src?.componentId || src?.contentId || '');
-								const idMatch = !!sId && !!srcId && sId === srcId;
-								// Only match by ID to ensure accuracy
-								return idMatch;
-							});
-
-							// Update selection state UI
-							if (isSelected) {
-								itemEl.classList.add('selected');
-							} else {
-								itemEl.classList.remove('selected');
-							}
-							// Remove built-in check attribute to avoid double ticks
-							itemEl.removeAttribute('checked');
-
-							// Update Prefix (Icon)
-							const prefix = itemEl.querySelector('[slot="prefix"]');
-							if (prefix) {
-								const renderedIconDiv = renderIcons(src?.source, src?.extIcon, null, src?.iconUrl, src?.isSupervisor);
-								prefix.innerHTML = renderedIconDiv?.outerHTML || '';
-							}
-
-							// Update Suffix (Tick mark)
-							let suffix = itemEl.querySelector('[slot="suffix"]');
-							if (isSelected) {
-								if (!suffix) {
-									suffix = document.createElement('span');
-									suffix.setAttribute('slot', 'suffix');
-									suffix.className = 'tick-wrapper';
-									itemEl.appendChild(suffix);
-								}
-								suffix.innerHTML = tickMarkIcon({ size: 10, color: '#475467' });
-							} else if (suffix) {
-								suffix.remove();
-							}
-
-							// Force-hide the built-in chevron in the sl-menu-item shadow DOM
-							await hideShoelaceMenuItemChevron(itemEl);
-						}
-					} catch (err) {
-						console.error('Error updating context dropdown selection:', err);
-					}
-				});
-
-				dropdown._evaDropdownBound = true;
-			}
-		}
-
-		// Single-source "Set as Context" button logic
-		if (item?.sources?.length === 1) {
-			const messageId = item?.messageId || item?.id;
-			const btn = document.getElementById(`setContextButton-${messageId}`);
-			if (btn && !btn._evaSingleBound) {
-				btn.addEventListener('click', (ev) => {
-					ev.preventDefault();
-					ev.stopPropagation();
-					console.log('Single source context button clicked');
-					onSetAsSource(ev, item.sources[0]);
-				});
-				btn._evaSingleBound = true;
-			}
-		}
-
-		if (item?.showMultiSourceList) {
-			item?.sources?.map((data, i) => {
-				let listItem = document.getElementById(
-					`multiSourceListItem-${item?.id}-${data?.docId}`
-				);
-				let askFollowupButton = document.getElementById(
-					`askFollowupButton-${item?.id}-${data?.docId}`
-				);
-				if (listItem && !listItem.eventListenerAdded) {
-					listItem.addEventListener("click", () => {
-						openInNewTab(data);
-					});
-					listItem.eventListenerAdded = true;
-				}
-				if (
-					askFollowupButton &&
-					!askFollowupButton.eventListenerAdded
-				) {
-					askFollowupButton.addEventListener("click", (e) => {
-						e?.preventDefault();
-						e?.stopPropagation();
-						onSetAsSource(e, data);
-					});
-					askFollowupButton.eventListenerAdded = true;
-				}
-			});
-		}
-
-		// if (item?.sources?.length === 1) {
-		// 	let chip = document.getElementById(`ansFromChip-${item?.id}`);
-		// 	if (chip && !chip.eventListenerAdded) {
-		// 		chip.addEventListener("click", (e) => {
-		// 			e?.preventDefault();
-		// 			e?.stopPropagation();
-		// 			showDataAction();
-		// 		});
-		// 		chip.eventListenerAdded = true;
-		// 	}
-		// }
 
 		// When split panel is used, only left-splitter-opener toggles the panel (see below)
 		const hasSplitPanel = !!(item?.hasData || item?.sources?.[0]?.source === "customQnAAPI");
@@ -744,15 +590,12 @@ const AnsFromChipFunctionality = ({ item }) => {
 		}
 
 		// Add event listeners for sources chip and Related Search Results button
-		// Find elements within the current item's container
-		// Try multiple selectors to find the container
 		const ansFromChipEl = document.getElementById(`ansFromChip-${item?.id}`);
 		const itemContainer = ansFromChipEl?.closest('.answerFromChipDiv') ||
 			ansFromChipEl?.closest('.ansFromChip')?.closest('.answerFromChipDiv') ||
 			document.querySelector(`.answerFromChipDiv:has(#ansFromChip-${item?.id})`) ||
 			document.querySelector(`[data-item-id="${item?.id}"]`);
 
-		// Find buttons directly if container search fails
 		const sourceChipItem = itemContainer?.querySelector(`[data-open-sources="sources"]`) ||
 			document.querySelector(`#ansFromChip-${item?.id} [data-open-sources="sources"]`) ||
 			document.querySelector(`.answerFromChipDiv:has(#ansFromChip-${item?.id}) [data-open-sources="sources"]`);
@@ -778,14 +621,11 @@ const AnsFromChipFunctionality = ({ item }) => {
 			});
 		}
 
-		// Attach list item listeners when showData is true or when drawer exists (hasData/customQnAAPI) so drawer content is interactive
+		// Attach list item listeners when showData is true or when drawer exists
 		if (item?.showData || item?.hasData || item?.sources?.[0]?.source === "customQnAAPI") {
-			/*for morgan stanley customQnAAPI */
 			if (item?.sources?.[0]?.source === "customQnAAPI") {
 				item?.content?.payload?.text?.body?.content_links_for_answer?.map((data, i) => {
-					let listItem = document.getElementById(
-						`openInNewTabIcon-${item?.id}-${data?.content_id}`
-					);
+					let listItem = document.getElementById(`openInNewTabIcon-${item?.id}-${data?.content_id}`);
 					if (listItem && !listItem.eventListenerAdded) {
 						listItem.addEventListener("click", () => {
 							openInNewTab({ ...data, redirectUrl: { dweb: data?.content_url } });
@@ -796,15 +636,9 @@ const AnsFromChipFunctionality = ({ item }) => {
 			}
 			else if (Array.isArray(item?.data)) {
 				item.data.map((data, i) => {
-					let listItem = document.getElementById(
-						`listItem-${item?.id}-${data?.docId}`
-					);
-					let newTabIcon = document.getElementById(
-						`openInNewTabIcon-${item?.id}-${data?.docId}`
-					);
-					let askFollowupButton = document.getElementById(
-						`askFollowupButton-${item?.id}-${data?.docId}`
-					);
+					let listItem = document.getElementById(`listItem-${item?.id}-${data?.docId}`);
+					let newTabIcon = document.getElementById(`openInNewTabIcon-${item?.id}-${data?.docId}`);
+					let askFollowupButton = document.getElementById(`askFollowupButton-${item?.id}-${data?.docId}`);
 					if (listItem && !listItem.eventListenerAdded) {
 						listItem.addEventListener("click", () => {
 							openInNewTab(data);
@@ -817,10 +651,7 @@ const AnsFromChipFunctionality = ({ item }) => {
 						});
 						newTabIcon.eventListenerAdded = true;
 					}
-					if (
-						askFollowupButton &&
-						!askFollowupButton.eventListenerAdded
-					) {
+					if (askFollowupButton && !askFollowupButton.eventListenerAdded) {
 						askFollowupButton.addEventListener("click", (e) => {
 							e?.preventDefault();
 							e?.stopPropagation();
@@ -831,26 +662,124 @@ const AnsFromChipFunctionality = ({ item }) => {
 				});
 			}
 		}
+	};
 
+	const actionChipsLogic = () => {
+		const messageId = item?.messageId || item?.id;
 
+		// 1. Multi-source dropdown logic
+		if (item?.sources?.length > 1) {
+			const dropdown = document.getElementById(`setContextDropdown-${messageId}`);
+			if (dropdown && !dropdown._evaDropdownBound) {
+				dropdown.addEventListener('sl-show', () => dropdown.classList.add('active'));
+				dropdown.addEventListener('sl-hide', () => dropdown.classList.remove('active'));
+				dropdown.addEventListener('sl-after-hide', () => dropdown.classList.remove('active'));
 
-		// Add copy answer button event listener
+				dropdown.addEventListener('sl-select', (event) => {
+					const itemEl = event.detail.item;
+					const idxStr = itemEl.getAttribute('data-source-index');
+					if (idxStr === null) return;
+					const idx = parseInt(idxStr);
+					const src = item?.sources?.[idx];
+					if (src) {
+						const fakeEvent = { preventDefault: () => { }, stopPropagation: () => { } };
+						onSetAsSource(fakeEvent, src);
+					}
+				});
+
+				dropdown.addEventListener('sl-show', async () => {
+					try {
+						const globalSC = store.getState()?.global?.selectedContext;
+						const selectedSources = globalSC?.data?.sources || globalSC?.sources || [];
+						const menuItems = dropdown.querySelectorAll('sl-menu-item');
+						for (const itemEl of menuItems) {
+							const idxStr = itemEl.getAttribute('data-source-index');
+							if (idxStr === null) continue;
+							const idx = parseInt(idxStr);
+							const src = item?.sources?.[idx];
+							if (!src) continue;
+
+							const isSelected = selectedSources?.some(s => {
+								const sId = String(s?.docId || s?.id || s?.uID || s?.componentId || s?.contentId || '');
+								const srcId = String(src?.docId || src?.id || src?.uID || src?.componentId || src?.contentId || '');
+								return !!sId && !!srcId && sId === srcId;
+							});
+
+							if (isSelected) itemEl.classList.add('selected');
+							else itemEl.classList.remove('selected');
+							itemEl.removeAttribute('checked');
+
+							const prefix = itemEl.querySelector('[slot="prefix"]');
+							if (prefix) {
+								const renderedIconDiv = renderIcons(src?.source, src?.extIcon, null, src?.iconUrl, src?.isSupervisor);
+								prefix.innerHTML = renderedIconDiv?.outerHTML || '';
+							}
+
+							let suffix = itemEl.querySelector('[slot="suffix"]');
+							if (isSelected) {
+								if (!suffix) {
+									suffix = document.createElement('span');
+									suffix.setAttribute('slot', 'suffix');
+									suffix.className = 'tick-wrapper';
+									itemEl.appendChild(suffix);
+								}
+								suffix.innerHTML = tickMarkIcon({ size: 10, color: '#475467' });
+							} else if (suffix) {
+								suffix.remove();
+							}
+							await hideShoelaceMenuItemChevron(itemEl);
+						}
+					} catch (err) { console.error('Error updating context dropdown selection:', err); }
+				});
+
+				dropdown._evaDropdownBound = true;
+			}
+		}
+
+		// 2. Single-source "Set as Context" button logic
+		if (item?.sources?.length === 1) {
+			const btn = document.getElementById(`setContextButton-${messageId}`);
+			if (btn && !btn._evaSingleBound) {
+				btn.addEventListener('click', (ev) => {
+					ev.preventDefault();
+					ev.stopPropagation();
+					onSetAsSource(ev, item.sources[0]);
+				});
+				btn._evaSingleBound = true;
+			}
+		}
+
+		// 3. Multi-source list logic (e.g. follow-up list buttons)
+		if (item?.showMultiSourceList) {
+			item?.sources?.map((data, i) => {
+				let askFollowupButton = document.getElementById(`askFollowupButton-${item?.id}-${data?.docId}`);
+				if (askFollowupButton && !askFollowupButton.eventListenerAdded) {
+					askFollowupButton.addEventListener("click", (e) => {
+						e?.preventDefault();
+						e?.stopPropagation();
+						onSetAsSource(e, data);
+					});
+					askFollowupButton.eventListenerAdded = true;
+				}
+			});
+		}
+
+		// 4. Copy Answer Button
 		if (item?.answer) {
-			// let copyAnswerButton = document.getElementById(
-			// 	`copyAnswerButton-${item?.id}`
-			// );
-			// if (copyAnswerButton && !copyAnswerButton.eventListenerAdded) {
-			// 	copyAnswerButton.addEventListener("click", (e) => {
-			// 		e?.preventDefault();
-			// 		e?.stopPropagation();
-			// 		copyAnswerToClipboard();
-			// 	});
-			// 	copyAnswerButton.eventListenerAdded = true;
-			// }
+			let copyAnswerButton = document.getElementById(`copyAnswerButton-${messageId}`);
+			if (copyAnswerButton && !copyAnswerButton.eventListenerAdded) {
+				copyAnswerButton.addEventListener("click", (e) => {
+					e?.preventDefault();
+					e?.stopPropagation();
+					copyAnswerToClipboard();
+				});
+				copyAnswerButton.eventListenerAdded = true;
+			}
+		}
 
-			let exportWordButton = document.getElementById(
-				`exportWordButton-${item?.messageId}`
-			);
+		// 5. Export to Word Button
+		if (item?.answer) {
+			let exportWordButton = document.getElementById(`exportWordButton-${messageId}`);
 			if (exportWordButton && !exportWordButton.eventListenerAdded) {
 				exportWordButton.addEventListener("click", (e) => {
 					e?.preventDefault();
@@ -861,380 +790,153 @@ const AnsFromChipFunctionality = ({ item }) => {
 			}
 		}
 
+		// 6. Feedback (Like / Dislike)
 		if (!item?.disableFeedback) {
-			let feedbackLikeButton = document.getElementById(
-				`feedbackLikeButton-${item?.messageId}`
-			);
+			let feedbackLikeButton = document.getElementById(`feedbackLikeButton-${messageId}`);
 			if (feedbackLikeButton && !feedbackLikeButton.eventListenerAdded) {
 				feedbackLikeButton.addEventListener("click", (e) => {
 					e?.preventDefault();
 					e?.stopPropagation();
-					console.log("feedbackLikeButton clicked");
 					submitUserFeedback({
 						type: "like",
 						cId: item?.cId || item?.reqId,
-						payload: {
-							feedback: "like",
-						},
+						payload: { feedback: "like" },
 					});
 				});
+				feedbackLikeButton.eventListenerAdded = true;
 			}
-			let feedbackDislikeButton = document.getElementById(
-				`feedbackDislikeButton-${item?.messageId}`
-			);
+
+			let feedbackDislikeButton = document.getElementById(`feedbackDislikeButton-${messageId}`);
 			if (feedbackDislikeButton && !feedbackDislikeButton.eventListenerAdded) {
 				feedbackDislikeButton.addEventListener("click", (e) => {
 					e?.preventDefault();
 					e?.stopPropagation();
-					console.log("feedbackDislikeButton clicked");
 					if (item?.feedback === "dislike") {
 						submitUserFeedback({
 							type: "dislike",
 							cId: item?.cId || item?.reqId,
-							payload: {
-								"action": "undo",
-							}
+							payload: { "action": "undo" }
 						});
 						return;
 					}
 
-					// Toggle feedback popup overlay
-					const feedbackPopup = document.getElementById(`feedbackPopup-${item?.messageId}`);
+					const feedbackPopup = document.getElementById(`feedbackPopup-${messageId}`);
 					if (feedbackPopup) {
-
 						if (feedbackPopup.tagName.toLowerCase() === 'sl-popup' && typeof feedbackPopup.show !== 'function') {
-							if (window.customElements && window.customElements.upgrade) {
-								customElements.upgrade(feedbackPopup);
-							}
-
+							if (window.customElements && window.customElements.upgrade) customElements.upgrade(feedbackPopup);
 						}
-
 						const isOpen = feedbackPopup.hasAttribute('active') || feedbackPopup.active;
-
 						if (isOpen) {
-							// Hide popup with fallback
-							if (typeof feedbackPopup.hide === 'function') {
-								feedbackPopup.hide();
-							} else {
-								console.warn("Shoelace hide() method not available, using fallback");
-								feedbackPopup.removeAttribute('active');
-								feedbackPopup.style.display = 'none';
-							}
+							if (typeof feedbackPopup.hide === 'function') feedbackPopup.hide();
+							else feedbackPopup.removeAttribute('active');
 							feedbackDislikeButton.classList.remove('active');
 						} else {
-
 							feedbackPopup.anchor = feedbackDislikeButton;
-
-
-							// Show popup with fallback
-							if (typeof feedbackPopup.show === 'function') {
-								feedbackPopup.show();
-							} else {
-								feedbackPopup.setAttribute('active', '');
-								feedbackPopup.style.display = 'block';
-							}
+							if (typeof feedbackPopup.show === "function") feedbackPopup.show();
+							else feedbackPopup.setAttribute('active', '');
 							feedbackDislikeButton.classList.add('active');
 						}
-					} else {
-						console.error("Feedback popup not found:", `feedbackPopup-${item?.messageId}`);
 					}
 				});
+				feedbackDislikeButton.eventListenerAdded = true;
 			}
-			feedbackLikeButton.eventListenerAdded = true;
-			feedbackDislikeButton.eventListenerAdded = true;
 
-			const checkSubmitButtonState = () => {
-				const feedbackPopup = document.getElementById(`feedbackPopup-${item?.messageId}`);
-				const submitBtn = feedbackPopup?.querySelector('button[data-action="submit-feedback"]');
-
-				if (submitBtn && feedbackPopup) {
-					// Check if any feedback option is selected
+			// Feedback Popup logic (options, submit, outside-click)
+			const feedbackPopup = document.getElementById(`feedbackPopup-${messageId}`);
+			if (feedbackPopup && !feedbackPopup.popupListenersAdded) {
+				const checkSubmitButtonState = () => {
+					const submitBtn = feedbackPopup.querySelector('button[data-action="submit-feedback"]');
 					const selectedOptionsData = feedbackPopup.getAttribute('data-selected-options');
 					const selectedOptions = selectedOptionsData ? JSON.parse(selectedOptionsData) : [];
-					const hasSelectedOption = selectedOptions.length > 0;
-
-					// Check if textarea has content
 					const textarea = feedbackPopup.querySelector('sl-textarea');
 					const hasTextContent = textarea && textarea.value && textarea.value.trim().length > 0;
 
-					// Enable submit button if either condition is met
-					if (hasSelectedOption || hasTextContent) {
+					if (selectedOptions.length > 0 || hasTextContent) {
 						submitBtn.disabled = false;
 						submitBtn.classList.remove('disable');
 					} else {
 						submitBtn.disabled = true;
 						submitBtn.classList.add('disable');
 					}
-				}
-			};
+				};
 
-			// Add feedback options multi-selection functionality for Shoelace buttons
-			const feedbackOptions = document.querySelectorAll(`.feedbackChip[data-message-id="${item?.messageId}"]`);
-			feedbackOptions.forEach(option => {
-				if (!option.eventListenerAdded) {
+				const feedbackOptions = document.querySelectorAll(`.feedbackChip[data-message-id="${messageId}"]`);
+				feedbackOptions.forEach(option => {
 					option.addEventListener('click', (e) => {
-						e.preventDefault();
-						e.stopPropagation();
-
-						// Toggle active state for Shoelace button
-						const isActive = option.classList.contains('selectedChip');
-						if (isActive) {
-							option.classList.remove('selectedChip');
-							option.variant = 'default';
-						} else {
-							option.classList.add('selectedChip');
-							option.variant = 'primary';
-						}
-
-						// Log selected options for debugging
+						e.preventDefault(); e.stopPropagation();
+						option.classList.toggle('selectedChip');
 						const selectedOptions = Array.from(feedbackOptions)
 							.filter(opt => opt.classList.contains('selectedChip'))
-							.map(opt => ({
-								id: opt.getAttribute('data-feedback-id'),
-								label: opt.textContent.trim()
-							}));
-
-
-						// Storing selected options in data attribute for submission
-						const feedbackPopup = document.getElementById(`feedbackPopup-${item?.messageId}`);
-						if (feedbackPopup) {
-							feedbackPopup.setAttribute('data-selected-options', JSON.stringify(selectedOptions));
-						}
-
-						// Check if submit button should be enabled
+							.map(opt => ({ id: opt.getAttribute('data-feedback-id'), label: opt.textContent.trim() }));
+						feedbackPopup.setAttribute('data-selected-options', JSON.stringify(selectedOptions));
 						checkSubmitButtonState();
 					});
-					option.eventListenerAdded = true;
-				}
-			});
+				});
 
-			const feedbackPopup = document.getElementById(`feedbackPopup-${item?.messageId}`);
-			if (feedbackPopup) {
 				const textarea = feedbackPopup.querySelector('sl-textarea');
-				if (textarea && !textarea.inputListenerAdded) {
-					textarea.addEventListener('sl-input', () => {
-						checkSubmitButtonState();
-					});
-					textarea.inputListenerAdded = true;
-				}
-			}
+				if (textarea) textarea.addEventListener('sl-input', checkSubmitButtonState);
 
-			if (feedbackPopup && !feedbackPopup.eventListenerAdded) {
-
-				// Submit button handler
 				const submitBtn = feedbackPopup.querySelector('button[data-action="submit-feedback"]');
 				if (submitBtn) {
 					submitBtn.addEventListener('click', (e) => {
-						e.preventDefault();
-						e.stopPropagation();
-
-						// Get message ID from button data attribute
-						const messageId = submitBtn.getAttribute('data-message-id');
-
-						// Get selected options
+						e.preventDefault(); e.stopPropagation();
 						const selectedOptionsData = feedbackPopup.getAttribute('data-selected-options');
 						const selectedOptions = selectedOptionsData ? JSON.parse(selectedOptionsData) : [];
-
-						// Get textarea content - Shoelace textarea
-						const textarea = feedbackPopup.querySelector('sl-textarea');
 						const comment = textarea ? textarea.value.trim() : '';
 
-						// Submit feedback with selected options and comment
 						submitUserFeedback({
 							type: "dislike",
 							cId: item?.cId || item?.reqId,
-							messageId: messageId, // Use the messageId from button attribute
-							payload: {
-								feedback: "dislike",
-								comment: comment,
-								category: selectedOptions.map(opt => opt.label) // For backward compatibility
-							},
+							messageId,
+							payload: { feedback: "dislike", comment, category: selectedOptions.map(opt => opt.label) },
 						});
 
-						/*need to display received feedback text*/
-						const feedbacksuccesstextDiv = document.querySelector('.feedbacksuccesstext');
-						if (feedbacksuccesstextDiv) {
-							feedbacksuccesstextDiv.style.display = 'block';
-						}
+						const successText = feedbackPopup.querySelector('.feedbacksuccesstext');
+						if (successText) successText.style.display = 'block';
 						setTimeout(() => {
-							if (typeof feedbackPopup.hide === 'function') {
-								feedbackPopup.hide();
-							} else {
-								feedbackPopup.setAttribute('active', true);
-								feedbackPopup.style.display = 'none';
-							}
+							if (typeof feedbackPopup.hide === "function") feedbackPopup.hide();
+							else feedbackPopup.removeAttribute('active');
 						}, 2000);
-
 					});
 				}
 
-				// Handle click outside to close popup
-				const handlePopupHide = () => {
-					const dislikeBtn = document.getElementById(`feedbackDislikeButton-${item?.messageId}`);
-					if (dislikeBtn) {
-						dislikeBtn.classList.remove('active');
-					}
-				};
-
-				// Listen for hide events
+				const handlePopupHide = () => feedbackDislikeButton?.classList.remove('active');
 				feedbackPopup.addEventListener('sl-hide', handlePopupHide);
 				feedbackPopup.addEventListener('sl-after-hide', handlePopupHide);
 
-				// Click outside to close popup
-				const clickOutsideHandler = (event) => {
-					const isPopupOpen = feedbackPopup.hasAttribute('active') || feedbackPopup.active;
-
-					if (isPopupOpen) {
-						// Check if click is outside the popup and dislike button
-						const isClickInsidePopup = feedbackPopup.contains(event.target);
-						const isClickOnDislikeButton = event.target.closest(`#feedbackDislikeButton-${item?.messageId}`);
-
-						if (!isClickInsidePopup && !isClickOnDislikeButton) {
-							submitUserFeedback({
-								type: "dislike",
-								cId: item?.cId || item?.reqId,
-								payload: {
-									feedback: "dislike"
-								},
-							});
-
-							// Hide popup with fallback
-							if (typeof feedbackPopup.hide === 'function') {
-								feedbackPopup.hide();
-							} else {
-								console.warn("Shoelace hide() method not available, using fallback");
-								feedbackPopup.removeAttribute('active');
-								feedbackPopup.style.display = 'none';
-							}
-
-							// Remove active state from dislike button
-							const dislikeBtn = document.getElementById(`feedbackDislikeButton-${item?.messageId}`);
-							if (dislikeBtn) {
-								dislikeBtn.classList.remove('active');
-							}
+				document.addEventListener('click', (event) => {
+					if (!feedbackPopup.contains(event.target) && !feedbackDislikeButton?.contains(event.target)) {
+						if (feedbackPopup.hasAttribute('active') || feedbackPopup.active) {
+							if (typeof feedbackPopup.hide === "function") feedbackPopup.hide();
+							else feedbackPopup.removeAttribute('active');
 						}
 					}
-				};
-
-				// Add click outside listener to document
-				document.addEventListener('click', clickOutsideHandler);
-
-				// Store reference to remove listener later if needed
-				feedbackPopup._clickOutsideHandler = clickOutsideHandler;
-
-				// Also check for attribute changes as fallback
-				const observer = new MutationObserver((mutations) => {
-					mutations.forEach((mutation) => {
-						if (mutation.type === 'attributes' && mutation.attributeName === 'active') {
-							if (!feedbackPopup.hasAttribute('active')) {
-								handlePopupHide();
-							}
-						}
-					});
 				});
-				observer.observe(feedbackPopup, { attributes: true, attributeFilter: ['active'] });
 
-				feedbackPopup.eventListenerAdded = true;
+				feedbackPopup.popupListenersAdded = true;
 			}
 		}
 
-
-		// Add three dot menu functionality
-		const messageId = item?.messageId || item?.reqId;
-		const threeDotTrigger = document.querySelector(`[data-three-dot-trigger="${messageId}"]`);
-		const threeDotDropdown = document.querySelector(`[data-three-dot-dropdown="${messageId}"]`);
-
-
-		// Let Shoelace handle dropdown behavior automatically - no manual control needed
-
-		// Add menu item event listeners
-		if (threeDotDropdown && !threeDotDropdown.eventListenerAdded) {
-			const menuItems = threeDotDropdown.querySelectorAll('.menu-item');
-
-			menuItems.forEach(menuItem => {
+		// 7. Three-Dot Actions Menu
+		const threeDotDropdown = document.querySelector(`.three-dot-menu-container sl-dropdown:has([data-three-dot-trigger="${messageId}"])`);
+		const threeDotMenuEl = threeDotDropdown?.querySelector(`sl-menu[data-three-dot-dropdown="${messageId}"]`) || document.querySelector(`sl-menu[data-three-dot-dropdown="${messageId}"]`);
+		if (threeDotMenuEl && !threeDotMenuEl.eventListenerAdded) {
+			threeDotMenuEl.querySelectorAll('.menu-item').forEach(menuItem => {
 				menuItem.addEventListener('click', (e) => {
-					console.log('Menu item clicked');
-					e.preventDefault();
-					e.stopPropagation();
-
+					e.preventDefault(); e.stopPropagation();
 					const action = menuItem.getAttribute('data-menu-action');
 					const actionType = menuItem.getAttribute('data-action-type');
+					threeDotMenuEl.closest('sl-dropdown')?.hide();
 
-					// Close Shoelace dropdown after selection
-					const dropdown = threeDotDropdown.closest('sl-dropdown');
-					if (dropdown) {
-						dropdown.hide();
-					}
-
-					console.log('Menu action:', action, 'Type:', actionType);
-
-					// Handle integration actions
 					if (actionType === 'integration') {
-						console.log(`Executing integration action: ${action}`);
-
-						switch (action) {
-							case 'gmail':
-								IntegrationsActions(e, 'gmail', item);
-								// Add Gmail integration logic here
-								break;
-							case 'outlook':
-								IntegrationsActions(e, 'outlook', item);
-								// Add Outlook integration logic here
-								break;
-							case 'slack':
-								IntegrationsActions(e, 'slack', item);
-								// Add Slack integration logic here
-								break;
-							case 'msteams':
-								IntegrationsActions(e, 'msteams', item);
-								// Add Teams integration logic here
-								break;
-							case 'jira':
-								IntegrationsActions(e, 'jira', item);
-								// Add Jira integration logic here
-								break;
-							default:
-								console.log('Unknown integration action:', action);
-						}
-						return;
-					}
-
-					// Handle default actions
-					switch (action) {
-						case 'copy':
-							// Trigger copy functionality
-							const copyButton = document.getElementById(`copyAnswerButton-${item?.id}`);
-							if (copyButton) {
-								copyButton.click();
-							} else {
-								console.log('Copy button not found for id:', `copyAnswerButton-${item?.id}`);
-							}
-							break;
-						case 'regenerate':
-							// Trigger regenerate functionality
-							console.log('Regenerate response for:', messageId);
-							// Add regenerate logic here
-							break;
-						case 'feedback':
-							// Trigger feedback functionality
-							console.log('Provide feedback for:', messageId);
-							// Add feedback logic here
-							break;
-						case 'share':
-							// Trigger share functionality
-							console.log('Share response for:', messageId);
-							// Add share logic here
-							break;
-						default:
-							console.log('Unknown menu action:', action);
+						IntegrationsActions(e, action, item);
+					} else if (action === 'copy') {
+						document.getElementById(`copyAnswerButton-${messageId}`)?.click();
 					}
 				});
 			});
-
-			threeDotDropdown.eventListenerAdded = true;
+			threeDotMenuEl.eventListenerAdded = true;
 		}
-
-		// Shoelace handles outside clicks automatically - no manual handling needed
 	};
 
 	const renderLogic = () => {
@@ -1243,6 +945,7 @@ const AnsFromChipFunctionality = ({ item }) => {
 		} else {
 			knowledgeChipLogic();
 		}
+		actionChipsLogic();
 	};
 
 	return renderLogic();

@@ -1099,9 +1099,7 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 
 	const setContextChip = () => {
 		const messageId = item?.id || item?.messageId;
-		const displayMenu = !item?.isTask && !item?.noResultFound && item?.viewType !== "list" && (item?.type === "search" || item?.type === "followup");
 		const isMultiSource = item?.sources?.length > 1;
-		const hideClass = displayMenu ? '' : 'hide';
 		const multiSourceClass = isMultiSource ? 'multiSource' : '';
 
 		const buttonHtml = `
@@ -1112,11 +1110,11 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
         `;
 
 		if (!isMultiSource) {
-			return `<div class="${hideClass}">${buttonHtml}</div>`;
+			return `<div>${buttonHtml}</div>`;
 		}
 
 		return `
-            <sl-dropdown id="setContextDropdown-${messageId}" class="setContextDropdown ${hideClass}" hoist>
+            <sl-dropdown id="setContextDropdown-${messageId}" class="setContextDropdown" hoist>
                 <div slot="trigger" style="cursor: pointer;">
                     ${buttonHtml}
                 </div>
@@ -1218,7 +1216,6 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 	/*need to creata a menufunction that displays a shoelace menu on clicking */
 	const threeDotMenu = () => {
 		const messageId = item?.messageId || item?.id;
-
 
 		// Get available integration actions
 		const availableActions = getAvailableActions();
@@ -1334,91 +1331,93 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 			// 	}
 			// }
 		}
-		let actionChipsHTML = `<div class="answerActionChips">`;
-		// Add copy answer chip if answer exists
-		if (item?.answer) {
-			actionChipsHTML += copyAnswerChip();
-		}
+		// ============================================================
+		// ACTION CHIPS — Matching Kora-React's MenuOptions.jsx conditions
+		// ============================================================
 
-		// Add export to Word chip if answer exists
-		if (item?.answer && !state?.ansFromChipElements?.disableExporttoWordDoc) {
-			actionChipsHTML += exportWordChip();
-		}
-		// Add Set as Context button with conditions matching Kora-React MenuOptions
-		// Conditions: !llm && !testAgentFlow && showSetAsSource && !isPersonalKnowledge
-		// Also need to check: item has sources, not threadView, not bot_template, not isEnterpriseKnowledge
+		// --- Shared condition variables (matching Kora-React MenuOptions.jsx lines 1051-1057) ---
 		const llm = item?.sources?.[0]?.source === "llm";
-		// canSetAsSourceContext defaults to true if undefined (only false when explicitly set to false)
 		const showSetAsSource = item?.sources?.[0]?.canSetAsSourceContext !== false;
 		const testAgentFlow = state?.ansFromChipElements?.testAgentFlow || false;
 		const isPersonalKnowledge = item?.context?.provider === "personalKnowledge";
-		const displayMenu = !item?.isTask && !item?.noResultFound && item?.viewType !== "list" && (item?.type === "search" || item?.type === "followup");
 		const hasSources = !!item?.sources?.length;
 		const isThreadView = item?.viewType === "threadView";
 		const isBotTemplate = item?.templateType === "bot_template";
 		const isEnterpriseKnowledge = item?.sources?.[0]?.isSupervisor || item?.isSupervisor;
 
-		// Match Kora-React conditions: MenuOptions is shown when: !!item?.sources?.length && (item?.viewType !== "threadView" && item?.templateType !== "bot_template" && !isEnterpriseKnowledge)
-		// And Set as Context is shown when: !llm && !testAgentFlow && showSetAsSource && !isPersonalKnowledge
-		// Note: Kora-React does NOT check disableSetAsContext - it's always shown when conditions are met
-		// The disableSetAsContext flag is an SDK-specific feature flag that can be used to disable it if needed
-		const shouldShowSetAsContext = hasSources && !isThreadView && !isBotTemplate && !isEnterpriseKnowledge &&
-			!llm && !testAgentFlow && showSetAsSource && !isPersonalKnowledge;
+		// --- WRAPPER-LEVEL GATE (Kora-React index.js line 1212) ---
+		// The entire action chips block is only rendered when these are true:
+		// !!item?.sources?.length && viewType !== threadView && templateType !== bot_template && !isEnterpriseKnowledge
+		const shouldShowActionChips = hasSources && !isThreadView && !isBotTemplate && !isEnterpriseKnowledge;
 
-		// Debug logging
-		console.log('Set as Context conditions check:', {
-			hasSources,
-			isThreadView,
-			isBotTemplate,
-			isEnterpriseKnowledge,
-			llm,
-			testAgentFlow,
-			showSetAsSource,
-			isPersonalKnowledge,
-			disableSetAsContext: state?.ansFromChipElements?.disableSetAsContext,
-			shouldShowSetAsContext,
-			itemId: item?.id,
-			sources: item?.sources,
-			viewType: item?.viewType,
-			templateType: item?.templateType
-		});
+		if (shouldShowActionChips) {
+			let actionChipsHTML = `<div class="answerActionChips">`;
 
-		if (shouldShowSetAsContext) {
-			actionChipsHTML += setContextChip();
-			console.log('Set as Context button added to actionChipsHTML for item:', item?.id);
-		} else {
-			console.log('Set as Context button NOT added - conditions not met for item:', item?.id);
-		}
+			// displayMenu — Kora-React MenuOptions.jsx line 1056
+			// Controls visibility of Copy, Export, Set as Context, and Three-dot.
+			// When false (e.g. viewType "list" or type is not search/followup), 
+			// Kora-React hides these chips via CSS `hide` class. 
+			// In the SDK, we simply don't render them.
+			const type = item?.type || item?.entities?.type || (item?.templateType === "search_answer" ? "search" : null);
+			const displayMenu = !item?.isTask && !item?.noResultFound && item?.viewType !== "list" && (type === "search" || type === "followup");
 
-		if (!item?.disableFeedback && !state?.ansFromChipElements?.disableFeedback) {
-			actionChipsHTML += feedbackChip();
-		}
+			if (displayMenu) {
+				// 1. COPY ANSWER — shown when displayMenu && answer exists
+				if (item?.answer) {
+					actionChipsHTML += `
+						<div class="copyAnswerButton" title="Copy Response" id="copyAnswerButton-${item?.messageId}">
+						${copyQuestion.render(item, 'answer')}
+						</div>
+					`;
+				}
 
-		// Add three dot menu
-		const checkAvailableActions = getAvailableActions();
-		if (checkAvailableActions?.length > 0 && !state?.ansFromChipElements?.disableThreeDotMenu) {
-			actionChipsHTML += threeDotMenu();
-		}
+				// 2. EXPORT TO WORD — shown when displayMenu && answer exists
+				if (item?.answer && !state?.ansFromChipElements?.disableExporttoWordDoc) {
+					actionChipsHTML += `
+						<div class="exportWordButton" id="exportWordButton-${item?.messageId}" title="Export Response">${getExportWordIcon()}</div>
+					`;
+				}
 
-		actionChipsHTML += `</div>`;
+				// 3. SET AS CONTEXT (Kora-React MenuOptions.jsx lines 1117-1122)
+				// Conditions: !llm && !testAgentFlow && showSetAsSource && !isPersonalKnowledge
+				const shouldShowSetAsContext = !llm && !testAgentFlow && showSetAsSource && !isPersonalKnowledge;
+				if (shouldShowSetAsContext) {
+					actionChipsHTML += setContextChip();
+				}
+			}
 
-		// Debug: Log actionChipsHTML content
-		console.log('actionChipsHTML content:', actionChipsHTML);
-		console.log('chipHTML includes ansFromChip:', chipHTML.includes('class="ansFromChip"'));
+			// 4. FEEDBACK (Kora-React MenuOptions.jsx lines 1125-1132)
+			// NOT gated by displayMenu — feedback shows independently
+			// Conditions: !testAgentFlow && !disableFeedback && !isTask && response is complete
+			const isResponseComplete = item?.status === "completed" || !!item?.answer || !!item?.feedback;
+			const shouldShowFeedback = !testAgentFlow &&
+				!item?.disableFeedback && !state?.ansFromChipElements?.disableFeedback &&
+				isResponseComplete &&
+				!item?.isTask;
+			if (shouldShowFeedback) {
+				actionChipsHTML += feedbackChip();
+			}
 
-		// In Kora-React, MenuOptions (which contains Set as Context) is in a SEPARATE ansFromChip div
-		// Line 1213: <div className={`ansFromChip${...}`}> contains <MenuOptions />
-		// So we need to wrap actionChipsHTML in a separate ansFromChip div, similar to Kora-React structure
-		// Only add the wrapper if we have action chips to show
-		if (actionChipsHTML.includes('setContextButton') || actionChipsHTML.includes('copyAnswerButton') ||
-			actionChipsHTML.includes('exportWordButton') || actionChipsHTML.includes('feedbackChip') ||
-			actionChipsHTML.includes('three-dot-menu-container')) {
-			// Wrap action chips in a separate ansFromChip div (matching Kora-React structure)
-			const actionChipsWrapper = `<div class="ansFromChip">${actionChipsHTML}</div>`;
-			chipHTML += actionChipsWrapper;
-			console.log('Action chips wrapper added to chipHTML');
-		} else {
-			console.log('No action chips to add');
+			// 5. THREE-DOT ACTIONS MENU (Kora-React MenuOptions.jsx lines 1134-1147)
+			// Gated by displayMenu — same as Copy/Export/SetAsContext
+			// Conditions: !!actionsItems?.length && !testAgentFlow
+			if (displayMenu) {
+				const checkAvailableActions = getAvailableActions();
+				if (checkAvailableActions?.length > 0 && !testAgentFlow && !state?.ansFromChipElements?.disableThreeDotMenu) {
+					actionChipsHTML += threeDotMenu();
+				}
+			}
+
+			actionChipsHTML += `</div>`;
+
+			// Only add the wrapper if we actually have action chips to show
+			if (actionChipsHTML.includes('copyAnswerButton') || actionChipsHTML.includes('exportWordButton') ||
+				actionChipsHTML.includes('setContextButton') || actionChipsHTML.includes('setContextDropdown') ||
+				actionChipsHTML.includes('feedbackChip') || actionChipsHTML.includes('three-dot-menu-container')) {
+				// Wrap action chips in a separate ansFromChip div (matching Kora-React structure line 1213)
+				const actionChipsWrapper = `<div class="ansFromChip">${actionChipsHTML}</div>`;
+				chipHTML += actionChipsWrapper;
+			}
 		}
 
 		// Generate the chat filter group content for the drawer (forDrawer: true so content is always built regardless of showData)
