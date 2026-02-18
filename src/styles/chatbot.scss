@@ -1,3 +1,5 @@
+@use "./mixins_new.scss" as *;
+
 /* Floating chatbot UI only */
 .eva-sdk-chatbot-button {
   position: fixed;

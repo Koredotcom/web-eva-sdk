@@ -185,7 +185,18 @@ class SourcesSidebar {
      * Show the drawer
      */
     show() {
-        if (this.drawer) {
+        if (!this.drawer) return;
+
+        // If the drawer is created + opened in the same tick, the browser may skip
+        // the first transition because it never painted the initial closed state.
+        // Opening on the next frame fixes that without any visible flicker.
+        this._showNonce = (this._showNonce || 0) + 1;
+        const nonce = this._showNonce;
+
+        const openDrawer = () => {
+            if (!this.drawer) return;
+            if (nonce !== this._showNonce) return;
+
             try {
                 if (typeof this.drawer.show === 'function') {
                     this.drawer.show();
@@ -196,6 +207,18 @@ class SourcesSidebar {
                 this.drawer.setAttribute('open', '');
             }
             this.showOverlay();
+        };
+
+        const scheduleOpen = () => {
+            requestAnimationFrame(() => {
+                requestAnimationFrame(openDrawer);
+            });
+        };
+
+        if (typeof customElements !== 'undefined' && customElements?.whenDefined) {
+            customElements.whenDefined('sl-drawer').then(scheduleOpen, scheduleOpen);
+        } else {
+            scheduleOpen();
         }
     }
 
@@ -203,6 +226,7 @@ class SourcesSidebar {
      * Hide the drawer
      */
     hide() {
+        this._showNonce = (this._showNonce || 0) + 1;
         if (this.drawer) {
             try {
                 if (typeof this.drawer.hide === 'function') {
