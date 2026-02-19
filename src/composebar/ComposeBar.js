@@ -74,6 +74,7 @@ class ComposeBar {
             onChange: null,
             onSpeechToText: null
         };
+        this.isSpeechHovering = false;
         this.init();
     }
 
@@ -588,7 +589,7 @@ class ComposeBar {
             const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
             this.recognition = new SpeechRecognition();
 
-            this.recognition.continuous = false;
+            this.recognition.continuous = true;
             this.recognition.interimResults = true;
             this.recognition.lang = 'en-US';
 
@@ -598,19 +599,32 @@ class ComposeBar {
 
             this.recognition.onresult = (event) => {
                 let finalTranscript = '';
+                let interimTranscript = '';
 
                 for (let i = event.resultIndex; i < event.results.length; i++) {
                     const transcript = event.results[i][0].transcript;
                     if (event.results[i].isFinal) {
                         finalTranscript += transcript;
+                    } else {
+                        interimTranscript += transcript;
                     }
                 }
 
-                // Update textarea with final transcript
-                if (finalTranscript) {
+                // Update textarea with results
+                if (finalTranscript || interimTranscript) {
                     const currentValue = this.getValue();
-                    const newValue = currentValue + (currentValue ? ' ' : '') + finalTranscript;
-                    this.setValue(newValue);
+                    // This is a simplified implementation. In Kora-React, it handles cursors and interim results more smoothly.
+                    // For now, we append final results.
+                    if (finalTranscript) {
+                        const newValue = currentValue + (currentValue && !currentValue.endsWith(' ') ? ' ' : '') + finalTranscript;
+                        this.setValue(newValue);
+
+                        // Trigger change for auto-resize etc
+                        const textarea = this.container.querySelector('[data-eva-input]');
+                        if (textarea) {
+                            textarea.dispatchEvent(new Event('input', { bubbles: true }));
+                        }
+                    }
                 }
             };
 
@@ -1228,10 +1242,23 @@ class ComposeBar {
                                     </button>
                                 </sl-tooltip>
                                 ${!this.isMSEnv ? `<sl-tooltip>
-                                    <div slot="content" class="caTooltips">Search using voice</div>
-                                    <button class="eva-input-action-btn voice-btn" data-eva-speech>
-                                        ${microphoneIcon({ size: 16, color: "#0F0F0F" })}
-                                    </button>
+                                    <div slot="content" class="caTooltips" data-eva-voice-tooltip>
+                                        ${this.isRecording && this.isSpeechHovering ? 'Stop listening' : this.isRecording ? 'Stop listening' : 'Search using voice'}
+                                    </div>
+                                    <div 
+                                        class="eva-input-action-btn voice-btn speakIcon${this.isRecording ? ' animatedImge' : ''}" 
+                                        data-eva-speech
+                                    >
+                                        ${this.isRecording ? (
+                    this.isSpeechHovering ?
+                        Close({ size: 12, color: "#424242" }) :
+                        `<div class="sonar-wrapper">
+                                                                            <img src="images/waves-animation.gif" alt="" />
+                                                                        </div>`
+                ) : (
+                    microphoneIcon({ size: 16, color: "#0F0F0F" })
+                )}
+                                    </div>
                                 </sl-tooltip>` : ''}
                                 <button class="eva-input-action-btn send-btn" data-eva-send title="Send">
                                     ${this.getSendButtonIcon()}
@@ -1455,6 +1482,14 @@ class ComposeBar {
         // Speech to text button event
         if (speechBtn) {
             speechBtn.addEventListener('click', () => this.handleSpeechToText());
+            speechBtn.addEventListener('mouseenter', () => {
+                this.isSpeechHovering = true;
+                this.updateSpeechButton();
+            });
+            speechBtn.addEventListener('mouseleave', () => {
+                this.isSpeechHovering = false;
+                this.updateSpeechButton();
+            });
         }
 
         // Override dialog button events
@@ -1807,18 +1842,6 @@ class ComposeBar {
      * Handle speech to text button click or clear input
      */
     handleSpeechToText() {
-
-        const textarea = this.container.querySelector('[data-eva-input]');
-        const actualValue = textarea ? textarea.value : '';
-
-
-        const hasInput = actualValue.length > 0;
-
-        if (hasInput) {
-            this.clearInput();
-            return;
-        }
-
 
         if (!this.recognition) {
             alert('Speech recognition is not supported in this browser');
@@ -2334,12 +2357,29 @@ class ComposeBar {
      */
     updateSpeechButton() {
         const speechBtn = this.container.querySelector('[data-eva-speech]');
+        const tooltip = speechBtn?.closest('sl-tooltip');
+        const tooltipContent = tooltip?.querySelector('[data-eva-voice-tooltip]');
+
         if (speechBtn) {
             if (this.isRecording) {
-                speechBtn.classList.add('recording');
-                speechBtn.setAttribute('title', 'Stop recording');
+                speechBtn.classList.add('animatedImge', 'recording');
+
+                if (this.isSpeechHovering) {
+                    speechBtn.innerHTML = Close({ size: 12, color: "#424242" });
+                    if (tooltipContent) tooltipContent.textContent = 'Stop listening';
+                } else {
+                    speechBtn.innerHTML = `
+                        <div class="sonar-wrapper">
+                            <img src="images/waves-animation.gif" alt="" />
+                        </div>
+                    `;
+                    if (tooltipContent) tooltipContent.textContent = 'Stop listening';
+                }
+                speechBtn.setAttribute('title', 'Stop listening');
             } else {
-                speechBtn.classList.remove('recording');
+                speechBtn.classList.remove('animatedImge', 'recording');
+                speechBtn.innerHTML = microphoneIcon({ size: 16, color: "#0F0F0F" });
+                if (tooltipContent) tooltipContent.textContent = 'Search using voice';
                 speechBtn.setAttribute('title', 'Voice input');
             }
         }
