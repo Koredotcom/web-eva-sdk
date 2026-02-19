@@ -1281,9 +1281,9 @@ sl-dialog.eva-agents-dialog {
     &:after {
         content: '';
         width: 100%;
-        height: 6.25rem;
-        background: linear-gradient(180deg, #F8F7F7 8.93%, #EDEDED 88.57%);
-        ;
+        height: 6rem;
+        //background: linear-gradient(180deg, #F8F7F7 8.93%, #EDEDED 88.57%);
+        background: linear-gradient(180deg, #F8F7F7 14.08%, #EDEDED 50%);
         position: absolute;
         display: block;
         left: 0;
