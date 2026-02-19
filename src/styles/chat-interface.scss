@@ -3067,7 +3067,7 @@ body {
                         line-height: inherit;
                         letter-spacing: 0em;
                         color: #424242;
-                        min-width: 172px;
+                        min-width: 232px;
                     }
 
                     &::part(expand-icon) {
@@ -6037,6 +6037,9 @@ sl-dialog.gpt-form-dialog {
 
                     .bot-conversation-content>div:last-child {
                         min-height: auto;
+                    }
+                    .question-profile {
+                        display: none;
                     }
                 }
 
@@ -9114,6 +9117,474 @@ sl-dropdown.setContextDropdown {
 
         &:hover {
             color: var(--colors-blue-light-600, #0086C9) !important;
+        }
+    }
+}
+
+.interruption-wrapper {  
+    @include krflexContainer($direction:column, $items:flex-start);
+    padding: 1rem;
+    gap: 1rem;
+    border-radius: 1.5rem;
+    border: 0.0625rem solid $wa-gray-200;
+    background: $wa-base-white;
+    margin-top: 1rem;
+    margin-bottom: 0.75rem;
+    box-shadow: 0 1px var(--Background-Blur-md, 16px) 0 rgba(16, 24, 40, 0.05);
+    .inputDropdowngroup {
+        @include krflexContainer($direction:column);
+        gap: 0.5rem;
+        // border-bottom: 0.0625rem solid $wa-gray-200;
+        // padding: 0 0 1.125rem 0;
+        width: 100%;
+
+        .drTitle {
+            @include typography-regular(0.875rem,500,1.25rem);
+            color: $wa-gray-700; 
+        }
+
+        .drInputSection {
+            width: 22.5rem;
+            position: relative;
+            .autocompleteInput {
+                width: 100%;
+                padding: 0.5rem 0.75rem;
+                border-radius: 0.5rem;
+                border: 0.0625rem solid $wa-gray-300;
+                background: $wa-base-white;
+                box-shadow: 0rem 0.0625rem 0.125rem 0rem rgba(16, 24, 40, 0.05);
+                @include typography-regular(0.875rem,400,1.25rem);
+                color: var(--Gray-iron-900, #18181B);
+                @include placeholder {
+                    color: $wa-gray-400;
+                }
+                &:focus {
+                    border-color: var(--input-active-border-color);
+                }
+            }
+        }
+        .p-inputtext {
+            width: 100%;
+            height: 2.5rem;
+            padding: 0.5rem 0.75rem;
+            border-radius: 0.5rem;
+            border: 0.0625rem solid $wa-gray-300;
+            background: $wa-base-white;
+            box-shadow: 0rem 0.0625rem 0.125rem 0rem rgba(16, 24, 40, 0.05);
+            @include typography-regular(0.875rem,400,1.25rem);
+            color: var(--Gray-iron-900, #18181B);
+            @include placeholder {
+                color: $wa-gray-400;
+            }
+        }
+        .p-calendar {
+            width: 100%;
+        }
+    } 
+    .interruption-block {
+        @include krflexContainer($direction:column, $items:flex-start);
+        gap: 1rem;
+        .prTitle {
+            @include typography-regular(0.75rem,600,1.125rem);
+            color: $wa-gray-500;
+            width: 100%;
+            &:empty {
+                display: none;
+            }
+        } 
+        .checkbox-group {
+            @include krflexContainer($items: center);
+            gap: 0.5rem;
+            width: 100%;
+            flex-wrap: wrap;
+
+            .checkboxWithLable {
+                @include krflexContainer($items: center);
+                gap: 0.25rem;
+                border-radius: 1rem;
+                padding:0.25rem 0.75rem 0.25rem 0.5rem;
+                border: 0.0625rem solid $wa-gray-200 ;
+                background: $wa-gray-50;
+                &:hover {
+                    background: $wa-base-white;
+                }
+                &.selected {
+                    background: $wa-base-white;
+                }
+            }
+        }
+        .inputDropdowngroup {
+            width: 100%;
+            @include krflexContainer($direction: column);
+            gap: 0.375rem;
+            position: relative;
+            .drInputSection{
+                .dropDown{
+                    position: absolute;
+                    top: 100%;
+                    left: 0;
+                    z-index: 999;
+                    width: 100%;
+                    border-radius: 0.5rem;
+                    border: 0.0625rem solid $wa-gray-100;
+                    background: $wa-base-white;
+                    box-shadow: 0rem 0.25rem 0.375rem -0.125rem rgba(16, 24, 40, 0.03), 0rem 0.75rem 1rem -0.25rem rgba(16, 24, 40, 0.08);
+                    max-height: 12.5rem;
+                    overflow-y: auto;
+                    @include scrollbar;
+                    padding: 0.25rem;
+                    .dd-options {
+                        display: flex;
+                        align-items: center;
+                        gap: 0.75rem;
+                        padding: 0.75rem 1.25rem;
+                        align-items: center;
+                        border-radius: 0.5rem;
+                        background: $wa-base-white;
+
+                        &:hover {
+                            cursor: pointer;
+                            background-color: $wa-gray-100;
+                        }
+
+                        .drimg {
+                            width: 1.25rem;
+                            height: 1.25rem;
+                            @include krflexContainer($items:center, $content:center);
+                            overflow: hidden;
+                            border-radius: 100%;
+                            flex-shrink: 0;
+                        }
+                        .drName {
+                            width: calc(100% - 2rem);
+                        }
+                    }
+                }
+            }
+        }
+
+        .field-checkbox {                    
+            @include krflexContainer($items:center, $content:center);
+            display: inline-flex;
+            padding: 0.25rem 0.75rem 0.25rem 0.5rem;
+            gap: 0.375rem;
+            border-radius: 1rem;
+            border: 0.0625rem solid $wa-gray-200;
+            background: $wa-gray-50;
+            cursor: pointer;
+            height: 1.75rem;
+            &:hover {
+                background-color: $wa-base-white
+            }
+             
+            &.checkedBox {
+                background-color: $wa-base-white
+            }
+
+            &.checked {
+                background-color: $wa-base-white;
+            }
+
+            label {
+                @include typography-regular(0.875rem,500,1.25rem);
+                color: var(--Gray-iron-900, #18181B);
+                cursor: pointer;
+                &:first-letter {
+                    text-transform: uppercase;
+                }
+            }
+        }
+        .p-checkbox {
+            &.p-component {
+                &.p-checkbox-checked {
+                    .p-checkbox-box {
+                        border-color: $wa-gray-700 !important;
+                        background-color: $wa-gray-700 !important;
+
+                        .p-checkbox-icon:before {
+                            position: relative;
+                            top: 0.0625rem;
+                        }
+                    }
+                }
+
+                .p-checkbox-box {
+                    border-radius: 100%;
+                }
+            }
+        }
+        .field-checkbox-dropdown {
+            @include krflexContainer($items:center, $content:center);
+            display: inline-flex;
+            padding: 0.25rem 0.75rem 0.25rem 0.5rem;
+            gap: 0.375rem;
+            border-radius: 1rem;
+            border: 0.0625rem solid $wa-gray-200;
+            background: $wa-gray-50;
+            cursor: pointer;
+            height: 1.75rem;
+            position: relative;
+            .seperatelabel {
+                display: block;
+                width: 100%;
+                margin-bottom: 0.625rem;
+                align-self: start;
+                display: flex;
+            }
+            .leftboxwrap {
+                display: inline-flex;
+                width: 100%;
+                gap: 0.5rem;
+            }
+            &:hover {
+                background-color: $wa-base-white
+            }
+             
+            &.checkedBox {
+                background-color: $wa-base-white
+            }
+
+            label {
+                @include typography-regular(0.875rem,500,1.25rem);
+                color: var(--Gray-iron-900, #18181B);
+                cursor: pointer;
+            }
+            &.checked {
+                background-color: $wa-base-white;
+            }
+        }
+        .dropdownBox, .leftBox {
+            @include krflexContainer($items:center);
+            gap: 0.25rem;
+        }
+        .leftBox {                    
+            //border-right: 0.0625rem solid $wa-gray-300;
+            padding-right: 0.75rem;
+            position: relative;
+            &:after {
+                content: '';
+                width: 0.0625rem;
+                background-color: $wa-gray-200;
+                position: absolute;
+                right: 0;
+                top: -3;
+                height: 1.6875rem;
+
+            }
+        }
+        .dropdownBox {
+            padding-left: 0.5rem;
+            position: relative;
+            .selectedItem {
+                @include typography-regular(0.875rem,500,1.25rem);
+                color: var(--Gray-iron-900, #18181B); 
+                text-transform: lowercase;
+                &::first-letter {
+                    text-transform: uppercase;
+                }
+            }
+            &:hover {
+                .selectedItem {
+                    color: $wa-primary-600;
+                }
+            }
+            .drArrow {
+                @include krflexContainer($items:center);
+                margin: 0.1875rem 0 0 0.125rem;
+            }
+            &.activedr {
+                //background-color: $wa-gray-200;
+            }
+        }
+        .textarea {
+            textarea {
+                resize: none;
+                padding: 0.5rem 0.75rem;
+                border-radius: 0.5rem;
+                border: 0.0625rem solid $wa-gray-300;
+                background: $wa-base-white;                       
+                /* Shadow/xs */
+                box-shadow: 0rem 0.0625rem 0.125rem 0rem rgba(16, 24, 40, 0.05);
+                height: 4.375rem !important;
+                @include scrollbar;
+                overflow-y: auto;
+            }
+        }
+        .field-radiobutton {
+            @include krflexContainer($items:center, $content:center);
+            display: inline-flex;
+            padding: 0.25rem 0.75rem 0.25rem 0.5rem;
+            gap: 0.375rem;
+            border-radius: 1rem;
+            border: 0.0625rem solid var(--colors-gray-iron-200, #E4E4E7);
+            background: $wa-base-white;
+            cursor: pointer;
+            height: 1.75rem;
+            @include raidioButton(20px, 20px, 9px);
+            &:hover {
+                background-color: $wa-base-white;
+            }
+
+            input[type="radio"] {
+                margin: 0;
+            }
+                
+            &.checkedBox {
+                background-color: $wa-base-white;
+            }
+
+            &.withoutBorder {
+                gap: 0.5rem;
+                border-color: transparent;
+                background-color: transparent;
+                padding: 0.25rem 0;
+                height: auto;
+
+                &.wrapBox {
+                    @include krflexContainer($direction: column);
+                    flex-wrap: wrap;
+                    justify-content: flex-start;
+                    align-items: flex-start;
+                    width: 100%;
+                    .checkbox-group {
+                        flex-wrap: wrap;
+                    }
+                }
+            }
+
+            label {
+                @include typography-regular(0.875rem,500,1.25rem);
+                color: var(--Gray-iron-900, #18181B);
+                cursor: pointer;
+                white-space: nowrap;
+            }
+
+            &.checked {
+                background-color: $wa-base-white;
+            }
+        }        
+    }
+    .buttons-wrapper {
+        @include krflexContainer($items:center);
+        gap: 0.5rem;
+        width: 100%;
+
+        .cancel-btn {
+            margin: 0;
+            display: inline-flex;
+            cursor: pointer;
+            user-select: none;
+            align-items: center;
+            text-align: center;
+            overflow: hidden;
+            position: relative;
+            vertical-align: middle;
+            justify-content: center;
+            height: 2.25rem;
+            padding: 0 0.875rem;
+            font-family: Inter;
+            font-size: 0.875rem;
+            font-style: normal;
+            font-weight: 500;
+            line-height: 1.25rem;
+            letter-spacing: 0em;
+            color: #344054;
+            background: #FFFFFF;
+            border: 0.0625rem solid #D0D5DD;
+            box-shadow: 0rem 0.0625rem 0.125rem rgba(16, 24, 40, 0.05);
+            border-radius: 0.75rem;
+            &:focus {
+                outline: none;
+            }
+            &:hover {
+                background: #F9FAFB;
+                border-color: #D0D5DD;
+                color: #1D2939;
+                box-shadow: 0rem 0.0625rem 0.125rem rgba(16, 24, 40, 0.05);
+            }
+        }
+
+        .continue-btn {
+            margin: 0;
+            display: inline-flex;
+            cursor: pointer;
+            user-select: none;
+            align-items: center;
+            text-align: center;
+            overflow: hidden;
+            position: relative;
+            vertical-align: middle;
+            justify-content: center;
+            height: 2.25rem;
+            padding: 0 0.875rem;
+            font-family: Inter;
+            font-size: 0.875rem;
+            font-style: normal;
+            font-weight: 500;
+            line-height: 1.25rem;
+            letter-spacing: 0em;
+            color: #FFFFFF;
+            background: #101828;
+            border: 0.0625rem solid #475467;
+            box-shadow: 0rem 0.0625rem 0.125rem rgba(16, 24, 40, 0.05);
+            border-radius: 0.75rem;
+            &:focus {
+                outline: none;
+            }
+            &:hover {
+                background: #344054;
+                border-color: #344054;
+                color: #FFFFFF;
+                box-shadow: 0rem 0.0625rem 0.125rem rgba(16, 24, 40, 0.05);
+            }
+        }
+    }
+}
+
+.entitiesUtterances {
+    @include krflexContainer($direction:column, $items:flex-start);
+    width: 100%;
+    .euHeader {
+        @include krflexContainer($items:center);
+        gap: 0.5rem;
+        border-bottom: 0.0625rem solid $wa-gray-200;
+        padding: 0 0 1.125rem 0;
+        margin-bottom: 1.125rem;
+        width: 100%;
+
+        .euIcon {
+            @include krflexContainer($items:center);
+        }
+
+        .euTitle {
+            @include typography-regular(1.125rem,600,1.75rem);
+            color: var(--Gray-iron-900, #18181B);
+        }
+    }
+    .euList {
+        @include krflexContainer($direction:column);
+        gap: 0.625rem;
+
+        .listItem {
+            @include krflexContainer($items:flex-start);
+            gap: 0.5rem;
+            transition: all 0.3s ease-in-out;
+            cursor: pointer;
+
+            &:hover {
+                padding-left: 0.25rem;
+            }
+
+            .listIcon {
+                @include krflexContainer($items:center);
+                position: relative;
+                top: 0.25rem;
+            }
+
+            .listTitle {
+                @include typography-regular(0.875rem,400,1.25rem);
+                color: var(--Gray-iron-900, #18181B);
+            }
         }
     }
 }
