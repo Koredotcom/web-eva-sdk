@@ -1,6 +1,7 @@
 import { cloneDeep, isEmpty, isUndefined } from "lodash";
 import store from "../../redux/store";
 import InitiateChatConversationAction from "../../chat/InitiateChatConversationAction";
+import ChatInterface from "../../chat/ChatInterface.js";
 import { updateChatData } from "../../redux/globalSlice";
 import { executionPipelineActions } from "../../redux/actions/global.action";
 import { createCloseIcon, tickMarkIcon } from "../icons-library.js";
@@ -103,7 +104,8 @@ const multiIntentExecutionFunc = (item) => {
       }
 
     const saveTask = async (index, task, executionPipeline) => {
-
+      // Always use fresh state (handlers can run after other dispatches)
+      state = store.getState().global;
       let _questions = cloneDeep(state?.questions);
       let utterance = document.getElementById(`utterance-${task?._id}`)?.value;
 
@@ -130,7 +132,7 @@ const multiIntentExecutionFunc = (item) => {
       }
       
       /*put the loading state in the task */
-      let currentExecutionPipeline = cloneDeep(_questions[item?.reqId]?.executionPipeline);
+      let currentExecutionPipeline = cloneDeep(_questions[item?.reqId]?.executionPipeline) || [];
       currentExecutionPipeline[index] = { ...currentExecutionPipeline[index], loading: true };
       const updatedQuestions = {
         ..._questions,
@@ -144,6 +146,9 @@ const multiIntentExecutionFunc = (item) => {
       const response = await store.dispatch(executionPipelineActions({params, payload}))
       
       if(!!response?.payload){
+        // Refresh again after await to avoid overwriting newer store changes
+        state = store.getState().global;
+        _questions = cloneDeep(state?.questions);
         const updatedQuestions = {
           ..._questions,
           [item?.reqId]: {
@@ -238,8 +243,20 @@ const multiIntentExecutionFunc = (item) => {
     }
 
     const addIntent = (index, task, selectedAgent) => {
+      // Always use fresh state (agent selection triggers re-renders)
+      state = store.getState().global;
       const _questions = cloneDeep(state?.questions);
-      let currentExecutionPipeline = cloneDeep(_questions[item?.reqId]?.executionPipeline);
+      let currentQuestion = cloneDeep(_questions[item?.reqId]);
+      let currentExecutionPipeline = cloneDeep(currentQuestion?.executionPipeline) || [];
+
+      // Persist the current utterance from DOM before mutating pipeline (prevents it from disappearing)
+      const utteranceInput = document.getElementById(`utterance-${task?._id}`);
+      if (utteranceInput) {
+        const utterance = utteranceInput.value || '';
+        if (currentExecutionPipeline[index]) {
+          currentExecutionPipeline[index].utterance = utterance;
+        }
+      }
       let savedExecutionPipeline = cloneDeep(currentExecutionPipeline);
       if(!currentExecutionPipeline[index].intents){
         currentExecutionPipeline[index].intents = [];
@@ -256,7 +273,7 @@ const multiIntentExecutionFunc = (item) => {
       
       const updatedQuestions = {
         ..._questions,
-        [item?.reqId]: { ..._questions[item?.reqId], executionPipeline: currentExecutionPipeline, savedExecutionPipeline }
+        [item?.reqId]: { ...currentQuestion, executionPipeline: currentExecutionPipeline, savedExecutionPipeline }
       };
       store.dispatch(updateChatData(updatedQuestions));
       
@@ -699,8 +716,47 @@ const multiIntentExecutionFunc = (item) => {
         const addNewTaskBtn = document.getElementById(`addNewTaskBtn-${index}`);
         const continueBtn = document.getElementById(`continueBtn-${task?._id}`);
         if(continueBtn && !continueBtn.eventListenerAdded){
-            continueBtn.addEventListener("click", () => {
-                cancelTask(task);
+            continueBtn.addEventListener("click", async () => {
+                // "Continue Flow" should move to next task without showing interruption UI.
+                // We silently cancel the current task request and immediately run the next task.
+                state = store.getState().global;
+                const currentTaskQ = state?.questions?.[task?._id];
+                if (currentTaskQ?.reqId) {
+                    const updated = cloneDeep(state.questions);
+                    updated[task._id] = {
+                        ...updated[task._id],
+                        _continueFlow: true,
+                        // Mark this task as discarded and show the interruption text only for this task.
+                        status: "discard",
+                        answer:
+                            "I see you interrupted the answer generation. Please feel free to provide more details or let me know how can I assist you further",
+                        // Force a minimal render (avoid showing previous template/thread UI).
+                        templateType: "search_answer",
+                        viewType: undefined,
+                        botConversation: null,
+                        template_html: undefined,
+                        sources: [],
+                        data: [],
+                        showResponse: true,
+                        loading: false,
+                    };
+                    store.dispatch(updateChatData(updated));
+                    // Force cancel API call even for bot agent threadView tasks.
+                    // Skip post-call UI mutation because we already updated the task UI above.
+                    // IMPORTANT: wait for cancelRequest success before moving to next task.
+                    try {
+                        const cancelResp = await ChatInterface().cancelMessageReqAction(
+                            currentTaskQ.reqId,
+                            { forceCancelApi: true, skipPostCall: true }
+                        );
+                        const isFulfilled = cancelResp?.meta?.requestStatus === 'fulfilled';
+                        if (isFulfilled) {
+                            try { MultiIntentExecution().runTask(item, index + 1, updated[task._id]); } catch (e) {}
+                        }
+                    } catch (e) {}
+                } else {
+                    cancelTask(task);
+                }
             });
             continueBtn.eventListenerAdded = true;
         }
@@ -793,8 +849,24 @@ const multiIntentExecutionFunc = (item) => {
 
          // Add input listener for description changes
          if (utteranceInput && !utteranceInput.changeListenerAdded) {
+           // Persist typed utterance into store so it survives re-renders (e.g., when adding an agent)
+           const persistUtterance = () => {
+             const currentState = store.getState().global;
+             const qs = cloneDeep(currentState.questions);
+             const q = qs[item?.reqId];
+             if (!q?.executionPipeline?.[index]) return;
+             q.executionPipeline[index].utterance = utteranceInput.value || '';
+             // keep savedExecutionPipeline in sync while editing (so Done/discard logic doesn't wipe state)
+             if (Array.isArray(q.savedExecutionPipeline) && q.savedExecutionPipeline[index]) {
+               q.savedExecutionPipeline[index].utterance = utteranceInput.value || '';
+             }
+             qs[item?.reqId] = q;
+             store.dispatch(updateChatData(qs));
+           };
            utteranceInput.addEventListener('input', checkForChanges);
            utteranceInput.addEventListener('change', checkForChanges);
+           utteranceInput.addEventListener('input', persistUtterance);
+           utteranceInput.addEventListener('change', persistUtterance);
            utteranceInput.changeListenerAdded = true;
          }
 

@@ -4,7 +4,7 @@ import store from "../../redux/store";
 import { sessionItemHandler } from "../../Attachments/createContext";
 import { getRelevantQuestions } from "../../redux/actions/global.action";
 import { highlightQuotedText } from "../utils/helper";
-import { InitiateChatConversationAction, toast } from "../../chat";
+import { InitiateChatConversationAction } from "../../chat";
 import { submitUserFeedback } from "../../Feedback";
 import customMarkdownRenderer from "../utils/customMarkdownRenderer";
 import chatInterface from "../../chat/ChatInterface";
@@ -212,11 +212,30 @@ const AnsFromChipFunctionality = ({ item }) => {
 	};
 
 	const copyAnswerToClipboard = async () => {
+		const showCopiedMessage = () => {
+			const el = document.getElementById(`copyAnswerMessage-${item?.messageId}`);
+			if (!el) return;
+			el.style.display = "flex";
+			setTimeout(() => {
+				el.style.display = "none";
+			}, 3000);
+		};
+
 		try {
-			if (item?.answer) {
-				await navigator.clipboard.writeText(item.answer);
-				toast.success("Response copied");
+			if (!item?.answer) return;
+
+			const messageDiv = document.querySelector(`#answer-${item?.messageId} .message-renderer`);
+			if (messageDiv && navigator.clipboard?.write && typeof ClipboardItem !== "undefined") {
+				const htmlData = messageDiv.outerHTML;
+				const blob = new Blob([htmlData], { type: "text/html" });
+				const clipboardItem = new ClipboardItem({ "text/html": blob });
+				await navigator.clipboard.write([clipboardItem]);
+				showCopiedMessage();
+				return;
 			}
+
+			await navigator.clipboard.writeText(item.answer);
+			showCopiedMessage();
 		} catch (err) {
 			console.error("Failed to copy answer to clipboard:", err);
 			// Fallback for older browsers
@@ -226,6 +245,7 @@ const AnsFromChipFunctionality = ({ item }) => {
 			textArea.select();
 			document.execCommand("copy");
 			document.body.removeChild(textArea);
+			showCopiedMessage();
 		}
 	};
 
