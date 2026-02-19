@@ -1067,7 +1067,7 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 
 	const copyAnswerChip = () => {
 		return `
-			<div class="copyAnswerButton"title="Copy Response" id="copyAnswerButton-${item?.messageId}">
+			<div class="copyAnswerButton" id="copyAnswerButton-${item?.messageId}">
 			${copyQuestion.render(item, 'answer')}
 			</div>
 		`;
@@ -1077,14 +1077,46 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 		return `
 			<div class="feedbackChip">
 			    ${item?.feedback === "like" ?
-				`<div class="feedbackLikeButton ${item?.feedback === "like" ? "active" : ""}" id="feedbackLikeButton-${item?.messageId}" title="Helpful">${getThumbsUpIcon(true)}</div>`
+				`<div class="feedbackLikeButton ${item?.feedback === "like" ? "active" : ""}" id="feedbackLikeButton-${item?.messageId}">
+				<sl-tooltip placement="bottom">
+					<div slot="content" class="caTooltips">
+						<div class="tooltip-title">Helpful:</div>
+						<div class="tooltip-subtitle">Response is appropriate and correct.</div>
+					</div>
+					<span style="display: flex; align-items: center; justify-content: center; width: 100%; height: 100%;">${getThumbsUpIcon(true)}</span>
+				</sl-tooltip>
+				</div>`
 				:
-				`<div class="feedbackLikeButton" id="feedbackLikeButton-${item?.messageId}" title="Helpful">${getThumbsUpIcon(false)}</div>`
+				`<div class="feedbackLikeButton" id="feedbackLikeButton-${item?.messageId}">
+				<sl-tooltip placement="bottom">
+					<div slot="content" class="caTooltips">
+						<div class="tooltip-title">Helpful:</div>
+						<div class="tooltip-subtitle">Response is appropriate and correct.</div>
+					</div>
+					<span style="display: flex; align-items: center; justify-content: center; width: 100%; height: 100%;">${getThumbsUpIcon(false)}</span>
+				</sl-tooltip>
+				</div>`
 			}
 				${item?.feedback === "dislike" ?
-				`<div class="feedbackDislikeButton ${item?.feedback === "dislike" ? "active" : ""}" id="feedbackDislikeButton-${item?.messageId}" title="Not Helpful">${getThumbsDownIcon(true)}</div>`
+				`<div class="feedbackDislikeButton ${item?.feedback === "dislike" ? "active" : ""}" id="feedbackDislikeButton-${item?.messageId}">
+				<sl-tooltip placement="bottom">
+					<div slot="content" class="caTooltips">
+						<div class="tooltip-title">Not Helpful:</div>
+						<div class="tooltip-subtitle">Response is incorrect or not relavant on your query.</div>
+					</div>
+					<span style="display: flex; align-items: center; justify-content: center; width: 100%; height: 100%;">${getThumbsDownIcon(true)}</span>
+				</sl-tooltip>
+				</div>`
 				:
-				`<div class="feedbackDislikeButton" id="feedbackDislikeButton-${item?.messageId}" title="Not Helpful">${getThumbsDownIcon(false)}</div>`
+				`<div class="feedbackDislikeButton" id="feedbackDislikeButton-${item?.messageId}">
+				<sl-tooltip placement="bottom">
+					<div slot="content" class="caTooltips">
+						<div class="tooltip-title">Not Helpful:</div>
+						<div class="tooltip-subtitle">Response is incorrect or not relavant on your query.</div>
+					</div>
+					<span style="display: flex; align-items: center; justify-content: center; width: 100%; height: 100%;">${getThumbsDownIcon(false)}</span>
+				</sl-tooltip>
+				</div>`
 			}
 				${renderFeedbackForm()}
 			</div>
@@ -1093,7 +1125,15 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 
 	const exportWordChip = () => {
 		return `
-			<div class="exportWordButton" id="exportWordButton-${item?.messageId}" title="Export Response">${getExportWordIcon()}</div>
+			<div class="exportWordButton" id="exportWordButton-${item?.messageId}">
+				<sl-tooltip placement="bottom">
+					<div slot="content" class="caTooltips">
+						<div class="tooltip-title">Export Response:</div>
+						<div class="tooltip-subtitle">Export the response as a file.</div>
+					</div>
+					${getExportWordIcon()}
+				</sl-tooltip>
+			</div>
 		`;
 	}
 
@@ -1103,9 +1143,17 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 		const multiSourceClass = isMultiSource ? 'multiSource' : '';
 
 		const buttonHtml = `
-            <div class="setContextButton optionWrapper ${multiSourceClass}" id="setContextButton-${messageId}" title="Set as Context: Set the sources as context and ask queries.">
-                <span style="pointer-events: none;">${setContextIcon({ size: 16, color: "#667085" })}</span>
-                ${isMultiSource ? `<div class="cheveron-icon" style="pointer-events: none;"><svg width="8" height="8" viewBox="0 0 8 8" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2 3L4 5L6 3" stroke="#344054" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/></svg></div>` : ''}
+            <div class="setContextButton optionWrapper ${multiSourceClass}" id="setContextButton-${messageId}">
+				<sl-tooltip placement="bottom">
+					<div slot="content" class="caTooltips">
+						<div class="tooltip-title">Set as Context:</div>
+						<div class="tooltip-subtitle">Set the sources as context and ask queries.</div>
+					</div>
+					<span style="display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; gap: 0.125rem;">
+						${setContextIcon({ size: 16, color: "#667085" })}
+						${isMultiSource ? `<div class="cheveron-icon"><svg width="8" height="8" viewBox="0 0 8 8" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2 3L4 5L6 3" stroke="#344054" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/></svg></div>` : ''}
+					</span>
+				</sl-tooltip>
             </div>
         `;
 
@@ -1365,7 +1413,7 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 				// 1. COPY ANSWER — shown when displayMenu && answer exists
 				if (item?.answer) {
 					actionChipsHTML += `
-						<div class="copyAnswerButton" title="Copy Response" id="copyAnswerButton-${item?.messageId}">
+						<div class="copyAnswerButton" id="copyAnswerButton-${item?.messageId}">
 						${copyQuestion.render(item, 'answer')}
 						</div>
 					`;
@@ -1374,7 +1422,15 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 				// 2. EXPORT TO WORD — shown when displayMenu && answer exists
 				if (item?.answer && !state?.ansFromChipElements?.disableExporttoWordDoc) {
 					actionChipsHTML += `
-						<div class="exportWordButton" id="exportWordButton-${item?.messageId}" title="Export Response">${getExportWordIcon()}</div>
+						<div class="exportWordButton" id="exportWordButton-${item?.messageId}">
+							<sl-tooltip placement="bottom">
+								<div slot="content" class="caTooltips">
+									<div class="tooltip-title">Export Response:</div>
+									<div class="tooltip-subtitle">Export the response as a file.</div>
+								</div>
+								${getExportWordIcon()}
+							</sl-tooltip>
+						</div>
 					`;
 				}
 

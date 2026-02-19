@@ -97,9 +97,22 @@ function render(data, type = 'question') {
         }
     }, 1000);
 
+    const tooltipTitle = type === 'answer' ? 'Copy Response:' : 'Copy';
+    const tooltipSubtitle = type === 'answer'
+        ? 'Copy the response to your clipboard.'
+        : '';
+    const triggerStyle = type === 'answer'
+        ? 'display: flex; align-items: center; justify-content: center; width: 100%; height: 100%;'
+        : '';
+    const copiedMessageText = type === 'answer' ? 'Response Copied' : 'Copied to Clipboard';
+
     return `
-    <sl-tooltip content="Copy Response" placement="bottom">
-        <div class='questcopy' id='${copyButtonId}'>
+    <sl-tooltip placement="bottom">
+        <div slot="content" class="caTooltips">
+            <div class="tooltip-title">${tooltipTitle}</div>
+            <div class="tooltip-subtitle">${tooltipSubtitle}</div>
+        </div>
+        <div class='questcopy' id='${copyButtonId}' ${triggerStyle ? `style="${triggerStyle}"` : ''}>
             ${getCopyIcon()}
         </div>
     </sl-tooltip>
@@ -107,7 +120,7 @@ function render(data, type = 'question') {
         <div class='copy-message-icon'>
             ${CheckCircle({ size: 16, color: '#039855' })}
         </div>
-        <div class='copy-message-text'>Copied to Clipboard</div>
+        <div class='copy-message-text'>${copiedMessageText}</div>
     </div>
     `
 }

@@ -1744,7 +1744,22 @@ sl-dialog.eva-attachments-dialog {
     font-weight: 500;
     line-height: 18px;
     letter-spacing: 0em;
-    color: #fff;
+    color: $wa-base-white;
+    display: flex;
+    flex-direction: column;
+    gap: .25rem;
+
+    .tooltip-title {
+        @include typography-regular(0.75rem, 500, 1.125rem);
+        color: $wa-base-white;
+        text-align: left;
+    }
+
+    .tooltip-subtitle {
+        @include typography-regular(0.75rem, 400, 1.125rem);
+        color: $wa-base-white;
+        text-align: left;
+    }
 }
 
 @-webkit-keyframes slide-content-top {
