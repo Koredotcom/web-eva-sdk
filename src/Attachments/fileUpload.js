@@ -21,12 +21,12 @@ const FileUpload = (props) => {
             state = store.getState().global;
             // If callback exists and API call is completed, invoke it
             if (state.selectedContext?.status !== 'loading' && callback) {
-                if(!state?.selectedContext?.data){
+                if (!state?.selectedContext?.data) {
                     //When there is no selected context, we are not calling the callback, so sending all the values to be null for subscribe.
                     callback(null, null, null, null);
                     return;
                 } else {
-                    const {sources, sessionId, quickactions, error, apiResp=state?.selectedContext?.data} = state?.selectedContext?.data;
+                    const { sources, sessionId, quickactions, error, apiResp = state?.selectedContext?.data } = state?.selectedContext?.data;
                     callback(sources, sessionId, quickactions, error, apiResp);
                 }
             }
@@ -87,7 +87,7 @@ const FileUpload = (props) => {
                         }
                         //If there are no sources to add, no searchSession call is to be made. 
                         let action = state?.selectedContext?.data?.sessionId ? "update" : "add"
-                        allSources?.length && uploadFiles({attachments : allSources, action});
+                        allSources?.length && uploadFiles({ attachments: allSources, action });
                     }
                 });
             }
@@ -97,7 +97,7 @@ const FileUpload = (props) => {
     const uploadFileInitial = (file, allSources, onComplete) => {
         let state = store.getState().global;
         let localSize = file.file.size / Math.pow(1024, 2)
-        let allowedFileSize = Math.round(state.maxAllowedFileSize / Math.pow(1024, 2));
+        let allowedFileSize = Math.round((state.maxAllowedFileSize || (10 * 1024 * 1024)) / Math.pow(1024, 2));
         //If the file size is greater than Max Allowed File, then returning with a response
         if (localSize > allowedFileSize) {
             let _selectedContext = {};
@@ -105,8 +105,8 @@ const FileUpload = (props) => {
             let errorFiles = [...(state.selectedContext.data.error || [])];
             let fileWithError = {
                 ...file,
-                error : 'size',
-                message : `File Size has to be less than ${allowedFileSize} MB`
+                error: 'size',
+                message: `File Size has to be less than ${allowedFileSize} MB`
             }
             errorFiles.push(fileWithError)
             let remainingFiles = state.selectedContext.data.sources.filter(f => f.uID !== file.uID)
@@ -152,7 +152,7 @@ const FileUpload = (props) => {
             (res) => { },
             (file) => {
                 let componentId = generateComponentId();
-                if(state?.enableDebugging){
+                if (state?.enableDebugging) {
                     console.log(file);
                 }
                 let f = {
@@ -184,12 +184,12 @@ const FileUpload = (props) => {
     const removeContext = async (args) => {
         if (args.loading) {
             //If the source is loading and user terminated the call in between, we are removing that in selected Context and updating the state
-            return removeItem({state, item:args})
+            return removeItem({ state, item: args })
         } else if (state?.selectedContext?.data?.loading) {
             //If there is a selectedContext call loading and user wants to remove already added file, returning with no action.
             let resp = {
-                success : false,
-                message : "File Upload in Progress, Please Wait."
+                success: false,
+                message: "File Upload in Progress, Please Wait."
             }
             // Returning as an object with success as false for the client to know that the request could not be completed
             return resp;
@@ -198,65 +198,65 @@ const FileUpload = (props) => {
             // The file object might not have docId directly, but it should be in selectedContext.sources
             const sources = state?.selectedContext?.data?.sources || [];
             let matchingSource = null;
-            
+
             if (args?.source === "attachment" || !args?.source) {
                 // For attachments, match by multiple possible identifiers
                 // Check docId first (most reliable), then id, uID, componentId, mediaName
                 matchingSource = sources.find(s => {
                     if (s?.source !== "attachment") return false;
-                    
+
                     // Match by docId (preferred)
                     if (args?.docId && s?.docId === args?.docId) return true;
                     if (args?.docId && s?.id === args?.docId) return true;
-                    
+
                     // Match by id
                     if (args?.id && s?.id === args?.id) return true;
                     if (args?.id && s?.docId === args?.id) return true;
-                    
+
                     // Match by uID
                     if (args?.uID && s?.uID === args?.uID) return true;
                     if (args?.uID && s?.id === args?.uID) return true;
                     if (args?.uID && s?.docId === args?.uID) return true;
-                    
+
                     // Match by componentId
                     if (args?.componentId && s?.componentId === args?.componentId) return true;
                     if (args?.componentId && s?.id === args?.componentId) return true;
                     if (args?.componentId && s?.docId === args?.componentId) return true;
-                    
+
                     // Match by mediaName (fallback for attachments)
                     if (args?.mediaName && s?.mediaName === args?.mediaName) return true;
-                    
+
                     return false;
                 });
             } else {
                 // For other sources, match by docId
-                matchingSource = sources.find(s => 
+                matchingSource = sources.find(s =>
                     s?.docId === args?.docId || s?.id === args?.docId
                 );
             }
-            
+
             // Use the matching source if found (it has the correct docId), otherwise use args
             const itemToRemove = matchingSource ? cloneDeep(matchingSource) : args;
-            
+
             // Ensure docId is present (required for API call)
             // Priority: docId > id > contentId
             if (!itemToRemove?.docId) {
                 itemToRemove.docId = itemToRemove?.docId || itemToRemove?.id || itemToRemove?.contentId;
             }
-            
+
             // Ensure source type is set
             if (!itemToRemove?.source && args?.source) {
                 itemToRemove.source = args.source;
             } else if (!itemToRemove?.source && matchingSource?.source) {
                 itemToRemove.source = matchingSource.source;
             }
-            
+
             if (!itemToRemove?.docId) {
                 console.error('Cannot remove attachment: docId not found', { args, matchingSource, sources });
                 return;
             }
-            
-            removeCurentFile({state, item : itemToRemove, removingSource : true})
+
+            removeCurentFile({ state, item: itemToRemove, removingSource: true })
         }
     }
 
@@ -274,13 +274,13 @@ const FileUpload = (props) => {
         let errorFiles = [...(state.selectedContext.data.error || [])];
         let fileWithError = {
             ...data,
-            error : 'type',
-            message : `The file type ${data.fileType} is not Compatible`
+            error: 'type',
+            message: `The file type ${data.fileType} is not Compatible`
         }
         errorFiles.push(fileWithError)
         _selectedContext.data.sources = remainingFiles
         _selectedContext.data.sessionId = state.selectedContext?.data?.sessionId
-        _selectedContext.data.quickactions = state.selectedContext?.data?.quickactions  
+        _selectedContext.data.quickactions = state.selectedContext?.data?.quickactions
         _selectedContext.data.error = errorFiles
         store.dispatch(setSelectedContext(_selectedContext))
         // Returning as an object with success as false for the client to know that the request could not be completed
@@ -297,7 +297,7 @@ const FileUpload = (props) => {
         }
 
         let state = store.getState().global
-        const {enabledAgents, selectedContext} = state
+        const { enabledAgents, selectedContext } = state
         let _agents = cloneDeep(enabledAgents)
         let isAgentSetAsSource = _agents.find(ag => ag.id === selectedContext?.data?.sources?.[0]?.source)
         let sourceType = isAgentSetAsSource ? "agent" : null
@@ -306,13 +306,13 @@ const FileUpload = (props) => {
             discardPrevSession = true
         }
 
-        sessionItemHandler({item, discardPrevSession})
+        sessionItemHandler({ item, discardPrevSession })
     }
 
     const askFollowup = (args) => {
         let state = store.getState().global
 
-        let {enabledAgents, selectedContext} = state
+        let { enabledAgents, selectedContext } = state
         const msgType = args?.type
         const messageId = msgType === "followup" ? args?.parentMessageId : args?.messageId;
         const _selectedContext = { ...args?.context, messageId, sources: args?.sources, viewType: args?.viewType }
@@ -336,7 +336,7 @@ const FileUpload = (props) => {
                 obj.discardPrevSession = true
             }
             /*In morgan they are using customQnAAPI, and when the source of the selectedContext is customQnAAPI, need to discardPrevSession */
-            if(args?.sources?.[0]?.source === "customQnAAPI" || selectedContext?.data?.sources?.[0]?.source === "customQnAAPI"){
+            if (args?.sources?.[0]?.source === "customQnAAPI" || selectedContext?.data?.sources?.[0]?.source === "customQnAAPI") {
                 obj.discardPrevSession = true
             }
             sessionItemHandler(obj)
