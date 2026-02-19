@@ -17,6 +17,31 @@ const {hideRecentAgentsDiv} = RecentAgentsFunc();
 const ChatInterface = (props) => {
     let state = store.getState().global, input = '', resIndexRef = 0;
 
+    const getScrollableChatElement = () => {
+      if (typeof document === "undefined") return null;
+      return (
+        // Chatbot UI (panel-scoped)
+        document.querySelector(".eva-sdk-chatbot-panel .questions-container") ||
+        document.querySelector(".eva-sdk-chatbot-panel #questions-container") ||
+        // Demo/full chat UI
+        document.querySelector(".chatSec") ||
+        document.getElementById("chatSec") ||
+        // SDK home/full-page UI
+        document.querySelector(".questions-container") ||
+        document.getElementById("questions-container")
+      );
+    };
+
+    const scrollToBottom = (behavior = "smooth") => {
+      const el = getScrollableChatElement();
+      if (!el) return;
+      try {
+        el.scrollTo({ top: el.scrollHeight, behavior });
+      } catch (e) {
+        el.scrollTop = el.scrollHeight;
+      }
+    };
+
     // Subscribe to store updates
     const subscribe = (cb) => {
         let callback = cb;
@@ -108,13 +133,8 @@ const ChatInterface = (props) => {
             }
           }
         }
-        const scrollableElement = document.querySelector('.chatSec');
-        if (scrollableElement) {
-          requestAnimationFrame(() => {
-            //scrollableElement.scrollTop = scrollableElement.scrollHeight;
-            scrollableElement.scrollTo({ top: scrollableElement.scrollHeight, behavior: 'smooth' });
-          });
-        }
+        // Scroll-to-bottom for normal (non-task) user questions.
+        requestAnimationFrame(() => scrollToBottom("smooth"));
         console.log("payload in chat interface", payload)
         const Res = await store.dispatch(advanceSearch({ params, payload, userId: state.profile.data.id }))
         console.log("payload in chat interface", payload)
@@ -195,12 +215,10 @@ const ChatInterface = (props) => {
 			qId = constructQuestionInitial({...params, ...payload, replaceExistingQsn})
 		}
     setTimeout(() => {
-       const scrollableElement = document.querySelector('.chatSec');
-       if (scrollableElement) {
-            scrollableElement.scrollTo({
-              top: scrollableElement.scrollHeight,
-              behavior: 'smooth'
-            });
+       // Execute scrollToBottom everywhere EXCEPT for multi-intent execution task steps.
+       const isTaskQuestion = !!arg?.multiIntentExecution || !!arg?.isTask || !!arg?.params?.parentMsgId;
+       if (!isTaskQuestion) {
+         scrollToBottom("smooth");
        }
     }, 200);
 
