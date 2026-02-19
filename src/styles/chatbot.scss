@@ -60,6 +60,14 @@
   border: 1px solid #eeeeee;
   font-family: Inter;
 
+  .agent-selection-popup {
+    .popup-container {
+      .agentsTabWrapper {
+        height: auto;
+      }
+    }
+  }
+
   .setContextDropdown {
       &::part(panel) {
         padding: .5rem;
