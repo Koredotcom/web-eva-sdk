@@ -121,8 +121,8 @@ const ChatInterface = (props) => {
       }
     }
 
-    const cancelMessageReqAction = async (id) => {
-
+    const cancelMessageReqAction = async (id, options = {}) => {
+      const { forceCancelApi = false, skipPostCall = false } = options || {};
 
       const reqId = id || state.currentQuestion.reqId;
       const questions = cloneDeep(store.getState().global.questions);
@@ -130,7 +130,7 @@ const ChatInterface = (props) => {
       const currQuestion = state.currentQuestion?.isTask ? state.currentQuestion : questions[state.currentQuestion.reqId];
       if(currQuestion?.viewType === "threadView" && currQuestion?.botConversation) {
          stopBotAnswer()
-        return;
+        if (!forceCancelApi) return;
       }
     
       const response = await store.dispatch(cancelAdvancedSearch({ 
@@ -139,6 +139,10 @@ const ChatInterface = (props) => {
         payload 
       }));
       
+      if (skipPostCall) {
+        return response;
+      }
+
       const reqdCId = currQuestion?.isTask ? currQuestion?.cId : getCidByReqId(questions, reqId);
     
       constructQuestionPostCall(response, reqdCId);

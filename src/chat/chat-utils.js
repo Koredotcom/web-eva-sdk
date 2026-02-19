@@ -294,6 +294,18 @@ export const constructQuestionPostCall = (data, qId, isBot = false) => {
     //         }, 1000);
     // }}
     else if(data?.payload?.history?.status === msgStatus.TERMINATED){
+        // For multi-intent execution "Continue Flow", we silently cancel a task to proceed.
+        // Do not replace the UI with interruption text in that case.
+        if (question?.isTask && question?._continueFlow) {
+            // Keep existing status/answer; just stop loading and clear the flag.
+            question = {
+                ...question,
+                loading: false,
+                _continueFlow: false,
+            };
+            // No runNextTask here because Continue Flow already triggers the next task.
+        }
+        else {
         if(data?.payload?.history?.templateType === chatTemplateTypes.GPT_FORM_TEMPLATE){
             delete question.template_html
         }
@@ -304,6 +316,7 @@ export const constructQuestionPostCall = (data, qId, isBot = false) => {
             setTimeout(() => {
                 MultiIntentExecution().runNextTask(stepIndex, data?.payload?.history?.status, question)
             }, 1000);
+        }
         }
 	} 
     else {      

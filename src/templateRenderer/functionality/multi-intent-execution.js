@@ -1,6 +1,7 @@
 import { cloneDeep, isEmpty, isUndefined } from "lodash";
 import store from "../../redux/store";
 import InitiateChatConversationAction from "../../chat/InitiateChatConversationAction";
+import ChatInterface from "../../chat/ChatInterface.js";
 import { updateChatData } from "../../redux/globalSlice";
 import { executionPipelineActions } from "../../redux/actions/global.action";
 import { createCloseIcon, tickMarkIcon } from "../icons-library.js";
@@ -699,8 +700,47 @@ const multiIntentExecutionFunc = (item) => {
         const addNewTaskBtn = document.getElementById(`addNewTaskBtn-${index}`);
         const continueBtn = document.getElementById(`continueBtn-${task?._id}`);
         if(continueBtn && !continueBtn.eventListenerAdded){
-            continueBtn.addEventListener("click", () => {
-                cancelTask(task);
+            continueBtn.addEventListener("click", async () => {
+                // "Continue Flow" should move to next task without showing interruption UI.
+                // We silently cancel the current task request and immediately run the next task.
+                state = store.getState().global;
+                const currentTaskQ = state?.questions?.[task?._id];
+                if (currentTaskQ?.reqId) {
+                    const updated = cloneDeep(state.questions);
+                    updated[task._id] = {
+                        ...updated[task._id],
+                        _continueFlow: true,
+                        // Mark this task as discarded and show the interruption text only for this task.
+                        status: "discard",
+                        answer:
+                            "I see you interrupted the answer generation. Please feel free to provide more details or let me know how can I assist you further",
+                        // Force a minimal render (avoid showing previous template/thread UI).
+                        templateType: "search_answer",
+                        viewType: undefined,
+                        botConversation: null,
+                        template_html: undefined,
+                        sources: [],
+                        data: [],
+                        showResponse: true,
+                        loading: false,
+                    };
+                    store.dispatch(updateChatData(updated));
+                    // Force cancel API call even for bot agent threadView tasks.
+                    // Skip post-call UI mutation because we already updated the task UI above.
+                    // IMPORTANT: wait for cancelRequest success before moving to next task.
+                    try {
+                        const cancelResp = await ChatInterface().cancelMessageReqAction(
+                            currentTaskQ.reqId,
+                            { forceCancelApi: true, skipPostCall: true }
+                        );
+                        const isFulfilled = cancelResp?.meta?.requestStatus === 'fulfilled';
+                        if (isFulfilled) {
+                            try { MultiIntentExecution().runTask(item, index + 1, updated[task._id]); } catch (e) {}
+                        }
+                    } catch (e) {}
+                } else {
+                    cancelTask(task);
+                }
             });
             continueBtn.eventListenerAdded = true;
         }
