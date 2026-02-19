@@ -4,14 +4,12 @@ import EnabledAgents from '../agents/EnabledAgents'
 import recentAgents from '../agents/RecentAgents'
 import InitiateChatConversationAction from '../chat/InitiateChatConversationAction'
 import { ChatInterface, InvokeAgent } from '../chat'
-import { fetchAgents } from '../redux/actions/global.action'
-import store from '../redux/store'
 import CommonAgents from '../agents/CommonAgents'
 import { bookmarkAgent } from '../agents/actionsOnAgents'
 import pinnedAgents from '../agents/pinnedAgents'
 
 const Agents = () => {
-    const [agents, setAgents] = useState(null)  
+    const [agents, setAgents] = useState(null)
     const [commonAgents, setCommonAgents] = useState(null)
     const [pinnedAgentsList, setPinnedAgentsList] = useState(null)
 
@@ -42,10 +40,10 @@ const Agents = () => {
         console.log(res)
         // console.log(res)
     }
-
     const fetchCommonAgentsData = async () => {
         const res = await CommonAgents()
         setCommonAgents(res?.data)
+        // console.log(res)
     }
 
     const bookmarkAgentHandler = async (agentId, value) => {

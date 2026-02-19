@@ -11,7 +11,7 @@ import { convertToTimeFormat } from "../../utils/helpers";
  * @returns {string} HTML string
  */
 export function renderQuestionBubble(data, userIconTemplate = false, displayTimestamp = false) {
-	const { question, timestamp, icon} = data;
+	const { question, timestamp, icon } = data;
     if(data?.isTask) return "";
 	return `
         <div class="message-bubble question ${data?.isTask ? 'task-item' : ''}">
@@ -38,8 +38,8 @@ export function renderQuestionBubble(data, userIconTemplate = false, displayTime
  * @returns {string} HTML string
  */
 export function renderAnswerBubble(data) {
-	const { answer, timestamp, icon, source, status } = data;
-
+	const { answer, timestamp, icon, source, status, isTask } = data;
+    if(isTask) return "";
 	return `
         <div class="${status || ""}" >
             ${

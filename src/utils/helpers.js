@@ -38,8 +38,9 @@ export const getUID = function (len) {
 
 export const getFileExtension = (fileName) => {
     const parts = fileName?.split('.');
+    const supportedFileTypesForAttachments = store.getState().global?.fileTypes?.attachment;
     if (parts?.length > 1 && parts[parts?.length - 1].trim() !== '') {
-        if(supportedImagesOfFileUpload.includes(parts[parts?.length - 1].toLowerCase())) {
+        if(supportedFileTypesForAttachments.includes(parts[parts?.length - 1].toLowerCase())) {
             return parts[parts?.length - 1].toLowerCase()
         }
         return 'default';
@@ -48,7 +49,7 @@ export const getFileExtension = (fileName) => {
     }
 }
 
-export const supportedImagesOfFileUpload = ['csv', 'ppt', 'txt', 'pdf', 'doc', 'docx', 'text', 'txt', 'xls', 'xlsx']
+// export const supportedImagesOfFileUpload = ['csv', 'ppt', 'txt', 'pdf', 'doc', 'docx', 'text', 'txt', 'xls', 'xlsx']
 
 export const generateComponentId = () => {
     let cId = Math.random().toString(36).slice(2);
@@ -96,6 +97,23 @@ export const getReqIdByMessageId = (messageId) => {
     return null; // or an appropriate value if no match is found
 };
 
+export const isTask = (messageId) => {
+    let questions = cloneDeep(store.getState().global?.questions)
+    const currentQuestion = Object.values(questions).find(question => question?.pId === messageId)
+    if(currentQuestion?.isTask) {
+        return true
+    }
+    return false;
+}
+
+export const getTaskIdBypId = (messageId) => {
+    let questions = cloneDeep(store.getState().global?.questions)
+    const currentQuestion = Object.values(questions).find(question => (question?.pId === messageId && question?.status === 'threadRunning'))
+    if(currentQuestion?.isTask) {
+        return currentQuestion?.cId;
+    }
+    return null;
+}
 export const getCidByReqId = (questions, reqId) => {
     for (const key in questions) {
         if (questions[key].reqId === reqId) {
@@ -240,7 +258,6 @@ export const formatToDDMMYY = (dateStr) => {
 export const checkHistoryAccessed = (questions) => {
     return Object.values(questions ||{}).every(q => q?.historicalData)
 }
-
 // Placeholder functions for missing icons
 export const getExtIcon = (extension) => {
     // Return a simple file icon based on extension
@@ -476,6 +493,14 @@ export function markdownToPlainText(md) {
 
     // Final trim
     return trimWithEllipsis(text).trim();
+}
+
+
+export const getAgentTypeByAgentId = (agentId) => {
+    const allAgents = store.getState().global?.allAgents?.data?.agents;
+    const agent = allAgents?.find(agent => agent?.id === agentId);
+    return agent?.type;
+
 }
 
 const trimWithEllipsis = (str, max=100) =>

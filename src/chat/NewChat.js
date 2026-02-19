@@ -5,6 +5,7 @@ import store from "../redux/store"
 const NewChat = () => {    
     abortAdvanceSearch()    
     // Set board id as null
+    abortAdvanceSearch()
     store.dispatch(setActiveBoardId(null))
     store.dispatch(updateChatData({}))
     store.dispatch(setGptUploadedFiles(null))

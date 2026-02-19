@@ -75,126 +75,16 @@ const gptFormFunctionality = (formData, item, preservedValues = {}) => {
 		const inputField = document.getElementById(
 			`fileUpload-${contextField?.key}-${item?.messageId}`
 		);
-
-		const browseField = document.getElementById(
-			`browseLink-${contextField?.key}-${item?.messageId}`
+		inputField.addEventListener("change", (event) =>
+			GptFileUpload(event, `${contextField?.key}-${item?.messageId}`)
 		);
-		if(browseField && !browseField.eventListenerAdded){
-			browseField.eventListenerAdded = true;
-			browseField.addEventListener("click", (event) => {
-				event.preventDefault();				
-				document.getElementById(`fileUpload-${contextField?.key}-${item?.messageId}`)?.click();
-			});
-		}
-		if(inputField && !inputField.eventListenerAdded){
-			inputField.eventListenerAdded = true;
-			inputField.addEventListener("change", (event) => {
-				const questionId = item?.isTask ? item?.cId : item?.reqId;
-				GptFileUpload(event, `${contextField?.key}-${item?.messageId}`, questionId);				
-				setTimeout(() => {
-					const submitButton = document.getElementById(`submitGptForm-${item?.messageId}`);
-					if (submitButton) {
-						const isContextFieldValid = checkContextField(formData?.contextFields?.[0], item?.messageId);
-						const isParamFieldsValid = checkParamFields(formData?.fieldValues, item?.messageId);
-						const isFormValid = isContextFieldValid && isParamFieldsValid;
-						
-						if (isFormValid) {
-							submitButton.removeAttribute("disabled");
-						} else {
-							submitButton.setAttribute("disabled", "");
-						}
-					}
-				}, 500); 
-			});
-		}
 
-		// Add click listener for disabled context field upload inputs to show toast
-		if (contextField?.value?.canUploadFile && !contextField?.value?.allowMultipleFiles) {
-			const contextInputField = document.getElementById(
-				`fileUpload-${contextField?.key}-${item?.messageId}`
-			);
-			
-			if (contextInputField && !contextInputField.disabledClickListenerAdded) {
-				contextInputField.disabledClickListenerAdded = true;
-				
-				// Check if the context field has uploaded files to determine if input should be disabled
-				setTimeout(() => {
-					const contextFileKey = `${contextField?.key}-${item?.messageId}`;
-					const contextFileDetails = uploadedFilesState?.[contextFileKey];
-					const hasContextFiles = contextFileDetails && contextFileDetails?.length > 0;
-					
-					if (hasContextFiles) {
-						contextInputField.disabled = true;
-					}
-					
-					// Listen on parent label to catch both label and input clicks
-					const parentLabel = contextInputField.closest('label');
-					if (parentLabel && !parentLabel.disabledClickListenerAdded) {
-						parentLabel.disabledClickListenerAdded = true;
-						parentLabel.addEventListener("click", (event) => {
-							if (contextInputField.disabled) {
-								event.preventDefault();
-								event.stopPropagation();
-								
-								// Show warning message div
-								const messageDiv = document.getElementById(`upload-limit-message-${contextField?.key}-${item?.messageId}`);
-								if (messageDiv) {
-									messageDiv.style.display = 'flex';
-									
-									// Hide the message div after 3 seconds
-									setTimeout(() => {
-										messageDiv.style.display = 'none';
-									}, 3000);
-								}
-							}
-						});
-					}
-				}, 100); 
-			}
-		}
-
-	}
-
-	// Handle contextField dropdown functionality
-	if (contextField?.value?.type === "dropdown") {
-		const contextDropdownElement = document.getElementById(`dropdownValue-${contextField?.key}-${item?.messageId}`);
-		if (contextDropdownElement && !contextDropdownElement.eventListenerAdded) {
-			contextDropdownElement.eventListenerAdded = true;
-			
-			// Initialize context dropdown value with checked items
-			setTimeout(() => {
-				const contextDropDownChoices = contextField?.value?.choices || [];
-				const preservedContextDropdownValue = preservedValues[`dropdownValue-${contextField?.key}-${item?.messageId}`];
-				
-				if (!preservedContextDropdownValue && contextDropdownElement?.value.length === 0) {
-					const checkedChoice = contextDropDownChoices.find(choice => choice?.checked);
-					if (checkedChoice) {
-						const optionValue = checkedChoice?.id || checkedChoice?.value;
-						contextDropdownElement.value = optionValue;
-					}
-				}
-			}, 100);
-			
-			contextDropdownElement.addEventListener("sl-change", (event) => {
-				console.log('Context field dropdown changed:', contextField?.key, 'New value:', event.target.value);
-				
-				// Trigger validation after dropdown change
-				setTimeout(() => {
-					const submitButton = document.getElementById(`submitGptForm-${item?.messageId}`);
-					if (submitButton) {
-						const isContextFieldValid = checkContextField(formData?.contextFields?.[0], item?.messageId);
-						const isParamFieldsValid = checkParamFields(formData?.fieldValues, item?.messageId);
-						const isFormValid = isContextFieldValid && isParamFieldsValid;
-						
-						if (isFormValid) {
-							submitButton.removeAttribute("disabled");
-						} else {
-							submitButton.setAttribute("disabled", "");
-						}
-					}
-				}, 100);
-			});
-		}
+		const removeButton = document.getElementById(
+			`removeButton-${contextField?.key}-${item?.messageId}`
+		);
+		removeButton?.addEventListener("click", (event) =>
+			removeUploadedFile(event, `${contextField?.key}-${item?.messageId}`)
+		);
 	}
 
 	formData?.fieldValues?.forEach((parameters, index) => {
@@ -375,13 +265,11 @@ const gptFormFunctionality = (formData, item, preservedValues = {}) => {
 	const addAdditionalResponseButton = document.getElementById(
 		`addAdditionalResponse-${item?.messageId}`
 	);
-	if (addAdditionalResponseButton) {
-		addAdditionalResponseButton.addEventListener("click", (event) => {
-			if (!addAdditionalResponseButton.eventListenerAdded) {
-				addAdditionalResponseButton.eventListenerAdded = true;
-				addResponse(event);
-			}
-		});
+	if (addAdditionalResponseButton && !addAdditionalResponseButton?.eventListenerAdded) {
+		addAdditionalResponseButton.eventListenerAdded = true;
+		addAdditionalResponseButton.addEventListener("click", (event) =>
+			addResponse(event)
+		);
 	}
 
 	// CLOSE ICON FUNCTIONALITY FOR UPLOAD LIMIT MESSAGES

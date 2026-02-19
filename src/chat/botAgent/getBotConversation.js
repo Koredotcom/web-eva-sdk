@@ -1,7 +1,7 @@
 import { cloneDeep, isEmpty } from "lodash";
 import {chatWindow, chatConfig} from "@koredev/kore-web-sdk"
 import store from "../../redux/store";
-import { checkHistoryAccessed } from "../../utils/helpers";
+import { checkHistoryAccessed, getReqIdByMessageId, getTaskIdBypId, isTask } from "../../utils/helpers";
 import { updateChatData, setBotSDKInstance, setCurrentQuestion, setEnableKoreBotSDK } from "../../redux/globalSlice";
 import { advanceSearch } from "../../redux/actions/global.action";
 import { constructQuestionPostCall } from "../chat-utils";
@@ -70,7 +70,7 @@ const BotConversation = (args) => {
                 (key) => questions[key]?.messageId === messageId
             );
             if (keyByMessageId) {
-                return keyByMessageId?.hasOwnProperty('messageId') ? keyByMessageId['messageId']  || messageId :  keyByMessageId;
+                return keyByMessageId;
             }
             return Object.keys(questions).find(
                 (key) =>
@@ -125,79 +125,161 @@ const BotConversation = (args) => {
                 }
             }
         }
-        if(detail?.action === "update"){         
-            /*reqId only comes when updating the parentMessage clo */   
-            // if (detail?.message?.hasOwnProperty('reqId') && Object.keys(questions || {}).length > 0) {
-            //     const currentQuestion = Object.values(questions).find(ques => ques.reqId === detail.message.reqId)
-            //     if(currentQuestion?.historicalData){
-            //         question = questions?.[currentQuestion?.id]
-            //     }else{
-            //         question = questions?.[currentQuestion?.reqId]
-            //     }                                
-            // }else{
+    //     if(detail?.action === "update"){         
+    //         /*reqId only comes when updating the parentMessage clo */   
+    //         // if (detail?.message?.hasOwnProperty('reqId') && Object.keys(questions || {}).length > 0) {
+    //         //     const currentQuestion = Object.values(questions).find(ques => ques.reqId === detail.message.reqId)
+    //         //     if(currentQuestion?.historicalData){
+    //         //         question = questions?.[currentQuestion?.id]
+    //         //     }else{
+    //         //         question = questions?.[currentQuestion?.reqId]
+    //         //     }                                
+    //         // }else{
                 
-            // }     
-            if(Object.keys(questions || {}).length === 0){
-                return;
-            }            
-            const questionKey = resolveQuestionKeyByMessageId(detail?.message?.pId)
-            question = questions[detail?.message?.pId] /*in order to update the already existing messages of botConversation, we will depend on pId */
-            const check = Object.values(questions)?.find(el => el?.messageId === detail?.message?.pId);
-            if(question){//found the question with pId, so need to update the conversation present in botConversation
-                question.botConversation[detail?.message?.messageId] = detail?.message
+    //         // }     
+    //         if(Object.keys(questions || {}).length === 0){
+    //             return;
+    //         }            
+    //         const questionKey = resolveQuestionKeyByMessageId(detail?.message?.pId)
+    //         question = questions[detail?.message?.pId] /*in order to update the already existing messages of botConversation, we will depend on pId */
+    //         const check = Object.values(questions)?.find(el => el?.messageId === detail?.message?.pId);
+    //         if(question){//found the question with pId, so need to update the conversation present in botConversation
+    //             question.botConversation[detail?.message?.messageId] = detail?.message
                 
-            }else if(check){
-                const currentQuestion = store.getState().global.currentQuestion;
-               if(currentQuestion?.isTask) {
-                   const stepIndex = currentQuestion?.stepIndex;
-                   setTimeout(() => {
-                       MultiIntentExecution().runNextTask(stepIndex, detail?.message?.status , currentQuestion)
-                   }, 1000);
-               }
+    //         }else if(check){
+    //             const currentQuestion = store.getState().global.currentQuestion;
+    //            if(currentQuestion?.isTask) {
+    //                const stepIndex = currentQuestion?.stepIndex;
+    //                setTimeout(() => {
+    //                    MultiIntentExecution().runNextTask(stepIndex, detail?.message?.status , currentQuestion)
+    //                }, 1000);
+    //            }
 
-            }
-            else{
-                const fallbackKey = resolveQuestionKeyByReqId(detail?.message?.pId)
-                question = questions[fallbackKey] /*to update the parent message itself, */
-                if(!question){
-                    if(state?.enableDebugging){
-                        console.error(`bot question with reqId: ${detail?.message?.reqId} is unavailable, please check the store`)
-                    }
-                    return;
-                }             
-                question = {...question, 'answer': detail?.message?.answer, 'status': detail?.message?.status}
-            }
+    //         }
+    //         else{
+    //             const fallbackKey = resolveQuestionKeyByReqId(detail?.message?.pId)
+    //             question = questions[fallbackKey] /*to update the parent message itself, */
+    //             if(!question){
+    //                 if(state?.enableDebugging){
+    //                     console.error(`bot question with reqId: ${detail?.message?.reqId} is unavailable, please check the store`)
+    //                 }
+    //                 return;
+    //             }             
+    //             question = {...question, 'answer': detail?.message?.answer, 'status': detail?.message?.status}
+    //         }
             
             
-            /*should retain the id of the question when accessing from history */
-            // if(question?.historicalData){
-            //     const questionHistoryId = question.id
-            //     question = { ...question, ...detail?.message }
-            //     question.id = questionHistoryId
-            // }else{
-            //     // question = { ...question, ...detail?.message }
-            // }  
-            if(state?.enableDebugging){
-                console.log("question after update: ", question)
-            }         
-        }       
-        if(!question){
-            if(state?.enableDebugging){
-                console.error(`can't update the question as the question is 'undefined' or 'null' -133`)
-            }
-            return;
-        } 
-        store.dispatch(setCurrentQuestion(question))
-        /*In case of history data we need to depend on id of the question */
-        // if(question?.historicalData){
-        //     questions[question?.id] = question
+    //         /*should retain the id of the question when accessing from history */
+    //         // if(question?.historicalData){
+    //         //     const questionHistoryId = question.id
+    //         //     question = { ...question, ...detail?.message }
+    //         //     question.id = questionHistoryId
+    //         // }else{
+    //         //     // question = { ...question, ...detail?.message }
+    //         // }  
+    //         if(state?.enableDebugging){
+    //             console.log("question after update: ", question)
+    //         }         
+    //     }       
+    //     if(!question){
+    //         if(state?.enableDebugging){
+    //             console.error(`can't update the question as the question is 'undefined' or 'null' -133`)
+    //         }
+    //         return;
+    //     } 
+    //     store.dispatch(setCurrentQuestion(question))
+    //     /*In case of history data we need to depend on id of the question */
+    //     // if(question?.historicalData){
+    //     //     questions[question?.id] = question
+    //     // }else{
+    //     //     questions[question?.reqId] = question
+    //     // }  
+    //      const currentQuestion = store.getState().global.currentQuestion;
+    //      if(!currentQuestion?.isTask) {    
+    //          questions[question?.reqId] = question
+    //      }
+    //     store.dispatch(updateChatData(questions))        
+    //     setupTemplates(question.botConversation);
+    // }
+
+    if(detail?.action === "update"){         
+        /*reqId only comes when updating the parentMessage clo */   
+        // if (detail?.message?.hasOwnProperty('reqId') && Object.keys(questions || {}).length > 0) {
+        //     const currentQuestion = Object.values(questions).find(ques => ques.reqId === detail.message.reqId)
+        //     if(currentQuestion?.historicalData){
+        //         question = questions?.[currentQuestion?.id]
+        //     }else{
+        //         question = questions?.[currentQuestion?.reqId]
+        //     }                                
         // }else{
-        //     questions[question?.reqId] = question
-        // }        
-        // questions[question?.reqId] = question
-        store.dispatch(updateChatData(questions))        
-        setupTemplates(question.botConversation);
+            
+        // }     
+        if(Object.keys(questions || {}).length === 0){
+            return;
+        }            
+        question = questions[getReqIdByMessageId(detail?.message?.pId)] /*in order to update the already existing messages of botConversation, we will depend on pId */
+        /*need to check whther the pId is a task or not */
+        if(isTask(detail?.message?.pId)){
+            question = questions[getTaskIdBypId(detail?.message?.pId)]
+        }
+        if(question){//found the question with pId, so need to update the conversation present in botConversation
+            /*if question is a task, update can happen for the parentQuestion or the childQuestion, so first checking for the parentQuestion */
+            if(question?.messageId === detail?.message?.messageId){ /*this happens when the agentic flow xo bot conversation step is completed, so need to execute the next step in agentic flow if we have any */            
+                question = {...question, 'answer': detail?.message?.answer, 'status': detail?.message?.status}
+            }else{
+                question.botConversation[detail?.message?.messageId] = detail?.message
+            }
+        }else{
+            question = questions[detail?.message?.reqId] /*to update the parent message itself, */
+            if(!question){
+                if(state?.enableDebugging){
+                    console.error(`bot question with reqId: ${detail?.message?.reqId} is unavailable, please check the store`)
+                }
+                return;
+            }             
+            question = {...question, 'answer': detail?.message?.answer, 'status': detail?.message?.status}
+        }
+        
+        
+        /*should retain the id of the question when accessing from history */
+        // if(question?.historicalData){
+        //     const questionHistoryId = question.id
+        //     question = { ...question, ...detail?.message }
+        //     question.id = questionHistoryId
+        // }else{
+        //     // question = { ...question, ...detail?.message }
+        // }  
+        if(state?.enableDebugging){
+            console.log("question after update: ", question)
+        }         
+    }       
+    if(!question){
+        if(state?.enableDebugging){
+            console.error(`can't update the question as the question is 'undefined' or 'null' -133`)
+        }
+        return;
+    }     
+    /*In case of history data we need to depend on id of the question */
+    // if(question?.historicalData){
+    //     questions[question?.id] = question
+    // }else{
+    //     questions[question?.reqId] = question
+    // }     
+    store.dispatch(setCurrentQuestion(question))   
+    if(question?.isTask){
+        questions[question?.cId] = question
+        if(question?.status === 'completed'){
+            setTimeout(() => {
+                MultiIntentExecution().runNextTask(question?.stepIndex, question?.status, question)
+            }, 1000);
+        }
+    }else{        
+        questions[question?.reqId] = question        
     }
+    store.dispatch(updateChatData(questions))
+    setupTemplates(question.botConversation);
+}
+
 
     const enableEVABotSdk = (payload) => {
         store.dispatch(setEnableKoreBotSDK(payload))

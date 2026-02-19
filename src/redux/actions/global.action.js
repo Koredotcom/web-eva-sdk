@@ -1,4 +1,5 @@
 import { createAsyncThunk  } from "@reduxjs/toolkit";
+import axios from 'axios';
 import axiosInstance from "../../api/axiosInstance";
 import { handleErrorState } from "../../utils/helpers";
 import { v4 as uuidv4 } from 'uuid';
@@ -65,7 +66,7 @@ export const fetchAgents = createAsyncThunk(
                         payload: { id: createdByIds }
                     }));
 
-                    userDetailsMap = userDetailsResult.payload?.reduce((acc, user) => {
+                    userDetailsMap = userDetailsResult?.payload?.reduce((acc, user) => {
                         acc[user?.id] = user;
                         return acc;
                     }, {}) || {};
@@ -95,9 +96,8 @@ export const fetchAgents = createAsyncThunk(
 
 let controller;
 
-// Helper function to abort any in-progress advance search request
 export const abortAdvanceSearch = () => {
-    if(controller) {
+    if (controller) {
         controller?.abort();
         controller = null;
     }
@@ -114,10 +114,14 @@ export const advanceSearch = createAsyncThunk(
                 signal: controller.signal,
                 headers: {
                     'kore-traceid': traceId
-                }
+                }                
             });
-            return { ...response.data, 'kore-traceid': traceId};
+            return {...response.data, 'kore-traceid': traceId};
         } catch (error) {
+            // Check whether api is cancelled
+            if (axios.isCancel(error) || error.name === 'CanceledError') {                
+                return thunkAPI.rejectWithValue({ cancelled: true });
+            }
             handleErrorState(error, "Advance Search");
             return thunkAPI.rejectWithValue(error.response.data);
         }
@@ -173,7 +177,7 @@ export const fetchRecentFiles = createAsyncThunk(
     async ({userId, params}, { rejectWithValue }) => {
         try {
             const response = await axiosInstance({
-                url: `1.1/ka/users/${userId}/files?fileContext=knowledge`,
+                url: `1.1/ka/users/${userId}/files?fileContext=runtime`,
                 method: 'GET',
                 params
             });
@@ -534,7 +538,7 @@ export const bookmarkAgentAction = createAsyncThunk(
     async (arg, { rejectWithValue }) => {
         try {
             const response = await axiosInstance.patch(`/1.1/users/${arg?.userId}/agents/${arg?.agentId}`, arg?.payload);
-            return {...response.data, status: response.status};
+            return response.data;
         } catch (error) {
             handleErrorState(error, "Bookmark Agent");
             return rejectWithValue(error.response.data);
@@ -547,7 +551,7 @@ export const deleteAnnouncementAction = createAsyncThunk(
     async (arg, { rejectWithValue }) => {
         try {
             const response = await axiosInstance.delete(`/1.1/users/${arg?.userId}/announcements/${arg?.announcementId}`);
-            return {data: response.data, status: response.status};
+            return response.data;
         } catch (error) {
             handleErrorState(error, "Delete Announcement");
             return rejectWithValue(error.response.data);

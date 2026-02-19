@@ -1,8 +1,8 @@
 import BotConversation from "./chat/botAgent/getBotConversation";
 // import CustomTemplateComponentManager from "./chat/botAgent/customTemplatesFolder/CustomTemplateComponentManager";
 // import HoldConversationTemplateManager from "./chat/botAgent/customTemplatesFolder/HoldConversationTemplateManager";
-import { fetchAgents, fetchConfigData, fetchProfileData, fetchHistory, fetchRecentFiles, presenceStart, getAllAnnouncements} from "./redux/actions/global.action";
-import { setEnabledDebugging, setAppMetaData } from "./redux/globalSlice";
+import { fetchAgents, fetchConfigData, fetchProfileData, fetchHistory, fetchRecentFiles, presenceStart, getAllAnnouncements } from "./redux/actions/global.action";
+import { setAnnouncements, setAutoRemoveWebSearchFromContext, setEnabledDebugging } from "./redux/globalSlice";
 import store from "./redux/store";
 import { WebSocketService } from "./socket/socket.service";
 export const initializeSDK = async (config) => {
@@ -24,14 +24,24 @@ export const initializeSDK = async (config) => {
   // Set the SDK config globally
   window.sdkConfig = config;
 
-  
+  if(config?.autoRemoveWebSearchFromContext){
+    store.dispatch(setAutoRemoveWebSearchFromContext(true))
+  }
+
+  // making foundation api call once sdk initialized properly
+  store.dispatch(fetchConfigData(config.userId))
   store.dispatch(fetchProfileData(config.userId))
   store.dispatch(fetchConfigData(config.userId))
   store.dispatch(fetchAgents({userId: config.userId}))
   store.dispatch(fetchHistory({onload: true, params: {limit: initialHistoryLimit}}))
   store.dispatch(fetchRecentFiles({onload: true, userId: config.userId, params: {limit: 10}}))
-  store.dispatch(getAllAnnouncements({params: {userId: config.userId}}))
-  store.dispatch(setAppMetaData(config.appMetaData))
+  const announcementData = await store.dispatch(getAllAnnouncements({params: {userId: config.userId}}))
+  const announcementObj = {
+    data: announcementData?.payload?.announcements,
+    status: 'success',
+    error: null
+  }
+  store.dispatch(setAnnouncements(announcementObj))
   
   // once presenceStart call success than get the sToken which is required to connect socket
   await store.dispatch(presenceStart())

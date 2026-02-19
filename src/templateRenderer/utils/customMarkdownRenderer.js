@@ -1,12 +1,9 @@
 import { marked } from "marked";
-import { encodeHtml } from "../../utils/helpers"; // optional, if you still need it
 import DOMPurify from "dompurify";
-import { SHOELACE_ATTRS, SHOELACE_TAGS } from "./helper";
-
-
+// import { SHOELACE_ATTRS, SHOELACE_TAGS } from "./helper";
 
 // Set marked config (v4+ compatible)
-marked.setOptions({
+marked.use({
     gfm: true,
     breaks: true, // Enables line breaks with single newline
 });
@@ -14,18 +11,18 @@ marked.setOptions({
 const customMarkdownRenderer = (text) => {
     if (!text) return "";
 
-    // Convert markdown to HTML
-    const cleanedMarkdown = text.replace(/^\s{2,}/gm, "");
-    let rawHtml = marked(cleanedMarkdown);
-    rawHtml = rawHtml.replace("<a", '<a target="_blank"');
+	// Convert markdown to HTML
+	const cleanedMarkdown = text.replace(/^\s{2,}/gm, "");
+	let rawHtml = marked.parse(cleanedMarkdown);
+	rawHtml = rawHtml.replaceAll("<a", '<a target="_blank"');
 
-    // Sanitize to prevent XSS (recommended)
-    const sanitizedHtml = DOMPurify.sanitize(rawHtml, {
-        ADD_TAGS: SHOELACE_TAGS,
-        ADD_ATTR: SHOELACE_ATTRS,
-    });
+	// Sanitize to prevent XSS (recommended)
+	// Configured DOMPurify to allow target attribute on anchor tags
+	const sanitizedHtml = DOMPurify.sanitize(rawHtml, {
+		ADD_ATTR: ['target']
+	});
 
-    return encodeHtml ? encodeHtml(sanitizedHtml) : sanitizedHtml;
+	return sanitizedHtml;
 };
 
 export default customMarkdownRenderer;

@@ -112,6 +112,10 @@ export const constructQuestionPostCall = (data, qId) => {
     const questions = cloneDeep(state.questions)
     const activeBoardId = state.activeBoardId
 
+    if(data?.payload?.cancelled || Object.keys(questions).length === 0) {
+        return;
+    }
+
     // let followupFromSuggestionModal = data?.params?.suggestionContext;
     let question = questions?.[qId]
     delete question?.loading;

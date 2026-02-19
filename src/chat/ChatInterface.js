@@ -83,7 +83,8 @@ const ChatInterface = (props) => {
 
         if(!isEmpty(selectedContext?.data)) {
           let _agents = cloneDeep(allAgents?.data?.agents)
-          _agents = [..._agents, ...commonAgents]?.filter(ag => !ag.disabled)          
+          let _commonAgents = cloneDeep(commonAgents) || []
+          _agents = [..._agents, ..._commonAgents?.filter(agent => !agent.disabled)]
           let isAgentSetAsSource = _agents.find(ag => ag.id === selectedContext?.data?.sources?.[0]?.source)
           let isAgent = isAgentSetAsSource ? "agent" : null
           if(isAgent) {
@@ -172,6 +173,15 @@ const ChatInterface = (props) => {
             params.parentMsgId = arg?.parentMsgId
           }
         }
+
+        if(arg?.from === 'mcpAgent'){
+          params.agentType = "mcpAgent"
+          params.reqId = getCidByMessageId(state.questions, payload?.messageId)
+          replaceExistingQsn = true
+          if(arg?.isTask){
+            params.parentMsgId = arg?.parentMsgId
+          }
+        }
       }  
             
 
@@ -240,6 +250,9 @@ const ChatInterface = (props) => {
        delete payload.context;
     }
 
+    if(arg?.from === 'mcpAgent'){
+      delete payload.context
+    }
     console.log("custom data payload in chat interface line no 206", payload.customData)
 
 		const Res = await store.dispatch(advanceSearch({ params, payload, userId: state?.profile?.data?.id, multiIntentExecution: arg?.multiIntentExecution }))
@@ -346,7 +359,7 @@ const ChatInterface = (props) => {
 
     const contentStreaming = (detail) => {
       let reqId;
-      const {currentQuestion, questions, chatInterfaceOptions} = store.getState().global;
+      const {currentQuestion,  chatInterfaceOptions} = store.getState().global;
       let _questions = cloneDeep(questions);
       if(Object.keys(_questions).length === 0){
         return;
@@ -355,7 +368,10 @@ const ChatInterface = (props) => {
       if(chatInterfaceOptions?.contentStreaming === false) return;
 
       // questionsRef.current - because questions state updates not coming in eventBuzz
-
+      const questions = cloneDeep(state.questions);
+      if(Object.keys(questions).length === 0) {
+        return;
+      }
       /*when resuming the conversation from history, the history data is structured using uuid, so using redId, we can extract the question to be resumed, so need to target the id, present in question with the help of reqId */
       /*function to check the questions are from history */
       const isHistoryAccessed = checkHistoryAccessed(_questions)
@@ -374,13 +390,9 @@ const ChatInterface = (props) => {
         /*function to fetch the questio id based on the  requestId*/
         reqId = Object.entries(_questions).find(([key, value]) => value?.reqId === detail?.data?.reqId)?.[0]
       }
-      let question = cloneDeep(_questions[reqId])
+      let question = cloneDeep(questions[reqId])
 
-      /*if api returns a non 200 response, an error, straming should be stopped */
-      if(question?.status === "error"){
-        question.streamingStatus = "aborted"
-        _questions[reqId] = question
-        store.dispatch(updateChatData(_questions))
+      if(question?.status === "terminated"){        
         return;
       }
 
@@ -478,13 +490,7 @@ const ChatInterface = (props) => {
       let _questions = cloneDeep(state.questions)
       const cQFromStore = state.currentQuestion /*this helps to understand whether the current question is a part of agentic flow using isTask flag */
       let reqId = detail?.data?.reqId
-      /*if the user terminates the questions, thoughts stearming should be stopped and update the questions */
-      if(_questions[reqId]?.status === "completed"){
-        let currentBotConversation = _questions[reqId]?.botConversation
-        if(currentBotConversation){
-          currentBotConversation[detail?.data?.answerMeta?.outputMessageId].status = "completed"
-        }        
-        store.dispatch(updateChatData(_questions))
+      if(isEmpty(_questions[reqId])){
         return;
       }
       /*when resuming the conversation from history, the history data is structured using uuid, so using redId, we can extract the question to be resumed, so need to target the id, present in question with the help of reqId */

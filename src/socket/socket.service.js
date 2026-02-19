@@ -4,7 +4,7 @@ import BotConversation from "../chat/botAgent/getBotConversation";
 import Notification from "../notifications/notification";
 import { presenceStart } from "../redux/actions/global.action";
 import store from "../redux/store";
-import { HistoryInterface } from "../history";
+import { AnnouncementsInterface } from "../Announcements";
 
 class WebSocketClient {
     constructor() {
@@ -85,8 +85,8 @@ class WebSocketClient {
                     /*update the name in the history board */
                     HistoryInterface().updateHistoryBoardNameonSocketEvent(msg?.data)
                 }
-                if (msg?.entity === 'reqFlow') {
-                    ChatInterface().responseFlowGeneration(msg)
+                if(msg?.entity === "announcements"){
+                    AnnouncementsInterface().setNewAnnouncements(msg)
                 }
             });
             this.socket.on("notification", (msg) => {
@@ -106,7 +106,7 @@ class WebSocketClient {
                 sToken: store.getState().global?.presenceStart?.data?.sToken,
                 rnd: new Date().getTime(),
             }
-            this.socket.reconnect();
+            // this.socket.reconnect();
         } else {
             console.error("Socket is not able to reconnect.");
         }

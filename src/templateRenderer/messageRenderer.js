@@ -12,7 +12,7 @@ import * as multiResponses from "./templates/multi-responses-template";
 import * as holdConversation from "./templates/hold-conversation-template";
 import * as errorMessage from "./templates/error-message-template";
 import * as genericErrorTemplate from "./templates/generic-error-template";
-import * as actionSendTeamsMessageTemplate from "./templates/action-send-teams-message";
+import * as formTemplate from "./templates/mcp-template";
 import * as feedbackTemplate from "./templates/feedback-template";
 import { encodeHtml, SHOELACE_ATTRS, SHOELACE_TAGS } from "./utils/helper";
 import { convertTemplateToHtml } from "../utils/helpers";
@@ -30,7 +30,7 @@ export function render(
 ) {
 	try {
 		// Handle loading state
-		if (data?.loading && !data?.botConversation && !data?.isTask) {
+		if (data?.loading && !data?.isTask) {
 			return TemplateComponents.wrapTemplate(
 				TemplateComponents.renderLoading(
 					data,
@@ -58,8 +58,7 @@ export function render(
 
 		// Add question bubble if needed
 		if (
-			data.question &&
-			!data?.isTask &&
+			data.question && !data?.isTask &&
 			shouldShowQuestion(data.templateType, data.botConversation)
 		) {
 			content += TemplateComponents.renderQuestionBubble(
@@ -154,8 +153,8 @@ export function renderTemplateContent(
 					<div class="answerCntr">${htmlTemplate}</div>
 				</div>`;
 	} else if (data?.status === "terminated") {
-		return htmlTemplate += `<div class="message-bubble answer"> 
-					I see you interrupted the answer generation. Please feel free to provide more details or let me know how can I assist you further
+		return `<div class="message-bubble answer"> 
+					I see you interrupted the answer generation. Please feel free to provide more details or let me know how I can assist you further.
 				</div>`;
 	} else {		
 		switch (data.templateType) {
@@ -184,11 +183,11 @@ export function renderTemplateContent(
 				break;
 
 			case "action_send_slack_message":
-				htmlTemplate += actionSendSlackMessage.render(data);
+				htmlTemplate = actionSendSlackMessage.render(data);
 				break;
 			
-			case "action_send_msteams_message":
-				htmlTemplate += actionSendTeamsMessageTemplate.render(data);
+			case "form_template":
+				htmlTemplate = formTemplate.render(data);
 				break;
 
 			case "connection_provider":
@@ -281,7 +280,7 @@ export function renderBotConversation(data) {
 	if (data.status === "terminated") {
 		return `
             <div class="threadName">
-                I see you interrupted the answer generation. Please feel free to provide more details or let me know how can I assist you further
+                I see you interrupted the answer generation. Please feel free to provide more details or let me know how I can assist you further.
             </div>
         `;
 	}

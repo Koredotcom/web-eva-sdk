@@ -1,5 +1,4 @@
 import { CheckCircle, createCopyIcon } from "../icons-library";
-import { toast } from "../../chat";
 import store from "../../redux/store";
 
 const getCopyIcon = () => {

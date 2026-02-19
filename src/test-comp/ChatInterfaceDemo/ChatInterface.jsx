@@ -1,22 +1,20 @@
 import React, { useEffect, useRef, useState } from "react";
 import { TemplateRenderer } from "../../templateRenderer";
 import { BotConversation, ChatInterface } from "../../chat";
-import NewChat from "../../chat/NewChat";
-// Removing React Composebar - we'll use the JavaScript version
-// import Composebar from "./Composebar";
 
-import "../../styles/chat-interface.scss"
-import "../../styles/composebar.scss"
-import History from "../history";
-import Agents from "../agents";
-import Notifications from "../Notifications";
-import AnnouncementData from "../../Announcements/AnnouncementData";
-import { RenderComposeBar } from "../../composebar";
-import RecentAgentsFunc from "../../UIComponents/RecentAgents/RecentAgents";
-import { isUserNearBottom } from "../../utils/helpers";
-import { RightArrow } from "../../templateRenderer/icons-library";
+import "./ChatInterface.scss"
+
 import Announcements from "../announcements";
-const {renderRecentAgents, unHideRecentAgentsDiv} = RecentAgentsFunc();
+import Composebar from "./Composebar";
+import { AnnouncementsInterface } from "../../Announcements";
+import Agents from "../agents";
+import MultiIntentExecutionDemo from "./MultiIntentExecutionDemo";
+import History from "../history";
+import { RenderComposeBar } from "../../composebar";
+import { renderRecentAgents } from "../../UIComponents/RecentAgents";
+import { RightArrow } from "../../templateRenderer/icons-library";
+  
+
 
 
 // function ShoelaceWrapper({ html }) {
@@ -47,10 +45,11 @@ const ChatInterfaceDemo = () => {
   const [wasScrollToBottomClicked, setWasScrollToBottomClicked] = useState(false);
 
   const chatInterface = useRef();
-  const composeBarRef = useRef(); // Reference for the ComposeBar instance
-  const scrollContainerRef = useRef(null);
-  const preventScrollRef = useRef(false);
-  const getBottomHeight = useRef(0);
+  const composeBarRef = useRef();
+  const scrollContainerRef = useRef();
+  const preventScrollRef = useRef();
+  const getBottomHeight = useRef();
+  const announcementInterface = useRef();
 
   useEffect(() => {
     chatInterface.current = ChatInterface();
@@ -65,8 +64,10 @@ const ChatInterfaceDemo = () => {
             }
         })
     botInstance.enableEVABotSdk(true)
-
-    // fetchAnnouncementData()   
+    announcementInterface.current = AnnouncementsInterface();
+    announcementInterface.current.subscribe((announcements) => {
+      console.log("Announcements:", announcements);
+    });
 
     // Subscribe to updates
     const unsubscribe = chatInterface.current.subscribe(
