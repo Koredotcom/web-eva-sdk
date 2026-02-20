@@ -1306,6 +1306,7 @@ class ComposeBar {
                                             class="agentSearchBar" 
                                             autocomplete="off" 
                                             value="" 
+                                            autofocus
                                             data-eva-agent-search-input-box                                            
                                             />
                                         </div>
