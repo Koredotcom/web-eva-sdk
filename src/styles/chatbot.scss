@@ -71,6 +71,19 @@
       }
     }
   }
+  sl-dialog.eva-agents-dialog {
+    .composebarFilter {
+      .agentsTabWrapper {
+        .agentsHeader {
+          .agentSearch {
+            .agentSearchBar {
+              max-height: 40px;
+            }
+          }
+        }
+      }
+    }
+  }
 
   .agent-selection-popup {
     .popup-container {
