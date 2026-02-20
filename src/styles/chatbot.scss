@@ -60,6 +60,18 @@
   border: 1px solid #eeeeee;
   font-family: Inter;
 
+  .agentsTabWrapper {
+    .eva-common-agents-dialog {
+      .agents-action-item {
+        .modeCardContent {
+          .modeCardText {
+            @include ellipsisText;
+          }
+        }
+      }
+    }
+  }
+
   .agent-selection-popup {
     .popup-container {
       .agentsTabWrapper {
