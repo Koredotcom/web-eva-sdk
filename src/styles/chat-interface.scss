@@ -7359,7 +7359,7 @@ sl-drawer.sources-sidebar-drawer {
                                 .content-header {
                                     .options-name-wrapper {
                                         .content-name {
-                                            max-width: calc(100% - 18.125rem)
+                                            max-width: calc(100% - 1rem)
                                         }
 
                                         .hover-options {
@@ -7387,6 +7387,7 @@ sl-drawer.sources-sidebar-drawer {
 
                         .icon-wrapper {
                             @include krflexContainer($items: center);
+                            flex-shrink: 0;
 
                             .sourceIcon,
                             .extIcon {
@@ -7443,7 +7444,8 @@ sl-drawer.sources-sidebar-drawer {
                         .content-desc {
                             @include krflexContainer($direction: column);
                             gap: 0.5rem;
-                            width: calc(100% - 2.5rem);
+                            flex-grow: 1;
+                            min-width: 0;
 
                             .content-header {
                                 @include krflexContainer($direction: column);
@@ -7457,10 +7459,14 @@ sl-drawer.sources-sidebar-drawer {
                                         @include typography-regular(0.875rem, 500, 1.25rem);
                                         color: var(--Gray-iron-900, #18181B);
                                         @include ellipsisText;
+                                        flex-grow: 1;
+                                        min-width: 0;
                                     }
 
                                     .hover-options {
-
+                                        @include krflexContainer;
+                                        gap: 0.25rem;
+                                        flex-shrink: 0;
                                         //display: none;
                                         &.answerSourceChip {
                                             //display: none;
@@ -7485,6 +7491,7 @@ sl-drawer.sources-sidebar-drawer {
                                         cursor: pointer;
                                         @include typography-regular(0.75rem, 500, 1rem);
                                         color: $wa-gray-700;
+                                        flex-shrink: 0;
 
                                         &:hover {
                                             background: $wa-gray-100;
@@ -7901,15 +7908,17 @@ sl-drawer.sources-sidebar-drawer {
                                 .content-header {
                                     .options-name-wrapper {
                                         .content-name {
-                                            max-width: calc(100% - 18.125rem)
+                                            max-width: calc(100% - 1rem)
                                         }
 
                                         .hover-options {
                                             @include krflexContainer;
                                             gap: 0.25rem;
+                                            flex-shrink: 0;
                                         }
 
                                         .options-wrapper {
+                                            flex-shrink: 0;
                                             &.answerSourceChip {
                                                 display: none;
                                             }
@@ -7929,6 +7938,7 @@ sl-drawer.sources-sidebar-drawer {
 
                         .icon-wrapper {
                             @include krflexContainer($items: center);
+                            flex-shrink: 0;
 
                             .sourceIcon,
                             .extIcon {
@@ -7994,7 +8004,8 @@ sl-drawer.sources-sidebar-drawer {
                         .content-desc {
                             @include krflexContainer($direction: column);
                             gap: 0.5rem;
-                            width: calc(100% - 2.5rem);
+                            flex-grow: 1;
+                            min-width: 0;
 
                             .content-header {
                                 @include krflexContainer($direction: column);
@@ -8008,12 +8019,16 @@ sl-drawer.sources-sidebar-drawer {
                                         @include typography-regular(0.875rem, 500, 1.25rem);
                                         color: var(--Gray-iron-900, #18181B);
                                         @include ellipsisText;
+                                        flex-grow: 1;
+                                        min-width: 0;
                                     }
 
                                     .hover-options {
-
+                                        @include krflexContainer;
+                                        gap: 0.25rem;
                                         //display: none;
                                         .options-wrapper {
+                                            flex-shrink: 0;
                                             &.answerSourceChip {
                                                 //display: none;
                                             }
@@ -8038,6 +8053,7 @@ sl-drawer.sources-sidebar-drawer {
                                         cursor: pointer;
                                         @include typography-regular(0.75rem, 500, 1rem);
                                         color: $wa-gray-700;
+                                        flex-shrink: 0;
 
                                         &:hover {
                                             background: $wa-gray-100;
