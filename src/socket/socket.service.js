@@ -48,11 +48,17 @@ class WebSocketClient {
             
             this.socket.on("disconnect", async (reason) => {
                 await store.dispatch(presenceStart())
+                if(this.options.query){
+                    this.options.query.sToken = store.getState().global?.presenceStart?.data?.sToken
+                } 
                 console.warn(`Socket disconnected: ${reason}`);
             });
 
             this.socket.on("connect_error", async (error) => {
                 await store.dispatch(presenceStart())
+                if(this.options.query){
+                     this.options.query.sToken = store.getState().global?.presenceStart?.data?.sToken
+                }
                 console.error(`Socket connection Error: ${error.message}`);
             });
 
