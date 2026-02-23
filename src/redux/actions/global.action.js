@@ -281,7 +281,11 @@ export const presenceStart = createAsyncThunk(
             const response = await axiosInstance.post(`1.1/presence/start`);
             return response.data;
         } catch (error) {
-            return thunkAPI.rejectWithValue(error.response.data);
+            return thunkAPI.rejectWithValue({
+                status: error?.response?.status,
+                data: error?.response?.data,
+                message: error?.message,
+            });
         }
     }
 );
