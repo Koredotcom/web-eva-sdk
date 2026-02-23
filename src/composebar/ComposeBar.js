@@ -448,7 +448,7 @@ class ComposeBar {
             const fileExtension = getFileExtension(name);
 
             return `<div class="eva-attachment-pill" data-attach-uid="${escapeHtml(uid)}" title="${escapeHtml(name)}">
-                <div class="attachment-icon"><img src="images/${fileExtension}.png" alt=''/></div>
+                <div class="attachment-icon"><img src="images/${fileExtension}.png" onerror="this.src='images/default.png'" alt=''/></div>
                 <div class="eva-attachment-name">${escapeHtml(name)}</div>
                 ${file?.loading ? `<div class="waloader"></div>` :
                     `<button type="button" class="eva-attachment-remove" data-remove-uid="${escapeHtml(uid)}" aria-label="Remove">&times;</button>`}
@@ -629,8 +629,17 @@ class ComposeBar {
             };
 
             this.recognition.onend = () => {
-                this.isRecording = false;
-                this.updateSpeechButton();
+                if (this.isRecording) {
+                    try {
+                        this.recognition.start();
+                    } catch (e) {
+                        console.error('Failed to restart speech recognition:', e);
+                        this.isRecording = false;
+                        this.updateSpeechButton();
+                    }
+                } else {
+                    this.updateSpeechButton();
+                }
             };
 
             this.recognition.onerror = (event) => {
@@ -1297,6 +1306,7 @@ class ComposeBar {
                                             class="agentSearchBar" 
                                             autocomplete="off" 
                                             value="" 
+                                            autofocus
                                             data-eva-agent-search-input-box                                            
                                             />
                                         </div>
@@ -1849,7 +1859,8 @@ class ComposeBar {
         }
 
         if (this.isRecording) {
-
+            this.isRecording = false;
+            this.updateSpeechButton();
             this.recognition.stop();
         } else {
 
@@ -2108,10 +2119,18 @@ class ComposeBar {
         const currentValue = textarea ? textarea.value : '';
         const wasFocused = textarea ? document.activeElement === textarea : false;
         const cursorPosition = textarea ? textarea.selectionStart : 0;
-        const currentAttachments = [...this.attachments];
+        const currentAttachments = [...(this.attachments || [])];
+
+        // Check if attachment dialog was open
+        const attachmentDialog = this.container.querySelector('[data-eva-attachment-dialog]');
+        const wasAttachmentDialogOpen = attachmentDialog?.hasAttribute('open') || attachmentDialog?.open;
+
         // Re-render
         this.render();
         this.renderCommonAgents();
+
+        // Re-attach event listeners since render() overwrites innerHTML
+        this.attachEventListeners();
 
         // Restore textarea state
         const newTextarea = this.container.querySelector('[data-eva-input]');
@@ -2128,8 +2147,20 @@ class ComposeBar {
         // Restore attachments if they exist
         if (currentAttachments.length > 0) {
             this.attachments = currentAttachments;
+            this.renderAttachments();
         }
 
+        // Restore attachment dialog state if it was open
+        if (wasAttachmentDialogOpen) {
+            const newAttachmentDialog = this.container.querySelector('[data-eva-attachment-dialog]');
+            if (newAttachmentDialog) {
+                if (typeof newAttachmentDialog.show === 'function') {
+                    newAttachmentDialog.show();
+                } else {
+                    newAttachmentDialog.setAttribute('open', '');
+                }
+            }
+        }
     }
 
     /**
@@ -2370,6 +2401,8 @@ class ComposeBar {
                 } else {
                     speechBtn.innerHTML = `
                         <div class="sonar-wrapper">
+                            <div class="sonar-wave"></div>
+                            <div class="sonar-wave"></div>
                             <img src="images/waves-animation.gif" alt="" />
                         </div>
                     `;

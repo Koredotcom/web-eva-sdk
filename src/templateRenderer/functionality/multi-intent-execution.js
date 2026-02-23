@@ -104,7 +104,8 @@ const multiIntentExecutionFunc = (item) => {
       }
 
     const saveTask = async (index, task, executionPipeline) => {
-
+      // Always use fresh state (handlers can run after other dispatches)
+      state = store.getState().global;
       let _questions = cloneDeep(state?.questions);
       let utterance = document.getElementById(`utterance-${task?._id}`)?.value;
 
@@ -131,7 +132,7 @@ const multiIntentExecutionFunc = (item) => {
       }
       
       /*put the loading state in the task */
-      let currentExecutionPipeline = cloneDeep(_questions[item?.reqId]?.executionPipeline);
+      let currentExecutionPipeline = cloneDeep(_questions[item?.reqId]?.executionPipeline) || [];
       currentExecutionPipeline[index] = { ...currentExecutionPipeline[index], loading: true };
       const updatedQuestions = {
         ..._questions,
@@ -145,6 +146,9 @@ const multiIntentExecutionFunc = (item) => {
       const response = await store.dispatch(executionPipelineActions({params, payload}))
       
       if(!!response?.payload){
+        // Refresh again after await to avoid overwriting newer store changes
+        state = store.getState().global;
+        _questions = cloneDeep(state?.questions);
         const updatedQuestions = {
           ..._questions,
           [item?.reqId]: {
@@ -239,8 +243,20 @@ const multiIntentExecutionFunc = (item) => {
     }
 
     const addIntent = (index, task, selectedAgent) => {
+      // Always use fresh state (agent selection triggers re-renders)
+      state = store.getState().global;
       const _questions = cloneDeep(state?.questions);
-      let currentExecutionPipeline = cloneDeep(_questions[item?.reqId]?.executionPipeline);
+      let currentQuestion = cloneDeep(_questions[item?.reqId]);
+      let currentExecutionPipeline = cloneDeep(currentQuestion?.executionPipeline) || [];
+
+      // Persist the current utterance from DOM before mutating pipeline (prevents it from disappearing)
+      const utteranceInput = document.getElementById(`utterance-${task?._id}`);
+      if (utteranceInput) {
+        const utterance = utteranceInput.value || '';
+        if (currentExecutionPipeline[index]) {
+          currentExecutionPipeline[index].utterance = utterance;
+        }
+      }
       let savedExecutionPipeline = cloneDeep(currentExecutionPipeline);
       if(!currentExecutionPipeline[index].intents){
         currentExecutionPipeline[index].intents = [];
@@ -257,7 +273,7 @@ const multiIntentExecutionFunc = (item) => {
       
       const updatedQuestions = {
         ..._questions,
-        [item?.reqId]: { ..._questions[item?.reqId], executionPipeline: currentExecutionPipeline, savedExecutionPipeline }
+        [item?.reqId]: { ...currentQuestion, executionPipeline: currentExecutionPipeline, savedExecutionPipeline }
       };
       store.dispatch(updateChatData(updatedQuestions));
       
@@ -833,8 +849,24 @@ const multiIntentExecutionFunc = (item) => {
 
          // Add input listener for description changes
          if (utteranceInput && !utteranceInput.changeListenerAdded) {
+           // Persist typed utterance into store so it survives re-renders (e.g., when adding an agent)
+           const persistUtterance = () => {
+             const currentState = store.getState().global;
+             const qs = cloneDeep(currentState.questions);
+             const q = qs[item?.reqId];
+             if (!q?.executionPipeline?.[index]) return;
+             q.executionPipeline[index].utterance = utteranceInput.value || '';
+             // keep savedExecutionPipeline in sync while editing (so Done/discard logic doesn't wipe state)
+             if (Array.isArray(q.savedExecutionPipeline) && q.savedExecutionPipeline[index]) {
+               q.savedExecutionPipeline[index].utterance = utteranceInput.value || '';
+             }
+             qs[item?.reqId] = q;
+             store.dispatch(updateChatData(qs));
+           };
            utteranceInput.addEventListener('input', checkForChanges);
            utteranceInput.addEventListener('change', checkForChanges);
+           utteranceInput.addEventListener('input', persistUtterance);
+           utteranceInput.addEventListener('change', persistUtterance);
            utteranceInput.changeListenerAdded = true;
          }
 
