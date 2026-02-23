@@ -404,10 +404,7 @@ export const constructQuestionPostCall = (data, qId, isBot = false) => {
     }
 
     if(data?.error){
-        questions[qId] = {
-            ...question,
-            error: question?.status !== 'terminated' // Terminated status is when user interrupted the answer generation. Error is when there is a server driven error.
-          };
+        questions[qId] = question
           
     }else{  
         questions[qId] = {...question, apiSuccess: true};

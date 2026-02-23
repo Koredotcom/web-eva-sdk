@@ -44,7 +44,7 @@ export function render(
 		}
 
 		// Handle error state
-		if (data.error) {
+		if (data?.error) {
 			return TemplateComponents.wrapTemplate(
 				errorMessage.render(data, assistantIconTemplate),
 				{
