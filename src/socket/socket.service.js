@@ -14,6 +14,33 @@ class WebSocketClient {
         this.options = null;
     }
 
+    stopReconnectionOnUnauthorized() {
+        if (!this.socket) {
+            return;
+        }
+        const manager = this.socket.io;
+        if (manager) {
+            manager.reconnection(false);
+            manager.disconnect();
+        }
+        this.socket = null;
+    }
+
+    async refreshPresenceTokenOrStop() {
+        const action = await store.dispatch(presenceStart());
+        if (action?.meta?.requestStatus === "rejected") {
+            if (action?.payload?.status === 401) {
+                console.warn("[socket] presenceStart unauthorized, stopping reconnects");
+                this.stopReconnectionOnUnauthorized();
+            }
+            return false;
+        }
+        if (this.options.query) {
+            this.options.query.sToken = store.getState().global?.presenceStart?.data?.sToken;
+        }
+        return true;
+    }
+
     initialize({ url, options }) {
         if (this.socket) {
             console.warn("Socket already initialized");
@@ -23,8 +50,9 @@ class WebSocketClient {
         this.options = {
             transports: ["websocket"],
             reconnection: true,
-            reconnectionAttempts: 1000,
+            reconnectionAttempts: Infinity,
             reconnectionDelay: 1000,
+            reconnectionDelayMax: 30000,
             ...options,
         };
     }
@@ -47,12 +75,12 @@ class WebSocketClient {
             });
             
             this.socket.on("disconnect", async (reason) => {
-                await store.dispatch(presenceStart())
+                await this.refreshPresenceTokenOrStop();
                 console.warn(`Socket disconnected: ${reason}`);
             });
 
             this.socket.on("connect_error", async (error) => {
-                await store.dispatch(presenceStart())
+                await this.refreshPresenceTokenOrStop();
                 console.error(`Socket connection Error: ${error.message}`);
             });
 
