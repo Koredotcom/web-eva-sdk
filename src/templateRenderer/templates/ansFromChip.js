@@ -1389,14 +1389,16 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 		const testAgentFlow = state?.ansFromChipElements?.testAgentFlow || false;
 		const isPersonalKnowledge = item?.context?.provider === "personalKnowledge";
 		const hasSources = !!item?.sources?.length;
+		const hasAgent = !!item?.agentId;
 		const isThreadView = item?.viewType === "threadView";
 		const isBotTemplate = item?.templateType === "bot_template";
 		const isEnterpriseKnowledge = item?.sources?.[0]?.isSupervisor || item?.isSupervisor;
 
 		// --- WRAPPER-LEVEL GATE (Kora-React index.js line 1212) ---
 		// The entire action chips block is only rendered when these are true:
-		// !!item?.sources?.length && viewType !== threadView && templateType !== bot_template && !isEnterpriseKnowledge
-		const shouldShowActionChips = hasSources && !isThreadView && !isBotTemplate && !isEnterpriseKnowledge;
+		// (!!item?.sources?.length || !!item?.agentId) && viewType !== threadView && templateType !== bot_template
+		// Note: We used to exclude Enterprise Knowledge here, but Kora-React shows MenuOptions for them.
+		const shouldShowActionChips = (hasSources || hasAgent) && !isThreadView && !isBotTemplate;
 
 		if (shouldShowActionChips) {
 			let actionChipsHTML = `<div class="answerActionChips">`;
