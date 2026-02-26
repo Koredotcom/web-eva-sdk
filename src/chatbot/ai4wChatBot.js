@@ -86,6 +86,7 @@ const ensureAgentSelectionPopupPortal = () => {
 
 const QUESTIONS_WITH_BOT_WRAPPER_CLASS =
   "eva-sdk-questions-container--with-bot-input-wrapper";
+const QUESTIONS_CONTAINER_PADDING_WITH_BOT_WRAPPER = "2.25rem";
 
 const isElementDisplayBlock = (el) => {
   if (!el) return false;
@@ -109,11 +110,21 @@ const syncQuestionsContainerClass = () => {
     root.querySelector?.("#questions-container") ||
     document.querySelector?.(".questions-container") ||
     document.querySelector?.("#questions-container");
+  const questionsContainerById =
+    root.querySelector?.("#questions-container") ||
+    document.querySelector?.("#questions-container");
 
   if (!questionsContainer) return;
 
   const enabled = !!botWrapper && isElementDisplayBlock(botWrapper);
   questionsContainer.classList.toggle(QUESTIONS_WITH_BOT_WRAPPER_CLASS, enabled);
+
+  // Specifically adjust #questions-container spacing when bot wrapper is shown
+  if (questionsContainerById) {
+    questionsContainerById.style.paddingBottom = enabled
+      ? QUESTIONS_CONTAINER_PADDING_WITH_BOT_WRAPPER
+      : "";
+  }
 };
 
 const ensureComposebarBotWrapperWatcher = () => {
