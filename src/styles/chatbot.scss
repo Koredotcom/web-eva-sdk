@@ -60,6 +60,20 @@
   border: 1px solid #eeeeee;
   font-family: Inter;
 
+  .composebar-bot-input-wrapper {
+    &:not(.details-hidden) {
+      &:after {
+        height: 7rem;
+      }
+    }
+  }
+
+  .bot-conversation-content-wrapper {
+    .questcopy {
+      display: none !important;
+    }
+  }
+
   .agentsTabWrapper {
     .eva-common-agents-dialog {
       .agents-action-item {
@@ -523,14 +537,19 @@
   }
   .message-bubble.answer .answerCntr .search-answer-container .message-renderer {
     max-width: 100%;
+    min-width: 0;
   }
   .table-wrapper {
     overflow-x: auto;
     max-width: 100%;
+    width: 100%;
+    display: block;
   }
   .message-bubble.answer {
     .answerCntr {
+      min-width: 0;
       .search-answer-container {
+        min-width: 0;
         word-break: break-word;
       }
     }
@@ -658,10 +677,20 @@
   .questions-container {
     scrollbar-gutter: stable;
     overscroll-behavior: contain;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    overflow-x: hidden;
     &.eva-sdk-questions-container--with-bot-input-wrapper {
       .message-container {
-        padding-bottom: 5.25rem !important;
+        padding-bottom: 2.25rem !important;
       }
+    }
+
+    .message-container {
+      min-width: 0;
+      width: 100%;
+      max-width: 100%;
     }
   }
   .landing-page-container.results-page-container {
@@ -750,6 +779,7 @@
   flex: 1;
   min-height: 0;
   display: flex;
+  overflow-x: hidden;
 }
 
 .eva-sdk-chatbot-content {
@@ -757,6 +787,10 @@
   min-height: 0;
   display: flex;
   position: relative;
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 .eva-sdk-chatbot-thread-skeleton {
@@ -944,6 +978,10 @@
 .eva-sdk-chatbot-container {
   flex: 1;
   min-height: 0;
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 @media (max-width: 768px) {

@@ -87,14 +87,12 @@ const ensureAgentSelectionPopupPortal = () => {
 const QUESTIONS_WITH_BOT_WRAPPER_CLASS =
   "eva-sdk-questions-container--with-bot-input-wrapper";
 
-const isElementVisible = (el) => {
+const isElementDisplayBlock = (el) => {
   if (!el) return false;
-  // offsetParent === null covers display:none and some detached cases
-  if (el.offsetParent !== null) return true;
   const style = window.getComputedStyle?.(el);
   if (!style) return false;
   return (
-    style.display !== "none" &&
+    style.display === "block" &&
     style.visibility !== "hidden" &&
     style.opacity !== "0"
   );
@@ -114,7 +112,7 @@ const syncQuestionsContainerClass = () => {
 
   if (!questionsContainer) return;
 
-  const enabled = !!botWrapper && isElementVisible(botWrapper);
+  const enabled = !!botWrapper && isElementDisplayBlock(botWrapper);
   questionsContainer.classList.toggle(QUESTIONS_WITH_BOT_WRAPPER_CLASS, enabled);
 };
 
