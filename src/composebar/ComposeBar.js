@@ -341,6 +341,17 @@ class ComposeBar {
                 // Context cleared → allow banner to show again next time
                 this.bannerClosedByUser = false;
                 this.bannerClosedAgentId = null;
+                
+                // Clear attachments when context is cleared
+                this.attachments = [];
+                const attachmentsContainer = this.container.querySelector('[data-eva-attachments]');
+                if (attachmentsContainer) {
+                    attachmentsContainer.innerHTML = '';
+                    const inputContainer = attachmentsContainer.closest('.eva-input-container');
+                    if (inputContainer) {
+                        inputContainer.classList.remove('file-uploaded');
+                    }
+                }
             }
         });
 
@@ -1790,6 +1801,17 @@ class ComposeBar {
      * Handle new chat action
      */
     handleNewChat() {
+        // Clear attachments before starting new chat
+        this.attachments = [];
+        const attachmentsContainer = this.container.querySelector('[data-eva-attachments]');
+        if (attachmentsContainer) {
+            attachmentsContainer.innerHTML = '';
+            const inputContainer = attachmentsContainer.closest('.eva-input-container');
+            if (inputContainer) {
+                inputContainer.classList.remove('file-uploaded');
+            }
+        }
+        // Now call NewChat which clears the Redux state
         NewChat();
     }
 
