@@ -101,7 +101,7 @@ export function render(
 				ADD_ATTR: SHOELACE_ATTRS,
 			});
 		}
-		if ((!!data?.sources?.length || !!data?.agentId) && supportsFeedback(data.templateType) && data?.status === "completed") {
+		if ((!!data?.sources?.length || !!data?.agentId) && supportsFeedback(data.templateType) && (data?.status === "completed" || !!data?.answer)) {
 			let chip = AnsFromChip({ item: data });
 			content += DOMPurify.sanitize(chip, {
 				ADD_TAGS: SHOELACE_TAGS,
