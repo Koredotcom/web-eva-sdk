@@ -133,9 +133,7 @@ const FileUpload = (props) => {
         const uploadConfig = {
             file: file.file,
             userInfoId: userId,
-            fileContext: 'knowledge',
-            // We are using 'knowledge' as a context in our AI4W as well, so changed the context to knowledge
-            // fileContext: 'runtime',
+            fileContext: state?.env === 'Kore' ? 'knowledge' : 'runtime',
             userAccessToken: userAccessToken,
             mediaName: obj.mediaName,
             source: source,
