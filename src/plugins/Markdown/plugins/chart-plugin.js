@@ -5,18 +5,45 @@ const CHART_REGEX = /```\s*chart\s*([\s\S]*?)\s*```/g;
 
 function safeJsonParseChart(input) {
   if (!input || typeof input !== 'string') return null;
-  try {
-    return JSON.parse(input);
-  } catch (_) {}
+  const trimmed = input.trim();
+  if (!trimmed) return null;
+
+  const tryJsonParse = (value) => {
+    try {
+      return JSON.parse(value);
+    } catch (_) {
+      return null;
+    }
+  };
+
+  // First try normal JSON.parse
+  const firstParse = tryJsonParse(trimmed);
+  if (firstParse && typeof firstParse === 'object') return firstParse;
+
+  // Handle strings with escaped quotes (e.g., {\"key\":\"value\"})
+  let unescaped = trimmed;
+  if (unescaped.includes('\\"')) {
+    unescaped = unescaped
+      .replace(/\\n/g, '\n')
+      .replace(/\\r/g, '\r')
+      .replace(/\\t/g, '\t')
+      .replace(/\\"/g, '"')
+      .replace(/\\\\/g, '\\');
+  }
+
+  const secondParse = tryJsonParse(unescaped);
+  if (secondParse && typeof secondParse === 'object') return secondParse;
 
   try {
     // Try to normalize common non-JSON patterns (single quotes, trailing commas, comments)
-    let normalized = input
+    let normalized = unescaped
       .replace(/\/\*[\s\S]*?\*\//g, '') // block comments
       .replace(/([^:])\/\/.*$/gm, '$1') // line comments
       .replace(/'/g, '"') // single to double quotes
       .replace(/,\s*([}\]])/g, '$1'); // trailing commas
-    return JSON.parse(normalized);
+
+    const finalParse = tryJsonParse(normalized);
+    return finalParse;
   } catch (err) {
     console.error('chart-plugin: failed to parse chart JSON', err);
     return null;
@@ -30,6 +57,9 @@ function splitChartContent(content) {
   const sections = [];
   let lastIndex = 0;
 
+  // We need to use a non-global regex for individual matches to extract groups correctly
+  const SINGLE_CHART_REGEX = /```\s*chart\s*([\s\S]*?)\s*```/;
+
   matches.forEach(match => {
     const index = content.indexOf(match, lastIndex);
     if (index > lastIndex) {
@@ -39,8 +69,9 @@ function splitChartContent(content) {
       });
     }
 
-    const [, chartJson] = match.match(/```\s*chart\s*([\s\S]*?)\s*```/) || [];
-    sections.push({ type: 'chart', content: (chartJson || '').trim() });
+    const m = match.match(SINGLE_CHART_REGEX);
+    const chartJson = (m && m[1]) || '';
+    sections.push({ type: 'chart', content: chartJson.trim() });
 
     lastIndex = index + match.length;
   });
@@ -68,12 +99,24 @@ function decodeSpec(encoded) {
   }
 }
 
-function initializeCharts(container) {
-  const nodes = (container || document).querySelectorAll('[data-chart-plugin="true"][data-chart-spec]:not([data-chart-initialized="true"])');
+/**
+ * Initialize all uninitialized charts in the given container (or document)
+ */
+export function initializeCharts(container) {
+  const nodes = (container || document).querySelectorAll(
+    '[data-chart-plugin="true"][data-chart-spec]:not([data-chart-initialized="true"])'
+  );
+
+  if (nodes.length === 0) return;
+
   nodes.forEach(node => {
+    // Basic check if node is in DOM and visible (optional but safer for ECharts)
+    if (!node.isConnected) return;
+
     const encoded = node.getAttribute('data-chart-spec');
     const spec = decodeSpec(encoded);
     if (!spec) return;
+
     try {
       const option = buildEChartOptions(spec);
       renderEChart(node, option, spec.theme || 'light');
@@ -82,6 +125,31 @@ function initializeCharts(container) {
       console.error('chart-plugin: failed to render chart', err);
     }
   });
+}
+
+// Global observer to catch charts added to the DOM dynamically
+if (typeof window !== 'undefined' && !window._chartObserverInitialized) {
+  const observer = new MutationObserver((mutations) => {
+    let hasNewCharts = false;
+    mutations.forEach(mutation => {
+      if (mutation.addedNodes.length) {
+        mutation.addedNodes.forEach(node => {
+          if (node.nodeType === 1) {
+            if (node.hasAttribute?.('data-chart-plugin') || node.querySelector?.('[data-chart-plugin="true"]')) {
+              hasNewCharts = true;
+            }
+          }
+        });
+      }
+    });
+    if (hasNewCharts) {
+      // Small delay to ensure styles are applied and layout is stable
+      setTimeout(() => initializeCharts(document), 50);
+    }
+  });
+
+  observer.observe(document.body, { childList: true, subtree: true });
+  window._chartObserverInitialized = true;
 }
 
 export const chartPlugin = {
@@ -95,7 +163,7 @@ export const chartPlugin = {
     const sections = splitChartContent(content);
 
     const wrapper = document.createElement('div');
-    wrapper.className = 'chart-content';
+    wrapper.className = 'chart-content-wrapper';
 
     sections.forEach((sec, i) => {
       if (sec.type === 'text') {
@@ -114,9 +182,7 @@ export const chartPlugin = {
         canvasDiv.className = 'echart-canvas';
         canvasDiv.style.width = '100%';
         canvasDiv.style.height = '400px';
-        canvasDiv.style.margin = '0';
-        canvasDiv.style.padding = '0 25px';
-        canvasDiv.style.boxSizing = 'border-box';
+        canvasDiv.style.margin = '16px 0';
         canvasDiv.setAttribute('data-chart-plugin', 'true');
         canvasDiv.setAttribute('data-chart-spec', encodeSpec(chartSpec));
 
@@ -125,20 +191,8 @@ export const chartPlugin = {
       }
     });
 
-    const html = wrapper.innerHTML;
-
-    // Defer chart initialization to ensure nodes are in the DOM
-    setTimeout(() => {
-      // Try to scope initialization to the most recent render if possible
-      const temp = document.createElement('div');
-      temp.innerHTML = html;
-      const firstCandidate = temp.querySelector('[data-chart-plugin="true"]');
-      if (firstCandidate) {
-        // Fallback: scan the document
-        initializeCharts(document);
-      }
-    }, 0);
-
-    return html;
+    // We return the HTML, and the MutationObserver created above will handle
+    // initialization once this HTML is actually inserted into the DOM.
+    return wrapper.innerHTML;
   },
 };
