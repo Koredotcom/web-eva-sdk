@@ -44,7 +44,7 @@ export function render(
 		}
 
 		// Handle error state
-		if (data.error) {
+		if (data?.error) {
 			return TemplateComponents.wrapTemplate(
 				errorMessage.render(data, assistantIconTemplate),
 				{
@@ -101,7 +101,7 @@ export function render(
 				ADD_ATTR: SHOELACE_ATTRS,
 			});
 		}
-		if (!!data?.sources?.length && supportsFeedback(data.templateType) && data?.status === "completed") {
+		if ((!!data?.sources?.length || !!data?.agentId) && supportsFeedback(data.templateType) && data?.status === "completed") {
 			let chip = AnsFromChip({ item: data });
 			content += DOMPurify.sanitize(chip, {
 				ADD_TAGS: SHOELACE_TAGS,
@@ -301,7 +301,7 @@ export function shouldShowQuestion(templateType, bot) {
 }
 
 export function supportsFeedback(templateType) {
-	const feedbackTemplates = ["search_answer", "multi_responses", "gpt_form", "search_results"];
+	const feedbackTemplates = ["search_answer", "multi_responses", "gpt_form_template", "search_results"];
 	return feedbackTemplates.includes(templateType);
 }
 

@@ -89,7 +89,7 @@ function createGmailDriveInterruptions(data) {
                         <div class="field-radiobutton withoutBorder wrapBox">
                             ${option?.value?.groups?.map((group,index) => `
                                 <div class="prTitle">${group.label}</div>
-                                <div class="checkbox-group-${index}">
+                                <div class="checkbox-group" class="checkbox-group-${index}">
                                     ${group?.choices?.map((choice, index) => `
                                         <div class="checkboxWithLable">
                                             <input type="radio" id="groupedCheckbox-${index}" name="radio-${option.key}" key="${index}" value = "${index}"/>

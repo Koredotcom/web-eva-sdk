@@ -67,7 +67,7 @@ const renderQuestionsOnly = () => {
         questionsContainer.innerHTML = questionsHTML
         
         // Auto-scroll to bottom 
-        scrollToBottom()
+        // scrollToBottom()
     }
 }
 

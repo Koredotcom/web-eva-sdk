@@ -34,6 +34,56 @@ const state = {
 const ensureDomAvailable = () =>
   typeof window !== "undefined" && typeof document !== "undefined";
 
+/**
+ * Route agent-selection popup into the chatbot panel instead of <body>.
+ * This keeps the popup scoped to the chatbot element tree.
+ */
+const ensureAgentSelectionPopupPortal = () => {
+  if (!ensureDomAvailable()) return;
+  if (state.__agentPopupPatched) return;
+
+  const getPortal = () => {
+    const panel = state.elements.panel;
+    if (!panel) return null;
+    let portal = panel.querySelector("#eva-sdk-agent-popup-portal");
+    if (!portal) {
+      portal = document.createElement("div");
+      portal.id = "eva-sdk-agent-popup-portal";
+      // Overlay layer inside panel; allows popups to position freely.
+      portal.style.position = "fixed";
+      portal.style.inset = "0";
+      portal.style.zIndex = "999999";
+      portal.style.pointerEvents = "none";
+      panel.appendChild(portal);
+    }
+    return portal;
+  };
+
+  const origAppendChild = document.body.appendChild.bind(document.body);
+  document.body.appendChild = (node) => {
+    try {
+      if (
+        node &&
+        node.nodeType === 1 &&
+        node.classList &&
+        node.classList.contains("agent-selection-popup")
+      ) {
+        const portal = getPortal();
+        if (portal) {
+          // Allow interactions inside the popup
+          node.style.pointerEvents = "auto";
+          return portal.appendChild(node);
+        }
+      }
+    } catch (e) {
+      // fall through
+    }
+    return origAppendChild(node);
+  };
+
+  state.__agentPopupPatched = true;
+};
+
 const QUESTIONS_WITH_BOT_WRAPPER_CLASS =
   "eva-sdk-questions-container--with-bot-input-wrapper";
 
@@ -333,6 +383,9 @@ const ensureElements = (config = {}) => {
     historyBody,
     historyContent,
   };
+
+  // Ensure agent-selection popup is scoped inside chatbot panel
+  ensureAgentSelectionPopupPortal();
 
   const listContainer = historyContent?.querySelector(".eva-sdk-chatbot-history-list");
   if (listContainer && !state.historyUnsubscribe) {

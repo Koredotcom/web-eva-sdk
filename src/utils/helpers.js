@@ -49,7 +49,7 @@ export const getFileExtension = (fileName) => {
     }
 }
 
-export const supportedImagesOfFileUpload = ['csv', 'ppt', 'txt', 'pdf', 'doc', 'docx', 'text', 'txt', 'xls', 'xlsx']
+export const supportedImagesOfFileUpload = ['png', 'jpg', 'jpeg', 'gif', 'csv', 'ppt', 'pptx', 'pdf', 'doc', 'docx', 'text', 'txt', 'xls', 'xlsx', 'svg']
 
 export const generateComponentId = () => {
     let cId = Math.random().toString(36).slice(2);
@@ -510,7 +510,7 @@ export function markdownToPlainText(md) {
 export const isTask = (messageId) => {
     let questions = cloneDeep(store.getState().global?.questions)
     const currentQuestion = Object.values(questions).find(question => question?.pId === messageId)
-    if(currentQuestion?.isTask) {
+    if (currentQuestion?.isTask) {
         return true
     }
     return false;
@@ -519,7 +519,7 @@ export const isTask = (messageId) => {
 export const getTaskIdBypId = (messageId) => {
     let questions = cloneDeep(store.getState().global?.questions)
     const currentQuestion = Object.values(questions).find(question => (question?.pId === messageId && question?.status === 'threadRunning'))
-    if(currentQuestion?.isTask) {
+    if (currentQuestion?.isTask) {
         return currentQuestion?.cId;
     }
     return null;

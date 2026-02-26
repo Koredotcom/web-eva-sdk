@@ -60,6 +60,39 @@
   border: 1px solid #eeeeee;
   font-family: Inter;
 
+  .agentsTabWrapper {
+    .eva-common-agents-dialog {
+      .agents-action-item {
+        .modeCardContent {
+          .modeCardText {
+            @include ellipsisText;
+          }
+        }
+      }
+    }
+  }
+  sl-dialog.eva-agents-dialog {
+    .composebarFilter {
+      .agentsTabWrapper {
+        .agentsHeader {
+          .agentSearch {
+            .agentSearchBar {
+              max-height: 40px;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  .agent-selection-popup {
+    .popup-container {
+      .agentsTabWrapper {
+        height: auto;
+      }
+    }
+  }
+
   .setContextDropdown {
       &::part(panel) {
         padding: .5rem;
@@ -1266,21 +1299,26 @@
 }
 .eva-sdk-history-item-dropdown sl-menu-item {
   font-family: Inter;
-  font-size: 14px;
+  font-size: 0.75rem;
   cursor: pointer;
-  color: #111827;
+  color: #424242;
   padding: .25rem .5rem;
   border-radius: .75rem;
   display: block;
   white-space: nowrap;
+  
 }
 .eva-sdk-history-item-dropdown sl-menu-item:hover {
   background: #f3f4f6;
 }
 /* Ensure Shoelace menu items are visible (they use shadow DOM parts) */
 .eva-sdk-history-item-dropdown sl-menu-item::part(base) {
-  color: #111827;
+  color: #424242;
   padding: 0;
+  font-family: Inter;
+  font-size: 0.75rem;
+  cursor: pointer;
+  font-weight: 500;
 }
 
 /* Hide Shoelace built-in checked icon + submenu chevron */
@@ -1310,13 +1348,14 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 16px;
-  height: 16px;
+  width: 14px;
+  height: 14px;
   margin-right: 8px;
 }
 
 .eva-sdk-history-item-dropdown .eva-sdk-history-menu-item-icon svg {
-  display: block;
-  width: 16px;
-  height: 16px;
+  display: inline-flex;
+  align-items: center;
+  width: 14px;
+  height: 14px;
 }

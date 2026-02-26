@@ -8,6 +8,25 @@ import { cancelOngoingCall } from "../templateRenderer/utils/helper";
 const MultiIntentExecution = (props) => {
     let state = store.getState().global;
 
+    // Auto-scroll helper: scroll only when a new task starts.
+    let _lastAutoScrolledTaskId = null;
+    const scrollToTaskCard = (taskId) => {
+        try {
+            if (typeof document === "undefined") return;
+            if (taskId === undefined || taskId === null) return;
+            const idStr = String(taskId);
+            if (_lastAutoScrolledTaskId === idStr) return;
+            _lastAutoScrolledTaskId = idStr;
+            const el = document.querySelector(`.dragTaskItem[data-task-id="${idStr.replace(/"/g, '\\"')}"]`);
+            if (!el) return;
+            requestAnimationFrame(() => {
+                el.scrollIntoView({ behavior: "smooth", block: "center" });
+            });
+        } catch (e) {
+            // ignore
+        }
+    };
+
     const resolveQuestionId = (item, questions) => {
         if (!item || !questions) {
             return item?.reqId || item?.id;
@@ -52,7 +71,10 @@ const MultiIntentExecution = (props) => {
             }
         }
 
-        const _item = cloneDeep(item);
+        // Always use the freshest parent question from store to avoid overwriting executionPipeline
+        const questions = globalState.questions || {};
+        const parent = questions[item?.reqId] || item;
+        const _item = cloneDeep(parent);
 
         const sourceTask =
             _item?.executionPipeline?.[index] ??
@@ -64,11 +86,25 @@ const MultiIntentExecution = (props) => {
             stepIndex: index
         };
 
+        // Scroll to the step that is about to run (once per step start)
+        scrollToTaskCard(task?._id);
+
+        // Strip any temp `type` flags before starting (ensures no task renders in edit/add mode)
+        const pipelineBase = _item?.savedExecutionPipeline || _item?.executionPipeline || [];
+        const sanitizedPipeline = Array.isArray(pipelineBase)
+          ? pipelineBase.map((t) => {
+              if (!t || typeof t !== "object") return t;
+              const { type, ...rest } = t;
+              return rest;
+            })
+          : [];
+
         store.dispatch(
             updateChatData({
-            ...globalState.questions,
-            [item?.reqId]: {
-                ...item,
+            ...questions,
+            [parent?.reqId]: {
+                ...parent,
+                executionPipeline: sanitizedPipeline,
                 status: q?.status || "in-progress"
             }
             })
@@ -134,7 +170,8 @@ const MultiIntentExecution = (props) => {
         }
 
         let newTask = {
-          _id: index, // temp id, it will get replaced with backend id later
+          // temp id: MUST NOT collide with real step ids (e.g. "1" for 2nd task)
+          _id: `tmp-${questionId}-${Date.now()}-${index}`,
           utterance: '',
           headerMsg: 'Oh, it seems I have missed a step. My apologies. Please describe and add the steps.',
           step: `Step ${hasAddTask ? index : index+1}`,
@@ -175,8 +212,9 @@ const MultiIntentExecution = (props) => {
             payload.index = index;
         }
 
-        if(task?._id > 0 && task?.type === 'addTask'){
-            payload.stepId = executionPipeline[task?._id - 1]?._id;
+        if(task?.type === 'addTask'){
+            // Use the insertion index to find the previous real step id (avoid relying on temp _id)
+            payload.stepId = executionPipeline?.[index - 1]?._id;
         } else if(task?.type === 'modify'){
             payload.stepId = task?._id;
         }
