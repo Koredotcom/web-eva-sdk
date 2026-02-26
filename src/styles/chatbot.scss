@@ -60,6 +60,10 @@
   border: 1px solid #eeeeee;
   font-family: Inter;
 
+  .bot-conversation-content>div:last-child {
+    min-height: auto;
+  }
+
   .composebar-bot-input-wrapper {
     &:not(.details-hidden) {
       &:after {
