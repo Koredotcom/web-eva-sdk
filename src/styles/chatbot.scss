@@ -30,7 +30,11 @@
 }
 
 .eva-sdk-chatbot-button.eva-sdk-chatbot-button--hidden {
-  display: none !important;
+  //display: none !important;
+  background: #f5f5f5;
+  &:hover {
+    background: #fff;
+  }
 }
 
 .eva-sdk-chatbot-button-icon {
