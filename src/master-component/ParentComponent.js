@@ -13,6 +13,9 @@ let searchResponse = null
 let moreAvailable = false
 let currentDivId = null  // Store the div ID for re-rendering
 let prevQuestionCount = 0
+let overlayObserver = null
+let resizeListenerAttached = false
+let scheduledArrowUpdate = null
 
 const unsubscribe = ChatInterface().subscribe((questionsData, searchResponse, moreAvailable, errorStates, quickActions) => {
     questions = questionsData
@@ -31,6 +34,23 @@ const getOverlayHeight = () => {
     if (attachments && attachments.offsetParent !== null && attachments.children.length > 0) return attachments.offsetHeight
 
     return 0
+}
+
+const syncQuestionsContainerPaddingBottom = () => {
+    const questionsContainer = document.getElementById('questions-container')
+    if (!questionsContainer) return
+
+    const botWrapper = document.querySelector('.composebar-bot-input-wrapper')
+    const botWrapperHeight =
+        botWrapper && botWrapper.offsetParent !== null ? botWrapper.offsetHeight : 0
+
+    if (!botWrapperHeight) {
+        questionsContainer.style.paddingBottom = ''
+        return
+    }
+
+    const remToPx = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16
+    questionsContainer.style.paddingBottom = `${botWrapperHeight + remToPx}px`
 }
 
 const pinLatestQuestionToTop = () => {
@@ -65,6 +85,8 @@ const updateScrollArrowVisibility = () => {
     const scrollArrow = document.getElementById('scroll-to-bottom-arrow')
     if (!questionsContainer || !scrollArrow) return
 
+    syncQuestionsContainerPaddingBottom()
+
     const landingPageContainer = document.querySelector('.landing-page-container')
     if (!landingPageContainer || !landingPageContainer.classList.contains('results-page-container')) {
         scrollArrow.classList.remove('visible')
@@ -73,7 +95,11 @@ const updateScrollArrowVisibility = () => {
 
     const overlayHeight = getOverlayHeight()
     const hasOverlay = overlayHeight > 0
-    scrollArrow.style.bottom = hasOverlay ? '8rem' : 'calc(8rem - 1.25rem)'
+    // Keep a consistent gap above the composebar area whether or not an overlay (bot wrapper/attachments) is visible.
+    // When an overlay is present, offset by its actual height instead of using a fixed jump.
+    scrollArrow.style.bottom = hasOverlay
+        ? `calc(8rem - 1.25rem + ${overlayHeight}px)`
+        : 'calc(8rem - 1.25rem)'
 
     const messageContainers = questionsContainer.querySelectorAll('.message-container')
     if (!messageContainers.length) {
@@ -104,6 +130,36 @@ const updateScrollArrowVisibility = () => {
     }
 }
 
+const scheduleScrollArrowUpdate = () => {
+    if (scheduledArrowUpdate != null) return
+    scheduledArrowUpdate = requestAnimationFrame(() => {
+        scheduledArrowUpdate = null
+        updateScrollArrowVisibility()
+    })
+}
+
+const ensureOverlayWatcher = () => {
+    const composeBar = document.getElementById('compose-bar-container')
+    if (!composeBar) return
+
+    if (overlayObserver) {
+        overlayObserver.disconnect()
+        overlayObserver = null
+    }
+
+    overlayObserver = new MutationObserver(() => {
+        // Bot wrapper / attachments can appear/disappear without any scroll event.
+        scheduleScrollArrowUpdate()
+    })
+
+    overlayObserver.observe(composeBar, {
+        childList: true,
+        subtree: true,
+        attributes: true,
+        attributeFilter: ["class", "style", "hidden", "aria-hidden"],
+    })
+}
+
 const initScrollArrow = () => {
     const questionsContainer = document.getElementById('questions-container')
     const scrollArrow = document.getElementById('scroll-to-bottom-arrow')
@@ -111,6 +167,15 @@ const initScrollArrow = () => {
 
     questionsContainer.addEventListener('scroll', updateScrollArrowVisibility)
     scrollArrow.addEventListener('click', scrollToBottom)
+
+    ensureOverlayWatcher()
+    if (!resizeListenerAttached) {
+        window.addEventListener('resize', scheduleScrollArrowUpdate)
+        resizeListenerAttached = true
+    }
+
+    // Initial positioning (no need to wait for a scroll)
+    scheduleScrollArrowUpdate()
 }
 
 const renderQuestionsOnly = () => {
@@ -178,8 +243,8 @@ const constructParentComponent = () => {
                         <!-- Questions will be rendered here -->
                     </div>
                     <div id='scroll-to-bottom-arrow' class='scroll-to-bottom-arrow' title='Scroll to bottom'>
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <polyline points="6 9 12 15 18 9"></polyline>
+                       <svg width="18" height="18" class="wa-RightArrow" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M1.33337 6.00016H10.6667M10.6667 6.00016L6.00004 1.3335M10.6667 6.00016L6.00004 10.6668" stroke="#737373" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round" />
                         </svg>
                     </div>
                     <div id='compose-bar-container' class='compose-bar-container'>

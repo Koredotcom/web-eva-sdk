@@ -60,6 +60,86 @@
   border: 1px solid #eeeeee;
   font-family: Inter;
 
+  .message-bubble.question {
+    .message-text {
+      background: #F2F4F7;
+    }
+  }
+
+  .Answerschip {
+    &.msutteranceChip {
+      padding: 1.5rem 1rem;
+      border-radius: 1rem;
+      border: 1px solid #EAECF0;
+      background: #F9FAFB;
+      backdrop-filter: blur(16px);
+      width: 100%;
+      margin-bottom: 0;
+
+      .mulanschip {
+        width: 100%;
+        gap: 0.5rem;
+        .chipone {
+          align-items: center;
+          justify-content: flex-start;
+          &:last-child {
+            .newtext {
+              .newtext-line {
+                display: none;
+              }
+            }
+            .tickmarkicon {
+              top: -1px;
+            }
+          }
+          .leftBlock {
+            display: flex;
+            align-items: center;
+          }
+          .tickmarkicon {
+            flex-shrink: 0;
+            display: flex;
+            top: -2px;
+          }
+          .newtext {
+            flex-grow: 1;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            .newtext-label {
+              @include typography-regular(0.875rem, 400, 1.25rem);
+              color: var(--Gray-900, #101828);
+              max-width: 100%;
+              @include ellipsisText;
+            }
+            .newtext-line {
+              width: 100%;
+              border-bottom: 0.0625rem solid #EAECF0;
+              flex-shrink: 0;
+            }
+          }
+        }
+      }
+
+      .ansdocwrap {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+
+        .chipheadericon {
+          display: flex;
+        }
+
+        .chipheadertype {
+          @include typography-regular(0.875rem, 500, 1.25rem);
+          color: var(--Gray-900, #101828);
+          max-width: 100%;
+        }
+      }
+    }
+  }
+
   .bot-conversation-content>div:last-child {
     min-height: auto;
   }
@@ -67,7 +147,7 @@
   .composebar-bot-input-wrapper {
     &:not(.details-hidden) {
       &:after {
-        height: 7rem;
+        height: 8rem;
       }
     }
   }
@@ -261,6 +341,7 @@
     .landing-page-container.results-page-container {
       .landing-page-content #questions-container {
         overscroll-behavior: contain;
+        padding: 0 0.5rem 1rem 0.5rem;
         .message-container {
           width: 95%;
         }
@@ -1400,4 +1481,24 @@
   align-items: center;
   width: 14px;
   height: 14px;
+}
+body {
+  &.eva-sdk--macos {
+    .eva-sdk-chatbot-panel {
+      .questions-container {
+        padding-right: 1.125rem;
+      }
+      .parent-home-container {
+        .landing-page-container {
+          &.results-page-container {
+            .landing-page-content {
+              #questions-container {
+                padding-right: 1.125rem;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
 }

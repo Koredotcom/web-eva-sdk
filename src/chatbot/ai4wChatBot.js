@@ -34,6 +34,21 @@ const state = {
 const ensureDomAvailable = () =>
   typeof window !== "undefined" && typeof document !== "undefined";
 
+const BODY_CLASS_MACOS = "eva-sdk--macos";
+
+const isMacOS = () => {
+  if (typeof navigator === "undefined") return false;
+  const platform = navigator.userAgentData?.platform || navigator.platform || "";
+  const ua = navigator.userAgent || "";
+  return /mac/i.test(platform) || /macintosh/i.test(ua);
+};
+
+const ensureMacOSBodyClass = () => {
+  if (!ensureDomAvailable()) return;
+  if (!isMacOS()) return;
+  document.body.classList.add(BODY_CLASS_MACOS);
+};
+
 /**
  * Route agent-selection popup into the chatbot panel instead of <body>.
  * This keeps the popup scoped to the chatbot element tree.
@@ -86,7 +101,6 @@ const ensureAgentSelectionPopupPortal = () => {
 
 const QUESTIONS_WITH_BOT_WRAPPER_CLASS =
   "eva-sdk-questions-container--with-bot-input-wrapper";
-const QUESTIONS_CONTAINER_PADDING_WITH_BOT_WRAPPER = "2.25rem";
 
 const isElementDisplayBlock = (el) => {
   if (!el) return false;
@@ -121,9 +135,15 @@ const syncQuestionsContainerClass = () => {
 
   // Specifically adjust #questions-container spacing when bot wrapper is shown
   if (questionsContainerById) {
-    questionsContainerById.style.paddingBottom = enabled
-      ? QUESTIONS_CONTAINER_PADDING_WITH_BOT_WRAPPER
-      : "";
+    if (!enabled) {
+      questionsContainerById.style.paddingBottom = "";
+    } else {
+      const remToPx =
+        parseFloat(window.getComputedStyle(document.documentElement).fontSize) ||
+        16;
+      const wrapperHeight = botWrapper?.offsetHeight || 0;
+      questionsContainerById.style.paddingBottom = `${wrapperHeight + remToPx}px`;
+    }
   }
 };
 
@@ -521,6 +541,8 @@ export const init = (config = {}) => {
   if (!ensureDomAvailable()) {
     return null;
   }
+
+  ensureMacOSBodyClass();
 
   const containerId = config?.containerId || DEFAULT_CONTAINER_ID;
   const sdkAlreadyInitialized =
