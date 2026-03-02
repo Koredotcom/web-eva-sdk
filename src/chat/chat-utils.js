@@ -9,7 +9,7 @@ import AnswerFromChip from './AnswerFromChip';
 import { chatTemplateTypes, msgStatus } from '../utils/constants';
 import MultiResponse from './gptTemplate/MultiResponse';
 import moment from "moment";
-import { fetchHistory } from "../redux/actions/global.action";
+import { fetchHistory, resolveAgentAction } from "../redux/actions/global.action";
 import MultiIntentExecution from '../multiIntentExecution/multiIntentExecution';
 
 export const constructQuestionInitial = (args) => {
@@ -116,7 +116,7 @@ export const constructQuestionInitial = (args) => {
 	return uniqueMsgId;
 };
 
-export const constructQuestionPostCall = (data, qId, isBot = false) => {
+export const constructQuestionPostCall = async (data, qId, isBot = false) => {
 
     // data.payload = contains api response
     // data.meta.arg = contains passed params and payload
@@ -132,6 +132,12 @@ export const constructQuestionPostCall = (data, qId, isBot = false) => {
     let question = questions?.[qId]
     const originalQuestion = question?.question;
     delete question?.loading;
+
+    if(data?.payload?.agentId){
+        const agentDetails = await store.dispatch(resolveAgentAction({ payload: [data?.payload?.agentId] }));
+        // console.log('agentDetails', agentDetails);
+        question.agentMetaDetails = agentDetails?.payload?.[0];
+    }
     
     // Preserve context data in question object (including originalContext for renderReferenceToResponseContext)
     // Matching Kora-React: use originalContext first, fallback to context

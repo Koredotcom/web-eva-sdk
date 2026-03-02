@@ -710,8 +710,8 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 			const isSupervisor = agentMetaDetails?.isSupervisor;
 
 			// Determine icon and name based on supervisor status
-			const iconUrl = isSupervisor ? supervisorAgent?.icon : agentMetaDetails?.icon;
-			const name = isSupervisor ? supervisorAgent?.name : agentMetaDetails?.name;
+			const iconUrl =agentMetaDetails?.icon || agentMetaDetails?.iconUrl;
+			const name = agentMetaDetails?.name;
 
 			let iconHtml = '';
 			if (iconUrl) {
