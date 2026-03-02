@@ -2,48 +2,43 @@ import io from "socket.io-client";
 import { ChatInterface } from "../chat";
 import BotConversation from "../chat/botAgent/getBotConversation";
 import Notification from "../notifications/notification";
+import { HistoryInterface } from "../history";
 import { presenceStart } from "../redux/actions/global.action";
 import store from "../redux/store";
-import { HistoryInterface } from "../history";
+import { AnnouncementsInterface } from "../Announcements";
 
 class WebSocketClient {
     constructor() {
         this.socket = null;
         this.url = null;
         this.options = null;
-        this._presenceRefreshPromise = null;
-        this._lastPresenceRefreshAt = 0;
     }
 
-    shouldRefreshPresence(errorOrReason) {
-        const text = String(errorOrReason?.message || errorOrReason || "").toLowerCase();
-        // Only refresh presence when it likely helps (auth/token issues).
-        return (
-            text.includes("unauthor") ||
-            text.includes("forbidden") ||
-            text.includes("token") ||
-            text.includes("jwt") ||
-            text.includes("auth")
-        );
+    stopReconnectionOnUnauthorized() {
+        if (!this.socket) {
+            return;
+        }
+        const manager = this.socket.io;
+        if (manager) {
+            manager.reconnection(false);
+            manager.disconnect();
+        }
+        this.socket = null;
     }
 
-    async refreshPresenceToken() {
-        // Avoid spamming /presence/start during socket reconnect loops.
-        const MIN_INTERVAL_MS = 60_000;
-        const now = Date.now();
-        if (this._presenceRefreshPromise) return this._presenceRefreshPromise;
-        if (now - this._lastPresenceRefreshAt < MIN_INTERVAL_MS) return;
-
-        this._lastPresenceRefreshAt = now;
-        this._presenceRefreshPromise = store
-            .dispatch(presenceStart())
-            .catch(() => {
-                // Ignore; reconnect logic will keep trying the socket.
-            })
-            .finally(() => {
-                this._presenceRefreshPromise = null;
-            });
-        return this._presenceRefreshPromise;
+    async refreshPresenceTokenOrStop() {
+        const action = await store.dispatch(presenceStart());
+        if (action?.meta?.requestStatus === "rejected") {
+            if (action?.payload?.status === 401) {
+                console.warn("[socket] presenceStart unauthorized, stopping reconnects");
+                this.stopReconnectionOnUnauthorized();
+            }
+            return false;
+        }
+        if (this.options.query) {
+            this.options.query.sToken = store.getState().global?.presenceStart?.data?.sToken;
+        }
+        return true;
     }
 
     initialize({ url, options }) {
@@ -55,16 +50,9 @@ class WebSocketClient {
         this.options = {
             transports: ["websocket"],
             reconnection: true,
-            reconnectionAttempts: 1000,
+            reconnectionAttempts: Infinity,
             reconnectionDelay: 1000,
-            auth: (cb) => {
-                // This function is called on every connection attempt (including reconnects)
-                cb({
-                    ...(options?.query || {}),
-                    sToken: store.getState().global?.presenceStart?.data?.sToken,
-                    rnd: new Date().getTime(),
-                });
-            },
+            reconnectionDelayMax: 30000,
             ...options,
         };
     }
@@ -87,19 +75,12 @@ class WebSocketClient {
             });
             
             this.socket.on("disconnect", async (reason) => {
-                // Don't call presenceStart on every disconnect — it causes continuous API calls
-                // when the socket is unstable. Refresh only for likely auth/token issues.
-                if (this.shouldRefreshPresence(reason)) {
-                    await this.refreshPresenceToken();
-                }
+                await this.refreshPresenceTokenOrStop();
                 console.warn(`Socket disconnected: ${reason}`);
             });
 
             this.socket.on("connect_error", async (error) => {
-                // Don't call presenceStart for generic network/CORS errors. Only refresh if auth/token issue.
-                if (this.shouldRefreshPresence(error)) {
-                    await this.refreshPresenceToken();
-                }
+                await this.refreshPresenceTokenOrStop();
                 console.error(`Socket connection Error: ${error.message}`);
             });
 
@@ -113,12 +94,9 @@ class WebSocketClient {
             });
 
             this.socket.on('live', (msg) => {
-                if(msg?.entity === "answerContext") {
+                if(msg?.entity === "answersuggestion") {
                     /*In answer suggestion, will receive thoughts of agents, need to append to the question*/                    
                         ChatInterface().agentThoughts(msg)                                        
-                }
-                if (msg?.entity === "thoughts") {
-                    ChatInterface().agentThoughts(msg)     
                 }
                 if(msg?.entity === "answerChunk"){
                     ChatInterface().contentStreaming(msg)
@@ -127,8 +105,8 @@ class WebSocketClient {
                     /*update the name in the history board */
                     HistoryInterface().updateHistoryBoardNameonSocketEvent(msg?.data)
                 }
-                if (msg?.entity === 'reqFlow') {
-                    ChatInterface().responseFlowGeneration(msg)
+                if(msg?.entity === "announcements"){
+                    AnnouncementsInterface().setNewAnnouncements(msg)
                 }
             });
             this.socket.on("notification", (msg) => {

@@ -1,34 +1,34 @@
 import { cloneDeep } from "lodash";
 import { default as fileUpload } from "../Attachments/fileUpload.js";
 import store from "../redux/store.js";
-import { attachmentIcon, createDeleteIcon } from "../templateRenderer/icons-library.js";
 import { getFileExtension, resolveSdkAssetPath } from "../utils/helpers.js";
+import { attachmentIcon, createDeleteIcon, RadioButtonChecked, RadioButtonCheckedGrey } from "../templateRenderer/icons-library.js";
 
 
 const formatFileSize = (bytes) => {
     if (!bytes || bytes === 0) return '';
-    
+
     const sizes = ['B', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(1024));
     const size = (bytes / Math.pow(1024, i)).toFixed(1);
-    
+
     return `${size} ${sizes[i]}`;
 };
 
 
 const formatDate = (date) => {
     if (!date) return '';
-    
+
     try {
         const d = new Date(date);
         const now = new Date();
         const diffTime = Math.abs(now - d);
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        
+
         if (diffDays === 1) return 'Yesterday';
         if (diffDays < 7) return `${diffDays} days ago`;
         if (diffDays < 30) return `${Math.ceil(diffDays / 7)} weeks ago`;
-        
+
         return d.toLocaleDateString();
     } catch (error) {
         return '';
@@ -37,12 +37,12 @@ const formatDate = (date) => {
 
 const handleFileAttach = (e, file, options = {}) => {
     try {
-        fileUpload().setAttachmentContext(file);       
-        
+        fileUpload().setAttachmentContext(file);
+
     } catch (error) {
         console.error('Error attaching file:', error);
     }
-    finally{
+    finally {
         /*close the modal */
         if (options.onFileClose && typeof options.onFileClose === 'function') {
             options.onFileClose();
@@ -58,15 +58,40 @@ const renderRecentFilesList = (targetEl, files, listType = 'recent', options = {
         return;
     }
 
+    const state = store.getState()?.global;
+    const selectedSources = state?.selectedContext?.data?.sources || [];
+
     // Generate HTML for each file
     const itemsHtml = files.map(file => {
         const safeName = (file?.name || file?.fileName || 'Untitled').replace(/</g, '&lt;').replace(/>/g, '&gt;');
         const fileExtension = getFileExtension(file?.name || file?.fileName || '');
-        const fileSize = formatFileSize(file?.size);        
+        const fileSize = formatFileSize(file?.size);
         const lastModified = formatDate(file?.lastModified || file?.updatedAt);
 
-        return `<li class="eva-file-item" data-file-id="${file.id || file.fileId}" data-file-type="${listType}">
-            <div class="file-icon"><img src="${resolveSdkAssetPath(`images/${fileExtension}.png`)}" alt=''/></div>
+        // Selection logic matching Kora-React
+        // Attempt to match by all possible IDs (fileId, id, docId, uID, componentId, contentId)
+        // Also fallback to title match if IDs are missing (more robust for SDK)
+        const isSelected = selectedSources.find(f => {
+            const selectedId = String(f?.docId || f?.id || f?.uID || f?.componentId || f?.contentId || '');
+            const fileId = String(file?.id || file?.fileId || file?.docId || file?.uID || file?.componentId || file?.contentId || '');
+
+            const idMatch = selectedId && fileId && selectedId === fileId;
+            const nameMatch = (f?.title === file?.name || f?.title === file?.fileName) && (f?.title && (file?.name || file?.fileName));
+
+            return idMatch;
+        });
+
+        let selectionIconHtml = '';
+        if (isSelected) {
+            if (isSelected.loading) {
+                selectionIconHtml = `<div class='selectIcon'>${RadioButtonCheckedGrey({ size: 14, color: "#98A2B3" })}</div>`;
+            } else {
+                selectionIconHtml = `<div class='selectIcon'>${RadioButtonChecked({ size: 14 })}</div>`;
+            }
+        }
+
+        return `<li class="eva-file-item ${isSelected ? 'selected' : ''}" data-file-id="${file.id || file.fileId}" data-file-type="${listType}">
+            <div class="file-icon"><img src="images/${fileExtension}.png" alt=''/></div>
             <div class="file-details">
                 <div class="file-name" title="${safeName}">${safeName}</div>
                 <div class="file-meta">
@@ -74,7 +99,8 @@ const renderRecentFilesList = (targetEl, files, listType = 'recent', options = {
                     ${fileSize ? `<span>•</span><span class="file-size">${fileSize}</span>` : ''}
                     ${lastModified ? `<span>•</span><span class="file-date">${lastModified}</span>` : ''}
                 </div>
-            </div>            
+            </div>
+            ${selectionIconHtml}
         </li>`;
     }).join('');
 
@@ -106,7 +132,7 @@ const renderRecentFilesList = (targetEl, files, listType = 'recent', options = {
                 handleFileAttach(e, file, options);
             });
         }
-        
+
     });
 };
 
@@ -122,9 +148,9 @@ const renderRecentFiles = (targetEl, options = {}) => {
     }
 };
 
-export { 
-    renderRecentFilesList, 
-    renderRecentFiles,        
+export {
+    renderRecentFilesList,
+    renderRecentFiles,
     formatFileSize,
     formatDate,
     handleFileAttach

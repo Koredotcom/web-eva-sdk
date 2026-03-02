@@ -33,6 +33,7 @@ class ComposeBar {
         this.recognition = null;
         this.unsubscribe = null;
         this.fileUploaderUnsubscribe = null;
+        this.selectedContextUnsubscribe = null;
         this.chatInterface = null;
         this.fileUploaderInterface = null;
         this.questions = {};
@@ -42,11 +43,27 @@ class ComposeBar {
         this.selectedAgent = null;
         this.attachments = [];
         this.quickActions = [];
+        // Used to temporarily hide quick replies after attachment-pill removal
+        this.suppressQuickReplies = false;
+        this._lastAttachmentPillsCount = 0;
+        // Attachment-session quick reply lock:
+        // once an answer completes with an attachment context, keep quick replies hidden
+        // until the attachment is removed and a new attachment/session is attached again.
+        this._attachmentQuickRepliesLocked = false;
+        this._attachmentSessionId = null;
+        this._prevIsLoading = false;
+
+        // Details section UI state (for composebar-bot-input-wrapper)
+        this.detailsExpanded = false;
+        this._detailsAgentId = null;
         this.selectedCommonAgent = null;
         this.currentAnswerResponse = null;
         this.showBotComposeBarHeader = false;
         this.botEndConversationLoader = false;
+        this.bannerClosedByUser = false;
+        this.bannerClosedAgentId = null;
         this.endConversationHandler = this.handleEndConversation.bind(this);
+        this.closeBannerHandler = this.handleCloseBanner.bind(this);
         this.detailsToggleHandler = this.handleDetailsToggle.bind(this);
         this.isMSEnv = isMSEnv();
         this.callbacks = {
@@ -57,6 +74,7 @@ class ComposeBar {
             onChange: null,
             onSpeechToText: null
         };
+        this.isSpeechHovering = false;
         this.init();
     }
 
@@ -79,12 +97,30 @@ class ComposeBar {
                 this.unsubscribe = this.chatInterface.subscribe((questions, searchResponse, moreAvailable, errorStates, quickActions) => {
                     // Toggle loading state based on async status
                     const isLoading = searchResponse?.status === 'loading';
+                    const wasLoading = !!this._prevIsLoading;
+                    this._prevIsLoading = !!isLoading;
                     if (Object.values(questions)?.some(question => question?.loading)) {
                         this.currentAnswerResponse = null;
                     } else {
                         this.currentAnswerResponse = searchResponse?.data;
                     }
                     this.setLoading(!!isLoading);
+                    const selectedSources = store.getState()?.global?.selectedContext?.data?.sources || [];
+                    const hasAttachmentContext = selectedSources.some(
+                        (s) => s?.source === 'attachment' || s?.type === 'attachment',
+                    );
+                    // Lock quick replies once an answer completes for an attachment context.
+                    if (wasLoading && !isLoading && hasAttachmentContext) {
+                        this._attachmentQuickRepliesLocked = true;
+                    }
+                    // If attachment context is cleared, unlock.
+                    if (!hasAttachmentContext) {
+                        this._attachmentQuickRepliesLocked = false;
+                    }
+                    // Keep quick replies in sync with latest answer payload.
+                    // Hide while loading/typing is handled by updateQuickRepliesVisibility().
+                    this.quickActions = Array.isArray(quickActions) ? quickActions : [];
+                    this.renderQuickReplies();
                     if (Object.keys(questions).length > 0) {
                         this.questions = questions;
                         // this.showBotComposeBarHeader = Object.values(questions)?.find(question => question?.status === 'threadRunning');
@@ -144,15 +180,85 @@ class ComposeBar {
                 console.log("fileUploaderInterface subscribe", sources, sessionId, quickActions, error, apiResp);
                 if (sources) {
                     try {
-                        const filesOnly = Array.isArray(sources)
-                            ? sources.filter(source => source.type === "attachment" || source.loading === true)
-                            : [];
+                        // Get selectedContext from store to check if context is actually set
+                        const state = store.getState()?.global;
+                        const selectedContext = state?.selectedContext?.data;
+
+                        // Only show attachment pills when context is actually set (matching Kora-React behavior)
+                        // In Kora-React, attachment pills are only shown when selectedContext?.sources?.length >= 1
+                        const hasContextSet = selectedContext?.sources?.length >= 1;
+
+                        // Filter files: only show attachments that are actually set as context
+                        // Don't show items that are only loading (not yet set as context)
+                        let filesOnly = [];
+                        if (hasContextSet && selectedContext?.sources) {
+                            // Only show attachments that exist in selectedContext
+                            filesOnly = Array.isArray(sources)
+                                ? sources.filter(source => {
+                                    if (source.type === "attachment") {
+                                        // Check if this source exists in selectedContext
+                                        const isInContext = selectedContext.sources.some(ctxSource =>
+                                            ctxSource?.docId === source?.docId ||
+                                            ctxSource?.uID === source?.uID ||
+                                            ctxSource?.componentId === source?.componentId ||
+                                            (ctxSource?.source === "attachment" && ctxSource?.title === source?.title)
+                                        );
+                                        return isInContext;
+                                    }
+                                    return false;
+                                })
+                                : [];
+                        }
+                        // If no context is set, don't show any attachment pills (even if loading)
+                        // The loader should only appear temporarily during upload, and disappear if context isn't set
+
+                        // Track attachment-pill count changes (used to hide quick replies on removal)
+                        const nextAttachmentCount = (filesOnly || []).length;
+                        const prevAttachmentCount = this._lastAttachmentPillsCount || 0;
+                        if (nextAttachmentCount < prevAttachmentCount) {
+                            this.suppressQuickReplies = true;
+                        } else if (nextAttachmentCount > prevAttachmentCount) {
+                            // If a new attachment is added, allow quick replies again
+                            this.suppressQuickReplies = false;
+                        }
+                        this._lastAttachmentPillsCount = nextAttachmentCount;
+
+                        // Attachment-session quick reply lock reset logic:
+                        // - If attachment context is cleared, unlock and forget session id
+                        // - If a new session id appears (reattach), unlock for the new session
+                        const nextSessionId = sessionId || selectedContext?.sessionId || null;
+                        if (!hasContextSet || nextAttachmentCount === 0) {
+                            this._attachmentQuickRepliesLocked = false;
+                            this._attachmentSessionId = null;
+                        } else {
+                            if (nextSessionId && nextSessionId !== this._attachmentSessionId) {
+                                this._attachmentQuickRepliesLocked = false;
+                            }
+                            if (nextSessionId) {
+                                this._attachmentSessionId = nextSessionId;
+                            }
+                        }
+
                         this.attachments = filesOnly;
                         this.quickActions = quickActions || [];
-                        // Always render to handle both adding and clearing attachments       
-                        if (this.attachments?.length > 0) {
+                        // Only render attachments if context is set
+                        // Match Kora-React: only show when selectedContext?.sources?.length >= 1
+                        if (hasContextSet && this.attachments?.length > 0) {
                             this.renderAttachments();
                         } else {
+                            // Clear attachments if no context is set
+                            const attachmentsContainer = this.container.querySelector('[data-eva-attachments]');
+                            if (attachmentsContainer) {
+                                attachmentsContainer.innerHTML = '';
+                                const inputContainer = attachmentsContainer.closest('.eva-input-container');
+                                if (inputContainer) {
+                                    inputContainer.classList.remove('file-uploaded');
+                                }
+                            }
+                        }
+
+                        // Handle context chip data (for non-attachment sources)
+                        if (!hasContextSet) {
                             if (sources?.length > 0) {
                                 /*check whether it is an agent */
                                 if (sources?.[0]?.isAgent) {
@@ -165,8 +271,8 @@ class ComposeBar {
                             } else {
                                 this.contextChipData = null;
                             }
-                        }                        
-                        if (this.contextChipData) {                            
+                        }
+                        if (this.contextChipData && !this.bannerClosedByUser) {
                             setTimeout(() => {
                                 const contextChipOnComposebarDiv = this.container.querySelector('.composebar-bot-input-wrapper');
                                 if (contextChipOnComposebarDiv) {
@@ -184,7 +290,7 @@ class ComposeBar {
                     } catch (err) {
                         console.warn('Failed processing file upload subscribe payload:', err);
                     }
-                }else{                                  
+                } else {
                     this.contextChipData = null;
                 }
 
@@ -192,6 +298,62 @@ class ComposeBar {
         } catch (e) {
             console.warn('FileUpload init failed:', e);
         }
+
+        // Subscribe to selectedContext updates to sync selection icons and context chip
+        this.selectedContextUnsubscribe = store.subscribe(() => {
+            const state = store.getState();
+            const globalState = state?.global;
+            const selectedContext = globalState?.selectedContext?.data;
+
+            // 1. Re-render update of recent files list selection icons if dialog is open
+            const attachmentDialog = this.container.querySelector('[data-eva-attachment-dialog]');
+            if (attachmentDialog?.hasAttribute('open')) {
+                const recentFilesListEl = this.container.querySelector('[data-eva-recent-files]');
+                if (recentFilesListEl) {
+                    renderRecentFiles(recentFilesListEl, {
+                        onFileAttach: (file) => this.handleFileAttachFromRecent(file),
+                        onFileRemove: (file) => this.handleFileRemoveFromRecent(file),
+                        onFileClose: () => this.handleCloseAttachmentDialog()
+                    });
+                }
+            }
+
+            // 2. React to selectedContext changes (e.g., after context API success)
+            // This ensures the context chip updates when context is set or cleared
+            if (selectedContext?.sources?.length > 0) {
+                // Get the source to pass to updateBotHeaderContent
+                const source = selectedContext?.sources?.[0];
+                // Update the context chip display
+                setTimeout(() => {
+                    this.updateBotHeaderContent(source);
+                }, 0);
+            } else if (!selectedContext || !selectedContext?.sources?.length) {
+                // Clear context chip if no context is set
+                const composeBarWrapperDiv = this.container.querySelector('.composebar-bot-input-wrapper');
+                const answerContextChipContainer = this.container.querySelector('.response-as-context-truncated-text');
+                if (composeBarWrapperDiv) {
+                    hideElementImmediately(composeBarWrapperDiv);
+                }
+                if (answerContextChipContainer) {
+                    hideElementImmediately(answerContextChipContainer);
+                }
+                this.syncContextTrueClass(false);
+                // Context cleared → allow banner to show again next time
+                this.bannerClosedByUser = false;
+                this.bannerClosedAgentId = null;
+                
+                // Clear attachments when context is cleared
+                this.attachments = [];
+                const attachmentsContainer = this.container.querySelector('[data-eva-attachments]');
+                if (attachmentsContainer) {
+                    attachmentsContainer.innerHTML = '';
+                    const inputContainer = attachmentsContainer.closest('.eva-input-container');
+                    if (inputContainer) {
+                        inputContainer.classList.remove('file-uploaded');
+                    }
+                }
+            }
+        });
 
         this.initSpeechRecognition();
         await this.getAgents();
@@ -297,7 +459,7 @@ class ComposeBar {
             const fileExtension = getFileExtension(name);
 
             return `<div class="eva-attachment-pill" data-attach-uid="${escapeHtml(uid)}" title="${escapeHtml(name)}">
-                <div class="attachment-icon"><img src="${resolveSdkAssetPath(`images/${fileExtension}.png`)}" alt=''/></div>
+                <div class="attachment-icon"><img src="images/${fileExtension}.png" onerror="this.src='images/default.png'" alt=''/></div>
                 <div class="eva-attachment-name">${escapeHtml(name)}</div>
                 ${file?.loading ? `<div class="waloader"></div>` :
                     `<button type="button" class="eva-attachment-remove" data-remove-uid="${escapeHtml(uid)}" aria-label="Remove">&times;</button>`}
@@ -316,8 +478,54 @@ class ComposeBar {
             }
         }
 
+        // Disable attachment button + update tooltip while upload is in progress
+        this.syncAttachmentUploadState();
+
         // Reattach event listeners for remove buttons
         this.attachAttachmentEventListeners();
+    }
+
+    isAttachmentUploadInProgress() {
+        return (this.attachments || []).some(a => !!a?.loading);
+    }
+
+    syncAttachmentUploadState() {
+        const attachmentBtn = this.container?.querySelector?.('[data-eva-attachment]');
+        if (!attachmentBtn) return;
+
+        const tooltip = attachmentBtn.closest('sl-tooltip');
+        const tooltipContentEl = tooltip?.querySelector?.('[data-eva-attachment-tooltip-content]');
+
+        const inProgress = this.isAttachmentUploadInProgress();
+
+        if (tooltipContentEl) {
+            tooltipContentEl.innerHTML = inProgress
+                ? 'Please wait. Upload is in progress'
+                : '5 attachments, max 10MB each. <br/>PDF, XLS, DOC, CSV, TXT formats.';
+        }
+
+        // Don't disable the button element itself (disabled blocks hover/focus so tooltip won't show).
+        // Instead, mark state for click handler to guard.
+        attachmentBtn.setAttribute('data-upload-in-progress', inProgress ? 'true' : 'false');
+    }
+
+    /**
+     * Show or hide quick replies container based on whether user has entered text
+     * (and while an answer is loading).
+     */
+    updateQuickRepliesVisibility() {
+        const quickRepliesContainer = this.container.querySelector('[data-eva-quick-replies]');
+        if (!quickRepliesContainer) return;
+        const hasText = this.input.trim().length > 0;
+        const selectedSources = store.getState()?.global?.selectedContext?.data?.sources || [];
+        const hasAttachmentContext = selectedSources.some(
+            (s) => s?.source === 'attachment' || s?.type === 'attachment',
+        );
+        const shouldHide =
+            hasText ||
+            this.isLoading ||
+            (hasAttachmentContext && this._attachmentQuickRepliesLocked);
+        quickRepliesContainer.style.display = shouldHide ? 'none' : '';
     }
 
     renderQuickReplies() {
@@ -326,6 +534,34 @@ class ComposeBar {
             return;
         }
 
+        if (this.suppressQuickReplies) {
+            quickRepliesContainer.innerHTML = '';
+            hideElementImmediately(quickRepliesContainer);
+            return;
+        }
+
+        // If we completed an answer while an attachment context is active, keep quick replies hidden
+        // until the attachment is removed and a new attachment/session is attached again.
+        const selectedSources = store.getState()?.global?.selectedContext?.data?.sources || [];
+        const hasAttachmentContext = selectedSources.some(
+            (s) => s?.source === 'attachment' || s?.type === 'attachment',
+        );
+        if (hasAttachmentContext && this._attachmentQuickRepliesLocked) {
+            quickRepliesContainer.innerHTML = '';
+            hideElementImmediately(quickRepliesContainer);
+            return;
+        }
+
+        // Hide container if there are no quick actions
+        if (!this.quickActions || this.quickActions.length === 0) {
+            quickRepliesContainer.innerHTML = '';
+            hideElementImmediately(quickRepliesContainer);
+            return;
+        }
+
+        // Ensure visible when quick actions exist
+        showElementImmediately(quickRepliesContainer, 'flex');
+
         const quickRepliesHtml = this.quickActions.map(action => {
             return `<div class="eva-quick-reply-chip" data-action-id="${action.id}">${action.label}</div>`;
         }).join('');
@@ -333,6 +569,7 @@ class ComposeBar {
         quickRepliesContainer.innerHTML = quickRepliesHtml;
         // Attach event listeners for quick reply clicks
         this.attachQuickReplyEventListeners();
+        this.updateQuickRepliesVisibility();
     }
 
     attachQuickReplyEventListeners() {
@@ -363,7 +600,7 @@ class ComposeBar {
             const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
             this.recognition = new SpeechRecognition();
 
-            this.recognition.continuous = false;
+            this.recognition.continuous = true;
             this.recognition.interimResults = true;
             this.recognition.lang = 'en-US';
 
@@ -373,25 +610,47 @@ class ComposeBar {
 
             this.recognition.onresult = (event) => {
                 let finalTranscript = '';
+                let interimTranscript = '';
 
                 for (let i = event.resultIndex; i < event.results.length; i++) {
                     const transcript = event.results[i][0].transcript;
                     if (event.results[i].isFinal) {
                         finalTranscript += transcript;
+                    } else {
+                        interimTranscript += transcript;
                     }
                 }
 
-                // Update textarea with final transcript
-                if (finalTranscript) {
+                // Update textarea with results
+                if (finalTranscript || interimTranscript) {
                     const currentValue = this.getValue();
-                    const newValue = currentValue + (currentValue ? ' ' : '') + finalTranscript;
-                    this.setValue(newValue);
+                    // This is a simplified implementation. In Kora-React, it handles cursors and interim results more smoothly.
+                    // For now, we append final results.
+                    if (finalTranscript) {
+                        const newValue = currentValue + (currentValue && !currentValue.endsWith(' ') ? ' ' : '') + finalTranscript;
+                        this.setValue(newValue);
+
+                        // Trigger change for auto-resize etc
+                        const textarea = this.container.querySelector('[data-eva-input]');
+                        if (textarea) {
+                            textarea.dispatchEvent(new Event('input', { bubbles: true }));
+                        }
+                    }
                 }
             };
 
             this.recognition.onend = () => {
-                this.isRecording = false;
-                this.updateSpeechButton();
+                if (this.isRecording) {
+                    try {
+                        this.recognition.start();
+                    } catch (e) {
+                        console.error('Failed to restart speech recognition:', e);
+                        this.isRecording = false;
+                        this.updateSpeechButton();
+                    }
+                } else {
+                    this.updateSpeechButton();
+                }
             };
 
             this.recognition.onerror = (event) => {
@@ -407,27 +666,231 @@ class ComposeBar {
     /**
      * Update the bot header content dynamically
      */
+    /**
+     * Render response selected as context (similar to responseSelectedAsContext in Kora-React)
+     * Shows question text and answer preview for GPT agent responses
+     */
+    responseSelectedAsContext(source) {
+        const state = store.getState()?.global;
+        const selectedContext = state?.selectedContext?.data;
+        const questions = state?.questions || this.questions;
+
+        // Find the response by searching through questions for matching messageId
+        let response = null;
+        if (selectedContext?.messageId && questions) {
+            response = Object.values(questions).find(
+                (q) => q.messageId === selectedContext.messageId,
+            );
+        }
+
+        let responseText = response?.answer || '';
+        // Convert markdown to plain text
+        const plainText = markdownToPlainText(responseText);
+
+        // use the full plain text for CSS line clamping
+        const preview = plainText.trim();
+
+        // Get the question text
+        const questionText = response?.question || '';
+
+        const answerContextChipContainer = this.container.querySelector('.response-as-context-truncated-text');
+        const answerContextChipText = this.container.querySelector('.response-as-context-question-text') ||
+            this.container.querySelector('.answer-context-chip-text');
+
+        if (answerContextChipContainer && answerContextChipText) {
+            // Set the question and answer preview (matching Kora-React structure)
+            if (questionText) {
+                answerContextChipText.innerHTML = `<strong>${this.escapeHtml(questionText)} -&gt; </strong>${this.escapeHtml(preview)}`;
+            } else {
+                answerContextChipText.innerText = preview;
+            }
+        }
+
+        return answerContextChipContainer;
+    }
+
+    /**
+     * Escape HTML to prevent XSS
+     */
+    escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    /**
+     * When response-as-context chip is visible, mark compose bar input container
+     * and hide `.composebar-bot-input-wrapper.details-hidden`.
+     */
+    syncContextTrueClass(isVisible) {
+        const inputContainer = this.container?.querySelector?.('.eva-input-container');
+        if (inputContainer) {
+            inputContainer.classList.toggle('context-true', !!isVisible);
+        }
+
+        // Requirement: hide "composebar-bot-input-wrapper details-hidden" when context-true
+        if (!!isVisible) {
+            const botWrapper = this.container?.querySelector?.('.composebar-bot-input-wrapper');
+            if (botWrapper?.classList?.contains('details-hidden')) {
+                hideElementImmediately(botWrapper);
+            }
+        }
+    }
+
     updateBotHeaderContent(contextChipData) {
         console.log("contextChipData in updateBotHeaderContent", contextChipData);
-        const composeBarWrapperDiv = this.container.querySelector('.composebar-bot-input-wrapper');  
+        const composeBarWrapperDiv = this.container.querySelector('.composebar-bot-input-wrapper');
         if (!composeBarWrapperDiv) return;
-        const botInputHeaderDiv = composeBarWrapperDiv.querySelector('.bot-input-header'); 
+        const botInputHeaderDiv = composeBarWrapperDiv.querySelector('.bot-input-header');
         const answerContextChipContainer = this.container.querySelector('.response-as-context-truncated-text');
-        if(!contextChipData){            
+        if (!contextChipData) {
+            this.bannerClosedByUser = false;
+            this.bannerClosedAgentId = null;
             hideElementImmediately(composeBarWrapperDiv);
+            return;
+        }
+
+        /* Don't reopen banner if user explicitly closed it for the SAME agent */
+        if (contextChipData?.isAgent && this.bannerClosedByUser) {
+            const currentAgentId = contextChipData?.source || contextChipData?.docId || contextChipData?.id;
+            if (this.bannerClosedAgentId && currentAgentId && this.bannerClosedAgentId === currentAgentId) {
+                hideElementImmediately(composeBarWrapperDiv);
+                this.syncContextTrueClass(false);
+                return;
+            }
+            // Different agent selected → allow banner to show again
+            this.bannerClosedByUser = false;
+            this.bannerClosedAgentId = null;
+        }
+
+        // Get selectedContext from store to check for setViaMenuOptions/setViaGptAgent
+        const state = store.getState()?.global;
+        const selectedContext = state?.selectedContext?.data;
+        const currentQuestion = state?.currentQuestion;
+        const questions = state?.questions || this.questions;
+
+        // Get source from selectedContext (matching Kora-React: source = selectedContext?.sources?.[0])
+        // If selectedContext doesn't have sources, fall back to contextChipData
+        const source = selectedContext?.sources?.[0] || contextChipData;
+
+        // Check if source is an attachment (matching Kora-React: const attachment = source?.source === "attachment")
+        const isAttachment = source?.source === "attachment" || source?.type === "attachment";
+
+        // Check for mcpAgent from currentQuestion (matching Kora-React: questions?.[currentQuestion]?.context?.agentType === "mcpAgent")
+        const isMcpAgent = currentQuestion && questions?.[currentQuestion]?.context?.agentType === "mcpAgent";
+
+        // Check if this is a GPT agent response selected as context
+        // Matching Kora-React exactly: (source?.templateType === 'gpt_form_template' || source?.agentType === 'gptAgent' || isMcpAgent) && (selectedContext?.setViaMenuOptions || selectedContext?.setViaGptAgent)
+        // This check comes FIRST in Kora-React's singleChipRenderer
+        // IMPORTANT: Only show response-as-context-truncated-text for GPT agent responses, NOT for attachments
+        const isGptAgentResponse = !isAttachment &&
+            (source?.templateType === 'gpt_form_template' ||
+                source?.agentType === 'gptAgent' ||
+                isMcpAgent) &&
+            (selectedContext?.setViaMenuOptions || selectedContext?.setViaGptAgent);
+
+        // Check if should return null (supervisor contexts shouldn't render a chip here)
+        const shouldReturnNull = selectedContext?.sources?.[0]?.isSupervisor;
+
+        // If GPT agent response, show response preview (matching Kora-React: return responseSelectedAsContext(source))
+        if (isGptAgentResponse) {
+            if (botInputHeaderDiv) {
+                hideElementImmediately(botInputHeaderDiv);
+            }
+            // Show the wrapper first so the context chip container is visible
+            showElementImmediately(composeBarWrapperDiv, 'block');
+
+            if (answerContextChipContainer) {
+                // Show the container (matching Kora-React)
+                showElementImmediately(answerContextChipContainer, 'flex');
+                this.syncContextTrueClass(true);
+                // Render response selected as context
+                this.responseSelectedAsContext(source);
+
+                // Attach close button handler (matching Kora-React: renderCloseBtn)
+                const answerContextCloseBtn = answerContextChipContainer.querySelector('.srCicon');
+                if (answerContextCloseBtn) {
+                    if (!answerContextCloseBtn.eventListenerAdded) {
+                        answerContextCloseBtn.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            if (this.fileUploaderInterface && typeof this.fileUploaderInterface.clearContext === 'function') {
+                                this.fileUploaderInterface.clearContext({});
+                            }
+                            hideElementImmediately(answerContextChipContainer);
+                            this.syncContextTrueClass(false);
+                            // Also hide the wrapper when context is cleared
+                            hideElementImmediately(composeBarWrapperDiv);
+                        });
+                        answerContextCloseBtn.eventListenerAdded = true;
+                    }
+                }
+            }
+            return; // Early return after showing GPT agent response preview
+        }
+
+        // If should return null (commonAgent, supervisor, or agent type), don't show anything
+        // Matching Kora-React: else if(...) return null
+        if (shouldReturnNull) {
+            if (botInputHeaderDiv) {
+                hideElementImmediately(botInputHeaderDiv);
+            }
+            if (answerContextChipContainer) {
+                hideElementImmediately(answerContextChipContainer);
+            }
+            if (composeBarWrapperDiv) {
+                hideElementImmediately(composeBarWrapperDiv);
+            }
+            this.syncContextTrueClass(false);
+            return;
+        }
+
+        // If it's an attachment, hide response-as-context-truncated-text (attachments use eva-attachment-pill instead)
+        // Matching Kora-React: attachments show in chipCard with 'attachment' class, not in response-as-context-truncated-text
+        if (isAttachment) {
+            if (answerContextChipContainer) {
+                hideElementImmediately(answerContextChipContainer);
+            }
+            this.syncContextTrueClass(false);
+            // For attachments, we don't show the response-as-context-truncated-text
+            // The attachment pill (eva-attachment-pill) is handled separately
+            // Just hide the wrapper if no other context chip is needed
+            if (composeBarWrapperDiv && !botInputHeaderDiv) {
+                hideElementImmediately(composeBarWrapperDiv);
+            }
             return;
         }
 
         /*check whether contextChipData is holding agent or answer */
         const iconElement = composeBarWrapperDiv.querySelector('.icon-image img');
         const nameElement = composeBarWrapperDiv.querySelector('.bot-input-header-left-text');
-        if (contextChipData?.isAgent) {  
-            if(botInputHeaderDiv){
+
+        if (contextChipData?.isAgent) {
+            // Ensure wrapper is visible when an agent is selected (common agent / agent context)
+            showElementImmediately(composeBarWrapperDiv, 'block');
+            if (botInputHeaderDiv) {
                 showElementImmediately(botInputHeaderDiv, 'flex');
-            }          
-            if(answerContextChipContainer){
+            }
+            if (answerContextChipContainer) {
                 hideElementImmediately(answerContextChipContainer);
-            }                       
+            }
+            this.syncContextTrueClass(false);
+
+            // Reset details only when a NEW agent is selected (avoid auto-collapse on subsequent updates)
+            try {
+                const state = store.getState()?.global;
+                const currentAgentId = state?.selectedContext?.data?.sources?.[0]?.source
+                    || contextChipData?.source
+                    || contextChipData?.docId
+                    || contextChipData?.id;
+
+                if (currentAgentId && currentAgentId !== this._detailsAgentId) {
+                    this._detailsAgentId = currentAgentId;
+                    this.detailsExpanded = false;
+                    // Don't set text here; `handleDetailsToggle` sets it when expanding.
+                }
+                this.setupDetailsToggle();
+            } catch (e) { /* noop */ }
+
             if (iconElement) {
                 const agentIcon = contextChipData?.icon;
                 if (agentIcon) {
@@ -441,22 +904,45 @@ class ComposeBar {
                     nameElement.textContent = agentName;
                 }
             }
-        } else {                        
+        } else {
+            // For non-agent contexts, check if it's an attachment first
+            // Attachments should NOT show response-as-context-truncated-text (they use eva-attachment-pill instead)
+            if (isAttachment) {
+                // Hide response-as-context-truncated-text for attachments
+                if (answerContextChipContainer) {
+                    hideElementImmediately(answerContextChipContainer);
+                }
+                this.syncContextTrueClass(false);
+                // Hide the wrapper for attachments (attachments are shown via eva-attachment-pill)
+                if (composeBarWrapperDiv) {
+                    hideElementImmediately(composeBarWrapperDiv);
+                }
+                if (botInputHeaderDiv) {
+                    hideElementImmediately(botInputHeaderDiv);
+                }
+                return; // Early return for attachments
+            }
+
+            // For other non-agent contexts (not attachments), show the answer context chip
             if (botInputHeaderDiv) {
                 hideElementImmediately(botInputHeaderDiv);
-            }                        
-            if(answerContextChipContainer){
+            }
+            if (answerContextChipContainer) {
                 showElementImmediately(answerContextChipContainer, 'flex');
+                this.syncContextTrueClass(true);
                 // Hide the bot input wrapper when response context is shown
                 hideElementImmediately(composeBarWrapperDiv);
-                    /*set answer inside response-as-context-truncated-text */
-                    const answerContextChipText = this.container.querySelector('.answer-context-chip-text');  
-                    const currentQuestionsLength = Object.values(this.questions)?.length;
-                    const currentAnswer = Object.values(this.questions)?.[currentQuestionsLength - 1]?.answer || 'Answer Context';
+                /*set answer inside response-as-context-truncated-text */
+                const answerContextChipText = this.container.querySelector('.response-as-context-question-text') ||
+                    this.container.querySelector('.answer-context-chip-text');
+                const currentQuestionsLength = Object.values(this.questions)?.length;
+                const currentAnswer = Object.values(this.questions)?.[currentQuestionsLength - 1]?.answer || 'Answer Context';
+                if (answerContextChipText) {
                     answerContextChipText.innerText = markdownToPlainText(currentAnswer);
-                    // answerContextChipText.innerHTML = this.answerContextHTML(markdownToPlainText(currentAnswer));
-                
-            }            
+                }
+                // answerContextChipText.innerHTML = this.answerContextHTML(markdownToPlainText(currentAnswer));
+
+            }
             // composeBarWrapperDiv.innerHTML = this.answerContextHTML(markdownToPlainText(currentAnswer));
             const answerContextCloseBtn = this.container.querySelector('.srCicon');
             if (answerContextCloseBtn) {
@@ -464,6 +950,7 @@ class ComposeBar {
                     answerContextCloseBtn.addEventListener('click', () => {
                         this.fileUploaderInterface.clearContext({});
                         hideElementImmediately(answerContextChipContainer);
+                        this.syncContextTrueClass(false);
                         // Hide the bot input wrapper as well when response context is closed
                         hideElementImmediately(composeBarWrapperDiv);
                     });
@@ -481,14 +968,16 @@ class ComposeBar {
 
         const endConversationBtn = composeBarWrapperDiv.querySelector('.bot-input-header-right-text');
         const agentDetailsBtn = composeBarWrapperDiv.querySelector('.details-section');
-        
+
         if (!agentDetailsBtn) return;
 
 
         if (endConversationBtn) {
             endConversationBtn.innerHTML = this.botEndConversationLoader ? '<div class="waloader"></div>' : `${createCloseIcon({ size: 10, color: "#667085" })}`;
             endConversationBtn.removeEventListener('click', this.endConversationHandler);
-            endConversationBtn.addEventListener('click', this.endConversationHandler);
+            endConversationBtn.removeEventListener('click', this.closeBannerHandler);
+            // Close button only closes the banner; does not stop response or clear context
+            endConversationBtn.addEventListener('click', this.closeBannerHandler);
         }
 
     }
@@ -514,7 +1003,7 @@ class ComposeBar {
         if (env === 'MS') {
             return `<img src="${resolveSdkAssetPath("images/MS-Icons/send-ms.svg")}" alt="Send" width="20" height="20" />`;
         }
-        return arrowCirlceUpIcon({ size: 20, color: "#101828" });
+        return arrowCirlceUpIcon({ size: 26, color: "#101828" });
     }
 
 
@@ -524,6 +1013,69 @@ class ComposeBar {
             return `<img src="${resolveSdkAssetPath("images/MS-Icons/attachment-ms.svg")}" alt="Attach" width="20" height="20" />`;
         }
         return attachmentIcon({ size: 16, color: "#0F0F0F" });
+    }
+
+    /**
+     * Show the compose bar banner for a selected agent/flow (e.g. when chosen from agents or flows list).
+     */
+    showBannerForSelectedAgent(agent) {
+        if (!agent) return;
+        this.contextChipData = { ...agent, isAgent: true };
+        this.selectedAgent = agent;
+        this.bannerClosedByUser = false;
+        const composeBarWrapperDiv = this.container.querySelector('.composebar-bot-input-wrapper');
+        if (composeBarWrapperDiv) {
+            showElementImmediately(composeBarWrapperDiv, 'block');
+            this.updateBotHeaderContent(this.contextChipData);
+            this.updatePlaceholder();
+        }
+    }
+
+    /**
+     * Trigger stop API and close the banner simultaneously (fire-and-forget API + hide).
+     */
+    handleCloseBanner(e) {
+        // Prevent the click from triggering any other handlers (e.g., details toggle)
+        try {
+            e?.stopPropagation?.();
+            e?.preventDefault?.();
+        } catch (err) { /* noop */ }
+
+        this.bannerClosedByUser = true;
+        try {
+            const state = store.getState()?.global;
+            const source = state?.selectedContext?.data?.sources?.[0];
+            this.bannerClosedAgentId =
+                source?.source ||
+                source?.docId ||
+                source?.id ||
+                this.selectedAgent?.id ||
+                this.selectedAgent?.docId ||
+                null;
+        } catch (err) {
+            this.bannerClosedAgentId = null;
+        }
+        const composeBarWrapperDiv = this.container.querySelector('.composebar-bot-input-wrapper');
+        const state = store.getState()?.global;
+        const currentQuestion = state?.currentQuestion;
+        const reqId = currentQuestion?.reqId;
+        const question = reqId ? state?.questions?.[reqId] : null;
+        if ((this.selectedAgent?.agentType === 'botAgent' || this.selectedAgent?.type === 'botAgent') && question?.status === 'threadRunning') {
+            this.chatInterface.stopBotAnswer();
+        } else {
+            this.fileUploaderInterface.clearContext();
+        }
+
+        // Reset selection state so re-selecting an agent works reliably
+        this.selectedAgent = null;
+        this.selectedCommonAgent = null;
+        this.contextChipData = null;
+        this.detailsExpanded = false;
+        this._detailsAgentId = null;
+
+        if (composeBarWrapperDiv) {
+            hideElementImmediately(composeBarWrapperDiv);
+        }
     }
 
     handleEndConversation() {
@@ -550,26 +1102,27 @@ class ComposeBar {
 
         const detailsContent = composeBarWrapper.querySelector('.details-content');
         const moreDetailsText = composeBarWrapper.querySelector('.more-details-text');
-        
+        const state = store.getState().global;
+        let getDescription = "";
+        const agentId = state.selectedContext?.data?.sources?.[0]?.source;
+        for (let key in state.allAgents.data) {
+            const agents = state.allAgents.data[key];
+            const agentFound = agents.find(el => el.id === agentId)
+            if (agentFound) {
+                getDescription = agentFound.description || "";
+                break; // Stop searching once found
+            }
+        }
+        // const enabledContextDescription = enabledContext?.description || '';
+
         if (!detailsContent || !moreDetailsText) return;
 
-        // Check if details are currently visible
-        const isDetailsVisible = detailsContent.style.display !== 'none';
-        
-        if (isDetailsVisible) {
-            // Currently showing details, user wants to hide them
-            detailsContent.style.display = 'none';
-            moreDetailsText.textContent = 'Show Details';
-            composeBarWrapper.classList.add('details-hidden');
-            // Don't hide wrapper - keep it visible so user can access "Show Details" button
-        } else {
-            // Currently hiding details, user wants to show them
-            detailsContent.style.display = 'block';
-            moreDetailsText.textContent = 'Hide Details';
-            composeBarWrapper.classList.remove('details-hidden');
-            // Ensure wrapper is visible when showing details
-            showElementImmediately(composeBarWrapper, 'block');
+        // Toggle state (persisted) and sync UI
+        this.detailsExpanded = !this.detailsExpanded;
+        if (this.detailsExpanded) {
+            detailsContent.textContent = getDescription;
         }
+        this.syncDetailsUI();
     }
 
     /**
@@ -580,17 +1133,43 @@ class ComposeBar {
         if (!composeBarWrapper) return;
 
         const infoDetailsDiv = composeBarWrapper.querySelector('.info-details');
-        if (infoDetailsDiv) {
-            infoDetailsDiv.removeEventListener('click', this.detailsToggleHandler);
-            infoDetailsDiv.addEventListener('click', this.detailsToggleHandler);
-            
-            // Ensure details content starts hidden and add corresponding class
-            const detailsContent = composeBarWrapper.querySelector('.details-content');
-            if (detailsContent) {
-                detailsContent.style.display = 'none';
-                composeBarWrapper.classList.add('details-hidden');
-                // Note: Don't hide wrapper initially - it needs to be visible for user to access "Show Details"
-            }
+        const detailsSectionBtn = composeBarWrapper.querySelector('.details-section');
+
+        const attach = (el) => {
+            if (!el) return;
+            el.removeEventListener('click', this.detailsToggleHandler);
+            el.addEventListener('click', this.detailsToggleHandler);
+        };
+
+        // Allow clicking either the text ("Show Details") or the button area.
+        attach(infoDetailsDiv);
+        attach(detailsSectionBtn);
+
+        // Do NOT force-collapse here; just sync to current state
+        this.syncDetailsUI();
+    }
+
+    /**
+     * Sync the details section DOM to `this.detailsExpanded` state.
+     * This prevents "opens then immediately collapses" when listeners are re-attached.
+     */
+    syncDetailsUI() {
+        const composeBarWrapper = this.container?.querySelector?.('.composebar-bot-input-wrapper');
+        if (!composeBarWrapper) return;
+
+        const detailsContent = composeBarWrapper.querySelector('.details-content');
+        const moreDetailsText = composeBarWrapper.querySelector('.more-details-text');
+        if (!detailsContent || !moreDetailsText) return;
+
+        if (this.detailsExpanded) {
+            detailsContent.style.display = 'block';
+            moreDetailsText.textContent = 'Hide Details';
+            composeBarWrapper.classList.remove('details-hidden');
+            showElementImmediately(composeBarWrapper, 'block');
+        } else {
+            detailsContent.style.display = 'none';
+            moreDetailsText.textContent = 'Show Details';
+            composeBarWrapper.classList.add('details-hidden');
         }
     }
 
@@ -604,6 +1183,9 @@ class ComposeBar {
             .replace(/>/g, '&gt;')
             .replace(/"/g, '&quot;')
             .replace(/'/g, '&#39;');
+
+        const uploadInProgress = (this.attachments || []).some(a => !!a?.loading);
+        const enabledAgents = store.getState().global.enabledAgents?.find((el) => el.id === store.getState()?.global.selectedContext?.data?.sources?.[0]?.source);
 
 
         this.container.innerHTML = `
@@ -642,13 +1224,13 @@ class ComposeBar {
                                     </button>
                                 </div>
                             </div> 
-                            <div class="details-content"></div>
+                            <div class="details-content">${enabledAgents?.description}</div>
                                               
                         </div>                        
                         
                         <div class="eva-input-container${this.attachments?.length ? ' file-uploaded' : ''}">
                             <div class="response-as-context-truncated-text" style="display: none;">
-                                <div class='arrow-down-icon'>${CurvedArrowForPreview({ size: 12, color: "#101828" })}</div>                                
+                                ${CurvedArrowForPreview({ size: 12, color: "#101828" })}
                                 <div class="answer-context-chip-text response-as-context-question-text"></div>
                                 <button class="srCicon">${createCloseIcon({ size: 10, color: "#667085" })}</button>
                             </div>         
@@ -672,16 +1254,31 @@ class ComposeBar {
                             </div>
                             <div class="right-actions">
                                 <sl-tooltip>
-                                    <div slot="content" class="caTooltips">5 attachments, max 10MB each. <br/>PDF, XLS, DOC, CSV, TXT formats.</div>
+                                    <div slot="content" class="caTooltips" data-eva-attachment-tooltip-content>
+                                        ${uploadInProgress ? 'Please wait. Upload is in progress' : '5 attachments, max 10MB each. <br/>PDF, XLS, DOC, CSV, TXT formats.'}
+                                    </div>
                                     <button class="eva-input-action-btn attachment-btn" data-eva-attachment>
                                         ${this.getAttachmentButtonIcon()}
                                     </button>
                                 </sl-tooltip>
                                 ${!this.isMSEnv ? `<sl-tooltip>
-                                    <div slot="content" class="caTooltips">Search using voice</div>
-                                    <button class="eva-input-action-btn voice-btn" data-eva-speech>
-                                        ${microphoneIcon({ size: 16, color: "#0F0F0F" })}
-                                    </button>
+                                    <div slot="content" class="caTooltips" data-eva-voice-tooltip>
+                                        ${this.isRecording && this.isSpeechHovering ? 'Stop listening' : this.isRecording ? 'Stop listening' : 'Search using voice'}
+                                    </div>
+                                    <div 
+                                        class="eva-input-action-btn voice-btn speakIcon${this.isRecording ? ' animatedImge' : ''}" 
+                                        data-eva-speech
+                                    >
+                                        ${this.isRecording ? (
+                    this.isSpeechHovering ?
+                        Close({ size: 12, color: "#424242" }) :
+                        `<div class="sonar-wrapper">
+                                                                            <img src="images/waves-animation.gif" alt="" />
+                                                                        </div>`
+                ) : (
+                    microphoneIcon({ size: 16, color: "#0F0F0F" })
+                )}
+                                    </div>
                                 </sl-tooltip>` : ''}
                                 <button class="eva-input-action-btn send-btn" data-eva-send title="Send">
                                     ${this.getSendButtonIcon()}
@@ -720,6 +1317,7 @@ class ComposeBar {
                                             class="agentSearchBar" 
                                             autocomplete="off" 
                                             value="" 
+                                            autofocus
                                             data-eva-agent-search-input-box                                            
                                             />
                                         </div>
@@ -838,7 +1436,42 @@ class ComposeBar {
 
         // Attachment button event
         if (attachmentBtn) {
-            attachmentBtn.addEventListener('click', () => this.handleAttachment());
+            attachmentBtn.addEventListener('click', () => {
+                const inProgressAttr = attachmentBtn.getAttribute('data-upload-in-progress') === 'true';
+                const inProgress = inProgressAttr || this.isAttachmentUploadInProgress();
+
+                // If upload is in progress, block opening dialog and show tooltip message.
+                if (inProgress) {
+                    try {
+                        const tooltip = attachmentBtn.closest('sl-tooltip');
+                        if (tooltip && typeof tooltip.show === 'function') {
+                            tooltip.show();
+                        }
+                        // Auto-hide after a short delay so it doesn't stick.
+                        setTimeout(() => {
+                            try {
+                                if (tooltip && typeof tooltip.hide === 'function') {
+                                    tooltip.hide();
+                                }
+                            } catch (e) { /* noop */ }
+                        }, 1500);
+                    } catch (e) { /* noop */ }
+                    return;
+                }
+
+                // Shoelace tooltip can remain open on click due to focus.
+                // Hide it immediately on click for better UX.
+                try {
+                    const tooltip = attachmentBtn.closest('sl-tooltip');
+                    if (tooltip && typeof tooltip.hide === 'function') {
+                        tooltip.hide();
+                    }
+                } catch (e) { /* noop */ }
+
+                try { attachmentBtn.blur(); } catch (e) { /* noop */ }
+
+                this.handleAttachment();
+            });
         }
 
         if (uploadFileBtn) {
@@ -870,6 +1503,14 @@ class ComposeBar {
         // Speech to text button event
         if (speechBtn) {
             speechBtn.addEventListener('click', () => this.handleSpeechToText());
+            speechBtn.addEventListener('mouseenter', () => {
+                this.isSpeechHovering = true;
+                this.updateSpeechButton();
+            });
+            speechBtn.addEventListener('mouseleave', () => {
+                this.isSpeechHovering = false;
+                this.updateSpeechButton();
+            });
         }
 
         // Override dialog button events
@@ -914,6 +1555,10 @@ class ComposeBar {
             this.fileUploaderInterface.clearContext();
         }
         this.selectedAgent = null;
+        this.selectedCommonAgent = null;
+        this.contextChipData = null;
+        this.detailsExpanded = false;
+        this._detailsAgentId = null;
         this.setCommonAgents();
         this.renderCommonAgents();
         /*update the placeholder name to default */
@@ -926,12 +1571,7 @@ class ComposeBar {
      */
     handleInputChange(event) {
         this.input = event.target.value;
-        if (this.quickActions?.length > 0) {
-            this.quickActions = [];
-            setTimeout(() => {
-                this.renderQuickReplies();
-            }, 0);
-        }
+        this.updateQuickRepliesVisibility();
         this.autoResize(event.target);
         this.updateMicrophoneButton();
 
@@ -1092,11 +1732,11 @@ class ComposeBar {
         // Target the textarea with class "eva-compose-textarea" (rows='1', single line initially)
         const composeTextarea = this.container.querySelector('.eva-compose-textarea');
         if (!composeTextarea) return;
-        
+
         // Get the input container to add class when textarea becomes multiline
         const inputContainer = this.container.querySelector('.eva-input-container');
         if (!inputContainer) return;
-        
+
         // Temporarily remove the class to measure in base layout state
         // This prevents layout shift from affecting the measurement
         const hadMultilineClass = inputContainer.classList.contains('textarea-multiline');
@@ -1105,23 +1745,30 @@ class ComposeBar {
             // Force a reflow to ensure layout has updated before measuring
             void inputContainer.offsetHeight;
         }
-        
+
         // Measure scrollHeight in the base layout state (without multiline class)
         composeTextarea.style.height = 'auto';
         const scrollHeight = composeTextarea.scrollHeight;
         const newHeight = Math.min(scrollHeight, 150) + 'px';
         composeTextarea.style.height = newHeight;
-        
-        // Get the computed height after setting it
+
+        // Determine "multiline" based on actual textarea metrics, not a fixed rem.
+        // (Fixed 1.5rem breaks when CSS sets a taller single-line textarea via padding/min-height.)
         const computedStyle = getComputedStyle(composeTextarea);
-        const currentHeight = parseFloat(computedStyle.height);
-        
-        // Convert 1.5rem to pixels (1rem = root font size, typically 16px)
-        const rootFontSize = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
-        const singleLineHeight = 1.5 * rootFontSize; // 1.5rem in pixels (single line height)
-        
-        // When single line goes to multiline, add class to eva-input-container
-        if (currentHeight > singleLineHeight) {
+        const paddingTop = parseFloat(computedStyle.paddingTop) || 0;
+        const paddingBottom = parseFloat(computedStyle.paddingBottom) || 0;
+        const fontSize = parseFloat(computedStyle.fontSize) || 16;
+        let lineHeight = parseFloat(computedStyle.lineHeight);
+        if (!Number.isFinite(lineHeight)) {
+            // `line-height: normal` fallback
+            lineHeight = fontSize * 1.2;
+        }
+
+        // For a true single-line textarea, scrollHeight ~= lineHeight + vertical padding
+        const singleLineScrollHeight = lineHeight + paddingTop + paddingBottom;
+        const isMultiline = scrollHeight > (singleLineScrollHeight + 1); // +1px tolerance
+
+        if (isMultiline) {
             inputContainer.classList.add('textarea-multiline');
         } else {
             // Remove class when it reverts back to single line
@@ -1154,6 +1801,17 @@ class ComposeBar {
      * Handle new chat action
      */
     handleNewChat() {
+        // Clear attachments before starting new chat
+        this.attachments = [];
+        const attachmentsContainer = this.container.querySelector('[data-eva-attachments]');
+        if (attachmentsContainer) {
+            attachmentsContainer.innerHTML = '';
+            const inputContainer = attachmentsContainer.closest('.eva-input-container');
+            if (inputContainer) {
+                inputContainer.classList.remove('file-uploaded');
+            }
+        }
+        // Now call NewChat which clears the Redux state
         NewChat();
     }
 
@@ -1217,25 +1875,14 @@ class ComposeBar {
      */
     handleSpeechToText() {
 
-        const textarea = this.container.querySelector('[data-eva-input]');
-        const actualValue = textarea ? textarea.value : '';
-
-
-        const hasInput = actualValue.length > 0;
-
-        if (hasInput) {
-            this.clearInput();
-            return;
-        }
-
-
         if (!this.recognition) {
             alert('Speech recognition is not supported in this browser');
             return;
         }
 
         if (this.isRecording) {
-
+            this.isRecording = false;
+            this.updateSpeechButton();
             this.recognition.stop();
         } else {
 
@@ -1265,6 +1912,7 @@ class ComposeBar {
             this.input = '';
             this.autoResize(textarea);
             this.updateMicrophoneButton();
+            this.updateQuickRepliesVisibility();
         } else {
             console.log('textarea not found!');
         }
@@ -1298,10 +1946,21 @@ class ComposeBar {
     updateCommonAgentsInDialog() {
         const dialog = this.container.querySelector('[data-eva-dialog]');
         if (!dialog) return;
-        
+
         const commonAgentsDialog = dialog.querySelector('[data-eva-common-agents-dialog]');
         if (!commonAgentsDialog) return;
-        
+
+        // Always derive common agents from store so dialog doesn't go empty
+        // when an agent context is selected (selectedContext exists).
+        try {
+            const state = store.getState();
+            const commonAgentsFromStore =
+                state?.global?.allAgents?.data?.commonAgents?.filter(agent => !agent.disabled) || [];
+            this.commonAgents = commonAgentsFromStore;
+        } catch (e) {
+            // keep existing this.commonAgents
+        }
+
         // Render common agents directly in the dialog
         commonAgentsDialog.innerHTML = this.commonAgents.map(agent => {
             return `<div class="agents-action-item ${this.selectedCommonAgent?.id === agent.id ? 'active' : ''}" data-eva-common-agents-action data-agent-id="${agent.id}">
@@ -1488,10 +2147,18 @@ class ComposeBar {
         const currentValue = textarea ? textarea.value : '';
         const wasFocused = textarea ? document.activeElement === textarea : false;
         const cursorPosition = textarea ? textarea.selectionStart : 0;
-        const currentAttachments = [...this.attachments];
+        const currentAttachments = [...(this.attachments || [])];
+
+        // Check if attachment dialog was open
+        const attachmentDialog = this.container.querySelector('[data-eva-attachment-dialog]');
+        const wasAttachmentDialogOpen = attachmentDialog?.hasAttribute('open') || attachmentDialog?.open;
+
         // Re-render
         this.render();
         this.renderCommonAgents();
+
+        // Re-attach event listeners since render() overwrites innerHTML
+        this.attachEventListeners();
 
         // Restore textarea state
         const newTextarea = this.container.querySelector('[data-eva-input]');
@@ -1508,8 +2175,20 @@ class ComposeBar {
         // Restore attachments if they exist
         if (currentAttachments.length > 0) {
             this.attachments = currentAttachments;
+            this.renderAttachments();
         }
 
+        // Restore attachment dialog state if it was open
+        if (wasAttachmentDialogOpen) {
+            const newAttachmentDialog = this.container.querySelector('[data-eva-attachment-dialog]');
+            if (newAttachmentDialog) {
+                if (typeof newAttachmentDialog.show === 'function') {
+                    newAttachmentDialog.show();
+                } else {
+                    newAttachmentDialog.setAttribute('open', '');
+                }
+            }
+        }
     }
 
     /**
@@ -1584,12 +2263,13 @@ class ComposeBar {
 
         // Continue with agent invocation
         if (this.selectedAgent) {
+            const agent = this.selectedAgent;
             try {
-                InvokeAgent(this.selectedAgent);
+                InvokeAgent(agent);
+                this.showBannerForSelectedAgent(agent);
             } catch (e) {
-                console.error(`InvokeAgent failed for ${this.selectedAgent.name}`, e);
+                console.error(`InvokeAgent failed for ${agent.name}`, e);
             }
-            this.selectedAgent = null;
         }
     }
 
@@ -1724,6 +2404,7 @@ class ComposeBar {
                 } else {
                     this.commonAgents = [];
                     try { InvokeAgent(agent); } catch (e) { console.error('InvokeAgent failed', e); }
+                    this.showBannerForSelectedAgent(agent);
                 }
                 this.handleCloseDialog();
             });
@@ -1735,12 +2416,31 @@ class ComposeBar {
      */
     updateSpeechButton() {
         const speechBtn = this.container.querySelector('[data-eva-speech]');
+        const tooltip = speechBtn?.closest('sl-tooltip');
+        const tooltipContent = tooltip?.querySelector('[data-eva-voice-tooltip]');
+
         if (speechBtn) {
             if (this.isRecording) {
-                speechBtn.classList.add('recording');
-                speechBtn.setAttribute('title', 'Stop recording');
+                speechBtn.classList.add('animatedImge', 'recording');
+
+                if (this.isSpeechHovering) {
+                    speechBtn.innerHTML = Close({ size: 12, color: "#424242" });
+                    if (tooltipContent) tooltipContent.textContent = 'Stop listening';
+                } else {
+                    speechBtn.innerHTML = `
+                        <div class="sonar-wrapper">
+                            <div class="sonar-wave"></div>
+                            <div class="sonar-wave"></div>
+                            <img src="images/waves-animation.gif" alt="" />
+                        </div>
+                    `;
+                    if (tooltipContent) tooltipContent.textContent = 'Stop listening';
+                }
+                speechBtn.setAttribute('title', 'Stop listening');
             } else {
-                speechBtn.classList.remove('recording');
+                speechBtn.classList.remove('animatedImge', 'recording');
+                speechBtn.innerHTML = microphoneIcon({ size: 16, color: "#0F0F0F" });
+                if (tooltipContent) tooltipContent.textContent = 'Search using voice';
                 speechBtn.setAttribute('title', 'Voice input');
             }
         }
@@ -1832,7 +2532,13 @@ class ComposeBar {
             }
 
             this.attachments = this.attachments.filter(f => String(f?.uID || f?.componentId || f?.docId) !== String(uid));
+            this._lastAttachmentPillsCount = (this.attachments || []).length;
             this.renderAttachments();
+
+            // Requirement: when an attachment pill is removed, hide quick replies
+            this.suppressQuickReplies = true;
+            this.quickActions = [];
+            this.renderQuickReplies();
 
         } catch (err) {
             console.warn('Failed to remove attachment:', err);
@@ -1899,6 +2605,10 @@ class ComposeBar {
         if (typeof this.fileUploaderUnsubscribe === 'function') {
             try { this.fileUploaderUnsubscribe(); } catch (e) { }
             this.fileUploaderUnsubscribe = null;
+        }
+        if (typeof this.selectedContextUnsubscribe === 'function') {
+            try { this.selectedContextUnsubscribe(); } catch (e) { }
+            this.selectedContextUnsubscribe = null;
         }
     }
 }

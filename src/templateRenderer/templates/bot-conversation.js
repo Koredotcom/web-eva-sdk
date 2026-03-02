@@ -2,6 +2,7 @@
 import { isEmpty } from "lodash";
 import BotConversation from "../../chat/botAgent/getBotConversation";
 import TemplateComponents from "./index";
+import * as copyQuestion from "./copy-question";
 import { encodeHtml } from "../../utils/helpers";
 import customMarkdownRenderer from "../utils/customMarkdownRenderer";
 import { MessageRenderer } from "../../plugins/Markdown/message-renderer";
@@ -21,8 +22,7 @@ function renderUserQuestion(question, userIconTemplate, conversation) {
 	if (question) {
 		return `<div class="message-bubble question" id = "${conversation?.messageId}">
 					<div class="message-content">
-						<div class="message-text">${encodeHtml(question)}</div>
-						${userIconTemplate ? userIconTemplate : ""}
+						<div class="message-text">${encodeHtml(question)}</div>						
 					</div>
 				</div>`;
 	}
@@ -31,20 +31,21 @@ function renderUserQuestion(question, userIconTemplate, conversation) {
 
 function renderAssistantQuestion(conversation, assistantIconTemplate) {
 	let question = conversation?.question;
-	if(conversation?.template_html){
+	if (conversation?.template_html) {
 		question = conversation?.template_html;
 	}
 	return `<div class="bot-flex-wrapper answer-container">
 				${assistantIconTemplate}
 				<div class='answerCntr'>					
 					<div class="assistant-question-container ${conversation?.status === 'completed' ? 'completed-assistant-question-container' : ''}">
+						${copyQuestion.render(conversation, 'answer')}
 						${question ? MessageRenderer(question) : ""}
 					</div>
 				</div>
 			</div>`;
 }
 
-function renderConversationAgentIcon(data){
+function renderConversationAgentIcon(data) {
 	return `
 		<div class='bot-conversation-icon-block'>                                    
                                         <span class='icon-block'><img src=${data?.sources?.[0]?.icon || data?.agentIcon} alt="" /></span>
@@ -62,9 +63,9 @@ function createConversationHTML(
 ) {
 
 	if (conversation?.status === "in-progress") {
-		let content = "";		
+		let content = "";
 		if (conversation?.templateType === "search_answer") {
-			content += renderAssistantQuestion(conversation, assistantIconTemplate);			
+			content += renderAssistantQuestion(conversation, assistantIconTemplate);
 			if (conversation?.answer) {
 				content += `<br/>`;
 				content += renderUserQuestion(
@@ -83,7 +84,7 @@ function createConversationHTML(
 					<div class="min-view-container"></div>
 			</div>`;
 			}
-		}	
+		}
 		if (conversation?.templateType === "bot_template") {
 			content += `
 			<div class="bot-flex-wrapper">				
@@ -102,7 +103,7 @@ function createConversationHTML(
 					<br/>
                 </div>
             `;
-		} 
+		}
 		if (conversation?.templateType === "bot_template") {
 			return `
 			<div class="completed">
@@ -124,13 +125,13 @@ function createConversationHTML(
 		// 		</div>
 		// 	`;
 		// }
-	}	
+	}
 	return "";
 }
 /*this function returns the div id needed for the setUpTemplates function to render the template html based on the id */
 function handleBotTemplates(conversation, props) {
 	/*if the template_type is hold_conversation invoke holdConversationTemplate.render, else return the div id */
-	if(conversation?.templateType === "hold_conversation"){
+	if (conversation?.templateType === "hold_conversation") {
 		return holdConversationTemplate.render(conversation);
 	}
 	return `
@@ -192,7 +193,7 @@ function setupEventListeners(botConversation, props) {
 		button.addEventListener("click", (event) => {
 			event.preventDefault();
 			event.stopPropagation();
-			
+
 			const messageId = event.target.closest('.expandAreaBlock')?.dataset?.messageId;
 			const isCollapsed = event.target.closest('.expandAreaBlock')?.dataset?.collapsed === "true";
 			const contentDiv = document.querySelector(`.bot-conversation-content[data-message-id="${messageId}"]`);
@@ -219,25 +220,25 @@ function setupEventListeners(botConversation, props) {
 }
 
 const renderQuickRepliesTemplate = (payload) => {
-    const payloadText = payload?.text;
-    const templateHTML = `
+	const payloadText = payload?.text;
+	const templateHTML = `
         <div class="usrsChipsList quickRepliesTemplate">
             <div class="title">${payloadText ? payloadText : ''}</div>
             ${payload?.quick_replies
-                ?.map((data) => `<div class="userChip">${data?.title}</div>`)
-                .join("")}
+			?.map((data) => `<div class="userChip">${data?.title}</div>`)
+			.join("")}
         </div>
     `;
 
-    // Convert the string to a DOM element
-    const templateFragment = document
-        .createRange()
-        .createContextualFragment(templateHTML);
+	// Convert the string to a DOM element
+	const templateFragment = document
+		.createRange()
+		.createContextualFragment(templateHTML);
 
-    return templateFragment;
+	return templateFragment;
 };
 export function setupTemplates(botConversation) {
-	
+
 	if (!isEmpty(botConversation)) {
 		const templateConversations = Object.values(botConversation)?.filter(
 			(conversation) => conversation?.hasOwnProperty("template_html")
@@ -245,14 +246,14 @@ export function setupTemplates(botConversation) {
 
 		if (templateConversations?.length) {
 			templateConversations.forEach((conversation) => {
-				if(conversation?.templateType === "bot_template" && conversation?.content?.payload?.template_type === "quick_replies"){
+				if (conversation?.templateType === "bot_template" && conversation?.content?.payload?.template_type === "quick_replies") {
 					if (!conversation.template_html?.querySelector(".quickRepliesTemplate"))
-					  conversation.template_html?.appendChild(renderQuickRepliesTemplate(conversation?.content?.payload))
+						conversation.template_html?.appendChild(renderQuickRepliesTemplate(conversation?.content?.payload))
 				}
 				const templateDiv = document.querySelector(
 					`.botTemplate-${conversation?.messageId}`
 				);
-				if (templateDiv && conversation?.template_html) {					
+				if (templateDiv && conversation?.template_html) {
 					if (!templateDiv.contains(conversation.template_html)) {
 						templateDiv.appendChild(conversation.template_html);
 					}
@@ -273,7 +274,7 @@ const renderThoughts = (conversation, props) => {
 				${expandThoughts(conversation)}
 			</div>
 		</div>
-	`;	
+	`;
 }
 
 const expandThoughts = (conversation) => {
@@ -281,7 +282,7 @@ const expandThoughts = (conversation) => {
         <div class='query-response-flow-items'>
             ${conversation?.thoughts?.map((thought, index) => {
 		return `
-		<div class='thoughtsContent' key=${index} style="animation-delay: ${ index * 0.2 } s">
+		<div class='thoughtsContent' key=${index} style="animation-delay: ${index * 0.2} s">
 			<div class='thoughts-content-wrapper'> 
 				<div class='border-line'></div>
 				<div class='thought-text'>${thought?.content}</div>				
@@ -291,7 +292,7 @@ const expandThoughts = (conversation) => {
 			<div class='thought-loader'>
 				<div class="dot-flashing"></div>
 			</div>
-		</div>`:''):''}                  
+		</div>`: '') : ''}                  
                 `;
 	}).join('')}
         </div>
@@ -299,11 +300,11 @@ const expandThoughts = (conversation) => {
 	return html;
 }
 
-const setupThoughtsToggle = (messageId, thoughtTime,  retryCount = 0 ) => {	
+const setupThoughtsToggle = (messageId, thoughtTime, retryCount = 0) => {
 	const maxRetries = 10;
-	const retryDelay = 500;	
+	const retryDelay = 500;
 	const thoughtWrapper = document.getElementById(`thought-wrapper-${messageId}`);
-	
+
 	if (!thoughtWrapper) {
 		if (retryCount < maxRetries) {
 			setTimeout(() => setupThoughtsToggle(messageId, thoughtTime, retryCount + 1), retryDelay);
@@ -314,16 +315,16 @@ const setupThoughtsToggle = (messageId, thoughtTime,  retryCount = 0 ) => {
 
 	const toggleThoughts = (event, thoughtTime) => {
 		event.preventDefault();
-		event.stopPropagation();		
+		event.stopPropagation();
 		const isCurrentlyCollapsed = thoughtWrapper.classList.contains('collapsed');
 		const iconSpan = thoughtWrapper.querySelector('.spanIcon');
 		const thoughtsHeader = document.getElementById(`thoughts-header-${messageId}`);
 		if (isCurrentlyCollapsed) {
-			try{
+			try {
 				thoughtWrapper.classList.remove('collapsed');
-				thoughtWrapper.classList.add('expanded');			
-				
-				
+				thoughtWrapper.classList.add('expanded');
+
+
 				// Ensure icon rotation for expanded state (chevron down)
 				if (iconSpan) {
 					iconSpan.style.transform = 'rotate(90deg)';
@@ -331,7 +332,7 @@ const setupThoughtsToggle = (messageId, thoughtTime,  retryCount = 0 ) => {
 				}
 				thoughtsHeader.textContent = `Thoughts`;
 			}
-			catch(error){
+			catch (error) {
 				console.log('error', error);
 			}
 
@@ -339,9 +340,9 @@ const setupThoughtsToggle = (messageId, thoughtTime,  retryCount = 0 ) => {
 			thoughtWrapper.classList.remove('expanded');
 			thoughtWrapper.classList.add('collapsed');
 			/* update the thoughts header text */
-			
+
 			thoughtsHeader.textContent = `Thoughts for ${thoughtTime} secs`;
-			
+
 			// Ensure icon rotation for collapsed state (chevron right)
 			if (iconSpan) {
 				iconSpan.style.transform = 'rotate(0deg)';
@@ -354,10 +355,10 @@ const setupThoughtsToggle = (messageId, thoughtTime,  retryCount = 0 ) => {
 	if (thoughtWrapper._toggleHandler) {
 		thoughtWrapper.removeEventListener('click', thoughtWrapper._toggleHandler);
 	}
-	
+
 	// Create and store the handler function
 	thoughtWrapper._toggleHandler = (event) => toggleThoughts(event, thoughtTime);
-	
+
 	// Add click event listener with thoughtTime passed correctly
 	thoughtWrapper.addEventListener('click', thoughtWrapper._toggleHandler);
 }
@@ -383,7 +384,7 @@ function renderBotConversation(
 	// 		</div>
 	// 	`);
 	// }else{
-		
+
 
 	// }
 
@@ -400,7 +401,7 @@ function renderBotConversation(
 		.join("");
 	// Find conversation with thoughts
 	const conversationWithThoughts = Object.values(botConversation || {}).find(conv => conv?.thoughts?.length > 0);
-	
+
 	return `
 		${renderConversationAgentIcon(props)}		
         <div class="bot-conversation-wrapper ${props?.status === 'completed' ? 'completed' : ''}" data-message-id="${props?.messageId} id="bot-conversation-wrapper">
@@ -428,7 +429,7 @@ function renderBotConversation(
 			</div>		
         </div>	
     `;
-		
+
 }
 
 // Main function to be exported
@@ -447,9 +448,9 @@ export function render(
 	// Function to setup all thought toggles
 	const setupAllThoughtToggles = () => {
 		const conversations = Object.values(props?.botConversation || {});
-		
+
 		conversations.forEach(conversation => {
-			if (conversation?.thoughts?.length > 0) {				
+			if (conversation?.thoughts?.length > 0) {
 				setupThoughtsToggle(conversation?.messageId, conversation?.thoughts?.[conversation?.thoughts?.length - 1]?.thoughtTime);
 			}
 		});
@@ -457,17 +458,17 @@ export function render(
 
 	// Try immediately first
 	setupAllThoughtToggles();
-	
+
 	// Also try after DOM is more likely to be ready
 	let timer;
 	timer = setTimeout(() => {
 		setupEventListeners(props?.botConversation, props);
 		setupTemplates(props?.botConversation);
-		
+
 		// Try again in case some elements were added later
 		setupAllThoughtToggles();
 	}, 1000);
-	
+
 	// Also use MutationObserver to catch dynamically added elements
 	if (typeof window !== 'undefined' && window.MutationObserver) {
 		const observer = new MutationObserver((mutations) => {
@@ -482,15 +483,15 @@ export function render(
 				});
 			});
 		});
-		
+
 		observer.observe(document.body, {
 			childList: true,
 			subtree: true
 		});
-		
+
 		// Clean up observer after 10 seconds to avoid memory leaks
 		setTimeout(() => observer.disconnect(), 10000);
 	}
 	return html;
 }
-export default { render , setupTemplates, setupThoughtsToggle };
+export default { render, setupTemplates, setupThoughtsToggle };

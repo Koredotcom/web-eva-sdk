@@ -1,4 +1,8 @@
-// Import the CSS file
+// Styles (keep ordering: vendor CSS first, then SDK overrides)
+import 'choices.js/public/assets/styles/choices.css';
+import './styles/input-text.css';
+import './styles/buttons.css';
+import './styles/dropdown.css';
 import './styles/sdk.scss';
 import './styles/tom-select.css';
 

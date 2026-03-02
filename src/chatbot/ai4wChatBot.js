@@ -4,6 +4,7 @@ import NewChat from "../chat/NewChat";
 import { JoinChatThread } from "../chat";
 import { unHideRecentAgentsDiv, hideRecentAgentsDiv } from "../LandingPageRecentAgents";
 import { createHistorySidebar, initHistoryList } from "./chatbotHistory";
+import store from "../redux/store";
 
 const DEFAULT_CONTAINER_ID = "eva-sdk-chatbot-container";
 const DEFAULT_TITLE = "Eva Assistant";
@@ -12,6 +13,8 @@ const state = {
   initialized: false,
   isOpen: false,
   isHistoryOpen: false,
+  sourcesDrawerObserver: null,
+  composebarObserver: null,
   elements: {
     button: null,
     panel: null,
@@ -31,6 +34,175 @@ const state = {
 
 const ensureDomAvailable = () =>
   typeof window !== "undefined" && typeof document !== "undefined";
+
+const BODY_CLASS_MACOS = "eva-sdk--macos";
+
+const isMacOS = () => {
+  if (typeof navigator === "undefined") return false;
+  const platform = navigator.userAgentData?.platform || navigator.platform || "";
+  const ua = navigator.userAgent || "";
+  return /mac/i.test(platform) || /macintosh/i.test(ua);
+};
+
+const ensureMacOSBodyClass = () => {
+  if (!ensureDomAvailable()) return;
+  if (!isMacOS()) return;
+  document.body.classList.add(BODY_CLASS_MACOS);
+};
+
+/**
+ * Route agent-selection popup into the chatbot panel instead of <body>.
+ * This keeps the popup scoped to the chatbot element tree.
+ */
+const ensureAgentSelectionPopupPortal = () => {
+  if (!ensureDomAvailable()) return;
+  if (state.__agentPopupPatched) return;
+
+  const getPortal = () => {
+    const panel = state.elements.panel;
+    if (!panel) return null;
+    let portal = panel.querySelector("#eva-sdk-agent-popup-portal");
+    if (!portal) {
+      portal = document.createElement("div");
+      portal.id = "eva-sdk-agent-popup-portal";
+      // Overlay layer inside panel; allows popups to position freely.
+      portal.style.position = "fixed";
+      portal.style.inset = "0";
+      portal.style.zIndex = "999999";
+      portal.style.pointerEvents = "none";
+      panel.appendChild(portal);
+    }
+    return portal;
+  };
+
+  const origAppendChild = document.body.appendChild.bind(document.body);
+  document.body.appendChild = (node) => {
+    try {
+      if (
+        node &&
+        node.nodeType === 1 &&
+        node.classList &&
+        node.classList.contains("agent-selection-popup")
+      ) {
+        const portal = getPortal();
+        if (portal) {
+          // Allow interactions inside the popup
+          node.style.pointerEvents = "auto";
+          return portal.appendChild(node);
+        }
+      }
+    } catch (e) {
+      // fall through
+    }
+    return origAppendChild(node);
+  };
+
+  state.__agentPopupPatched = true;
+};
+
+const QUESTIONS_WITH_BOT_WRAPPER_CLASS =
+  "eva-sdk-questions-container--with-bot-input-wrapper";
+
+const isElementDisplayBlock = (el) => {
+  if (!el) return false;
+  const style = window.getComputedStyle?.(el);
+  if (!style) return false;
+  return (
+    style.display === "block" &&
+    style.visibility !== "hidden" &&
+    style.opacity !== "0"
+  );
+};
+
+/**
+ * When composebar-bot-input-wrapper is present & visible, add a class on questions container.
+ */
+const syncQuestionsContainerClass = () => {
+  const root = state.elements.panel || document;
+  const botWrapper = root.querySelector?.(".composebar-bot-input-wrapper");
+  const questionsContainer =
+    root.querySelector?.(".questions-container") ||
+    root.querySelector?.("#questions-container") ||
+    document.querySelector?.(".questions-container") ||
+    document.querySelector?.("#questions-container");
+  const questionsContainerById =
+    root.querySelector?.("#questions-container") ||
+    document.querySelector?.("#questions-container");
+
+  if (!questionsContainer) return;
+
+  const enabled = !!botWrapper && isElementDisplayBlock(botWrapper);
+  questionsContainer.classList.toggle(QUESTIONS_WITH_BOT_WRAPPER_CLASS, enabled);
+
+  // Specifically adjust #questions-container spacing when bot wrapper is shown
+  if (questionsContainerById) {
+    if (!enabled) {
+      questionsContainerById.style.paddingBottom = "";
+    } else {
+      const remToPx =
+        parseFloat(window.getComputedStyle(document.documentElement).fontSize) ||
+        16;
+      const wrapperHeight = botWrapper?.offsetHeight || 0;
+      questionsContainerById.style.paddingBottom = `${wrapperHeight + remToPx}px`;
+    }
+  }
+};
+
+const ensureComposebarBotWrapperWatcher = () => {
+  if (state.composebarObserver) return;
+
+  // Initial sync (in case elements already exist)
+  try {
+    syncQuestionsContainerClass();
+  } catch (e) {
+    // ignore
+  }
+
+  const target = state.elements.panel || document.body;
+  const observer = new MutationObserver(() => {
+    // Keep this very cheap; the function does a few querySelector calls.
+    syncQuestionsContainerClass();
+  });
+
+  observer.observe(target, {
+    childList: true,
+    subtree: true,
+    attributes: true,
+    attributeFilter: ["class", "style", "hidden", "aria-hidden"],
+  });
+
+  state.composebarObserver = observer;
+};
+
+/**
+ * Force Shoelace Sources drawer to use bottom placement.
+ * Note: The drawer is created elsewhere (SourcesSidebar), so we enforce it here at runtime.
+ */
+const enforceSourcesDrawerBottomPlacement = () => {
+  const drawer = document.getElementById("sources-sidebar-drawer");
+  if (!drawer) return false;
+
+  // Shoelace supports: start | end | top | bottom
+  drawer.setAttribute("placement", "bottom");
+  return true;
+};
+
+/**
+ * Observe DOM for Sources drawer creation and enforce placement.
+ */
+const ensureSourcesDrawerPlacementWatcher = () => {
+  if (state.sourcesDrawerObserver) return;
+
+  // Apply immediately if it already exists
+  enforceSourcesDrawerBottomPlacement();
+
+  const observer = new MutationObserver(() => {
+    enforceSourcesDrawerBottomPlacement();
+  });
+
+  observer.observe(document.body, { childList: true, subtree: true });
+  state.sourcesDrawerObserver = observer;
+};
 
 const createButton = (label) => {
   const button = document.createElement("button");
@@ -81,6 +253,9 @@ const createPanel = (titleText) => {
   chatHistoryButton.type = "button";
   chatHistoryButton.className = "sdk-chatbot-newchat sdk-chatbot-chat-history";
   chatHistoryButton.textContent = "Chat History";
+  if (store.getState().global.disableHistorySectionInChatSection) {
+    chatHistoryButton.style.display = "none";
+  }
 
   const headerButtonContainer = document.createElement("div");
   headerButtonContainer.className = "eva-sdk-chatbot-header-buttons";
@@ -242,6 +417,9 @@ const ensureElements = (config = {}) => {
     historyContent,
   };
 
+  // Ensure agent-selection popup is scoped inside chatbot panel
+  ensureAgentSelectionPopupPortal();
+
   const listContainer = historyContent?.querySelector(".eva-sdk-chatbot-history-list");
   if (listContainer && !state.historyUnsubscribe) {
     const showThreadLoader = () => {
@@ -304,6 +482,9 @@ const ensureElements = (config = {}) => {
   historyCloseButton.addEventListener("click", () => {
     closeHistory();
   });
+
+  // Keep questions container in sync with composebar header wrapper visibility
+  ensureComposebarBotWrapperWatcher();
 };
 
 const ensureChatContainer = (containerId) => {
@@ -365,12 +546,15 @@ export const init = (config = {}) => {
     return null;
   }
 
+  ensureMacOSBodyClass();
+
   const containerId = config?.containerId || DEFAULT_CONTAINER_ID;
   const sdkAlreadyInitialized =
     typeof window !== "undefined" && window.__EVA_SDK_INITIALIZED__;
 
   ensureElements(config);
   ensureChatContainer(containerId);
+  ensureSourcesDrawerPlacementWatcher();
 
   initializeSDK({
     ...config,
@@ -396,6 +580,9 @@ export const open = () => {
     return;
   }
 
+  // Re-enforce in case something changed between sessions
+  enforceSourcesDrawerBottomPlacement();
+  syncQuestionsContainerClass();
   state.isOpen = true;
   syncPanelState();
 };

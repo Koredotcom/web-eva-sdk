@@ -1,6 +1,7 @@
 import { cloneDeep, isEmpty, isUndefined } from "lodash";
 import store from "../../redux/store";
 import InitiateChatConversationAction from "../../chat/InitiateChatConversationAction";
+import ChatInterface from "../../chat/ChatInterface.js";
 import { updateChatData } from "../../redux/globalSlice";
 import { executionPipelineActions } from "../../redux/actions/global.action";
 import { createCloseIcon, tickMarkIcon } from "../icons-library.js";
@@ -13,23 +14,68 @@ const multiIntentExecutionFunc = (item) => {
     let state = store.getState().global;
     const { fetchHistoricalTask } = MultiIntentExecution();
 
+    // Auto-scroll helper: scroll only when a new task starts.
+    let _lastAutoScrolledTaskId = null;
+    const scrollToTaskCard = (taskId) => {
+      try {
+        if (typeof document === "undefined") return;
+        if (taskId === undefined || taskId === null) return;
+        const idStr = String(taskId);
+        if (_lastAutoScrolledTaskId === idStr) return;
+        _lastAutoScrolledTaskId = idStr;
+        const el = document.querySelector(`.dragTaskItem[data-task-id="${idStr.replace(/"/g, '\\"')}"]`);
+        if (!el) return;
+        requestAnimationFrame(() => {
+          el.scrollIntoView({ behavior: "smooth", block: "center" });
+        });
+      } catch (e) {
+        // ignore
+      }
+    };
+
     const runTask = (index, q) => {
-        const {activeBoardId} = state;  
-        if(!!q){
-          let updatedQuestion = cloneDeep(state.questions);
-          item = Object.values(updatedQuestion).find(qId => (updatedQuestion[qId.parentMsgId]?.executingActionId ===  q?.id))
-          item = updatedQuestion[item?.parentMsgId] || updatedQuestion[q?.parentMsgId] || updatedQuestion[state?.questions[q?.id]?.parentMsgId]
+        // Always use fresh state + fresh parent question (avoid overwriting pipeline with stale `item`)
+        state = store.getState().global;
+        const { activeBoardId } = state;
+        const questions = state.questions || {};
+        let parent = questions[item?.reqId] || item;
+        if (q) {
+          // Resolve parent from current executing action id (task id)
+          parent =
+            Object.values(questions).find(
+              (qId) => questions[qId?.parentMsgId]?.executingActionId === q?.id
+            ) ||
+            questions[parent?.parentMsgId] ||
+            questions[q?.parentMsgId] ||
+            parent;
         }
-        let _item = cloneDeep(item);
-        let task = _item?.executionPipeline?.[index];
-        task.stepIndex = index;
-        store.dispatch(updateChatData({
-          ...state.questions,
-          [item?.reqId]: {
-            ...item,
-            status: "in-progress"
-          }
-        }))
+
+        // Exit edit/add mode when starting execution: strip temp `type` flags from pipeline tasks
+        const pipelineBase = parent?.savedExecutionPipeline || parent?.executionPipeline || [];
+        const sanitizedPipeline = Array.isArray(pipelineBase)
+          ? pipelineBase.map((t) => {
+              if (!t || typeof t !== "object") return t;
+              const { type, ...rest } = t;
+              return rest;
+            })
+          : [];
+
+        const _item = { ...cloneDeep(parent), executionPipeline: sanitizedPipeline };
+        const sourceTask = _item?.executionPipeline?.[index];
+        if (!sourceTask) return;
+        const task = { ...sourceTask, stepIndex: index };
+        scrollToTaskCard(task?._id);
+
+        store.dispatch(
+          updateChatData({
+            ...questions,
+            [parent?.reqId]: {
+              ...parent,
+              executionPipeline: sanitizedPipeline,
+              status: "in-progress",
+            },
+          })
+        );
 
       const params = { cId: _item?.id, type: _item?.type, stepId: task?._id, task, currentRunningQuestion: _item, parentMsgId: _item?.reqId , reqId : _item?.id}
 
@@ -64,22 +110,27 @@ const multiIntentExecutionFunc = (item) => {
         if(hasEditTask){
             hasEditTask.type = "draft"
         }
-        let currentExecutionPipeline = question?.executionPipeline?.filter(el => el?.type !== "addTask") || item?.executionPipeline?.filter(el => el?.type !== "addTask") || []
-        
+        const addedTaskIndex = question?.executionPipeline?.findIndex(el => el.type === "addTask");
+        let currentExecutionPipeline = question?.executionPipeline || item?.executionPipeline || [];
         if (isEmpty(question?.savedExecutionPipeline)) {
           _questions[questionId] = {
             ...question,
             savedExecutionPipeline: currentExecutionPipeline
           };
         } else {
-          currentExecutionPipeline = question?.savedExecutionPipeline;
+          if(addedTaskIndex !== -1 && index > 0 && addedTaskIndex < index){
+             index-=1;
+             currentExecutionPipeline.splice(addedTaskIndex, 1);
+          }
+          else currentExecutionPipeline = question?.savedExecutionPipeline;
         }
 
         let newTask = {
-          _id: index, // temp id, it will get replaced with backend id later
+          // temp id: MUST NOT collide with real step ids (e.g. "1" for 2nd task)
+          _id: `tmp-${questionId}-${Date.now()}-${index}`,
           utterance: '',
           headerMsg: 'Oh, it seems I have missed a step. My apologies. Please describe and add the steps.',
-          step: `Step ${hasAddTask ? index : index+1}`,
+          step: `Step ${index+1}`,
           type: 'addTask' 
         }
 
@@ -99,7 +150,8 @@ const multiIntentExecutionFunc = (item) => {
       }
 
     const saveTask = async (index, task, executionPipeline) => {
-
+      // Always use fresh state (handlers can run after other dispatches)
+      state = store.getState().global;
       let _questions = cloneDeep(state?.questions);
       let utterance = document.getElementById(`utterance-${task?._id}`)?.value;
 
@@ -108,8 +160,9 @@ const multiIntentExecutionFunc = (item) => {
         action: task?.type == 'addTask' ? 'add' : 'update',
       }
 
-      if(task?._id > 0 && task?.type === 'addTask'){
-        payload.stepId = executionPipeline[task?._id - 1]?._id;
+      if(task?.type === 'addTask'){
+        // Use the insertion index to find the previous real step id (avoid relying on temp _id)
+        payload.stepId = executionPipeline?.[index - 1]?._id;
       }else if(task?.type === 'modify'){
         payload.stepId = task?._id;        
         /*check for additional intents that might have been added */
@@ -126,7 +179,7 @@ const multiIntentExecutionFunc = (item) => {
       }
       
       /*put the loading state in the task */
-      let currentExecutionPipeline = cloneDeep(_questions[item?.reqId]?.executionPipeline);
+      let currentExecutionPipeline = cloneDeep(_questions[item?.reqId]?.executionPipeline) || [];
       currentExecutionPipeline[index] = { ...currentExecutionPipeline[index], loading: true };
       const updatedQuestions = {
         ..._questions,
@@ -140,6 +193,9 @@ const multiIntentExecutionFunc = (item) => {
       const response = await store.dispatch(executionPipelineActions({params, payload}))
       
       if(!!response?.payload){
+        // Refresh again after await to avoid overwriting newer store changes
+        state = store.getState().global;
+        _questions = cloneDeep(state?.questions);
         const updatedQuestions = {
           ..._questions,
           [item?.reqId]: {
@@ -202,11 +258,18 @@ const multiIntentExecutionFunc = (item) => {
     const editTask = (index, task) => {
       const _questions = cloneDeep(state?.questions);
       let currentExecutionPipeline = cloneDeep(_questions[item?.reqId]?.executionPipeline);
+      const addTaskIndexExists = currentExecutionPipeline?.findIndex(el => el?.type === 'addTask');
 
       if(isEmpty(_questions[item?.reqId]?.savedExecutionPipeline)){
         _questions[item?.reqId].savedExecutionPipeline = currentExecutionPipeline;
-      }else{
-        currentExecutionPipeline = _questions[item?.reqId].savedExecutionPipeline;
+      }
+      else{
+        if( addTaskIndexExists !== -1 && addTaskIndexExists < index && index > 0){
+          index-=1;
+          currentExecutionPipeline.splice(addTaskIndexExists, 1);
+
+        }
+        else currentExecutionPipeline = _questions[item?.reqId].savedExecutionPipeline;
       }
 
       let _task = {...task, type : 'modify', step : `Step ${index+1}`}
@@ -227,9 +290,22 @@ const multiIntentExecutionFunc = (item) => {
     }
 
     const addIntent = (index, task, selectedAgent) => {
+      // Always use fresh state (agent selection triggers re-renders)
+      state = store.getState().global;
       const _questions = cloneDeep(state?.questions);
-      let currentExecutionPipeline = cloneDeep(_questions[item?.reqId]?.executionPipeline);
-      let savedExecutionPipeline = cloneDeep(currentExecutionPipeline);
+      let currentQuestion = cloneDeep(_questions[item?.reqId]);
+      let currentExecutionPipeline = cloneDeep(currentQuestion?.executionPipeline) || [];
+
+      // Persist the current utterance from DOM before mutating pipeline (prevents it from disappearing)
+      const utteranceInput = document.getElementById(`utterance-${task?._id}`);
+      if (utteranceInput) {
+        const utterance = utteranceInput.value || '';
+        if (currentExecutionPipeline[index]) {
+          currentExecutionPipeline[index].utterance = utterance;
+        }
+      }
+      // Preserve baseline savedExecutionPipeline (used to enable Done)
+      let savedExecutionPipeline = cloneDeep(currentQuestion?.savedExecutionPipeline || currentExecutionPipeline);
       if(!currentExecutionPipeline[index].intents){
         currentExecutionPipeline[index].intents = [];
       }
@@ -245,7 +321,7 @@ const multiIntentExecutionFunc = (item) => {
       
       const updatedQuestions = {
         ..._questions,
-        [item?.reqId]: { ..._questions[item?.reqId], executionPipeline: currentExecutionPipeline, savedExecutionPipeline }
+        [item?.reqId]: { ...currentQuestion, executionPipeline: currentExecutionPipeline, savedExecutionPipeline }
       };
       store.dispatch(updateChatData(updatedQuestions));
       
@@ -454,7 +530,8 @@ const multiIntentExecutionFunc = (item) => {
       const _questions = cloneDeep(state?.questions);
       let currentQuestion = cloneDeep(_questions[item?.reqId]);
       let currentExecutionPipeline = cloneDeep(currentQuestion?.executionPipeline);
-      let savedExecutionPipeline = cloneDeep(currentExecutionPipeline); 
+      // Preserve baseline savedExecutionPipeline (used to enable Done)
+      let savedExecutionPipeline = cloneDeep(currentQuestion?.savedExecutionPipeline || currentExecutionPipeline); 
       let task = currentExecutionPipeline[index];     
       currentExecutionPipeline[index].intents = currentExecutionPipeline[index]?.intents?.filter(intent => intent?.agentId !== intentToDelete?.agentId);
             
@@ -470,7 +547,7 @@ const multiIntentExecutionFunc = (item) => {
       }
       const updatedQuestions = {
         ..._questions,
-        [item?.reqId]: { ...currentQuestion, savedExecutionPipeline }
+        [item?.reqId]: { ...currentQuestion, executionPipeline: currentExecutionPipeline, savedExecutionPipeline }
       };
       store.dispatch(updateChatData(updatedQuestions));
       
@@ -688,8 +765,47 @@ const multiIntentExecutionFunc = (item) => {
         const addNewTaskBtn = document.getElementById(`addNewTaskBtn-${index}`);
         const continueBtn = document.getElementById(`continueBtn-${task?._id}`);
         if(continueBtn && !continueBtn.eventListenerAdded){
-            continueBtn.addEventListener("click", () => {
-                cancelTask(task);
+            continueBtn.addEventListener("click", async () => {
+                // "Continue Flow" should move to next task without showing interruption UI.
+                // We silently cancel the current task request and immediately run the next task.
+                state = store.getState().global;
+                const currentTaskQ = state?.questions?.[task?._id];
+                if (currentTaskQ?.reqId) {
+                    const updated = cloneDeep(state.questions);
+                    updated[task._id] = {
+                        ...updated[task._id],
+                        _continueFlow: true,
+                        // Mark this task as discarded and show the interruption text only for this task.
+                        status: "discard",
+                        answer:
+                            "I see you interrupted the answer generation. Please feel free to provide more details or let me know how can I assist you further",
+                        // Force a minimal render (avoid showing previous template/thread UI).
+                        templateType: "search_answer",
+                        viewType: undefined,
+                        botConversation: null,
+                        template_html: undefined,
+                        sources: [],
+                        data: [],
+                        showResponse: true,
+                        loading: false,
+                    };
+                    store.dispatch(updateChatData(updated));
+                    // Force cancel API call even for bot agent threadView tasks.
+                    // Skip post-call UI mutation because we already updated the task UI above.
+                    // IMPORTANT: wait for cancelRequest success before moving to next task.
+                    try {
+                        const cancelResp = await ChatInterface().cancelMessageReqAction(
+                            currentTaskQ.reqId,
+                            { forceCancelApi: true, skipPostCall: true }
+                        );
+                        const isFulfilled = cancelResp?.meta?.requestStatus === 'fulfilled';
+                        if (isFulfilled) {
+                            try { MultiIntentExecution().runTask(item, index + 1, updated[task._id]); } catch (e) {}
+                        }
+                    } catch (e) {}
+                } else {
+                    cancelTask(task);
+                }
             });
             continueBtn.eventListenerAdded = true;
         }
@@ -703,7 +819,8 @@ const multiIntentExecutionFunc = (item) => {
 
         const deleteBtn = document.getElementById(`deleteBtn-${task?._id}`);
         if(deleteBtn && !deleteBtn.eventListenerAdded){
-            deleteBtn.addEventListener("click", () => {
+            deleteBtn.addEventListener("click", (e) => {
+                e?.stopPropagation?.();
                 deleteExistingTask(index, task);
             });
             deleteBtn.eventListenerAdded = true;
@@ -711,7 +828,8 @@ const multiIntentExecutionFunc = (item) => {
 
         const editBtn = document.getElementById(`editBtn-${task?._id}`);
         if(editBtn && !editBtn.eventListenerAdded){
-            editBtn.addEventListener("click", () => {
+            editBtn.addEventListener("click", (e) => {
+                e?.stopPropagation?.();
                 editTask(index, task);
             });
             editBtn.eventListenerAdded = true;
@@ -755,12 +873,12 @@ const multiIntentExecutionFunc = (item) => {
            if (!currentTask) return;
            
            const domUtterance = utteranceInput.value || '';
-           const storeUtterance = currentTask?.utterance || '';           
+           const savedUtterance = currentState?.questions[item?.reqId]?.savedExecutionPipeline?.[index]?.utterance || '';
            const taskIntents = currentTask?.intents || [];
            const currentTaskSavedIntents = currentState?.questions[item?.reqId]?.savedExecutionPipeline?.[index]?.intents || [];
            
            const hasChanges = 
-             domUtterance !== storeUtterance || compareArrays(taskIntents, currentTaskSavedIntents);
+             domUtterance !== savedUtterance || compareArrays(taskIntents, currentTaskSavedIntents);
            
            if (hasChanges) {
              doneBtn.disabled = false;
@@ -780,8 +898,21 @@ const multiIntentExecutionFunc = (item) => {
 
          // Add input listener for description changes
          if (utteranceInput && !utteranceInput.changeListenerAdded) {
+           // Persist typed utterance into store so it survives re-renders (e.g., when adding an agent)
+           const persistUtterance = () => {
+             const currentState = store.getState().global;
+             const qs = cloneDeep(currentState.questions);
+             const q = qs[item?.reqId];
+             if (!q?.executionPipeline?.[index]) return;
+             q.executionPipeline[index].utterance = utteranceInput.value || '';
+             qs[item?.reqId] = q;
+             store.dispatch(updateChatData(qs));
+           };
            utteranceInput.addEventListener('input', checkForChanges);
            utteranceInput.addEventListener('change', checkForChanges);
+           // IMPORTANT: Do NOT dispatch on every keystroke (causes UI fluctuation due to full re-render).
+           // Persist only on change/blur; before actions like "Add Agent" we already copy DOM -> store.
+           utteranceInput.addEventListener('change', persistUtterance);
            utteranceInput.changeListenerAdded = true;
          }
 

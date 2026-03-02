@@ -66,7 +66,11 @@ const initialState = {
   chatInterfaceElements:{
     disableAppAvatar: false,
   },
-  env: 'DEV'
+  env: 'Kore',
+  answerSources: null,
+  unifiedSearchResults: null,
+  /* disableHistorySectionInChatSection is used to disable the history section in the chat section */
+  disableHistorySectionInChatSection: false,
 };
 
 const globalSlice = createSlice({
@@ -150,6 +154,15 @@ const globalSlice = createSlice({
       },
       setChatInterfaceElements: (state, action) => {
         state.chatInterfaceElements = {...state.chatInterfaceElements, ...action.payload};
+      },
+      setAnswerSources: (state, action) => {
+        state.answerSources = action.payload;
+      },
+      setUnifiedSearchResults: (state, action) => {
+        state.unifiedSearchResults = action.payload;
+      },
+      setDisableHistorySectionInChatSection: (state, action) => {
+        state.disableHistorySectionInChatSection = action.payload;
       }
     },
     extraReducers: (builder) => {
@@ -278,7 +291,10 @@ export const {
   setAnnouncements,
 	setAppMetaData,
 	setAnsFromChipElements,
-	setChatInterfaceElements
+	setChatInterfaceElements,
+	setAnswerSources,
+	setUnifiedSearchResults,
+	setDisableHistorySectionInChatSection
 } = globalSlice.actions;
 
 export default globalSlice;
