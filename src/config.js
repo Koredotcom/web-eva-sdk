@@ -2,7 +2,7 @@ import BotConversation from "./chat/botAgent/getBotConversation";
 // import CustomTemplateComponentManager from "./chat/botAgent/customTemplatesFolder/CustomTemplateComponentManager";
 // import HoldConversationTemplateManager from "./chat/botAgent/customTemplatesFolder/HoldConversationTemplateManager";
 import { fetchAgents, fetchConfigData, fetchProfileData, fetchHistory, fetchRecentFiles, presenceStart, getAllAnnouncements} from "./redux/actions/global.action";
-import { setEnabledDebugging, setAppMetaData } from "./redux/globalSlice";
+import { setEnabledDebugging, setAppMetaData, setDisableHistorySectionInChatSection } from "./redux/globalSlice";
 import store from "./redux/store";
 import { WebSocketService } from "./socket/socket.service";
 import { initializeSDKRuntime } from "./sdkRuntime";
@@ -51,7 +51,7 @@ export const initializeSDK = async (config) => {
   store.dispatch(fetchRecentFiles({onload: true, userId: config.userId, params: {limit: 10}}))
   store.dispatch(getAllAnnouncements({params: {userId: config.userId}}))
   store.dispatch(setAppMetaData(config.appMetaData))
-  
+  store.dispatch(setDisableHistorySectionInChatSection(config?.disableHistorySectionInChatSection || false))
   // once presenceStart call success than get the sToken which is required to connect socket
   await store.dispatch(presenceStart())
 

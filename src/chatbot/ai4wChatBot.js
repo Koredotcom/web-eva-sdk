@@ -4,6 +4,7 @@ import NewChat from "../chat/NewChat";
 import { JoinChatThread } from "../chat";
 import { unHideRecentAgentsDiv, hideRecentAgentsDiv } from "../LandingPageRecentAgents";
 import { createHistorySidebar, initHistoryList } from "./chatbotHistory";
+import store from "../redux/store";
 
 const DEFAULT_CONTAINER_ID = "eva-sdk-chatbot-container";
 const DEFAULT_TITLE = "Eva Assistant";
@@ -252,6 +253,9 @@ const createPanel = (titleText) => {
   chatHistoryButton.type = "button";
   chatHistoryButton.className = "sdk-chatbot-newchat sdk-chatbot-chat-history";
   chatHistoryButton.textContent = "Chat History";
+  if (store.getState().global.disableHistorySectionInChatSection) {
+    chatHistoryButton.style.display = "none";
+  }
 
   const headerButtonContainer = document.createElement("div");
   headerButtonContainer.className = "eva-sdk-chatbot-header-buttons";
