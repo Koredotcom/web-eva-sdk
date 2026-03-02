@@ -22,8 +22,7 @@ function renderUserQuestion(question, userIconTemplate, conversation) {
 	if (question) {
 		return `<div class="message-bubble question" id = "${conversation?.messageId}">
 					<div class="message-content">
-						<div class="message-text">${encodeHtml(question)}</div>
-						${userIconTemplate ? userIconTemplate : ""}
+						<div class="message-text">${encodeHtml(question)}</div>						
 					</div>
 				</div>`;
 	}

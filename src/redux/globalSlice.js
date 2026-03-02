@@ -69,6 +69,7 @@ const initialState = {
   env: 'Kore',
   answerSources: null,
   unifiedSearchResults: null,
+  /* disableHistorySectionInChatSection is used to disable the history section in the chat section */
   disableHistorySectionInChatSection: false,
 };
 
