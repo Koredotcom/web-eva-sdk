@@ -1297,6 +1297,9 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 		let state = store.getState()?.global;
 		let chipHTML = "";
 		let chatFilterGroupHTML = "";
+		if(item?.status === 'threadRunning'){
+			return;
+		}
 		if (regeneratingAnswer) {
 			chipHTML = regeneratingChipRenderer();
 		} else if (item?.viewType === "table") {

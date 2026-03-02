@@ -246,7 +246,13 @@ const createPanel = (titleText) => {
       ?.querySelector?.(".eva-composebar-area")
       ?.classList?.remove("eva-composebar-area--history-selected");
     unHideRecentAgentsDiv('recent-agents-container');
-    NewChat()
+    NewChat();
+    /* Hide agent banner after Redux subscribers run, so ComposeBar does not re-show it */
+    const hideAgentBanner = () => {
+      const agentBanner = document.querySelector('.composebar-bot-input-wrapper');
+      if (agentBanner) agentBanner.style.display = "none";
+    };
+    setTimeout(hideAgentBanner, 0);
   });
 
   const chatHistoryButton = document.createElement("button");
