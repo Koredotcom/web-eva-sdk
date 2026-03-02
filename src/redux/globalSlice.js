@@ -68,7 +68,9 @@ const initialState = {
   },
   env: 'Kore',
   answerSources: null,
-  unifiedSearchResults: null
+  unifiedSearchResults: null,
+  /* disableHistorySectionInChatSection is used to disable the history section in the chat section */
+  disableHistorySectionInChatSection: false,
 };
 
 const globalSlice = createSlice({
@@ -158,6 +160,9 @@ const globalSlice = createSlice({
       },
       setUnifiedSearchResults: (state, action) => {
         state.unifiedSearchResults = action.payload;
+      },
+      setDisableHistorySectionInChatSection: (state, action) => {
+        state.disableHistorySectionInChatSection = action.payload;
       }
     },
     extraReducers: (builder) => {
@@ -288,7 +293,8 @@ export const {
 	setAnsFromChipElements,
 	setChatInterfaceElements,
 	setAnswerSources,
-	setUnifiedSearchResults
+	setUnifiedSearchResults,
+	setDisableHistorySectionInChatSection
 } = globalSlice.actions;
 
 export default globalSlice;
