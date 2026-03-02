@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { TemplateRenderer } from "../../templateRenderer";
 import { BotConversation, ChatInterface } from "../../chat";
 
-import "./ChatInterface.scss"
+import "../../styles/chat-interface.scss"
 
 import Announcements from "../announcements";
 import Composebar from "./Composebar";

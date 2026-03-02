@@ -1,6 +1,13 @@
 // Main SDK styles entry point
 // This file imports all necessary CSS and SCSS files for the SDK
 
+// @use rules must come first (before any other rules)
+@use "./mixins_new.scss" as *;
+@use "./chat-interface.scss";
+@use "./composebar.scss";
+@use "./tooltip.scss";
+@use "./home.scss";
+
 // External CSS libraries
 @import "choices.js/public/assets/styles/choices.css";
 
@@ -9,13 +16,6 @@
 @import "./buttons.css";
 @import "./dropdown.css";
 @import "./history-drawer.css";
-@use "./mixins_new.scss" as *;
-
-// SCSS files - these will be processed by Sass
-@use "./chat-interface.scss";
-@use "./composebar.scss";
-@use "./tooltip.scss";
-@use "./home.scss";
 
 /* @import './quill-editor.css'; */
 

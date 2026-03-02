@@ -4,7 +4,7 @@ import InitiateChatConversationAction from "../chat/InitiateChatConversationActi
 import { updateChatData } from "../redux/globalSlice";
 import { executionPipelineActions, getSearchHistory } from "../redux/actions/global.action";
 import { cancelOngoingCall } from "../templateRenderer/utils/helper";
-import { getAgentTypeByAgentId } from "../utils/helpers";
+// import { getAgentTypeByAgentId } from "../utils/helpers";
 
 const MultiIntentExecution = (props) => {
     let state = store.getState().global;
