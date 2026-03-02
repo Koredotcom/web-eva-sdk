@@ -48,38 +48,76 @@ function render(data) {
             }
 
             return `
-                <div class='addNewLineWrapper'>
-                  ${initialState ? `<div class='addNewLine'>
-                      <button class="addNewTaskBtn" id = "addNewTaskBtn-${index}">+</button>
-                  </div>` : ''}
-                </div>
-                <div class="taskItem">
-                    <div class="taskItemHeader">
-                        <div class="taskItemHeaderTitle">Task ${index + 1}</div>
-                        <div class="contentBlock">
-                            ${Array.isArray(task?.intents) && task.intents.length > 0 ? `
-                                <div class="agentIcons">
-                                ${task.intents.slice(0, 2).map((intent, idx) => `
-                                    <div class="agentIcon">
-                                        <img src="${intent?.agentMeta?.icon}" alt="Agent ${idx + 1}" />
-                                    </div>
-                                `).join('')}
-                                </div>
-                            ` : ''}
-                            <div class="utterance" id="utterance-${items?.id}-${index}">${task?.utterance}</div>
+                <div class="tasksToRun">
+                    <div class="taskItems">
+                        <div class='addNewLineWrapper'>
+                            ${initialState ? `<div class='addNewLine'>
+                                <span class="stepIcon addNewTaskBtn" id="addNewTaskBtn-${index}">
+                                    ${AddStepFilledIcon({ size: 32, color: "#98A2B3" })}
+                                </span>
+                            </div>` : ''}
                         </div>
-                        ${initialState ? `<div class="optionsWrapper">
-                            <button class="editBtn" id = "editBtn-${items?.id}-${index}">Edit</button>
-                            <button class="deleteBtn" id = "deleteBtn-${items?.id}-${index}">Delete</button>
-                        </div>` : ''}
-                        ${task?.showResponse ? `
-                            <div class="bottomCard">
-                            ${html?.innerHTML}
-                            </div>
-                        ` : ''}
-                        ${task?.loading ? `
-                            <div class="loadingState"><div class="loading-text">Analyzing</div></div>
-                        ` : ''}
+                        <div class="dragTaskItem" 
+                            draggable="${initialState ? 'true' : 'false'}" 
+                            data-task-id="${task?._id}" 
+                            data-task-index="${index}">
+                            ${initialState ? `<div class="dragHandle" title="Drag to reorder">
+                                ${DragHandleIcon({ size: 14, color: "#9CA3AF" })}
+                            </div>` : ''}
+                            <div class="taskItem ${task?.showResponse ? 'loadingSkeleton' : ''}">
+                                <div class="topCard" ${((task?.status === "completed" || task?.status === "terminated") && items?.historicalData) ? `id="historyBtn-${task?._id}"` : ''}>
+                                    <div class="leftBlock">                                                                            
+                                ${task?.loading ? `<div class="statusIcon">
+                                    ${LoadingSpinner({ size: 16 })}    
+                                </div>`:
+                                task?.status === "completed"
+                                    ? tickMarkIcon({ size: 16, color: "#475467" }) 
+                                            : task?.status === "discard"
+                                                ? WarningStrokeCircle({ size: 16, color: "white", stroke: "#F04438", insideFill: "#F04438" }) 
+                                                : HistoryIcon({ size: 16, color: "#98A2B3" }) 
+                                        } 
+                              
+                                        <div class="contentBlock">
+                                            ${Array.isArray(task?.intents) && task.intents.length > 0 ? `
+                                                <div class="agentsAmbiguity">
+                                                ${task.intents.slice(0, 2).map((intent, idx) => `
+                                                    <div class="agentIcon">
+                                                        <img src="${intent?.agentMeta?.icon}" alt="Agent ${idx + 1}" />
+                                                    </div>
+                                                `).join('')}
+                                                </div>
+                                            ` : ''}                                    
+                                            <div class="utterance">${task?.utterance}</div>                                            
+                                        </div>
+                                    </div>
+                                    <div class="rightBlock">
+                                    ${initialState ? `
+                                        <div class="options">
+                                            <div class="opItem" id="editBtn-${task?._id}">${EditIcon({ size: 14, color: "#667085" })}</div>
+                                            <div class="opItem" id="deleteBtn-${task?._id}">${createDeleteIcon({ size: 14, color: "#667085" })}</div>
+                                        </div>
+                                    ` : ''}                                    
+                                    </div>
+                                    ${((task?.status === "completed" || task.status === "terminated") && items?.historicalData) ? `
+                                        <div class="opItem">${task?.showResponse ? `
+                                            ${CheveronDownIcon({ size: 14, color: "#667085", rotation: 180 })}
+                                        ` : `
+                                            ${CheveronDownIcon({ size: 14, color: "#667085"})}
+                                        `}</div>
+                                    ` : ''}
+                                </div> 
+                                ${task?.showResponse ? `
+                                    <div class="bottomCard">
+                                        ${html?.innerHTML}
+                                        ${index < items?.executionPipeline?.length - 1  && ['draft', 'in-progress', 'threadRunning'].includes(task?.status) ?
+                                        `<div class='continuebtn' id="continueBtn-${task?._id}">
+                                            Continue Flow 
+                                        </div>`    :''
+                                        }
+                                    </div>
+                            ` : ''}                               
+                            </div>             
+                        </div>
                     </div>
                 </div>
             `;

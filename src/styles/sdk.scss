@@ -9,12 +9,13 @@
 @import "./buttons.css";
 @import "./dropdown.css";
 @import "./history-drawer.css";
+@use "./mixins_new.scss" as *;
 
 // SCSS files - these will be processed by Sass
-@import "./chat-interface.scss";
-@import "./composebar.scss";
-@import "./tooltip.scss";
-@import "./home.scss";
+@use "./chat-interface.scss";
+@use "./composebar.scss";
+@use "./tooltip.scss";
+@use "./home.scss";
 
 /* @import './quill-editor.css'; */
 

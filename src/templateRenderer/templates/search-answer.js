@@ -2,12 +2,13 @@ import customMarkdownRenderer from "../utils/customMarkdownRenderer";
 import { encodeHtml } from "../utils/helper";
 
 function render(data) {
-    const showSources = data.hasData && data?.data?.length > 0;
-    const drawerId = `sources-drawer-${data.id}`;
+    // For search_results template type, only render the answer text
+    // Search results should NOT be displayed in the main answer area
+    // They should only appear in the SourcesSidebar when "Related Search Results" is clicked
 
     let html = `
         <div class="search-answer-container">
-            ${customMarkdownRenderer(data.answer)}
+            ${renderAnswer(data)}
         </div>
     `;
 
@@ -17,7 +18,7 @@ function render(data) {
 
 
 function renderAnswer(data) {
-	if (!data.answer) return "";
+    if (!data.answer) return "";
 
     let html = `
         <div id="answer-${data?.messageId}" class="threadName maxLength">
@@ -30,14 +31,14 @@ function renderAnswer(data) {
 
 
 function renderSourcesForDrawer(data) {
-	if (!data?.data?.length) return "";
+    if (!data?.data?.length) return "";
 
-	return `
+    return `
         <div style="padding: 20px;">
             <div class="sources-list">
                 ${data.data
-					.map(
-						(source, index) => `
+            .map(
+                (source, index) => `
                     <div class="source-item" style="
                         margin-bottom: 20px; 
                         padding-bottom: 20px; 
@@ -90,8 +91,8 @@ function renderSourcesForDrawer(data) {
                         ` : ''}
                     </div>
                 `
-					)
-					.join("")}
+            )
+            .join("")}
             </div>
         </div>
     `;
@@ -100,19 +101,19 @@ function renderSourcesForDrawer(data) {
 // Helper function to format email date
 function formatEmailDate(timestamp) {
     if (!timestamp) return 'Unknown date';
-    
+
     try {
         const date = new Date(typeof timestamp === 'string' ? timestamp : timestamp);
-        const options = { 
-            weekday: 'short', 
-            year: 'numeric', 
-            month: 'short', 
+        const options = {
+            weekday: 'short',
+            year: 'numeric',
+            month: 'short',
             day: 'numeric',
             hour: 'numeric',
             minute: '2-digit',
             hour12: true
         };
-        
+
         // Format: "Thu, Nov 27 2025, 3:24PM"
         const formatted = date.toLocaleString('en-US', options);
         return formatted.replace(',', '').replace(/(\d{1,2}:\d{2})\s*(AM|PM)/, '$1$2');

@@ -66,92 +66,104 @@ const initialState = {
   chatInterfaceElements:{
     disableAppAvatar: true,
   },
+  env: 'Kore',
+  answerSources: null,
+  unifiedSearchResults: null,
   appMetaData:{}
 };
 
 const globalSlice = createSlice({
-  name: 'global',
-  initialState,
-  reducers: {
-    updateChatData: (state, action) => {
-      state.questions = action.payload;
+    name: 'global',
+    initialState,
+    reducers: {
+      updateChatData: (state, action) => {
+        state.questions = action.payload;
+      },
+      setActiveBoardId: (state, action) => {
+        state.activeBoardId = action.payload;
+      },
+      setCurrentQuestion: (state, action) => {
+        state.currentQuestion = action.payload;
+      },
+      setRecentFiles: (state, action) => {
+        state.recentFiles = action.payload;
+      },
+      setAllRecentFiles: (state, action) => {
+        state.AllrecentFiles = action.payload;
+      },
+      setAllHistory: (state, action) => {
+        state.AllHistory = action.payload;
+      },
+      setChatHistoryMoreAvailable: (state, action) => {
+        state.chatHistoryMoreAvailable = action.payload;
+      },
+      setSelectedContext : (state, action) => {
+        state.selectedContext = action.payload;
+      },
+      setEnabledCustomTemplates : (state, action) => {
+        state.enabledCustomTemplates = action.payload;
+      },
+      setGptUploadedFiles : (state, action) => {
+        state.GptUploadedFiles = action.payload;
+      },
+      setCustomData : (state, action) => {
+        state.customData = action.payload
+      },
+      setChatInterfaceOptions : (state, action) => {
+        state.chatInterfaceOptions = action.payload;
+      },
+      setBotSDKInstance : (state, action) => {
+        state.botSDkInstance = action.payload
+      }, 
+      setEnableKoreBotSDK: (state, action) => {
+        state.enableKoreBotSDK = action.payload
+      },
+      setEnableContextByFollowupContext: (state, action) => {
+        state.enableContextByFollowupContext = action.payload
+      },  
+      // deleteHistoryItem : (state, action) =>{
+      //   state.AllHistory = action.payload
+      // },
+      // updateHistoryItem : (state, action) => {
+      //   state.AllHistory = action.payload
+      // }
+      setErrorState: (state, action) => {
+        state.errorState = action.payload
+      },
+      setNotifications: (state, action) => {
+        state.notifications = action.payload
+      },
+	  setBookMarkedChatThreads: (state, action) => {
+        state.bookMarkedChatThreads = action.payload
+      },
+      setEnabledDebugging: (state, action) => {
+        state.enableDebugging = action.payload
+      },
+      setQuickActions: (state, action) => {
+        state.quickActions = action.payload;
+      },
+      setAnnouncements: (state, action) => {
+        state.announcements = action.payload;
+      },
+      setAutoRemoveWebSearchFromContext: (state, action) => {
+        state.autoRemoveWebSearchFromContext = action.payload;
+      },
+      setAppMetaData: (state, action) => {
+        state.appMetaData = action.payload;
+      },
+      setAnsFromChipElements: (state, action) => {
+        state.ansFromChipElements = {...state.ansFromChipElements, ...action.payload};
+      },
+      setChatInterfaceElements: (state, action) => {
+        state.chatInterfaceElements = {...state.chatInterfaceElements, ...action.payload};
+      },
+      setAnswerSources: (state, action) => {
+        state.answerSources = action.payload;
+      },
+      setUnifiedSearchResults: (state, action) => {
+        state.unifiedSearchResults = action.payload;
+      }
     },
-    setActiveBoardId: (state, action) => {
-      state.activeBoardId = action.payload;
-    },
-    setCurrentQuestion: (state, action) => {
-      state.currentQuestion = action.payload;
-    },
-    setRecentFiles: (state, action) => {
-      state.recentFiles = action.payload;
-    },
-    setAllRecentFiles: (state, action) => {
-      state.AllrecentFiles = action.payload;
-    },
-    setAllHistory: (state, action) => {
-      state.AllHistory = action.payload;
-    },
-    setChatHistoryMoreAvailable: (state, action) => {
-      state.chatHistoryMoreAvailable = action.payload;
-    },
-    setSelectedContext: (state, action) => {
-      state.selectedContext = action.payload;
-    },
-    setEnabledCustomTemplates: (state, action) => {
-      state.enabledCustomTemplates = action.payload;
-    },
-    setGptUploadedFiles: (state, action) => {
-      state.GptUploadedFiles = action.payload;
-    },
-    setCustomData: (state, action) => {
-      state.customData = action.payload
-    },
-    setChatInterfaceOptions: (state, action) => {
-      state.chatInterfaceOptions = action.payload;
-    },
-    setBotSDKInstance: (state, action) => {
-      state.botSDkInstance = action.payload
-    },
-    setEnableKoreBotSDK: (state, action) => {
-      state.enableKoreBotSDK = action.payload
-    },
-    setEnableContextByFollowupContext: (state, action) => {
-      state.enableContextByFollowupContext = action.payload
-    },
-    // deleteHistoryItem : (state, action) =>{
-    //   state.AllHistory = action.payload
-    // },
-    // updateHistoryItem : (state, action) => {
-    //   state.AllHistory = action.payload
-    // }
-    setErrorState: (state, action) => {
-      state.errorState = action.payload
-    },
-    setNotifications: (state, action) => {
-      state.notifications = action.payload
-    },
-    setBookMarkedChatThreads: (state, action) => {
-      state.bookMarkedChatThreads = action.payload
-    },
-    setEnabledDebugging: (state, action) => {
-      state.enableDebugging = action.payload
-    },
-    setQuickActions: (state, action) => {
-      state.quickActions = action.payload;
-    },
-    setAnnouncements: (state , action) =>{
-       state.announcements = action.payload;
-    },
-    setAutoRemoveWebSearchFromContext: (state, action) => {
-      state.autoRemoveWebSearchFromContext = action.payload;
-    },
-    setAnsFromChipElements: (state, action) => {
-      state.ansFromChipElements = {...state.ansFromChipElements, ...action.payload};
-    },
-    setChatInterfaceElements: (state, action) => {
-      state.chatInterfaceElements = {...state.chatInterfaceElements, ...action.payload};
-    }
-  },
   extraReducers: (builder) => {
     handleAsyncActions(builder, fetchConfigData, 'config', (state, action) => {
       state.fileTypes = action.payload.fileTypes
@@ -276,6 +288,9 @@ export const {
   setAutoRemoveWebSearchFromContext,
   setAnsFromChipElements,
   setChatInterfaceElements,
+	setAppMetaData,
+	setAnswerSources,
+	setUnifiedSearchResults
 } = globalSlice.actions;
 
 export default globalSlice;

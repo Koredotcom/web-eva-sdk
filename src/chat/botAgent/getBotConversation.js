@@ -322,7 +322,7 @@ const BotConversation = (args) => {
             })
         );
 
-        constructQuestionPostCall(res, data?.cId);
+        constructQuestionPostCall(res, data?.cId , 'bot');
 };
 
 

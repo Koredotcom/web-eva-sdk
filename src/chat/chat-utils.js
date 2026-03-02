@@ -76,6 +76,22 @@ export const constructQuestionInitial = (args) => {
 			reqId: uniqueMsgId,
 		};
 
+		// Store context data in question object (matching Kora-React)
+		// This allows renderReferenceToResponseContext to access context when rendering the question
+		const state = store.getState()?.global;
+		const selectedContext = state?.selectedContext?.data;
+		if (selectedContext && (selectedContext?.setViaMenuOptions || selectedContext?.setViaGptAgent)) {
+			// Store context with all necessary fields for response context preview
+			obj.context = {
+				type: selectedContext?.type || (selectedContext?.sources?.[0]?.agentType === "gptAgent" ? "agent" : null),
+				messageId: selectedContext?.messageId,
+				setViaMenuOptions: selectedContext?.setViaMenuOptions,
+				setViaGptAgent: selectedContext?.setViaGptAgent,
+				sources: selectedContext?.sources,
+				sessionId: selectedContext?.sessionId
+			};
+		}
+
 		questions[uniqueMsgId] = obj;
 	}
 
@@ -100,7 +116,7 @@ export const constructQuestionInitial = (args) => {
 	return uniqueMsgId;
 };
 
-export const constructQuestionPostCall = (data, qId) => {
+export const constructQuestionPostCall = (data, qId, isBot = false) => {
 
     // data.payload = contains api response
     // data.meta.arg = contains passed params and payload
@@ -118,7 +134,14 @@ export const constructQuestionPostCall = (data, qId) => {
 
     // let followupFromSuggestionModal = data?.params?.suggestionContext;
     let question = questions?.[qId]
+    const originalQuestion = question?.question;
     delete question?.loading;
+    
+    // Preserve context data in question object (including originalContext for renderReferenceToResponseContext)
+    // Matching Kora-React: use originalContext first, fallback to context
+    if (question?.context && !question?.originalContext) {
+        question.originalContext = cloneDeep(question.context);
+    }
 
 	if (!activeBoardId) {
 		store.dispatch(
@@ -275,6 +298,18 @@ export const constructQuestionPostCall = (data, qId) => {
     //         }, 1000);
     // }}
     else if(data?.payload?.history?.status === msgStatus.TERMINATED){
+        // For multi-intent execution "Continue Flow", we silently cancel a task to proceed.
+        // Do not replace the UI with interruption text in that case.
+        if (question?.isTask && question?._continueFlow) {
+            // Keep existing status/answer; just stop loading and clear the flag.
+            question = {
+                ...question,
+                loading: false,
+                _continueFlow: false,
+            };
+            // No runNextTask here because Continue Flow already triggers the next task.
+        }
+        else {
         if(data?.payload?.history?.templateType === chatTemplateTypes.GPT_FORM_TEMPLATE){
             delete question.template_html
         }
@@ -285,6 +320,7 @@ export const constructQuestionPostCall = (data, qId) => {
             setTimeout(() => {
                 MultiIntentExecution().runNextTask(stepIndex, data?.payload?.history?.status, question)
             }, 1000);
+        }
         }
 	} 
     else {      
@@ -338,7 +374,12 @@ export const constructQuestionPostCall = (data, qId) => {
         // question.question = data?.res?.question
     }
 
-    if(data?.payload?.viewType === "threadView" && (!data?.payload?.hasOwnProperty('thread'))){
+    if(isBot === 'bot'){
+        question.botConversation[data?.payload?.messageId] = data?.payload;
+    }
+
+
+    else if(data?.payload?.viewType === "threadView" && (!data?.payload?.hasOwnProperty('thread'))){
         question = {...question, ...data?.payload}
     }
 
@@ -362,11 +403,12 @@ export const constructQuestionPostCall = (data, qId) => {
     //     }
     // }    
 
+    if (!question?.question || String(question.question).trim() === "") {
+        question.question = originalQuestion;
+    }
+
     if(data?.error){
-        questions[qId] = {
-            ...question,
-            error: question?.status !== 'terminated' // Terminated status is when user interrupted the answer generation. Error is when there is a server driven error.
-          };
+        questions[qId] = question
           
     }else{  
         questions[qId] = {...question, apiSuccess: true};

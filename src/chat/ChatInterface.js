@@ -122,8 +122,8 @@ const ChatInterface = (props) => {
       }
     }
 
-    const cancelMessageReqAction = async (id) => {
-
+    const cancelMessageReqAction = async (id, options = {}) => {
+      const { forceCancelApi = false, skipPostCall = false } = options || {};
 
       const reqId = id || state.currentQuestion.reqId;
       const questions = cloneDeep(store.getState().global.questions);
@@ -131,7 +131,7 @@ const ChatInterface = (props) => {
       const currQuestion = state.currentQuestion?.isTask ? state.currentQuestion : questions[state.currentQuestion.reqId];
       if(currQuestion?.viewType === "threadView" && currQuestion?.botConversation) {
          stopBotAnswer()
-        return;
+        if (!forceCancelApi) return;
       }
     
       const response = await store.dispatch(cancelAdvancedSearch({ 
@@ -140,6 +140,10 @@ const ChatInterface = (props) => {
         payload 
       }));
       
+      if (skipPostCall) {
+        return response;
+      }
+
       const reqdCId = currQuestion?.isTask ? currQuestion?.cId : getCidByReqId(questions, reqId);
     
       constructQuestionPostCall(response, reqdCId);
@@ -298,6 +302,7 @@ const ChatInterface = (props) => {
       const payload = {
         action : arg
       }
+      payload.question = arg.label
       initiateChatConversationAction({payload})
     }
 
@@ -470,7 +475,8 @@ const ChatInterface = (props) => {
 
       if (detail?.data?.status === 'completed' || detail?.data?.status === 'aborted') {
         question.streamingStatus = detail?.data?.status // 'completed' or 'aborted'
-        
+        question.apiSuccess = true
+        question.status = detail?.data?.status
         _questions[reqId] = question
         store.dispatch(updateChatData(_questions))
 
@@ -583,18 +589,29 @@ const ChatInterface = (props) => {
     }
 
     const setAgentContext = (agent) => {
+      const agentData = agent?.data || agent;
+      const agentId = agentData?.id || agentData?.docId || agentData?.source;
+      const agentName = agentData?.name || agentData?.title || '';
+      const agentType = agentData?.agentType || 'commonAgent';
+      const sourceType = agentData?.type || agentData?.sourceType || 'searchAgent';
       const agentDetails = {
-			name: agent?.name,
-			docId: agent?.id,
-			source: agent?.id,
-			title: agent?.name,
-			icon: agent?.icon,
+			name: agentName,
+			docId: agentId,
+			source: agentId,
+			title: agentData?.title || agentName,
+			icon: agentData?.icon,
+			description: agentData?.description || agentData?.shortDescription || '',
+			shortDescription: agentData?.shortDescription || '',
 			isAgent: true,
+			agentType,
+			composeBar: agentData?.composeBar,
+			citationLabel: agentData?.citationLabel || agentName,
+			type: sourceType,
 		};
 		sessionItemHandler({
 			item: agentDetails,
 			invokeAgent: true,
-			type: "agent",
+			type: agentType,
       })
     }
 
