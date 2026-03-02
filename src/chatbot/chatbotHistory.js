@@ -292,6 +292,33 @@ const setupLoadingIndicator = (listContainer) => {
 
 const SCROLL_LOAD_THRESHOLD_PX = 80;
 const LOAD_MORE_LIMIT = 10;
+const PREFETCH_MAX_REQUESTS = 8;
+
+const defer = (fn) => {
+  if (typeof queueMicrotask === "function") return queueMicrotask(fn);
+  return Promise.resolve().then(fn);
+};
+
+const normalizeCreatedOn = (ts) => {
+  if (ts == null || typeof ts !== "number") return null;
+  return ts < 1e12 ? ts * 1000 : ts;
+};
+
+const needsMoreForLast30Days = (items = []) => {
+  if (!Array.isArray(items) || items.length === 0) return true;
+  let oldestTs = null;
+  for (const item of items) {
+    const ts = normalizeCreatedOn(item?.createdOn);
+    if (ts == null) continue;
+    oldestTs = oldestTs == null ? ts : Math.min(oldestTs, ts);
+  }
+  if (oldestTs == null) return true;
+  const oldestDate = new Date(oldestTs);
+  if (Number.isNaN(oldestDate.getTime())) return true;
+  const threshold = new Date();
+  threshold.setDate(threshold.getDate() - 30);
+  return oldestDate > threshold;
+};
 
 const setupScrollPagination = (listContainer) => {
   const scrollContainer = listContainer?.closest(".eva-sdk-chatbot-history-body");
@@ -318,6 +345,33 @@ export const initHistoryList = (listContainer, callbacks = {}) => {
   if (!listContainer) return null;
 
   const historyInterface = HistoryInterface();
+  let prefetchInProgress = false;
+  let prefetchDone = false;
+
+  const maybePrefetchForLast30Days = async () => {
+    if (prefetchDone || prefetchInProgress) return;
+    const { AllHistory } = store.getState()?.global || {};
+    if (AllHistory?.status === "loading") return;
+    prefetchInProgress = true;
+    try {
+      let requests = 0;
+      while (requests < PREFETCH_MAX_REQUESTS) {
+        const { AllHistory } = store.getState()?.global || {};
+        const hasMore = Boolean(AllHistory?.hasMore);
+        const isLoading = AllHistory?.status === "loading";
+        const items = AllHistory?.data || [];
+        if (!hasMore || isLoading) break;
+        if (!needsMoreForLast30Days(items)) break;
+        requests += 1;
+        await LoadMoreHistoryData({ limit: LOAD_MORE_LIMIT });
+      }
+      // Mark done once we either have enough range, hit the cap, or the API has no more.
+      prefetchDone = true;
+    } finally {
+      prefetchInProgress = false;
+    }
+  };
+
   const callbacksWithHistory = {
     ...callbacks,
     onRename: (item) => startInlineRename(listContainer, item, historyInterface),
@@ -326,6 +380,11 @@ export const initHistoryList = (listContainer, callbacks = {}) => {
 
   const unsubscribe = historyInterface.subscribe((allhistoryData) => {
     renderHistoryList(listContainer, allhistoryData, callbacksWithHistory);
+    // Keep prefetching until we have enough items to cover last 30 days.
+    // This makes sections like "Last 7 days" and "Last 30 days" show up without requiring scroll.
+    defer(() => {
+      maybePrefetchForLast30Days();
+    });
   });
 
   const removeScrollListener = setupScrollPagination(listContainer);
@@ -334,6 +393,9 @@ export const initHistoryList = (listContainer, callbacks = {}) => {
   const initialHistory = store.getState()?.global?.AllHistory;
   if (initialHistory?.data) {
     renderHistoryList(listContainer, { data: initialHistory.data, hasMore: initialHistory.hasMore }, callbacksWithHistory);
+    defer(() => {
+      maybePrefetchForLast30Days();
+    });
   }
 
   return {

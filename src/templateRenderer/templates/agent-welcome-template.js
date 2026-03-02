@@ -1,4 +1,5 @@
 import AgentWelcomeFunc from "../functionality/agent-welcome-template";
+import { agentThreadIcon } from "../icons-library";
 import { encodeHtml } from "../utils/helper";
 import TemplateComponents from "./index";
 
@@ -12,9 +13,14 @@ export function render(item) {
 				<div class="chipone" id="awt-${item?.id}-${i}">
 					<div class="leftBlock">
 						<span class="tickmarkicon">
-							<svg width="13" height="13" class="wa-RightArrow " viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M1.33337 6.00016H10.6667M10.6667 6.00016L6.00004 1.3335M10.6667 6.00016L6.00004 10.6668" stroke="#26272B" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+							<svg xmlns="http://www.w3.org/2000/svg" width="12" height="9" viewBox="0 0 12 9" fill="none">
+							<path d="M11.3317 0.665039L3.99837 7.99837L0.665039 4.66504" stroke="#12B76A" stroke-width="1.33" stroke-linecap="round" stroke-linejoin="round"/>
+							</svg>
 						</span>
-						<span class="newtext" key="${i}">${utterance?.label}</span>
+						<span class="newtext" key="${i}">
+							<span class="newtext-label">${utterance?.label}</span>
+							<span class="newtext-line"></span>
+						</span>
 					</div>
 					${
 						item?.utterances?.isNew
@@ -35,6 +41,9 @@ export function render(item) {
 			<div class="threadName maxLength">
 				<div class="Answerschip msutteranceChip">
 					<div class="ansdocwrap">
+						<div class='chipheadericon'>
+							${agentThreadIcon()}
+						</div>
 						<div class="chipheadertype">${suggestions?.title || ""}</div>
 					</div>
 					<div class="mulanschip">

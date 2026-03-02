@@ -1,4 +1,4 @@
-import { cloneDeep, isEmpty} from "lodash";
+import { cloneDeep, isEmpty } from "lodash";
 import store from "../redux/store";
 import { searchSession } from "../redux/actions/global.action";
 import { setQuickActions, setSelectedContext } from "../redux/globalSlice";
@@ -136,13 +136,16 @@ export const sessionItemHandler = (args) => {
         selectedContextData.data = {};
         // selectedContextData.data.sessionId = selectedContext?.data?.sessionId
         // selectedContextData.data.quickactions = selectedContext?.data?.quickactions
-        selectedContextData.data.sources = [{...item, type}]
+        selectedContextData.data.sources = [{ ...item, type: item?.type || type }];
+        if (type) {
+            selectedContextData.data.type = type;
+        }
         store.dispatch(setSelectedContext(selectedContextData))
         return;
     }
 
     if (_selectedItem && !discardPrevSession) {
-        if (duplicateErr) {   
+        if (duplicateErr) {
             let selectedContextData = cloneDeep(selectedContext)
             // setTimeout(() => {
             //     selectedContextData.data.error = null;
@@ -193,16 +196,28 @@ export const sessionItemHandler = (args) => {
             }
         }
         else if (_selectedContext?.sources?.length > selectedContext?.data?.sources?.length) {
-            action = "update"
-            payload = [addedItem];
+            // If sessionId is undefined, use "add" action instead of "update"
+            // This matches Kora-React behavior where undefined sessionId means create new session
+            if (!selectedContext?.data?.sessionId) {
+                action = "add"
+                payload = _selectedContext?.sources;
+            } else {
+                action = "update"
+                payload = [addedItem];
+            }
         }
     }
 
-    if(invokeFrom === "gptAgent"){
+    if (invokeFrom === "gptAgent") {
         _selectedContext.setViaGptAgent = true;
         args.setViaGptAgent = true;
     }
-    
+
+    // Set setViaMenuOptions if setting context via menu options (similar to Kora-React)
+    if (args?.setViaMenuOptions) {
+        _selectedContext.setViaMenuOptions = true;
+    }
+
     // Dispatch loading state to store so UI shows loader
     // store.dispatch(setSelectedContext({selectedContext: _selectedContext}));
     const selectedContextData = {};
@@ -210,6 +225,16 @@ export const sessionItemHandler = (args) => {
     selectedContextData.data.sources = _selectedContext.sources;
     selectedContextData.data.sessionId = selectedContext?.data?.sessionId;
     selectedContextData.data.quickactions = selectedContext?.data?.quickactions;
+    // Include messageId, setViaMenuOptions, and setViaGptAgent in selectedContext data
+    if (_selectedContext.messageId || args?.messageId) {
+        selectedContextData.data.messageId = _selectedContext.messageId || args?.messageId;
+    }
+    if (_selectedContext.setViaMenuOptions) {
+        selectedContextData.data.setViaMenuOptions = _selectedContext.setViaMenuOptions;
+    }
+    if (_selectedContext.setViaGptAgent) {
+        selectedContextData.data.setViaGptAgent = _selectedContext.setViaGptAgent;
+    }
     store.dispatch(setSelectedContext(selectedContextData));
 
     setContext(state, { payload, action, params: args, messageId, boardId }, () => { }, type);
@@ -267,11 +292,18 @@ export const setContext = async (state, args, callback, type) => {
                 } else return { ...obj, docId: p?.contentId, source: type }
             }
             else {
-                if(p?.docId){
+                if (p?.docId) {
                     obj.docId = p?.docId
                 }
-                if(p?.source){
+                if (p?.source) {
                     obj.source = p?.source
+                }
+                // Include agentType if present (for GPT agents set as context)
+                // Matching Kora-React: agentType : args?.params?.setViaGptAgent ? "gptAgent" : p?.agentType ? p?.agentType : null
+                if (args?.params?.setViaGptAgent) {
+                    obj.agentType = "gptAgent";
+                } else if (p?.agentType) {
+                    obj.agentType = p?.agentType;
                 }
                 return obj
             }
@@ -286,11 +318,11 @@ export const setContext = async (state, args, callback, type) => {
     }
     const payload = {}
 
-    if (args?.messageId) {
+    if (args?.messageId && !args?.params?.skipPayloadMessageId) {
         payload.messageId = args.messageId
     }
 
-    if (args?.boardId) {
+    if (args?.boardId && !args?.params?.skipPayloadMessageId) {
         payload.boardId = args.boardId
     }
 
@@ -304,8 +336,10 @@ export const setContext = async (state, args, callback, type) => {
     if (args?.action === "update" || args?.action === "remove") {
         params.sessionId = state.selectedContext?.data?.sessionId
         if (args?.action === "remove") {
-            // params.docId = args?.payload?.[0]?.docId
-            payload.removeSources = args?.payload?.map(obj => obj?.docId)
+            // Set params.docId for DELETE API call (matching Kora-React)
+            // The API expects docId in params for the URL path: /sources/:docId
+            params.docId = args?.payload?.[0]?.docId || args?.payload?.[0]?.contentId || args?.payload?.[0]?.id
+            payload.removeSources = args?.payload?.map(obj => obj?.docId || obj?.contentId || obj?.id)
         }
     }
     const response = await store.dispatch(searchSession({ params, payload, userId }))
@@ -348,14 +382,66 @@ const getContextData = (state, data) => {
         selectedContextData.data = _selectedContext
         return store.dispatch(setSelectedContext(selectedContextData));
     } else {
-        if(state?.enableDebugging){
-            console.log(data?.response)
+        // API call succeeded - update selectedContext with API response (matching Kora-React)
+        if (state?.enableDebugging) {
+            console.log('SearchSession API success:', data?.response)
         }
+
+        const wasInvokedFromMenuOptions = data?.args?.params?.invokeFrom === "menuOptions";
+        const wasInvokedFromGptAgent = data?.args?.params?.invokeFrom === "gptAgent";
+
+        // Get sources from API response
+        let contextSources = data?.response?.payload?.sources;
+
+        // Preserve correct docId for GPT agents (matching Kora-React fix)
+        if (wasInvokedFromGptAgent && data?.args?.params?.item?.docId && contextSources?.[0]) {
+            contextSources = contextSources.map(source => ({
+                ...source,
+                docId: data?.args?.params?.item?.docId
+            }));
+        }
+
+        // Update selectedContext with API response data
+        const selectedContextData = {
+            data: {
+                ...data?.response?.payload,
+                // Use corrected sources if available
+                sources: contextSources || data?.response?.payload?.sources,
+                // Preserve sessionId from API response
+                sessionId: data?.response?.payload?.sessionId || state.selectedContext?.data?.sessionId,
+                // Preserve flags
+                setViaMenuOptions: state.selectedContext?.data?.setViaMenuOptions || wasInvokedFromMenuOptions,
+                setViaGptAgent: state.selectedContext?.data?.setViaGptAgent || wasInvokedFromGptAgent,
+                // Preserve messageId/boardId if previously set (e.g., via menu options)
+                messageId: state.selectedContext?.data?.messageId || data?.args?.messageId || data?.args?.params?.messageId,
+                boardId: state.selectedContext?.data?.boardId || data?.args?.boardId || data?.args?.params?.boardId,
+                // Set type based on agent type (matching Kora-React)
+                type: data?.type || (data?.response?.payload?.context?.agentType === "gptAgent" ? "agent" : null),
+                // Preserve quickactions
+                quickactions: data?.response?.payload?.quickactions || state.selectedContext?.data?.quickactions
+            }
+        };
+
+        // Remove loading state from sources
+        if (selectedContextData.data.sources) {
+            selectedContextData.data.sources = selectedContextData.data.sources.map(source => {
+                const updated = { ...source };
+                delete updated.loading;
+                return updated;
+            });
+        }
+
+        store.dispatch(setSelectedContext(selectedContextData));
+
+        // Update quick actions
         let _quickActions = data?.response?.payload?.quickactions;
-        store.dispatch(setQuickActions(_quickActions));
+        if (_quickActions) {
+            store.dispatch(setQuickActions(_quickActions));
+        }
     }
+
     // if comes in this condition means all items removed from existing session
-    if (data?.args?.action === "remove" && (data?.response?.payload?.sources?.length === 0)) {
+    if (data?.args?.action === "remove" && (data?.response?.payload?.sources?.length === 0 || isEmpty(data?.response?.payload))) {
         store.dispatch(setSelectedContext({}));
     }
 

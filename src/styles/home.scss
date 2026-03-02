@@ -1,4 +1,4 @@
-@import "../../src/styles/mixins_new.scss";
+@use "./mixins_new.scss" as *;
 
 #root {
     width: 100%;
@@ -86,6 +86,7 @@
             height: 100%;
             display: flex;
             flex-direction: column;
+            position: relative;
 
             #questions-container {
                 flex-grow: 1;
@@ -111,6 +112,34 @@
                     }
                 }
             }
+            .scroll-to-bottom-arrow {
+                display: none;
+                align-items: center;
+                justify-content: center;
+                width: 2rem;
+                height: 2rem;
+                border-radius: 50%;
+                background: #fff;
+                border: 1px solid #E5E5E5;
+                cursor: pointer;
+                color: #737373;
+                position: absolute;
+                bottom: 8rem;
+                left: 50%;
+                transform: translateX(-50%);
+                z-index: 10;
+                transition: opacity 0.2s ease, transform 0.2s ease;
+
+                &.visible {
+                    display: flex;
+                }
+
+                svg {
+                    pointer-events: none;
+                    transform: rotate(90deg);
+                }
+            }
+
             #compose-bar-container {
                 flex-shrink: 0;
                 margin-bottom: 1.5rem;
@@ -122,6 +151,10 @@
         }
       }
     }
+}
+
+.scroll-to-bottom-arrow {
+    display: none;
 }
 
 .landing-page-content {
