@@ -258,10 +258,7 @@ const createPanel = (titleText) => {
   const chatHistoryButton = document.createElement("button");
   chatHistoryButton.type = "button";
   chatHistoryButton.className = "sdk-chatbot-newchat sdk-chatbot-chat-history";
-  chatHistoryButton.textContent = "Chat History";
-  if (store.getState().global.disableHistorySectionInChatSection) {
-    chatHistoryButton.style.display = "none";
-  }
+  chatHistoryButton.textContent = "Chat History";  
 
   const headerButtonContainer = document.createElement("div");
   headerButtonContainer.className = "eva-sdk-chatbot-header-buttons";
@@ -591,6 +588,10 @@ export const open = () => {
   syncQuestionsContainerClass();
   state.isOpen = true;
   syncPanelState();
+
+  if (store.getState().global.disableHistorySectionInChatSection) {
+    state.elements.chatHistoryButton.style.display = "none";
+  }
 };
 
 export const close = () => {
