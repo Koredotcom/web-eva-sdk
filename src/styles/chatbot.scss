@@ -64,6 +64,10 @@
   border: 1px solid #eeeeee;
   font-family: Inter;
 
+  @media (max-height: 555px) {
+    height: 78dvh;
+  }
+
   .message-bubble.question {
     .message-text {
       background: #F2F4F7;
@@ -115,7 +119,7 @@
               @include typography-regular(0.875rem, 400, 1.25rem);
               color: var(--Gray-900, #101828);
               max-width: 100%;
-              @include ellipsisText;
+              //@include ellipsisText;
             }
             .newtext-line {
               width: 100%;
@@ -352,6 +356,7 @@
       }
       .ComposeBarContainer {
         .eva-composebar-parent {
+          z-index: 1;
           .eva-composebar-area {
             &.eva-composebar-area--history-selected {
               animation: none;
