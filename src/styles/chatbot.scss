@@ -64,6 +64,10 @@
   border: 1px solid #eeeeee;
   font-family: Inter;
 
+  @media (max-height: 555px) {
+    height: 78dvh;
+  }
+
   .message-bubble.question {
     .message-text {
       background: #F2F4F7;
