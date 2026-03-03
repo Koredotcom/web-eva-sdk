@@ -44,7 +44,7 @@ export function render(
 		}
 
 		// Handle error state
-		if (data.error) {
+		if (data?.error) {
 			return TemplateComponents.wrapTemplate(
 				errorMessage.render(data, assistantIconTemplate),
 				{
@@ -72,15 +72,15 @@ export function render(
 		// Render template content based on type
 		if (data.botConversation || data.viewType === "threadView") {
 			let html = renderTemplateContent(
-					data,
-					assistantIconTemplate,
-					userIconTemplate,
-					loadingText
-				)
+				data,
+				assistantIconTemplate,
+				userIconTemplate,
+				loadingText
+			)
 			content += DOMPurify.sanitize(html, {
-					ADD_TAGS: SHOELACE_TAGS,
-					ADD_ATTR: SHOELACE_ATTRS,
-				});
+				ADD_TAGS: SHOELACE_TAGS,
+				ADD_ATTR: SHOELACE_ATTRS,
+			});
 		} else {
 			// content += customMarkdownRenderer(
 			// 	renderTemplateContent(
@@ -101,7 +101,7 @@ export function render(
 				ADD_ATTR: SHOELACE_ATTRS,
 			});
 		}
-		if (!!data?.sources?.length && supportsFeedback(data.templateType) && data?.status === "completed") {
+		if ((!!data?.sources?.length || !!data?.agentId) && supportsFeedback(data.templateType) && data?.status === "completed") {
 			let chip = AnsFromChip({ item: data });
 			content += DOMPurify.sanitize(chip, {
 				ADD_TAGS: SHOELACE_TAGS,
@@ -130,16 +130,16 @@ export function renderTemplateContent(
 	assistantIconTemplate,
 	userIconTemplate,
 	loadingText
-) {	
+) {
 	const state = store.getState().global;
 	let htmlTemplate = "";
 	htmlTemplate = responseQueryFlow.render(data);
 	/*customQNAAPI is for ms */
-	if(!state.chatInterfaceElements.disableAppAvatar){
-		if(data?.context?.agentType === "gptAgent"){
+	if (!state.chatInterfaceElements.disableAppAvatar) {
+		if (data?.context?.agentType === "gptAgent") {
 			htmlTemplate += TemplateComponents.renderAppAvatar(data?.context?.title, data?.context?.sources?.[0]?.icon || data?.sources?.[0]?.icon, data.timestamp);
 		}
-		else{
+		else {
 			htmlTemplate += TemplateComponents.renderAppAvatar(state.appMetaData.appName, state.appMetaData.appIcon, data.timestamp);
 		}
 	}
@@ -157,7 +157,7 @@ export function renderTemplateContent(
 		return htmlTemplate += `<div class="message-bubble answer"> 
 					I see you interrupted the answer generation. Please feel free to provide more details or let me know how can I assist you further
 				</div>`;
-	} else {		
+	} else {
 		switch (data.templateType) {
 			case "resolve_ambiguity":
 				htmlTemplate += ambiguityTemplate.render(data);
@@ -186,7 +186,7 @@ export function renderTemplateContent(
 			case "action_send_slack_message":
 				htmlTemplate += actionSendSlackMessage.render(data);
 				break;
-			
+
 			case "action_send_msteams_message":
 				htmlTemplate += actionSendTeamsMessageTemplate.render(data);
 				break;
@@ -223,7 +223,7 @@ export function renderTemplateContent(
 				break;
 
 			case "hold_conversation":
-					htmlTemplate += holdConversation.render(data);
+				htmlTemplate += holdConversation.render(data);
 				break;
 			case "items_ambiguity_template":
 				htmlTemplate += itemsAmbiguityTemplate.render(data);
@@ -238,16 +238,15 @@ export function renderTemplateContent(
 				// 	htmlTemplate = renderBotConversation(data);
 				// }
 				console.warn(`Unknown template type: ${data.templateType}`);
-				// htmlTemplate = TemplateComponents.renderAnswerBubble(data);
+			// htmlTemplate = TemplateComponents.renderAnswerBubble(data);
 		}
 	}
 	// Add feedback if supported
 	// if (supportsFeedback(data.templateType)) {
 	// 	htmlTemplate += feedbackTemplate.render(data);
 	// }
-	return `<div class="message-bubble answer"> ${
-		assistantIconTemplate ? assistantIconTemplate : ""
-	} <div class="answerCntr">${htmlTemplate}</div>
+	return `<div class="message-bubble answer"> ${assistantIconTemplate ? assistantIconTemplate : ""
+		} <div class="answerCntr">${htmlTemplate}</div>
 	</div>`;
 }
 
@@ -265,13 +264,13 @@ export function renderBotConversation(data) {
                 <div class='generating-answer-block-item'>
                     <div class='icon'>
                         ${TemplateComponents.renderIcon("TickMark", {
-							size: 18,
-						})}
+			size: 18,
+		})}
                     </div>
                     <div class='msg'>
                         <span>${encodeHtml(
-							`Transferring to: "${data.sources[0].title}" agent`
-						)}</span>
+			`Transferring to: "${data.sources[0].title}" agent`
+		)}</span>
                     </div>
                 </div>
             </div>
@@ -302,7 +301,7 @@ export function shouldShowQuestion(templateType, bot) {
 }
 
 export function supportsFeedback(templateType) {
-	const feedbackTemplates = ["search_answer", "multi_responses", "gpt_form"];
+	const feedbackTemplates = ["search_answer", "multi_responses", "gpt_form_template", "search_results"];
 	return feedbackTemplates.includes(templateType);
 }
 

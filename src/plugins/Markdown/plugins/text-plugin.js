@@ -66,7 +66,56 @@ renderer.listitem = function (text) {
 
 // --- Links ---
 renderer.link = function (href, title, text) {
-  return `<a href="${href}" target="_blank" rel="noopener noreferrer" onclick="event.preventDefault(); window.open('${href}','_blank');">${text}</a>`;
+  // Marked passes the link label as `text`. We treat it as a "markdown link" (apply special-link)
+  // only when the visible label is meaningfully different from the href, e.g. [Google](https://google.com).
+  //
+  // NOTE: href is often normalized by Marked (e.g., adding https://), so a plain URL label like
+  // "example.com" should NOT be considered a markdown link even though text !== href.
+  const decodeEntities = (value) =>
+    String(value ?? "")
+      .replace(/&amp;/g, "&")
+      .replace(/&lt;/g, "<")
+      .replace(/&gt;/g, ">")
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'");
+
+  const stripTags = (value) => String(value ?? "").replace(/<[^>]*>/g, "");
+
+  const normalizeUrlLike = (value) => {
+    const v = String(value ?? "").trim();
+    // Remove scheme + trailing slash for comparison against displayed URL text
+    return v.replace(/^https?:\/\//i, "").replace(/\/$/, "");
+  };
+
+  const isProbablyUrlText = (value) => {
+    const v = String(value ?? "").trim();
+    // Accept: example.com, www.example.com/path, https://example.com?a=b, mailto:user@x.com, etc.
+    return (
+      /^(https?:\/\/|mailto:|tel:)/i.test(v) ||
+      /^[\w.-]+\.[a-z]{2,}(\/[^\s]*)?$/i.test(v) ||
+      /^www\.[\w.-]+\.[a-z]{2,}(\/[^\s]*)?$/i.test(v)
+    );
+  };
+
+  const textPlain = decodeEntities(stripTags(text)).trim();
+  const hrefPlain = String(href ?? "").trim();
+
+  const hrefComparable = normalizeUrlLike(hrefPlain);
+  const textComparable = normalizeUrlLike(textPlain);
+
+  const isTextEssentiallyHref =
+    textPlain === hrefPlain ||
+    textComparable === hrefComparable ||
+    (hrefPlain.toLowerCase().startsWith("mailto:") && textPlain === hrefPlain.slice(7)) ||
+    (hrefPlain.toLowerCase().startsWith("tel:") && textPlain === hrefPlain.slice(4)) ||
+    // Marked may normalize scheme; treat "example.com" label as same as "https://example.com"
+    (isProbablyUrlText(textPlain) && textComparable === hrefComparable);
+
+  const isMarkdownLink = !isTextEssentiallyHref;
+  const classAttr = ` class="${isMarkdownLink ? "special-link" : "normal-link"}"`;
+
+  // Avoid embedding href directly into onclick (quote escaping/XSS risk).
+  return `<a href="${href}" target="_blank" rel="noopener noreferrer"${classAttr} onclick="event.preventDefault(); window.open(this.href,'_blank');">${text}</a>`;
 };
 
 // --- Images ---

@@ -66,7 +66,9 @@ const initialState = {
   chatInterfaceElements:{
     disableAppAvatar: false,
   },
-  env: 'MS'
+  env: 'Kore',
+  answerSources: null,
+  unifiedSearchResults: null
 };
 
 const globalSlice = createSlice({
@@ -150,6 +152,12 @@ const globalSlice = createSlice({
       },
       setChatInterfaceElements: (state, action) => {
         state.chatInterfaceElements = {...state.chatInterfaceElements, ...action.payload};
+      },
+      setAnswerSources: (state, action) => {
+        state.answerSources = action.payload;
+      },
+      setUnifiedSearchResults: (state, action) => {
+        state.unifiedSearchResults = action.payload;
       }
     },
     extraReducers: (builder) => {
@@ -278,7 +286,9 @@ export const {
   setAnnouncements,
 	setAppMetaData,
 	setAnsFromChipElements,
-	setChatInterfaceElements
+	setChatInterfaceElements,
+	setAnswerSources,
+	setUnifiedSearchResults
 } = globalSlice.actions;
 
 export default globalSlice;

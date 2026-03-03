@@ -1,8 +1,8 @@
 const config = {
-    color: '#667085',
-    color1: '#667085',
-    color2: '#667085',
-    size: 20
+  color: '#667085',
+  color1: '#667085',
+  color2: '#667085',
+  size: 20
 };
 
 export function createDeleteIcon({ size = config.size, color = config.color, className = '' }) {
@@ -37,8 +37,8 @@ export function createCopyIcon({ size = config.size, color = config.color, class
 
 export function Close({ size = config.size, color = config.color, className = '' }) {
   return `  
-    <svg width="${size}" height="${size}" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg" className={'wa-Close ' + className}>
-      <path d="M9.18311 1L1.18311 9M1.18311 1L9.18311 9" stroke="${color}" strokeWidth="1.33" strokeLinecap="round" strokeLinejoin="round" />
+    <svg width="${size}" height="${size}" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg" class="wa-Close ${className}">
+      <path d="M9.18311 1L1.18311 9M1.18311 1L9.18311 9" stroke="${color}" stroke-width="1.33" stroke-linecap="round" stroke-linejoin="round" />
     </svg>    
   `;
 }
@@ -148,7 +148,7 @@ export function microphoneIcon({ size = config.size, color = config.color, class
 export function arrowCirlceUpIcon({ size = config.size, color = config.color, className = "" } = {}) {
   return `
     <svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="wa-arrowCirlceUpIcon ${className}">
-      <path fillRule="evenodd" clipRule="evenodd" d="M12 23C18.0751 23 23 18.0751 23 12C23 5.92487 18.0751 1 12 1C5.92487 0.999999 1 5.92487 1 12C0.999999 18.0751 5.92487 23 12 23ZM12 17C11.4477 17 11 16.5523 11 16V10.4142L8.70711 12.7071C8.31658 13.0976 7.68342 13.0976 7.29289 12.7071C6.90237 12.3166 6.90237 11.6834 7.29289 11.2929L11.2929 7.29289C11.6834 6.90237 12.3166 6.90237 12.7071 7.29289L16.7071 11.2929C17.0976 11.6834 17.0976 12.3166 16.7071 12.7071C16.3166 13.0976 15.6834 13.0976 15.2929 12.7071L13 10.4142V16C13 16.5523 12.5523 17 12 17Z" fill="${color}" />
+      <path fill-rule="evenodd" clip-rule="evenodd" d="M12 23C18.0751 23 23 18.0751 23 12C23 5.92487 18.0751 1 12 1C5.92487 0.999999 1 5.92487 1 12C0.999999 18.0751 5.92487 23 12 23ZM12 17C11.4477 17 11 16.5523 11 16V10.4142L8.70711 12.7071C8.31658 13.0976 7.68342 13.0976 7.29289 12.7071C6.90237 12.3166 6.90237 11.6834 7.29289 11.2929L11.2929 7.29289C11.6834 6.90237 12.3166 6.90237 12.7071 7.29289L16.7071 11.2929C17.0976 11.6834 17.0976 12.3166 16.7071 12.7071C16.3166 13.0976 15.6834 13.0976 15.2929 12.7071L13 10.4142V16C13 16.5523 12.5523 17 12 17Z" fill="${color}" />
     </svg>
   `;
 }
@@ -162,7 +162,7 @@ export function CheveronDownIcon({ size = config.size, color = config.color, cla
 }
 
 export function cheveronRightIcon({ size = config.size, color = config.color, className = '' } = {}) {
-    return `
+  return `
     <svg width="${size}" height="${size}" viewBox="0 0 7 10" fill="none" xmlns="http://www.w3.org/2000/svg" class="wa-CheveronRight ${className}">
       <path d="M1.59277 8.8623L5.59277 4.8623L1.59277 0.862305" stroke="${color}" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round" />
     </svg>
@@ -195,16 +195,16 @@ export function settingsIcon({ size = config.size, color = config.color, classNa
   return `
     <svg width="${size}" height="${size}" viewBox="0 0 16 15" fill="none" xmlns="http://www.w3.org/2000/svg" class="wa-searchIcon ${className}">
       <path d="M8.00004 9.60014C9.10461 9.60014 10 8.70471 10 7.60014C10 6.49557 9.10461 5.60014 8.00004 5.60014C6.89547 5.60014 6.00004 6.49557 6.00004 7.60014C6.00004 8.70471 6.89547 9.60014 8.00004 9.60014Z" stroke="${color}" stroke-width="1.33" stroke-linecap="round" stroke-linejoin="round" />
-      <path d="M12.4849 9.41832C12.4042 9.60112 12.3801 9.80389 12.4158 10.0005C12.4514 10.1971 12.5452 10.3785 12.6849 10.5214L12.7213 10.5577C12.834 10.6703 12.9234 10.804 12.9844 10.9511C13.0454 11.0983 13.0768 11.256 13.0768 11.4153C13.0768 11.5746 13.0454 11.7323 12.9844 11.8795C12.9234 12.0266 12.834 12.1603 12.7213 12.2729C12.6087 12.3856 12.475 12.475 12.3278 12.536C12.1807 12.597 12.023 12.6284 11.8637 12.6284C11.7044 12.6284 11.5467 12.597 11.3995 12.536C11.2524 12.475 11.1187 12.3856 11.0061 12.2729L10.9697 12.2365C10.8269 12.0968 10.6455 12.0031 10.4489 11.9674C10.2523 11.9318 10.0495 11.9558 9.86671 12.0365C9.68745 12.1133 9.53458 12.2409 9.42689 12.4035C9.31921 12.5661 9.26142 12.7566 9.26065 12.9517V13.0547C9.26065 13.3762 9.13294 13.6845 8.90562 13.9118C8.67831 14.1391 8.37 14.2668 8.04853 14.2668C7.72705 14.2668 7.41874 14.1391 7.19143 13.9118C6.96411 13.6845 6.8364 13.3762 6.8364 13.0547V13.0001C6.83171 12.7995 6.76678 12.605 6.65005 12.4418C6.53332 12.2786 6.37018 12.1542 6.18186 12.085C5.99906 12.0043 5.79629 11.9802 5.59968 12.0159C5.40308 12.0515 5.22166 12.1453 5.07883 12.285L5.04247 12.3214C4.92989 12.4341 4.79621 12.5235 4.64906 12.5845C4.50191 12.6455 4.34418 12.6768 4.18489 12.6768C4.0256 12.6768 3.86787 12.6455 3.72072 12.5845C3.57357 12.5235 3.43989 12.4341 3.32731 12.3214C3.21461 12.2088 3.12521 12.0751 3.06421 11.9279C3.00321 11.7808 2.97181 11.6231 2.97181 11.4638C2.97181 11.3045 3.00321 11.1468 3.06421 10.9996C3.12521 10.8525 3.21461 10.7188 3.32731 10.6062L3.36368 10.5698C3.5034 10.427 3.59712 10.2456 3.63277 10.049C3.66842 9.85238 3.64435 9.6496 3.56368 9.46681C3.48685 9.28755 3.35929 9.13467 3.19669 9.02699C3.03409 8.91931 2.84355 8.86152 2.64853 8.86074H2.5455C2.22402 8.86074 1.91571 8.73304 1.6884 8.50572C1.46108 8.27841 1.33337 7.9701 1.33337 7.64862C1.33337 7.32715 1.46108 7.01884 1.6884 6.79152C1.91571 6.56421 2.22402 6.4365 2.5455 6.4365H2.60004C2.80064 6.43181 2.9952 6.36688 3.1584 6.25015C3.32161 6.13341 3.44593 5.97028 3.51519 5.78196C3.59587 5.59916 3.61993 5.39639 3.58429 5.19978C3.54864 5.00318 3.45491 4.82176 3.31519 4.67893L3.27883 4.64256C3.16613 4.52999 3.07673 4.39631 3.01573 4.24916C2.95473 4.10201 2.92333 3.94428 2.92333 3.78499C2.92333 3.6257 2.95473 3.46797 3.01573 3.32082C3.07673 3.17367 3.16613 3.03998 3.27883 2.92741C3.3914 2.81471 3.52509 2.72531 3.67223 2.66431C3.81938 2.60331 3.97711 2.57191 4.1364 2.57191C4.2957 2.57191 4.45343 2.60331 4.60057 2.66431C4.74772 2.72531 4.88141 2.81471 4.99398 2.92741L5.03034 2.96377C5.17318 3.10349 5.3546 3.19722 5.5512 3.23287C5.7478 3.26852 5.95058 3.24445 6.13337 3.16377H6.18186C6.36111 3.08695 6.51399 2.95938 6.62167 2.79678C6.72936 2.63418 6.78714 2.44365 6.78792 2.24862V2.14559C6.78792 1.82412 6.91563 1.51581 7.14294 1.28849C7.37026 1.06118 7.67857 0.933472 8.00004 0.933472C8.32152 0.933472 8.62982 1.06118 8.85714 1.28849C9.08446 1.51581 9.21216 1.82412 9.21216 2.14559V2.20014C9.21294 2.39516 9.27073 2.5857 9.37841 2.7483C9.48609 2.9109 9.63897 3.03846 9.81822 3.11529C10.001 3.19597 10.2038 3.22003 10.4004 3.18438C10.597 3.14874 10.7784 3.05501 10.9213 2.91529L10.9576 2.87893C11.0702 2.76623 11.2039 2.67682 11.351 2.61582C11.4982 2.55482 11.6559 2.52343 11.8152 2.52343C11.9745 2.52343 12.1322 2.55482 12.2794 2.61582C12.4265 2.67682 12.5602 2.76623 12.6728 2.87893C12.7855 2.9915 12.8749 3.12518 12.9359 3.27233C12.9969 3.41948 13.0283 3.57721 13.0283 3.7365C13.0283 3.89579 12.9969 4.05352 12.9359 4.20067C12.8749 4.34782 12.7855 4.4815 12.6728 4.59408L12.6364 4.63044C12.4967 4.77328 12.403 4.95469 12.3673 5.1513C12.3317 5.3479 12.3557 5.55067 12.4364 5.73347V5.78196C12.5132 5.96121 12.6408 6.11409 12.8034 6.22177C12.966 6.32945 13.1565 6.38724 13.3516 6.38802H13.4546C13.7761 6.38802 14.0844 6.51572 14.3117 6.74304C14.539 6.97036 14.6667 7.27866 14.6667 7.60014C14.6667 7.92161 14.539 8.22992 14.3117 8.45724C14.0844 8.68455 13.7761 8.81226 13.4546 8.81226H13.4C13.205 8.81304 13.0145 8.87082 12.8519 8.97851C12.6893 9.08619 12.5617 9.23907 12.4849 9.41832Z" strokeWidth="1.33" stroke="${color}" stroke-width="1.33" stroke-linecap="round" stroke-linejoin="round" />
+      <path d="M12.4849 9.41832C12.4042 9.60112 12.3801 9.80389 12.4158 10.0005C12.4514 10.1971 12.5452 10.3785 12.6849 10.5214L12.7213 10.5577C12.834 10.6703 12.9234 10.804 12.9844 10.9511C13.0454 11.0983 13.0768 11.256 13.0768 11.4153C13.0768 11.5746 13.0454 11.7323 12.9844 11.8795C12.9234 12.0266 12.834 12.1603 12.7213 12.2729C12.6087 12.3856 12.475 12.475 12.3278 12.536C12.1807 12.597 12.023 12.6284 11.8637 12.6284C11.7044 12.6284 11.5467 12.597 11.3995 12.536C11.2524 12.475 11.1187 12.3856 11.0061 12.2729L10.9697 12.2365C10.8269 12.0968 10.6455 12.0031 10.4489 11.9674C10.2523 11.9318 10.0495 11.9558 9.86671 12.0365C9.68745 12.1133 9.53458 12.2409 9.42689 12.4035C9.31921 12.5661 9.26142 12.7566 9.26065 12.9517V13.0547C9.26065 13.3762 9.13294 13.6845 8.90562 13.9118C8.67831 14.1391 8.37 14.2668 8.04853 14.2668C7.72705 14.2668 7.41874 14.1391 7.19143 13.9118C6.96411 13.6845 6.8364 13.3762 6.8364 13.0547V13.0001C6.83171 12.7995 6.76678 12.605 6.65005 12.4418C6.53332 12.2786 6.37018 12.1542 6.18186 12.085C5.99906 12.0043 5.79629 11.9802 5.59968 12.0159C5.40308 12.0515 5.22166 12.1453 5.07883 12.285L5.04247 12.3214C4.92989 12.4341 4.79621 12.5235 4.64906 12.5845C4.50191 12.6455 4.34418 12.6768 4.18489 12.6768C4.0256 12.6768 3.86787 12.6455 3.72072 12.5845C3.57357 12.5235 3.43989 12.4341 3.32731 12.3214C3.21461 12.2088 3.12521 12.0751 3.06421 11.9279C3.00321 11.7808 2.97181 11.6231 2.97181 11.4638C2.97181 11.3045 3.00321 11.1468 3.06421 10.9996C3.12521 10.8525 3.21461 10.7188 3.32731 10.6062L3.36368 10.5698C3.5034 10.427 3.59712 10.2456 3.63277 10.049C3.66842 9.85238 3.64435 9.6496 3.56368 9.46681C3.48685 9.28755 3.35929 9.13467 3.19669 9.02699C3.03409 8.91931 2.84355 8.86152 2.64853 8.86074H2.5455C2.22402 8.86074 1.91571 8.73304 1.6884 8.50572C1.46108 8.27841 1.33337 7.9701 1.33337 7.64862C1.33337 7.32715 1.46108 7.01884 1.6884 6.79152C1.91571 6.56421 2.22402 6.4365 2.5455 6.4365H2.60004C2.80064 6.43181 2.9952 6.36688 3.1584 6.25015C3.32161 6.13341 3.44593 5.97028 3.51519 5.78196C3.59587 5.59916 3.61993 5.39639 3.58429 5.19978C3.54864 5.00318 3.45491 4.82176 3.31519 4.67893L3.27883 4.64256C3.16613 4.52999 3.07673 4.39631 3.01573 4.24916C2.95473 4.10201 2.92333 3.94428 2.92333 3.78499C2.92333 3.6257 2.95473 3.46797 3.01573 3.32082C3.07673 3.17367 3.16613 3.03998 3.27883 2.92741C3.3914 2.81471 3.52509 2.72531 3.67223 2.66431C3.81938 2.60331 3.97711 2.57191 4.1364 2.57191C4.2957 2.57191 4.45343 2.60331 4.60057 2.66431C4.74772 2.72531 4.88141 2.81471 4.99398 2.92741L5.03034 2.96377C5.17318 3.10349 5.3546 3.19722 5.5512 3.23287C5.7478 3.26852 5.95058 3.24445 6.13337 3.16377H6.18186C6.36111 3.08695 6.51399 2.95938 6.62167 2.79678C6.72936 2.63418 6.78714 2.44365 6.78792 2.24862V2.14559C6.78792 1.82412 6.91563 1.51581 7.14294 1.28849C7.37026 1.06118 7.67857 0.933472 8.00004 0.933472C8.32152 0.933472 8.62982 1.06118 8.85714 1.28849C9.08446 1.51581 9.21216 1.82412 9.21216 2.14559V2.20014C9.21294 2.39516 9.27073 2.5857 9.37841 2.7483C9.48609 2.9109 9.63897 3.03846 9.81822 3.11529C10.001 3.19597 10.2038 3.22003 10.4004 3.18438C10.597 3.14874 10.7784 3.05501 10.9213 2.91529L10.9576 2.87893C11.0702 2.76623 11.2039 2.67682 11.351 2.61582C11.4982 2.55482 11.6559 2.52343 11.8152 2.52343C11.9745 2.52343 12.1322 2.55482 12.2794 2.61582C12.4265 2.67682 12.5602 2.76623 12.6728 2.87893C12.7855 2.9915 12.8749 3.12518 12.9359 3.27233C12.9969 3.41948 13.0283 3.57721 13.0283 3.7365C13.0283 3.89579 12.9969 4.05352 12.9359 4.20067C12.8749 4.34782 12.7855 4.4815 12.6728 4.59408L12.6364 4.63044C12.4967 4.77328 12.403 4.95469 12.3673 5.1513C12.3317 5.3479 12.3557 5.55067 12.4364 5.73347V5.78196C12.5132 5.96121 12.6408 6.11409 12.8034 6.22177C12.966 6.32945 13.1565 6.38724 13.3516 6.38802H13.4546C13.7761 6.38802 14.0844 6.51572 14.3117 6.74304C14.539 6.97036 14.6667 7.27866 14.6667 7.60014C14.6667 7.92161 14.539 8.22992 14.3117 8.45724C14.0844 8.68455 13.7761 8.81226 13.4546 8.81226H13.4C13.205 8.81304 13.0145 8.87082 12.8519 8.97851C12.6893 9.08619 12.5617 9.23907 12.4849 9.41832Z" stroke="${color}" stroke-width="1.33" stroke-linecap="round" stroke-linejoin="round" />
     </svg>
   `;
 }
 
 export function StopIcon({ size = config.size, color = config.color, className = "" } = {}) {
   return `
-    <svg width="${size}" height="${size}" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="wa-StopIcon ${className}">
+    <svg width="${size}" height="${size}" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" class="wa-StopIcon ${className}">
                 <g id="stop">
-                    <path id="Solid" fillRule="evenodd" clipRule="evenodd" d="M5.13451 1.66666H14.8654C15.3047 1.66664 15.6837 1.66663 15.9958 1.69213C16.3253 1.71905 16.653 1.77848 16.9683 1.93914C17.4387 2.17883 17.8211 2.56128 18.0608 3.03168C18.2215 3.347 18.2809 3.67468 18.3078 4.00413C18.3333 4.31627 18.3333 4.69524 18.3333 5.13452V14.8655C18.3333 15.3047 18.3333 15.6837 18.3078 15.9958C18.2809 16.3253 18.2215 16.653 18.0608 16.9683C17.8211 17.4387 17.4387 17.8212 16.9683 18.0608C16.653 18.2215 16.3253 18.2809 15.9958 18.3079C15.6837 18.3334 15.3047 18.3333 14.8654 18.3333H5.13449C4.69521 18.3333 4.31624 18.3334 4.0041 18.3079C3.67465 18.2809 3.34697 18.2215 3.03165 18.0608C2.56125 17.8212 2.17879 17.4387 1.93911 16.9683C1.77845 16.653 1.71902 16.3253 1.6921 15.9958C1.6666 15.6837 1.66661 15.3047 1.66663 14.8654V5.13454C1.66661 4.69525 1.6666 4.31628 1.6921 4.00413C1.71902 3.67468 1.77845 3.347 1.93911 3.03168C2.17879 2.56128 2.56125 2.17883 3.03165 1.93914C3.34697 1.77848 3.67465 1.71905 4.0041 1.69213C4.31625 1.66663 4.69522 1.66664 5.13451 1.66666Z" fill="${color}" />
+                    <path id="Solid" fill-rule="evenodd" clip-rule="evenodd" d="M5.13451 1.66666H14.8654C15.3047 1.66664 15.6837 1.66663 15.9958 1.69213C16.3253 1.71905 16.653 1.77848 16.9683 1.93914C17.4387 2.17883 17.8211 2.56128 18.0608 3.03168C18.2215 3.347 18.2809 3.67468 18.3078 4.00413C18.3333 4.31627 18.3333 4.69524 18.3333 5.13452V14.8655C18.3333 15.3047 18.3333 15.6837 18.3078 15.9958C18.2809 16.3253 18.2215 16.653 18.0608 16.9683C17.8211 17.4387 17.4387 17.8212 16.9683 18.0608C16.653 18.2215 16.3253 18.2809 15.9958 18.3079C15.6837 18.3334 15.3047 18.3333 14.8654 18.3333H5.13449C4.69521 18.3333 4.31624 18.3334 4.0041 18.3079C3.67465 18.2809 3.34697 18.2215 3.03165 18.0608C2.56125 17.8212 2.17879 17.4387 1.93911 16.9683C1.77845 16.653 1.71902 16.3253 1.6921 15.9958C1.6666 15.6837 1.66661 15.3047 1.66663 14.8654V5.13454C1.66661 4.69525 1.6666 4.31628 1.6921 4.00413C1.71902 3.67468 1.77845 3.347 1.93911 3.03168C2.17879 2.56128 2.56125 2.17883 3.03165 1.93914C3.34697 1.77848 3.67465 1.71905 4.0041 1.69213C4.31625 1.66663 4.69522 1.66664 5.13451 1.66666Z" fill="${color}" />
                 </g>
             </svg>
   `;
@@ -212,15 +212,15 @@ export function StopIcon({ size = config.size, color = config.color, className =
 
 export function setContextIcon({ className = '', size = config.size, color = config.color }) {
   return `
-      <svg width="${size}" height="${size}" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" className="wa-setContextIcon ${className}">
-       <path d="M9.33333 7.3335H5.33333M6.66666 10.0002H5.33333M10.6667 4.66683H5.33333M13.3333 7.00016V4.5335C13.3333 3.41339 13.3333 2.85334 13.1153 2.42552C12.9236 2.04919 12.6176 1.74323 12.2413 1.55148C11.8135 1.3335 11.2534 1.3335 10.1333 1.3335H5.86666C4.74656 1.3335 4.18651 1.3335 3.75868 1.55148C3.38236 1.74323 3.0764 2.04919 2.88465 2.42552C2.66666 2.85334 2.66666 3.41339 2.66666 4.5335V11.4668C2.66666 12.5869 2.66666 13.147 2.88465 13.5748C3.0764 13.9511 3.38236 14.2571 3.75868 14.4488C4.18651 14.6668 4.74656 14.6668 5.86666 14.6668H7.66666M14.6667 14.6668L13.6667 13.6668M14.3333 12.0002C14.3333 13.2888 13.2887 14.3335 12 14.3335C10.7113 14.3335 9.66666 13.2888 9.66666 12.0002C9.66666 10.7115 10.7113 9.66683 12 9.66683C13.2887 9.66683 14.3333 10.7115 14.3333 12.0002Z" stroke="${color}" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round" />
+      <svg width="${size}" height="${size}" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" class="wa-setContextIcon ${className}">
+       <path d="M9.33333 7.3335H5.33333M6.66666 10.0002H5.33333M10.6667 4.66683H5.33333M13.3333 7.00016V4.5335C13.3333 3.41339 13.3333 2.85334 13.1153 2.42552C12.9236 2.04919 12.6176 1.74323 12.2413 1.55148C11.8135 1.3335 11.2534 1.3335 10.1333 1.3335H5.86666C4.74656 1.3335 4.18651 1.3335 3.75868 1.55148C3.38236 1.74323 3.0764 2.04919 2.88465 2.42552C2.66666 2.85334 2.66666 3.41339 2.66666 4.5335V11.4668C2.66666 12.5869 2.66666 13.147 2.88465 13.5748C3.0764 13.9511 3.38236 14.2571 3.75868 14.4488C4.18651 14.6668 4.74656 14.6668 5.86666 14.6668H7.66666M14.6667 14.6668L13.6667 13.6668M14.3333 12.0002C14.3333 13.2888 13.2887 14.3335 12 14.3335C10.7113 14.3335 9.66666 13.2888 9.66666 12.0002C9.66666 10.7115 10.7113 9.66683 12 9.66683C13.2887 9.66683 14.3333 10.7115 14.3333 12.0002Z" stroke="${color}" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round" />
       </svg>
   `;
 }
 
 export function EllipsisVertical({ size = config.size, color = config.color, className = '' } = {}) {
   return `    
-      <svg width="${size}" height="${size}" viewBox="0 0 3 14" fill="none" xmlns="http://www.w3.org/2000/svg" className="wa-EllipsisVertical ${className}">
+      <svg width="${size}" height="${size}" viewBox="0 0 3 14" fill="none" xmlns="http://www.w3.org/2000/svg" class="wa-EllipsisVertical ${className}">
         <path d="M1.46667 3.26666C2.15396 3.26666 2.71112 2.7095 2.71112 2.02222C2.71112 1.33493 2.15396 0.777771 1.46667 0.777771C0.779386 0.777771 0.222229 1.33493 0.222229 2.02222C0.222229 2.7095 0.779386 3.26666 1.46667 3.26666Z" fill="${color}" />
         <path d="M2.71112 6.99999C2.71112 7.68728 2.15396 8.24444 1.46667 8.24444C0.779386 8.24444 0.222229 7.68728 0.222229 6.99999C0.222229 6.31271 0.779386 5.75555 1.46667 5.75555C2.15396 5.75555 2.71112 6.31271 2.71112 6.99999Z" fill="${color}" />
         <path d="M2.71112 11.9778C2.71112 12.6651 2.15396 13.2222 1.46667 13.2222C0.779386 13.2222 0.222229 12.6651 0.222229 11.9778C0.222229 11.2905 0.779386 10.7333 1.46667 10.7333C2.15396 10.7333 2.71112 11.2905 2.71112 11.9778Z" fill="${color}" />
@@ -230,7 +230,7 @@ export function EllipsisVertical({ size = config.size, color = config.color, cla
 
 export function Gmail({ size = config.size, color = config.color, className = '' }) {
   return `
-      <svg width="${size}" height="${size}" className="wa-Gmail ${className}" viewBox="0 0 12 9" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <svg width="${size}" height="${size}" class="wa-Gmail ${className}" viewBox="0 0 12 9" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M9.02564 1.26172L6.03209 3.59793L2.97009 1.26172V1.26235L2.97379 1.26551V4.53683L5.99756 6.92356L9.02564 4.62902V1.26172Z" fill="#EA4335" />
         <path d="M9.81173 0.693193L9.02557 1.26146V4.62876L11.4993 2.72948V1.58537C11.4993 1.58537 11.1991 -0.048712 9.81173 0.693193Z" fill="#FBBC05" />
         <path d="M9.02557 4.62877V8.99622H10.9216C10.9216 8.99622 11.4611 8.94066 11.5 8.32566V2.72949L9.02557 4.62877Z" fill="#34A853" />
@@ -245,7 +245,7 @@ export function Gmail({ size = config.size, color = config.color, className = ''
 
 export function Outlookimg({ className = '', size = config.size, color = config.color }) {
   return `
-      <svg width="${size}" height="${size}" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" className="wa-Outlookimg ${className}">
+      <svg width="${size}" height="${size}" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" class="wa-Outlookimg ${className}">
         <rect x="5" y="1" width="10" height="14" rx="1" fill="#1066B5" />
         <rect x="5" y="1" width="10" height="14" rx="1" fill="url(#paint0_linear_21_20380)" />
         <rect x="5" y="2.5" width="5" height="5" fill="#32A9E7" />
@@ -292,7 +292,7 @@ export function Outlookimg({ className = '', size = config.size, color = config.
 
 export function Slackimg({ className = '', size = config.size, color = config.color }) {
   return `
-      <svg width="${size}" height="${size}" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" className="wa-Slackimg ${className}">
+      <svg width="${size}" height="${size}" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" class="wa-Slackimg ${className}">
         <path d="M13.2501 7.49979C13.9404 7.49979 14.5 6.94019 14.5 6.24989C14.5 5.5596 13.9404 5 13.2501 5C12.5597 5 12 5.55964 12 6.25V7.49979H13.2501ZM9.75 7.49979C10.4404 7.49979 11 6.94014 11 6.24979V2.75C11 2.05964 10.4404 1.5 9.75 1.5C9.05964 1.5 8.5 2.05964 8.5 2.75V6.24979C8.5 6.94014 9.05964 7.49979 9.75 7.49979Z" fill="#2EB67D" />
         <path d="M2.74989 8.50021C2.0596 8.50021 1.5 9.05981 1.5 9.75011C1.5 10.4404 2.05965 11 2.74995 11C3.4403 11 4 10.4404 4 9.75V8.50021H2.74989ZM6.25 8.50021C5.55964 8.50021 5 9.05986 5 9.75021V13.25C5 13.9404 5.55964 14.5 6.25 14.5C6.94036 14.5 7.5 13.9404 7.5 13.25V9.75021C7.5 9.05986 6.94036 8.50021 6.25 8.50021Z" fill="#E01E5A" />
         <path d="M8.50021 13.2501C8.50021 13.9404 9.05981 14.5 9.75011 14.5C10.4404 14.5 11 13.9403 11 13.2501C11 12.5597 10.4404 12 9.75 12L8.50021 12L8.50021 13.2501ZM8.50021 9.75C8.50021 10.4404 9.05986 11 9.75021 11L13.25 11C13.9404 11 14.5 10.4404 14.5 9.75C14.5 9.05964 13.9404 8.5 13.25 8.5L9.75021 8.5C9.05986 8.5 8.50021 9.05964 8.50021 9.75Z" fill="#ECB22E" />
@@ -303,7 +303,7 @@ export function Slackimg({ className = '', size = config.size, color = config.co
 
 export function Teamsimg({ className = '', size = config.size, color = config.color }) {
   return `    
-      <svg width="${size}" height="${size}" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" className="wa-Teamsimg ${className}">
+      <svg width="${size}" height="${size}" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" class="wa-Teamsimg ${className}">
         <path d="M9.5 6.95161C9.5 6.70219 9.70219 6.5 9.95161 6.5H15.5484C15.7978 6.5 16 6.70219 16 6.95161V10.25C16 12.0449 14.5449 13.5 12.75 13.5C10.9551 13.5 9.5 12.0449 9.5 10.25V6.95161Z" fill="url(#paint0_linear_21_20386)" />
         <path d="M4.5 6.1129C4.5 5.77441 4.77441 5.5 5.1129 5.5H11.8871C12.2256 5.5 12.5 5.77441 12.5 6.1129V11C12.5 13.2091 10.7091 15 8.5 15C6.29086 15 4.5 13.2091 4.5 11V6.1129Z" fill="url(#paint1_linear_21_20386)" />
         <circle cx="13.5" cy="4" r="1.5" fill="#34439E" />
@@ -353,7 +353,7 @@ export function Teamsimg({ className = '', size = config.size, color = config.co
 
 export function JiraCommentsIcon({ size = config.size, className = '' }) {
   return `
-      <svg className="wa-JiraCommentsIcon ${className}" width="${size}" height="${size}" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <svg class="wa-JiraCommentsIcon ${className}" width="${size}" height="${size}" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M14.8324 7.60824L8.60376 1.58395L8 1L3.31134 5.53485L1.16763 7.60824C0.944123 7.82468 0.944123 8.17532 1.16763 8.39176L5.45124 12.5348L8 15L12.6887 10.4652L12.7613 10.3949L14.8324 8.39176C15.0559 8.17532 15.0559 7.82468 14.8324 7.60824ZM8 10.0697L5.86011 8L8 5.93031L10.1399 8L8 10.0697Z" fill="#2684FF" />
         <path fill-rule="evenodd" clip-rule="evenodd" d="M7.99997 5.93028C6.59893 4.57504 6.5921 2.37997 7.98468 1.0166L3.30176 5.54406L5.85052 8.00921L7.99997 5.93028Z" fill="url(#paint0_linear_4847_128613)" />
         <path fill-rule="evenodd" clip-rule="evenodd" d="M10.1456 7.99445L8 10.0697C8.67624 10.7233 9.05618 11.6101 9.05618 12.5348C9.05618 13.4595 8.67624 14.3463 8 15L12.6944 10.4596L10.1456 7.99445Z" fill="url(#paint1_linear_4847_128613)" />
@@ -371,18 +371,18 @@ export function JiraCommentsIcon({ size = config.size, className = '' }) {
   `
 }
 
-export function RightArrow({ size = config.size, color = config.color, className = '' }) {  
+export function RightArrow({ size = config.size, color = config.color, className = '' }) {
   return `
-      <svg width="${size}" height="${size}" className="wa-RightArrow ${className}" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <svg width="${size}" height="${size}" class="wa-RightArrow ${className}" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M1.33337 6.00016H10.6667M10.6667 6.00016L6.00004 1.3335M10.6667 6.00016L6.00004 10.6668" stroke="${color}" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round" />
       </svg>
   `
 }
 
-export function CheckCircle({ size = config.size, color = config.color, className = '' }) {  
+export function CheckCircle({ size = config.size, color = config.color, className = '' }) {
   return `
-      <svg width="${size}" height="${size}" className="wa-CheckCircle ${className}" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <g clipPath="url(#clip0_200_6980)">
+      <svg width="${size}" height="${size}" class="wa-CheckCircle ${className}" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <g clip-path="url(#clip0_200_6980)">
               <path d="M6.24935 10.0003L8.74935 12.5003L13.7493 7.50033M18.3327 10.0003C18.3327 14.6027 14.6017 18.3337 9.99935 18.3337C5.39698 18.3337 1.66602 14.6027 1.66602 10.0003C1.66602 5.39795 5.39698 1.66699 9.99935 1.66699C14.6017 1.66699 18.3327 5.39795 18.3327 10.0003Z" stroke="${color}" stroke-width="1.66667" stroke-linecap="round" stroke-linejoin="round" />
           </g>
           <defs>
@@ -394,26 +394,26 @@ export function CheckCircle({ size = config.size, color = config.color, classNam
   `
 }
 
-export function MaximizeIcon({ size = config.size, color = config.color, className = '' }) {  
+export function MaximizeIcon({ size = config.size, color = config.color, className = '' }) {
   return `
-      <svg width="${size}" height="${size}" className="wa-MaximizeIcon ${className}" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <svg width="${size}" height="${size}" class="wa-MaximizeIcon ${className}" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
         <g id="maximize-01">
             <path id="Icon" d="M9.33333 6.66667L14 2M14 2H10M14 2V6M6.66667 9.33333L2 14M2 14H6M2 14L2 10" stroke="${color}" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
   `
 }
 
-export function MinimizeIcon({ size = config.size, color = config.color, className = '' }) {  
+export function MinimizeIcon({ size = config.size, color = config.color, className = '' }) {
   return `
-      <svg width="${size}" height="${size}" className="wa-MinimizeIcon ${className}" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <svg width="${size}" height="${size}" class="wa-MinimizeIcon ${className}" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M1.66667 8.33333H5.66667M5.66667 8.33333V12.3333M5.66667 8.33333L1 13M12.3333 5.66667H8.33333M8.33333 5.66667V1.66667M8.33333 5.66667L13 1" stroke="${color}" stroke-width="1.33" stroke-linecap="round" stroke-linejoin="round" />
       </svg>
   `
 }
 
-export function RadioButtonChecked({ size = config.size, color = config.color, className = '' }) {  
+export function RadioButtonChecked({ size = config.size, color = config.color, className = '' }) {
   return `
-      <svg width="${size}" height="${size}" className="wa-RadioButtonChecked ${className}" viewBox="0 0 16 17" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <svg width="${size}" height="${size}" class="wa-RadioButtonChecked ${className}" viewBox="0 0 16 17" fill="none" xmlns="http://www.w3.org/2000/svg">
         <rect x="0.5" y="1" width="15" height="15" rx="7.5" fill="#12B76A" />
         <path d="M11.3337 6L6.75033 10.5833L4.66699 8.5" stroke="white" stroke-width="1.66667" stroke-linecap="round" stroke-linejoin="round" />
         <rect x="0.5" y="1" width="15" height="15" rx="7.5" stroke="#12B76A" />
@@ -421,25 +421,35 @@ export function RadioButtonChecked({ size = config.size, color = config.color, c
   `
 }
 
-export function PlusIcon({ size = config.size, color = config.color, className = '' }) {  
+export function RadioButtonCheckedGrey({ size = config.size, color = "#98A2B3", className = '' }) {
   return `
-      <svg width="${size}" height="${size}" className="wa-PlusIcon ${className}" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <svg width="${size}" height="${size}" class="wa-RadioButtonCheckedGrey ${className}" viewBox="0 0 16 17" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="0.5" y="1" width="15" height="15" rx="7.5" fill="${color}" />
+        <path d="M11.3337 6L6.75033 10.5833L4.66699 8.5" stroke="white" stroke-width="1.66667" stroke-linecap="round" stroke-linejoin="round" />
+        <rect x="0.5" y="1" width="15" height="15" rx="7.5" stroke="${color}" />
+      </svg>
+  `
+}
+
+export function PlusIcon({ size = config.size, color = config.color, className = '' }) {
+  return `
+      <svg width="${size}" height="${size}" class="wa-PlusIcon ${className}" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M6.84976 1.33329C6.84976 0.965103 6.55129 0.666626 6.1831 0.666626C5.81491 0.666626 5.51643 0.965103 5.51643 1.33329V5.33329H1.51643C1.14824 5.33329 0.849762 5.63177 0.849762 5.99996C0.849762 6.36815 1.14824 6.66663 1.51643 6.66663H5.51643V10.6666C5.51643 11.0348 5.81491 11.3333 6.1831 11.3333C6.55129 11.3333 6.84976 11.0348 6.84976 10.6666V6.66663H10.8498C11.218 6.66663 11.5164 6.36815 11.5164 5.99996C11.5164 5.63177 11.218 5.33329 10.8498 5.33329H6.84976V1.33329Z" fill="${color}" />
       </svg>
   `
 }
 
-export function ExportIcon({ size = config.size, color = config.color, className = '' }) {  
+export function ExportIcon({ size = config.size, color = config.color, className = '' }) {
   return `
-      <svg width="${size}" height="${size}" className="wa-ExportIcon ${className}" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <svg width="${size}" height="${size}" class="wa-ExportIcon ${className}" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M13 9V9.8C13 10.9201 13 11.4802 12.782 11.908C12.5903 12.2843 12.2843 12.5903 11.908 12.782C11.4802 13 10.9201 13 9.8 13H4.2C3.07989 13 2.51984 13 2.09202 12.782C1.71569 12.5903 1.40973 12.2843 1.21799 11.908C1 11.4802 1 10.9201 1 9.8V9M10.3333 4.33333L7 1M7 1L3.66667 4.33333M7 1V9" stroke="${color}" stroke-width="1.33" stroke-linecap="round" stroke-linejoin="round" />
       </svg>
   `
 }
 
-export function ToastWarningIcon({ size = config.size }) {  
+export function ToastWarningIcon({ size = config.size }) {
   return `
-      <svg width="${size}" height="${size}" className="wa-ToastWarningIcon" viewBox="0 0 46 46" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <svg width="${size}" height="${size}" class="wa-ToastWarningIcon" viewBox="0 0 46 46" fill="none" xmlns="http://www.w3.org/2000/svg">
         <rect x="3" y="3" width="40" height="40" rx="20" fill="#FEF0C7"/>
         <g clip-path="url(#clip0_3761_81834)">
         <path d="M23.0003 19.667V23.0003M23.0003 26.3337H23.0087M31.3337 23.0003C31.3337 27.6027 27.6027 31.3337 23.0003 31.3337C18.398 31.3337 14.667 27.6027 14.667 23.0003C14.667 18.398 18.398 14.667 23.0003 14.667C27.6027 14.667 31.3337 18.398 31.3337 23.0003Z" stroke="#DC6803" stroke-width="1.66667" stroke-linecap="round" stroke-linejoin="round"/>
@@ -454,9 +464,9 @@ export function ToastWarningIcon({ size = config.size }) {
   `
 }
 
-export function DragHandleIcon({ size = config.size, color = config.color, className = '' }) {  
+export function DragHandleIcon({ size = config.size, color = config.color, className = '' }) {
   return `
-      <svg width="${size}" height="${size}" className="wa-DragHandleIcon ${className}" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <svg width="${size}" height="${size}" class="wa-DragHandleIcon ${className}" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M6 4C6 4.55228 5.55228 5 5 5C4.44772 5 4 4.55228 4 4C4 3.44772 4.44772 3 5 3C5.55228 3 6 3.44772 6 4Z" fill="${color}"/>
         <path d="M12 4C12 4.55228 11.5523 5 11 5C10.4477 5 10 4.55228 10 4C10 3.44772 10.4477 3 11 3C11.5523 3 12 3.44772 12 4Z" fill="${color}"/>
         <path d="M6 8C6 8.55228 5.55228 9 5 9C4.44772 9 4 8.55228 4 8C4 7.44772 4.44772 7 5 7C5.55228 7 6 7.44772 6 8Z" fill="${color}"/>
@@ -467,25 +477,25 @@ export function DragHandleIcon({ size = config.size, color = config.color, class
   `
 }
 
-export function EditIcon({ size = config.size, color = config.color, className = '' }) {  
+export function EditIcon({ size = config.size, color = config.color, className = '' }) {
   return `
-      <svg width="${size}" height="${size}" className="wa-EditIcon ${className}" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <svg width="${size}" height="${size}" class="wa-EditIcon ${className}" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M18 10L14 6M2.49997 21.5L5.88434 21.124C6.29783 21.078 6.50457 21.055 6.69782 20.9925C6.86926 20.937 7.03242 20.8586 7.18286 20.7594C7.35242 20.6475 7.49951 20.5005 7.7937 20.2063L21 7C22.1046 5.89543 22.1046 4.10457 21 3C19.8954 1.89543 18.1046 1.89543 17 3L3.7937 16.2063C3.49952 16.5005 3.35242 16.6475 3.24061 16.8171C3.1414 16.9676 3.06298 17.1307 3.00748 17.3022C2.94493 17.4954 2.92195 17.7021 2.87601 18.1156L2.49997 21.5Z" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
       </svg>
   `
 }
 
-export function HistoryIcon({ size = config.size, color = config.color, className = '' }) {  
+export function HistoryIcon({ size = config.size, color = config.color, className = '' }) {
   return `
-      <svg width="${size}" height="${size}" className="wa-HistoryIcon ${className}" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <svg width="${size}" height="${size}" class="wa-HistoryIcon ${className}" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M18.9166 9.58333L17.2505 11.25L15.5833 9.58333M17.4542 10.8333C17.4845 10.5597 17.5 10.2817 17.5 10C17.5 5.85786 14.1421 2.5 10 2.5C5.85786 2.5 2.5 5.85786 2.5 10C2.5 14.1421 5.85786 17.5 10 17.5C12.3561 17.5 14.4584 16.4136 15.8333 14.7144M10 5.83333V10L12.5 11.6667" stroke="${color}" stroke-width="1.66667" stroke-linecap="round" stroke-linejoin="round" />
       </svg>
   `
 }
 
-export function AddStepFilledIcon({ size = config.size, color = config.color, className = '' }) {  
+export function AddStepFilledIcon({ size = config.size, color = config.color, className = '' }) {
   return `
-      <svg width="${size}" height="${size}" className="wa-AddStepFilledIcon ${className}" viewBox="0 0 32 38" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <svg width="${size}" height="${size}" class="wa-AddStepFilledIcon ${className}" viewBox="0 0 32 38" fill="none" xmlns="http://www.w3.org/2000/svg">
         <rect x="11.5" y="2.50879" width="16" height="16" transform="rotate(45 11.5 2.50879)" fill="#475467"/>
             <rect x="3" width="28" height="28" rx="14" fill="#475467"/>
             <path d="M17 10.5V17.5M13.5 14H20.5" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
@@ -495,10 +505,10 @@ export function AddStepFilledIcon({ size = config.size, color = config.color, cl
 
 export function WarningStrokeCircle({ className = '', size = config.size, color = config.color, stroke = config.stroke || config.color, insideFill = config.insideFill || 'white' }) {
   return `    
-      <svg className={'wa-ManageMembers' + className} width="${size}" height="${size}" viewBox="0 0 21 21" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <svg class="wa-ManageMembers ${className}" width="${size}" height="${size}" viewBox="0 0 21 21" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path opacity="0.2" d="M10.7397 17.625C14.8819 17.625 18.2397 14.2671 18.2397 10.125C18.2397 5.98286 14.8819 2.625 10.7397 2.625C6.59761 2.625 3.23975 5.98286 3.23975 10.125C3.23975 14.2671 6.59761 17.625 10.7397 17.625Z" fill="black" />
-        <path d="M10.7397 17.625C14.8819 17.625 18.2397 14.2671 18.2397 10.125C18.2397 5.98286 14.8819 2.625 10.7397 2.625C6.59761 2.625 3.23975 5.98286 3.23975 10.125C3.23975 14.2671 6.59761 17.625 10.7397 17.625Z" fill="${color}" stroke="${stroke}" strokeWidth="1.33" strokeMiterlimit="10" />
-        <path d="M10.7397 6.375V10.75" stroke="${insideFill}" strokeWidth="1.33" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M10.7397 17.625C14.8819 17.625 18.2397 14.2671 18.2397 10.125C18.2397 5.98286 14.8819 2.625 10.7397 2.625C6.59761 2.625 3.23975 5.98286 3.23975 10.125C3.23975 14.2671 6.59761 17.625 10.7397 17.625Z" fill="${color}" stroke="${stroke}" stroke-width="1.33" stroke-miterlimit="10" />
+        <path d="M10.7397 6.375V10.75" stroke="${insideFill}" stroke-width="1.33" stroke-linecap="round" stroke-linejoin="round" />
         <path d="M10.7397 14.5C11.2575 14.5 11.6772 14.0803 11.6772 13.5625C11.6772 13.0447 11.2575 12.625 10.7397 12.625C10.222 12.625 9.80225 13.0447 9.80225 13.5625C9.80225 14.0803 10.222 14.5 10.7397 14.5Z" fill="${insideFill}" />
       </svg>    
   `
@@ -529,11 +539,12 @@ export function AgenticSearchIcon({ className = '', size = config.size, color = 
   `;
 }
 
-export function CurvedArrowForPreview ({ size = config.size, className = '' }) {
-    return`
+export function CurvedArrowForPreview({ size = config.size, className = '' }) {
+  return `
         <svg
             width="${size}"
             height="${size}"
+            class="wa-CurvedArrowForPreview"
             viewBox="0 0 12 12"
             fill="none"
             xmlns="http://www.w3.org/2000/svg">
@@ -542,4 +553,21 @@ export function CurvedArrowForPreview ({ size = config.size, className = '' }) {
                 fill="#737373"
             />
         </svg>
-    `;}
+    `;
+}
+
+export function ArrowUpRight({ className = '', size = config.size, color = config.color }) {
+  return `
+    <svg width="${size}" height="${size}" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" class="wa-ArrowUpRight ${className}">
+      <path d="M5.83325 14.1667L14.1666 5.83334M14.1666 5.83334H5.83325M14.1666 5.83334V14.1667" stroke="${color}" stroke-width="1.66667" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  `;
+}
+
+export function getMessageTextIcon({ size = config.size, color = config.color, className = '' } = {}) {
+  return `
+        <svg width="${size}" height="${size}" viewBox="0 0 12 13" fill="none" xmlns="http://www.w3.org/2000/svg" class="wa-MessageText ${className}">
+            <path d="M4 5.25003H6M4 7.00003H7.5M6 11C8.48528 11 10.5 8.98531 10.5 6.50003C10.5 4.01475 8.48528 2.00003 6 2.00003C3.51472 2.00003 1.5 4.01475 1.5 6.50003C1.5 7.0986 1.61687 7.66988 1.82903 8.19229C1.86964 8.29227 1.88994 8.34226 1.899 8.38267C1.90786 8.4222 1.9111 8.45145 1.9111 8.49196C1.91111 8.53338 1.90359 8.57849 1.88855 8.66871L1.59206 10.4476C1.56102 10.6339 1.54549 10.7271 1.57438 10.7944C1.59966 10.8534 1.64664 10.9004 1.70559 10.9257C1.77295 10.9545 1.86609 10.939 2.05238 10.908L3.83133 10.6115C3.92154 10.5964 3.96665 10.5889 4.00807 10.5889C4.04858 10.5889 4.07783 10.5922 4.11736 10.601C4.15777 10.6101 4.20776 10.6304 4.30775 10.671C4.83015 10.8832 5.40143 11 6 11Z" stroke="${color}" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+    `;
+}
