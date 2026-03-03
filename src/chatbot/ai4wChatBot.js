@@ -4,6 +4,7 @@ import NewChat from "../chat/NewChat";
 import { JoinChatThread } from "../chat";
 import { unHideRecentAgentsDiv, hideRecentAgentsDiv } from "../LandingPageRecentAgents";
 import { createHistorySidebar, initHistoryList } from "./chatbotHistory";
+import BotConversation from "../chat/botAgent/getBotConversation";
 import store from "../redux/store";
 
 const DEFAULT_CONTAINER_ID = "eva-sdk-chatbot-container";
@@ -574,6 +575,18 @@ export const init = (config = {}) => {
   syncPanelState();
   syncHistoryState();
   state.initialized = true;
+
+
+  let botInstance = BotConversation()
+        botInstance.initializeBotSDK({
+            "name": "ProcureBot",
+            "streamId": "st-b6012ef2-810d-5240-b33e-5404d68b680e",
+            "webhook": {
+                "clientId": "cs-79a89a6f-b0ab-5e2f-b912-8dd1e2f95da0",
+                "clientSecret": "VJNwkfbPcMZl4bOa1Qn3XtYRz6rqigwtTgOlaYX25Xs="
+            }
+        })
+        botInstance.enableEVABotSdk(true)
 
   return containerId;
 };
