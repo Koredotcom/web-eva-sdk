@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import store from "../redux/store";
 import ChatInterface from "../chat/ChatInterface";
 import NewChat from "../chat/NewChat";
 import AgentWelcomeTemplate from "./WelcomeTemplate";
@@ -38,15 +39,16 @@ const TestComp = (props) => {
 		// Subscribe to updates
 		const unsubscribe = chatInterface.current.subscribe(
 			(question, searchResponse, moreAvailable, errorStates, quickActions) => {
-				// Handle the API response data
-				console.log(
-					"Received data from chat API:",
-					question,
-					searchResponse,
-					moreAvailable,
-					errorStates,
-					quickActions
-				);
+				if (store.getState().global?.enableDebugging) {
+					console.log(
+						"Received data from chat API:",
+						question,
+						searchResponse,
+						moreAvailable,
+						errorStates,
+						quickActions
+					);
+				}
 				setQuestions(question);
 				setErrorStates(errorStates);
 				setQuickActions(quickActions);
@@ -86,7 +88,9 @@ const TestComp = (props) => {
 				input,
 				items?.[items?.length - 1]
 			);
-			console.log("working.....");
+			if (store.getState().global?.enableDebugging) {
+				console.log("working.....");
+			}
 			setInput("");
 		}
 	};
@@ -300,7 +304,9 @@ const TestComp = (props) => {
 									loadingText: "Analyzing",
 								}
 							);
-							console.log(html);
+							if (store.getState().global?.enableDebugging) {
+								console.log(html);
+							}
 							return (
 								<div
 									dangerouslySetInnerHTML={{

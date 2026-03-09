@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { TemplateRenderer } from "../../templateRenderer";
 import { BotConversation, ChatInterface } from "../../chat";
+import store from "../../redux/store";
 
 import "./ChatInterface.scss"
 
@@ -55,21 +56,24 @@ const ChatInterfaceDemo = () => {
     botInstance.enableEVABotSdk(true)
     announcementInterface.current = AnnouncementsInterface();
     announcementInterface.current.subscribe((announcements) => {
-      console.log("Announcements:", announcements);
+      if (store.getState().global?.enableDebugging) {
+        console.log("Announcements:", announcements);
+      }
     });
 
     // Subscribe to updates
     const unsubscribe = chatInterface.current.subscribe(
       (question, searchResponse, moreAvailable, errorStates, quickActions) => {
-        // Handle the API response data
-        console.log(
-          "Received data from chat API:",
-          question,
-          searchResponse,
-          moreAvailable,
-          errorStates,
-          quickActions
-        );
+        if (store.getState().global?.enableDebugging) {
+          console.log(
+            "Received data from chat API:",
+            question,
+            searchResponse,
+            moreAvailable,
+            errorStates,
+            quickActions
+          );
+        }
         setMessages(question);
         setQuickActions(quickActions);
       }
@@ -97,7 +101,7 @@ const ChatInterfaceDemo = () => {
           </div>
           
           {/* <Notifications /> */}
-          {/* <Agents />  */}
+          <Agents /> 
           {/* <Announcements /> */}
           {/* <History /> */}
         </div>

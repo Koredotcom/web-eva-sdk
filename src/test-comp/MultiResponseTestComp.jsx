@@ -16,13 +16,17 @@ const MultiResponseTestComp = ({ item }) => {
     const [selectedPrompt, setSelectedPrompt] = useState(null);
 
     useEffect(() => {
-        console.log("_forms", _forms);
+        if (store.getState().global?.enableDebugging) {
+            console.log("_forms", _forms);
+        }
         const _prompts = _forms?.fieldValues?.find(field => field?.key === "prompts");
         /*check whether prompts is having nested key or not */
         if(_prompts?.value?.nested){
             setSelectedPrompt(_prompts?.choices?.[0]);
         }
-        console.log("selectedPrompt", selectedPrompt);
+        if (store.getState().global?.enableDebugging) {
+            console.log("selectedPrompt", selectedPrompt);
+        }
     }, []);
 
     /** Read the selected option from a dropdown in the DOM using id dropdownValue-${key}-${messageId}-${subIndex} */
@@ -65,7 +69,9 @@ const MultiResponseTestComp = ({ item }) => {
                                                 const res = await GptFileUpload(e, `${contextField?.key}-${item?.messageId}`)
                                                 setFiles(res)
                                             }    catch(err){
-                                                console.log("error", err)
+                                                if (store.getState().global?.enableDebugging) {
+                                                    console.log("error", err)
+                                                }
                                             }                                 
                                         
                                     }
@@ -143,7 +149,9 @@ const MultiResponseTestComp = ({ item }) => {
                                                           const res =  await GptFileUpload(e, `${subItem?.key}-${item?.messageId}-${subIndex}`)
                                                           setFiles(res)
                                                         }catch(err){
-                                                            console.log("error", err)
+                                                            if (store.getState().global?.enableDebugging) {
+                                                                console.log("error", err)
+                                                            }
                                                         }
                                                     }}/>
                                                 {files?.[`${subItem?.key}-${item?.messageId}-${subIndex}`]?.map((file, fileIndex) =>{

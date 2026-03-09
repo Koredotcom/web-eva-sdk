@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react'
+import store from '../redux/store'
 import { GetDownloadUrl, LoadMoreRecentFiles, RecentFiles } from '../files'
 import SetAttachmentContext from '../Attachments/setAttachmentContext'
 
@@ -11,8 +12,7 @@ const File = () => {
     }, [])
 
     const fetchRecentFiles = async () => {
-        const res = await RecentFiles()
-        console.log('Recent Files', res)
+        const res = await RecentFiles()        
     }
     const fetchLoadMoreRecentFiles = async (loadmore) => {
         const res = await LoadMoreRecentFiles({ limit: 10, initialData: loadmore ? false : true })
