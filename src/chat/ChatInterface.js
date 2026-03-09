@@ -124,7 +124,11 @@ const ChatInterface = (props) => {
             }
             /*writing especially for botAgent, will remove this once search session api gives the context data, when we click on askFollowup after bot completion */
             if(selectedContext?.data?.sessionId){
-              payload.context.sessionId = selectedContext?.data?.sessionId
+              payload.context = {
+                sessionId: selectedContext?.data?.sessionId,
+                agentType: isAgentSetAsSource?.type || selectedContext?.data?.agentType,
+                source: selectedContext?.data?.sources?.[0].source || selectedContext?.data?.source,
+              }
             }
           } else {
             // when setted context is an attachment
@@ -249,8 +253,12 @@ const ChatInterface = (props) => {
 					}
 					/*writing especially for botAgent, will remove this once search session api gives the context data, when we click on askFollowup after bot completion */
 					if (selectedContext?.data?.sessionId) {
-						payload.context.sessionId =
-							selectedContext?.data?.sessionId;
+						payload.context = {
+              sessionId: selectedContext?.data?.sessionId,
+              agentType: isAgentSetAsSource?.type || selectedContext?.data?.agentType,
+              source: selectedContext?.data?.sources?.[0].source || selectedContext?.data?.source,
+            }
+            
 					}
 				} else {
 					// when setted context is an attachment
@@ -521,32 +529,35 @@ const ChatInterface = (props) => {
         reqId = cQFromStore?.cId
       }
       let currentQuestion = _questions[reqId]
-      if(detail?.entity !== "answerContext"){      
-      if(detail?.data?.answerMeta?.hasOwnProperty('messageId')) {
-        currentQuestion = {...currentQuestion, ...detail?.data?.answerMeta}      
-        currentQuestion.botConversation = {}  
+      if(currentQuestion.viewType === 'threadView'){
+        if(detail?.entity !== "answerContext"){      
+          if(detail?.data?.answerMeta?.hasOwnProperty('messageId')) {
+            currentQuestion = {...currentQuestion, ...detail?.data?.answerMeta}      
+            currentQuestion.botConversation = {}  
+          }
+          /*we have to create botConversation with the outputMessageId add thoughts to it, once the advanceSearchApi is completed, need to replace that outputMessageId with the response of advSearch API */
+          if(detail?.data?.answerMeta?.hasOwnProperty('outputMessageId')){
+            if(!currentQuestion?.botConversation) {
+                  currentQuestion.botConversation = {}
+            }
+            currentQuestion.botConversation[detail?.data?.answerMeta?.outputMessageId] = {
+                "suggestion":detail?.data?.suggestion,
+                "thoughts":detail?.data?.answerMeta?.thoughts,
+                "status": "in-progress",
+                "templateType": detail?.data?.templateType || "search_answer",
+            }
+          } 
+        } else {
+          currentQuestion.agentIcon = detail?.data?.answerMeta?.agentIcon
+          currentQuestion.agentName = detail?.data?.answerMeta?.agentName
+          currentQuestion.viewType  = detail?.data?.answerMeta?.viewType
+        }
+      }else{
+        currentQuestion = {...currentQuestion, ...detail?.data?.answerMeta}
       }
-      /*we have to create botConversation with the outputMessageId add thoughts to it, once the advanceSearchApi is completed, need to replace that outputMessageId with the response of advSearch API */
-      if(detail?.data?.answerMeta?.hasOwnProperty('outputMessageId')){
-        if(!currentQuestion?.botConversation) {
-              currentQuestion.botConversation = {}
-        }
-        currentQuestion.botConversation[detail?.data?.answerMeta?.outputMessageId] = {
-            "suggestion":detail?.data?.suggestion,
-            "thoughts":detail?.data?.answerMeta?.thoughts,
-            "status": "in-progress",
-            "templateType": detail?.data?.templateType || "search_answer",
-        }
-      } 
-    } else {
-      currentQuestion.agentIcon = detail?.data?.answerMeta?.agentIcon
-      currentQuestion.agentName = detail?.data?.answerMeta?.agentName
-      currentQuestion.viewType  = detail?.data?.answerMeta?.viewType
-    }
-      
+      console.log("currentQuestion in agentThoughts", currentQuestion)
       _questions[reqId] = currentQuestion      
       store.dispatch(updateChatData(_questions))      
-      console.log("agentThoughts", detail)
     }
 
     const options = (_options) => {

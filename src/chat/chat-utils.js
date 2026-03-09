@@ -439,18 +439,29 @@ export const constructQuestionPostCall = async (data, qId, isBot = false) => {
     }
     if (data?.payload?.followUpContext && state.enableContextByFollowupContext) {
         // console.log("data?.payload?.followUpContext", { ...data?.payload?.followUpContext, messageId: data?.payload?.messageId })
+        const _selectedContext = store.getState().global.selectedContext;
         let context = {
             context: data?.payload?.followUpContext,
-            messageId: data?.payload?.messageId,
-            sources: data?.payload?.sources,
+            sources: isEmpty(data?.payload?.sources) ? _selectedContext?.data?.sources : data?.payload?.sources,
             viewType: data?.payload?.viewType,
             type: "agent",
             'isAgent': true,
-            sessionId: data?.payload?.followUpContext?.sessionId
+            sessionId: data?.payload?.followUpContext?.sessionId,
+            agentType: data?.payload?.followUpContext?.agentType,
+            source: data?.payload?.followUpContext?.source
         }
         store.dispatch(setSelectedContext({data: context}))
     }
     store.dispatch(updateChatData(questions))
+
+    // if(data?.payload?.context?.sessionId){
+    //     let _selectedContext = cloneDeep(store.getState().global.selectedContext);
+    //     console.log('selected context', _selectedContext);
+    //     if(!isEmpty(_selectedContext)){
+    //         _selectedContext.data.sessionId = data?.payload?.context?.sessionId;
+    //         store.dispatch(setSelectedContext({data: _selectedContext.data}))
+    //     }
+    // }
 
     // if(question?.isTask) {
     //     setTimeout(() => {
