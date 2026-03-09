@@ -87,7 +87,8 @@ window.setupTomSelect = function setupTomSelect({
     },
 
     onItemAdd: (value) => {
-      onAdd(tom.options[value]?.raw || { id: value }, type);
+      const raw = tom.options[value]?.raw;
+      onAdd(raw ? { ...raw, id: raw.id || value } : { id: value }, type);
     },
     onItemRemove: (value) => {
       onRemove({ id: value }, type);

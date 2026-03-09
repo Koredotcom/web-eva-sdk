@@ -1,5 +1,5 @@
 import { cloneDeep } from "lodash";
-import { delayedSearchCallback, getFileExtension, getUID } from "../../utils/helpers";
+import { delayedSearchCallback, getUID } from "../../utils/helpers";
 import store from "../../redux/store";
 import { updateChatData } from "../../redux/globalSlice";
 import { sendEmail, smartComposeEmail } from "../../redux/actions/global.action";
