@@ -49,9 +49,9 @@ window.setupTomSelect = function setupTomSelect({
       item: (data, escape) => {
         const initials = (data.raw?.name || data.text || '?').split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
         const avatarHtml = data.raw?.icon
-          ? `<img src="${data.raw.icon}" style="width:16px;height:16px;border-radius:50%;margin-right:6px;object-fit:cover;" crossorigin="anonymous" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='inline-flex';" onload="this.nextElementSibling.style.display='none';"/><div style="width:16px;height:16px;margin-right:6px;background:#4f46e5;color:white;border-radius:50%;display:none;align-items:center;justify-content:center;font-size:7px;font-weight:500;">${initials}</div>`
-          : `<div style="width:16px;height:16px;margin-right:6px;background:#4f46e5;color:white;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:7px;font-weight:500;">${initials}</div>`;
-        return `<div style="display:flex;align-items:center;">${avatarHtml}${escape(data.text)}</div>`;
+          ? `<img class="ts-avatar" src="${data.raw.icon}" style="width:16px;height:16px;border-radius:50%;margin-right:6px;object-fit:cover;" crossorigin="anonymous" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='inline-flex';" onload="this.nextElementSibling.style.display='none';"/><div class="ts-avatar" style="width:16px;height:16px;margin-right:6px;background:#4f46e5;color:white;border-radius:50%;display:none;align-items:center;justify-content:center;font-size:7px;font-weight:500;">${initials}</div>`
+          : `<div class="ts-avatar" style="width:16px;height:16px;margin-right:6px;background:#4f46e5;color:white;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:7px;font-weight:500;">${initials}</div>`;
+        return `<div class="ts-item-content" style="display:flex;align-items:center;">${avatarHtml}${escape(data.text)}</div>`;
       },
       loading: () => `<div class="loading">Searching...</div>`,
       no_results: () => `<div class="no-results">No results found</div>`

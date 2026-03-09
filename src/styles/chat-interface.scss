@@ -3149,12 +3149,45 @@ body {
                     margin-bottom: 0;
                 }
 
+                &.email-to-row {
+                    .ts-wrapper {
+                        flex: 1;
+                        min-width: 0;
+                        width: auto !important;
+                    }
+
+                    .cc-bcc-toggle {
+                        display: flex;
+                        align-items: center;
+                        gap: .375rem;
+                        margin-left: auto;
+                        flex-shrink: 0;
+
+                        span {
+                            font-size: .75rem;
+                            font-weight: 500;
+                            color: #737373;
+                            cursor: pointer;
+                            padding: .125rem .25rem;
+                            border-radius: .25rem;
+                            user-select: none;
+                            transition: color .15s ease, background .15s ease;
+
+                            &:hover {
+                                color: #141414;
+                                background: #F2F4F7;
+                            }
+                        }
+                    }
+                }
+
                 .ts-wrapper {
                     &.email-select-field {
                         .ts-control {
                             border: none;
                             box-shadow: none;
                             padding: 0 !important;
+                            transition: min-height 0.15s ease;
 
                             input {
                                 padding: 0.375rem 0.5rem !important;
@@ -3170,6 +3203,9 @@ body {
                                 box-shadow: 0rem 0.0625rem 0.125rem 0rem rgba(16, 24, 40, 0.05);
                                 padding: 0 0.25rem 0 0.25rem;
                                 height: 2rem;
+                                transition: border 0.15s ease, background 0.15s ease,
+                                            box-shadow 0.15s ease, padding 0.15s ease,
+                                            height 0.15s ease;
 
                                 a {
                                     border-left: none;
@@ -3180,6 +3216,60 @@ body {
                                     &:hover {
                                         color: #101828;
                                         background: transparent;
+                                    }
+                                }
+                            }
+                        }
+
+                        // Blurred / unfocused state with recipients: plain text look.
+                        // Only when items exist so empty fields stay clickable.
+                        &.has-items:not(.focus) {
+                            .ts-control {
+                                min-height: unset !important;
+
+                                input {
+                                    width: 0 !important;
+                                    min-width: 0 !important;
+                                    padding: 0 !important;
+                                    opacity: 0;
+                                    position: absolute;
+                                }
+
+                                .item {
+                                    border-color: transparent !important;
+                                    background: transparent !important;
+                                    box-shadow: none !important;
+                                    border-radius: 0 !important;
+                                    padding: 0 !important;
+                                    height: auto !important;
+                                    margin: 0 !important;
+                                    font-family: Inter;
+                                    font-size: .875rem;
+                                    font-style: normal;
+                                    font-weight: 500;
+                                    line-height: inherit;
+                                    letter-spacing: 0em;
+                                    color: #141414;
+                                    white-space: nowrap;
+                                    margin-inline-end: .25rem !important;
+
+                                    &::after {
+                                        content: ',' !important;
+                                    }
+                                    &:nth-last-child(2)::after {
+                                        content: none !important;
+                                    }
+
+                                    .ts-item-content {
+                                        display: inline !important;
+                                    }
+
+                                    .ts-avatar {
+                                        display: none !important;
+                                    }
+
+                                    a {
+                                        display: none !important;
                                     }
                                 }
                             }

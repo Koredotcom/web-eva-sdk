@@ -28,15 +28,19 @@ export function render(data) {
                     </sl-select>
                 </div>
                 <div class="email-header">
-                    <div class="email-field">
+                    <div class="email-field email-to-row">
                         <label>To:</label>
                         <select class="email-select-field" id="email-to-${data.reqId}" multiple></select>
+                        <div class="cc-bcc-toggle" id="cc-bcc-toggle-${data?.reqId}">
+                            <span class="cc-toggle-btn" id="cc-toggle-${data?.reqId}"${data?.content?.cc?.length ? ' style="display:none"' : ''}>CC</span>
+                            <span class="bcc-toggle-btn" id="bcc-toggle-${data?.reqId}"${data?.content?.bcc?.length ? ' style="display:none"' : ''}>BCC</span>
+                        </div>
                     </div>
-                    <div class="email-field">
+                    <div class="email-field email-cc-row" id="email-cc-row-${data?.reqId}"${data?.content?.cc?.length ? '' : ' style="display:none"'}>
                        <label>CC:</label>
                        <select class="email-select-field" id="email-cc-${data.reqId}" multiple></select>
                     </div>
-                    <div class="email-field">
+                    <div class="email-field email-bcc-row" id="email-bcc-row-${data?.reqId}"${data?.content?.bcc?.length ? '' : ' style="display:none"'}>
                       <label>BCC:</label>
                       <select class="email-select-field" id="email-bcc-${data.reqId}" multiple></select>
                     </div>

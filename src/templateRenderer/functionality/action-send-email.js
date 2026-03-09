@@ -317,6 +317,34 @@ const sendEmailFunctionality = (data) => {
         bccSection.eventListenerAdded = true;
     }
 
+    // CC / BCC toggle buttons
+    const ccToggleBtn = document.getElementById(`cc-toggle-${data?.reqId}`);
+    const bccToggleBtn = document.getElementById(`bcc-toggle-${data?.reqId}`);
+    const ccRow = document.getElementById(`email-cc-row-${data?.reqId}`);
+    const bccRow = document.getElementById(`email-bcc-row-${data?.reqId}`);
+
+    if (ccToggleBtn && !ccToggleBtn.eventListenerAdded) {
+        ccToggleBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (ccRow) ccRow.style.display = '';
+            ccToggleBtn.style.display = 'none';
+            const ccInput = ccRow?.querySelector('.ts-control input');
+            if (ccInput) setTimeout(() => ccInput.focus(), 0);
+        });
+        ccToggleBtn.eventListenerAdded = true;
+    }
+
+    if (bccToggleBtn && !bccToggleBtn.eventListenerAdded) {
+        bccToggleBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (bccRow) bccRow.style.display = '';
+            bccToggleBtn.style.display = 'none';
+            const bccInput = bccRow?.querySelector('.ts-control input');
+            if (bccInput) setTimeout(() => bccInput.focus(), 0);
+        });
+        bccToggleBtn.eventListenerAdded = true;
+    }
+
     function validateSendButton() {
         const sendBtn = document.getElementById(`email-send-${data?.reqId}`);
         if (!sendBtn) return;
