@@ -180,57 +180,61 @@ const initScrollArrow = () => {
 
 const renderQuestionsOnly = () => {
     const questionsContainer = document.getElementById('questions-container')
-    if (questionsContainer) {
-        // Generate questions HTML like ChatInterface does
-        let questionsHTML = '';
-        const hasQuestions = questions && !isEmpty(questions);
-        
-        if (hasQuestions) {
-            questionsHTML = Object.values(questions).map((item, index) => {
-                if (item?.isTask) return '';
-                
-                const assistantIconTemplate = () => {
-                    return `<div class="logo-icon"><img src="${resolveSdkAssetPath("images/eva-black-svg.svg")}" alt="AiForWork" /></div>`;
-                };
+    if (!questionsContainer) return
 
-                let html = TemplateRenderer.generateHTMLTemplate(item, {
-                    // assistantIconTemplate,
-                    loadingText: "Analyzing",
-                });
+    // When a TomSelect input has focus (user is typing/selecting recipients),
+    // skip the re-render entirely. store.subscribe fires on EVERY Redux dispatch
+    // — including getSuggestedContactListNew pending/fulfilled which don't change
+    // any visible state. Re-rendering during that window destroys the TomSelect
+    // instance (dropdown closes, typed text lost, height jumps).
+    if (questionsContainer.querySelector('.ts-control input:focus')) return
 
-                return html.outerHTML;
-            }).join('');
-        }
-        
-        // Add or remove class based on questions existence
-        const landingPageContainer = document.querySelector('.landing-page-container');
-        if (hasQuestions) {
-            /*append  results-page-container to the class of landing-page-container*/
-            landingPageContainer.classList.add('results-page-container');
-        } else {
-            landingPageContainer.classList.remove('results-page-container');
-        }
-        
-        const prevScrollTop = questionsContainer.scrollTop
+    const hasQuestions = questions && !isEmpty(questions);
 
-        questionsContainer.innerHTML = questionsHTML
-
-        const messageContainers = questionsContainer.querySelectorAll('.message-container')
-        const currentQuestionCount = messageContainers.length
-
-        if (currentQuestionCount > prevQuestionCount && currentQuestionCount >= 2) {
-            pinLatestQuestionToTop()
-        } else if (currentQuestionCount >= 2) {
-            const lastMessage = messageContainers[messageContainers.length - 1]
-            const visibleHeight = questionsContainer.clientHeight - getOverlayHeight()
-            const lastMessageHeight = lastMessage.offsetHeight
-            lastMessage.style.marginBottom = Math.max(0, visibleHeight - lastMessageHeight) + 'px'
-            questionsContainer.scrollTop = prevScrollTop
-        }
-        prevQuestionCount = currentQuestionCount
-
-        setTimeout(() => updateScrollArrowVisibility(), 150)
+    const landingPageContainer = document.querySelector('.landing-page-container');
+    if (hasQuestions) {
+        landingPageContainer?.classList.add('results-page-container');
+    } else {
+        landingPageContainer?.classList.remove('results-page-container');
     }
+
+    if (!hasQuestions) {
+        questionsContainer.innerHTML = '';
+        prevQuestionCount = 0;
+        setTimeout(() => updateScrollArrowVisibility(), 150)
+        return;
+    }
+
+    const prevScrollTop = questionsContainer.scrollTop
+
+    let questionsHTML = '';
+    questionsHTML = Object.values(questions).map((item, index) => {
+        if (item?.isTask) return '';
+
+        const el = TemplateRenderer.generateHTMLTemplate(item, {
+            loadingText: "Analyzing",
+        });
+
+        return el.outerHTML;
+    }).join('');
+
+    questionsContainer.innerHTML = questionsHTML
+
+    const messageContainers = questionsContainer.querySelectorAll('.message-container')
+    const currentQuestionCount = messageContainers.length
+
+    if (currentQuestionCount > prevQuestionCount && currentQuestionCount >= 2) {
+        pinLatestQuestionToTop()
+    } else if (currentQuestionCount >= 2) {
+        const lastMessage = messageContainers[messageContainers.length - 1]
+        const visibleHeight = questionsContainer.clientHeight - getOverlayHeight()
+        const lastMessageHeight = lastMessage.offsetHeight
+        lastMessage.style.marginBottom = Math.max(0, visibleHeight - lastMessageHeight) + 'px'
+        questionsContainer.scrollTop = prevScrollTop
+    }
+    prevQuestionCount = currentQuestionCount
+
+    setTimeout(() => updateScrollArrowVisibility(), 150)
 }
 
 const constructParentComponent = () => {

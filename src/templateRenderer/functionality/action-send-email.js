@@ -1,9 +1,10 @@
-import { cloneDeep, debounce } from "lodash";
-import { delayedSearchCallback } from "../../utils/helpers";
+import { cloneDeep } from "lodash";
+import { delayedSearchCallback, getFileExtension, getUID } from "../../utils/helpers";
 import store from "../../redux/store";
 import { updateChatData } from "../../redux/globalSlice";
 import { sendEmail, smartComposeEmail } from "../../redux/actions/global.action";
 import { Gmail, Outlookimg, Teamsimg, Slackimg } from "../icons-library";
+import FileUploader from "../../utils/FileUploader";
 
 
 
@@ -43,45 +44,30 @@ const sendEmailFunctionality = (data) => {
         
     let isSyncing = false;
 
-    // Create a promise-aware debounce function
-    const debouncedSearch = debounce(async (text, type, resolve, reject) => {
-        try {
-            if(text?.length === 0) {
-                resolve([]);
-                return;
-            }
-            
-            let { state, currentData } = getState();
+    const getSearchedUsers = async (text, type) => {
+        if (!text?.length) return [];
 
-            let values = preserveEmailContent();
-            let obj = {
-                value: text,
-                connectionSource : currentData?.provider,
-                connectionId : currentData?.templateInfo?.defaultConnections,
-                fieldTo : type 
-            }
+        let { currentData } = getState();
 
-            let response = await delayedSearchCallback(obj);
-            
-            localCurrentData.content.subject = values?.subject;  
-            localCurrentData.content.body = values?.body;
-            localCurrentData[`${type}Choices`] = {
-                res: response,
-                input: text
-            };
+        let values = preserveEmailContent();
+        let obj = {
+            value: text,
+            connectionSource: currentData?.provider,
+            connectionId: currentData?.templateInfo?.defaultConnections,
+            fieldTo: type
+        };
 
-            
-            
-            resolve(response || []);
-        } catch (error) {
-            reject(error);
-        }
-    }, 500);
+        let response = await delayedSearchCallback(obj);
 
-    const getSearchedUsers = (text, type) => {
-        return new Promise((resolve, reject) => {
-            debouncedSearch(text, type, resolve, reject);
-        });
+        if (!localCurrentData.content) localCurrentData.content = {};
+        localCurrentData.content.subject = values?.subject;
+        localCurrentData.content.body = values?.body;
+        localCurrentData[`${type}Choices`] = {
+            res: response,
+            input: text
+        };
+
+        return response || [];
     };
 
     const insertEmail = (email, type) => {
@@ -389,6 +375,84 @@ const sendEmailFunctionality = (data) => {
         });
         sendButton.eventListenerAdded = true;
     }
+
+    // --- Attachment handling ---
+    if (!localCurrentData.attachmentPreview) localCurrentData.attachmentPreview = [];
+
+    const renderAttachmentPreviews = () => {
+        let container = document.getElementById(`email-attachment-preview-${data?.reqId}`);
+        if (!container) {
+            const sendBtn = document.getElementById(`email-send-${data?.reqId}`);
+            const footer = sendBtn?.closest('.email-footer');
+            if (footer) {
+                const div = document.createElement('div');
+                div.id = `email-attachment-preview-${data?.reqId}`;
+                div.className = 'attachment-preview-container';
+                footer.parentElement.insertBefore(div, footer);
+                container = div;
+            }
+        }
+        if (!container) return;
+
+        container.innerHTML = localCurrentData.attachmentPreview.map((file, idx) => `
+            <div class="file-preview-chip" data-idx="${idx}">
+                <span class="file-title">${file.fileName || 'file'}</span>
+                <span class="file-remove" data-idx="${idx}" style="cursor:pointer;margin-left:4px;color:#dc2626;font-weight:600;">&times;</span>
+            </div>
+        `).join('');
+
+        container.querySelectorAll('.file-remove').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const i = parseInt(e.target.getAttribute('data-idx'), 10);
+                localCurrentData.attachmentPreview.splice(i, 1);
+                renderAttachmentPreviews();
+                validateSendButton();
+            });
+        });
+    };
+
+    const handleFileSelect = (event) => {
+        const files = event.target.files;
+        if (!files || !files.length) return;
+
+        const state = store.getState().global;
+        const userId = window.sdkConfig?.userId || state?.profile?.data?.id;
+        const accessToken = window.sdkConfig?.accessToken;
+
+        Array.from(files).forEach(file => {
+            const mediaName = getUID(6);
+            const config = {
+                file,
+                userInfoId: userId,
+                fileContext: 'sendEmail',
+                userAccessToken: accessToken,
+                mediaName,
+            };
+
+            const uploader = new FileUploader(config);
+            uploader.start(
+                null,
+                (result) => {
+                    localCurrentData.attachmentPreview.push(result);
+                    renderAttachmentPreviews();
+                    validateSendButton();
+                },
+                (err) => {
+                    console.error('Email attachment upload failed:', err);
+                }
+            );
+        });
+
+        event.target.value = '';
+    };
+
+    const attachInput = document.getElementById(`email-attachments-${data?.reqId}`);
+    if (attachInput && !attachInput.eventListenerAdded) {
+        attachInput.addEventListener('change', handleFileSelect);
+        attachInput.eventListenerAdded = true;
+    }
+
+    if (localCurrentData.attachmentPreview.length) renderAttachmentPreviews();
 
     let emailBody = document.getElementById(`email-body-${data?.reqId}`);
     if(emailBody) {

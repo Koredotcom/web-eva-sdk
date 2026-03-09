@@ -30,16 +30,15 @@ export function render(data) {
                 <div class="email-header">
                     <div class="email-field">
                         <label>To:</label>
-                        <select class= "email-select-field" id="email-to-${data.reqId}" multiple">
-                        </select>
+                        <select class="email-select-field" id="email-to-${data.reqId}" multiple></select>
                     </div>
                     <div class="email-field">
                        <label>CC:</label>
-                       <select class= "email-select-field" id="email-cc-${data.reqId}" multiple></select>
+                       <select class="email-select-field" id="email-cc-${data.reqId}" multiple></select>
                     </div>
                     <div class="email-field">
                       <label>BCC:</label>
-                      <select class= "email-select-field" id="email-bcc-${data.reqId}" multiple></select>
+                      <select class="email-select-field" id="email-bcc-${data.reqId}" multiple></select>
                     </div>
                     <div class="email-field email-subject">
                         <sl-input
@@ -80,7 +79,7 @@ export function render(data) {
 
     setTimeout(() => {
         sendEmailFunctionality(data);
-    }, 1000);
+    }, 0);
 
     return html;
 }
