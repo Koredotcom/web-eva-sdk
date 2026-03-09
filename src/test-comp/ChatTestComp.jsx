@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react'
+import store from '../redux/store'
 import ChatInterface from '../chat/ChatInterface'
 import NewChat from '../chat/NewChat'
 import AgentWelcomeTemplate from './WelcomeTemplate'
@@ -35,8 +36,9 @@ const ChatTestComp = (props) => {
 
         // Subscribe to updates
         const unsubscribe = chatInterface.current.subscribe((question, searchResponse, moreAvailable, errorStates) => {
-            // Handle the API response data
-            console.log('Received data from chat API:', question, searchResponse, moreAvailable, errorStates);
+            if (store.getState().global?.enableDebugging) {
+                console.log('Received data from chat API:', question, searchResponse, moreAvailable, errorStates);
+            }
             setQuestions(question)
             setErrorStates(errorStates)
         });
@@ -69,8 +71,7 @@ const ChatTestComp = (props) => {
     const onChange = async (event) => {
         if (event.keyCode === 13 && !event.shiftKey) {
             event.preventDefault()
-            await chatInterface.current.sendMessageAction(input)
-            console.log('working.....')
+            await chatInterface.current.sendMessageAction(input)                
             setInput('')
         }
     }
