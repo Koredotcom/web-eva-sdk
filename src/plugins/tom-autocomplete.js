@@ -40,11 +40,14 @@ window.setupTomSelect = function setupTomSelect({
     },
     render: {
       option: (data, escape) => {
-        const initials = (data.raw?.name || data.text || '?').split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+        const name = data.raw?.name || data.text || '?';
+        const email = data.raw?.email || data.raw?.id || '';
+        const initials = name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
         const avatarHtml = data.raw?.icon
-          ? `<img src="${data.raw.icon}" style="width:20px;height:20px;border-radius:50%;margin-right:8px;object-fit:cover;" crossorigin="anonymous" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='inline-flex';" onload="this.nextElementSibling.style.display='none';"/><div style="width:20px;height:20px;margin-right:8px;background:#4f46e5;color:white;border-radius:50%;display:none;align-items:center;justify-content:center;font-size:8px;font-weight:500;">${initials}</div>`
-          : `<div style="width:20px;height:20px;margin-right:8px;background:#4f46e5;color:white;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:8px;font-weight:500;">${initials}</div>`;
-        return `<div style="display:flex;align-items:center;">${avatarHtml}${escape(data.text)}</div>`;
+          ? `<img src="${data.raw.icon}" style="width:2rem;height:2rem;border-radius:50%;margin-right:.625rem;object-fit:cover;flex-shrink:0;" crossorigin="anonymous" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='inline-flex';" onload="this.nextElementSibling.style.display='none';"/><div style="width:2rem;height:2rem;margin-right:.625rem;background:#4f46e5;color:white;border-radius:50%;display:none;align-items:center;justify-content:center;font-size:.5625rem;font-weight:500;flex-shrink:0;">${initials}</div>`
+          : `<div style="width:2rem;height:2rem;margin-right:.625rem;background:#4f46e5;color:white;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:.5625rem;font-weight:500;flex-shrink:0;">${initials}</div>`;
+        const emailLine = email && email !== name ? `<div style="font-size:.75rem;font-weight:400;color:#737373;line-height:1.25;margin-top:.0625rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escape(email)}</div>` : '';
+        return `<div style="display:flex;align-items:center;"><div style="flex-shrink:0;">${avatarHtml}</div><div style="min-width:0;overflow:hidden;"><div style="font-size:.875rem;font-weight:500;color:#141414;line-height:1.25;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escape(name)}</div>${emailLine}</div></div>`;
       },
       item: (data, escape) => {
         const initials = (data.raw?.name || data.text || '?').split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
