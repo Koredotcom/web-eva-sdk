@@ -109,6 +109,7 @@ body > .ts-dropdown {
 
 body > .ts-dropdown .ts-dropdown-content {
     padding: .5rem;
+    max-height: unset;
 }
 
 body > .ts-dropdown .option {
@@ -117,11 +118,14 @@ body > .ts-dropdown .option {
     margin-bottom: 0.1875rem;
 }
 
+body > .ts-dropdown .option div:first-of-type {
+    display: flex;
+}
+
 body > .ts-dropdown .option.active {
     background-color: #F2F4F7;
     color: #202124;
 }
-
 .ts-dropdown .ts-dropdown-content {
     padding: .25rem 0;
 }
@@ -201,4 +205,7 @@ body > .ts-dropdown .option.active {
 
 .ts-dropdown::-webkit-scrollbar-thumb:hover {
     background: #a8a8a8;
+}
+.ts-avatar {
+    flex-shrink: 0;
 }
