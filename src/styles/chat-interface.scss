@@ -3138,6 +3138,53 @@ body {
             display: flex;
             flex-direction: column;
 
+            .email-recipients-collapsed {
+                display: flex;
+                align-items: center;
+                padding: .25rem .5rem .25rem 1rem;
+                min-height: 1.75rem;
+                cursor: pointer;
+                overflow: hidden;
+                white-space: nowrap;
+                position: relative;
+
+                &:hover {
+                    background: #fafafa;
+                }
+
+                .collapsed-recipient {
+                    font-family: Inter;
+                    font-size: .875rem;
+                    font-style: normal;
+                    font-weight: 500;
+                    line-height: 1.5;
+                    letter-spacing: 0em;
+                    color: #141414;
+                    white-space: nowrap;
+                }
+
+                .collapsed-sep {
+                    font-size: .875rem;
+                    color: #141414;
+                    white-space: pre;
+                }
+
+                .collapsed-more {
+                    font-size: .75rem;
+                    font-weight: 500;
+                    color: #737373;
+                    margin-left: .375rem;
+                    white-space: nowrap;
+                    flex-shrink: 0;
+                    cursor: pointer;
+
+                    &:hover {
+                        color: #141414;
+                        text-decoration: underline;
+                    }
+                }
+            }
+
             .email-field {
                 display: flex;
                 align-items: center;
@@ -3216,60 +3263,6 @@ body {
                                     &:hover {
                                         color: #101828;
                                         background: transparent;
-                                    }
-                                }
-                            }
-                        }
-
-                        // Blurred / unfocused state with recipients: plain text look.
-                        // Only when items exist so empty fields stay clickable.
-                        &.has-items:not(.focus) {
-                            .ts-control {
-                                min-height: unset !important;
-
-                                input {
-                                    width: 0 !important;
-                                    min-width: 0 !important;
-                                    padding: 0 !important;
-                                    opacity: 0;
-                                    position: absolute;
-                                }
-
-                                .item {
-                                    border-color: transparent !important;
-                                    background: transparent !important;
-                                    box-shadow: none !important;
-                                    border-radius: 0 !important;
-                                    padding: 0 !important;
-                                    height: auto !important;
-                                    margin: 0 !important;
-                                    font-family: Inter;
-                                    font-size: .875rem;
-                                    font-style: normal;
-                                    font-weight: 500;
-                                    line-height: inherit;
-                                    letter-spacing: 0em;
-                                    color: #141414;
-                                    white-space: nowrap;
-                                    margin-inline-end: .25rem !important;
-
-                                    &::after {
-                                        content: ',' !important;
-                                    }
-                                    &:nth-last-child(2)::after {
-                                        content: none !important;
-                                    }
-
-                                    .ts-item-content {
-                                        display: inline !important;
-                                    }
-
-                                    .ts-avatar {
-                                        display: none !important;
-                                    }
-
-                                    a {
-                                        display: none !important;
                                     }
                                 }
                             }

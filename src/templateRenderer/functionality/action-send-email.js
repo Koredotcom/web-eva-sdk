@@ -515,7 +515,116 @@ const sendEmailFunctionality = (data) => {
         });
         connectionSelect.eventListenerAdded = true;
     }
-    
+
+    // --- Collapsed recipients preview ---
+    let isRecipientsCollapsed = false;
+    const collapsedEl = document.getElementById(`email-recipients-collapsed-${data?.reqId}`);
+    const toRowEl = document.getElementById(`email-to-${data?.reqId}`)?.closest('.email-field');
+
+    function getRecipientDisplayName(r) {
+        return r?.name || r?.label || r?.email || r?.id || '';
+    }
+
+    function getAllRecipientNames() {
+        const toNames = (localCurrentData?.content?.to || []).map(getRecipientDisplayName);
+        const ccNames = (localCurrentData?.content?.cc || []).map(getRecipientDisplayName);
+        const bccNames = (localCurrentData?.content?.bcc || []).map(getRecipientDisplayName);
+        return [...toNames, ...ccNames, ...bccNames].filter(Boolean);
+    }
+
+    function renderCollapsedRecipients() {
+        if (!collapsedEl) return;
+        const names = getAllRecipientNames();
+        if (!names.length) { collapsedEl.innerHTML = ''; return; }
+
+        collapsedEl.innerHTML = names
+            .map(n => `<span class="collapsed-recipient">${n}</span>`)
+            .join('<span class="collapsed-sep">, </span>');
+
+        const availableWidth = collapsedEl.clientWidth;
+        if (collapsedEl.scrollWidth <= availableWidth) return;
+
+        const maxRight = collapsedEl.getBoundingClientRect().left + availableWidth - 50;
+        const spans = collapsedEl.querySelectorAll('.collapsed-recipient');
+        let visibleCount = 0;
+
+        for (let i = 0; i < spans.length; i++) {
+            if (spans[i].getBoundingClientRect().right > maxRight && i > 0) break;
+            visibleCount++;
+        }
+
+        if (visibleCount === 0) visibleCount = 1;
+        const remaining = names.length - visibleCount;
+
+        if (remaining > 0) {
+            collapsedEl.innerHTML = names.slice(0, visibleCount)
+                .map(n => `<span class="collapsed-recipient">${n}</span>`)
+                .join('<span class="collapsed-sep">, </span>') +
+                `<span class="collapsed-more"> +${remaining} more</span>`;
+        }
+    }
+
+    function collapseRecipients() {
+        const names = getAllRecipientNames();
+        if (!names.length) return;
+
+        isRecipientsCollapsed = true;
+
+        if (toRowEl) toRowEl.style.display = 'none';
+        if (ccRow) ccRow.style.display = 'none';
+        if (bccRow) bccRow.style.display = 'none';
+
+        if (collapsedEl) {
+            collapsedEl.style.display = '';
+            renderCollapsedRecipients();
+        }
+    }
+
+    function expandRecipients() {
+        isRecipientsCollapsed = false;
+
+        if (collapsedEl) collapsedEl.style.display = 'none';
+        if (toRowEl) toRowEl.style.display = '';
+
+        const hasCc = (localCurrentData?.content?.cc || []).length > 0;
+        const hasBcc = (localCurrentData?.content?.bcc || []).length > 0;
+
+        if (ccRow) ccRow.style.display = hasCc ? '' : 'none';
+        if (bccRow) bccRow.style.display = hasBcc ? '' : 'none';
+        if (ccToggleBtn) ccToggleBtn.style.display = hasCc ? 'none' : '';
+        if (bccToggleBtn) bccToggleBtn.style.display = hasBcc ? 'none' : '';
+
+        const toInput = toRowEl?.querySelector('.ts-control input');
+        if (toInput) setTimeout(() => toInput.focus(), 0);
+    }
+
+    if (collapsedEl && !collapsedEl.eventListenerAdded) {
+        collapsedEl.addEventListener('click', () => {
+            if (isRecipientsCollapsed) expandRecipients();
+        });
+        collapsedEl.eventListenerAdded = true;
+    }
+
+    function handleOutsideMousedown(e) {
+        if (!collapsedEl || !document.contains(collapsedEl)) {
+            document.removeEventListener('mousedown', handleOutsideMousedown);
+            return;
+        }
+        if (isRecipientsCollapsed) return;
+        if (toRowEl?.contains(e.target)) return;
+        if (ccRow?.contains(e.target)) return;
+        if (bccRow?.contains(e.target)) return;
+        if (collapsedEl?.contains(e.target)) return;
+        if (e.target.closest('.ts-dropdown')) return;
+
+        collapseRecipients();
+    }
+
+    if (collapsedEl && !collapsedEl._outsideHandlerAdded) {
+        document.addEventListener('mousedown', handleOutsideMousedown);
+        collapsedEl._outsideHandlerAdded = true;
+    }
+
 }
 
 

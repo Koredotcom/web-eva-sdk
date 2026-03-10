@@ -58,6 +58,8 @@ window.setupTomSelect = function setupTomSelect({
     },
     load: function(query, callback) {
       if (!query.length) return callback();
+      this.clearOptions();
+      Object.keys(this.loadedSearches).forEach(k => delete this.loadedSearches[k]);
       fetchSuggestions(query, type)
         .then(results => {
           if (results && results.length > 0) {

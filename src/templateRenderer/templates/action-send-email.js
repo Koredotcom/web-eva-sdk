@@ -28,6 +28,7 @@ export function render(data) {
                     </sl-select>
                 </div>
                 <div class="email-header">
+                    <div class="email-recipients-collapsed" id="email-recipients-collapsed-${data?.reqId}" style="display:none"></div>
                     <div class="email-field email-to-row">
                         <label>To:</label>
                         <select class="email-select-field" id="email-to-${data.reqId}" multiple></select>
