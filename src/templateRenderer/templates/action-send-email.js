@@ -1,6 +1,6 @@
 import sendEmailFunctionality from "../functionality/action-send-email";
 import { encodeHtml } from "../utils/helper";
-import { Gmail, Outlookimg } from "../icons-library";
+import { attachmentIcon, Gmail, Outlookimg } from "../icons-library";
 import "./../styles/template.scss";
 
 export function render(data) {
@@ -78,11 +78,12 @@ export function render(data) {
                                     id="email-attachments-${data?.reqId}"
                                     multiple
                                 />
+                                <span class="file-upload-icon">${attachmentIcon({ size: 16, color: "#667085" })}</span>
                                 <span class="file-upload-text">Attach</span>
                             </label>
                         </div>
                         <button type="button" class="email-options-btn" id="email-options-btn-${data?.reqId}">
-                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 4h12M2 8h12M2 12h8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                            <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" class="wa-TypeSquare"><g id="type-square"><path id="Icon" d="M6.66667 5.83333H13.3333M10 5.83333V14.1667M6.5 17.5H13.5C14.9001 17.5 15.6002 17.5 16.135 17.2275C16.6054 16.9878 16.9878 16.6054 17.2275 16.135C17.5 15.6002 17.5 14.9001 17.5 13.5V6.5C17.5 5.09987 17.5 4.3998 17.2275 3.86502C16.9878 3.39462 16.6054 3.01217 16.135 2.77248C15.6002 2.5 14.9001 2.5 13.5 2.5H6.5C5.09987 2.5 4.3998 2.5 3.86502 2.77248C3.39462 3.01217 3.01217 3.39462 2.77248 3.86502C2.5 4.3998 2.5 5.09987 2.5 6.5V13.5C2.5 14.9001 2.5 15.6002 2.77248 16.135C3.01217 16.6054 3.39462 16.9878 3.86502 17.2275C4.3998 17.5 5.09987 17.5 6.5 17.5Z" stroke="#667085" stroke-width="1.66667" stroke-linecap="round" stroke-linejoin="round"></path></g></svg>
                             <span>Options</span>
                         </button>
                     </div>
@@ -168,6 +169,7 @@ const renderEmailSummary = (data) => {
     `;
 
     setTimeout(() => {
+        const wrapper = document.getElementById(`email-sent-${uniqueId}`);
         const card = document.getElementById(`email-sent-card-${uniqueId}`);
         const expanded = document.getElementById(`email-sent-expanded-${uniqueId}`);
         const collapseBtn = document.getElementById(`es-collapse-btn-${uniqueId}`);
@@ -175,11 +177,13 @@ const renderEmailSummary = (data) => {
         if (card) card.addEventListener('click', () => {
             card.style.display = 'none';
             if (expanded) expanded.style.display = '';
+            if (wrapper) wrapper.classList.add('is-expanded');
         });
         if (collapseBtn) collapseBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             if (expanded) expanded.style.display = 'none';
             if (card) card.style.display = '';
+            if (wrapper) wrapper.classList.remove('is-expanded');
         });
     }, 0);
 

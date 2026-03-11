@@ -532,6 +532,35 @@ const sendEmailFunctionality = (data) => {
     // --- Formatting toolbar ---
     const formatToolbar = document.getElementById(`email-format-toolbar-${data?.reqId}`);
     const optionsBtn = document.getElementById(`email-options-btn-${data?.reqId}`);
+    const emailBodyEl = document.getElementById(`email-body-${data?.reqId}`);
+
+    const isSelectionInside = (containerEl) => {
+        if (!containerEl) return false;
+        const sel = document.getSelection?.();
+        if (!sel || !sel.rangeCount) return false;
+        const node = sel.anchorNode;
+        if (!node) return false;
+        const el = node.nodeType === 3 ? node.parentElement : node; // 3 = TEXT_NODE
+        return !!(el && containerEl.contains(el));
+    };
+
+    const syncFormatToolbarState = () => {
+        if (!formatToolbar) return;
+        const inside = isSelectionInside(emailBodyEl);
+        formatToolbar.querySelectorAll('.fmt-btn[data-cmd]').forEach(btn => {
+            const cmd = btn.dataset.cmd;
+            let active = false;
+            if (inside && cmd) {
+                try {
+                    active = !!document.queryCommandState(cmd);
+                } catch (e) {
+                    active = false;
+                }
+            }
+            btn.classList.toggle('active', active);
+            btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+        });
+    };
 
     if (optionsBtn && !optionsBtn.eventListenerAdded) {
         optionsBtn.addEventListener('click', () => {
@@ -539,6 +568,10 @@ const sendEmailFunctionality = (data) => {
             const isVisible = formatToolbar.style.display !== 'none';
             formatToolbar.style.display = isVisible ? 'none' : '';
             optionsBtn.classList.toggle('active', !isVisible);
+            if (!isVisible) {
+                // Make sure active formatting is reflected when opening the toolbar
+                setTimeout(syncFormatToolbarState, 0);
+            }
         });
         optionsBtn.eventListenerAdded = true;
     }
@@ -549,6 +582,7 @@ const sendEmailFunctionality = (data) => {
                 const bodyEl = document.getElementById(`email-body-${data?.reqId}`);
                 if (bodyEl) bodyEl.focus();
                 document.execCommand(btn.dataset.cmd, false, null);
+                setTimeout(syncFormatToolbarState, 0);
             });
         });
 
@@ -566,10 +600,33 @@ const sendEmailFunctionality = (data) => {
                 const bodyEl = document.getElementById(`email-body-${data?.reqId}`);
                 if (bodyEl) bodyEl.focus();
                 document.execCommand(input.dataset.cmd, false, input.value);
+                setTimeout(syncFormatToolbarState, 0);
             });
         });
 
         formatToolbar.eventListenerAdded = true;
+    }
+
+    // Keep toolbar buttons in sync with caret/selection formatting state
+    if (emailBodyEl && !emailBodyEl._formatStateListenerAdded) {
+        const handler = () => syncFormatToolbarState();
+
+        emailBodyEl.addEventListener('keyup', handler);
+        emailBodyEl.addEventListener('mouseup', handler);
+        emailBodyEl.addEventListener('input', handler);
+        emailBodyEl.addEventListener('focus', handler);
+        emailBodyEl.addEventListener('blur', handler);
+
+        const docKey = `__emailFmtSelectionChange_${data?.reqId}`;
+        if (!document[docKey]) {
+            document[docKey] = handler;
+            document.addEventListener('selectionchange', handler);
+        }
+
+        // Initial sync (useful when body is pre-filled with formatted HTML)
+        setTimeout(syncFormatToolbarState, 0);
+
+        emailBodyEl._formatStateListenerAdded = true;
     }
 
     //connection changes event listener
