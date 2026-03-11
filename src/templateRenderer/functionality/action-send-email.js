@@ -407,6 +407,24 @@ const sendEmailFunctionality = (data) => {
     // --- Attachment handling ---
     if (!localCurrentData.attachmentPreview) localCurrentData.attachmentPreview = [];
 
+    function formatFileSize(bytes) {
+        if (!bytes) return '';
+        if (bytes < 1024) return bytes + ' B';
+        if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+        return (bytes / 1048576).toFixed(1) + ' MB';
+    }
+
+    function getExtColor(ext) {
+        if (!ext) return '#737373';
+        switch (ext.toLowerCase()) {
+            case 'pdf': return '#dc2626';
+            case 'doc': case 'docx': return '#2563eb';
+            case 'xls': case 'xlsx': case 'csv': return '#16a34a';
+            case 'ppt': case 'pptx': return '#f97316';
+            default: return '#737373';
+        }
+    }
+
     const renderAttachmentPreviews = () => {
         let container = document.getElementById(`email-attachment-preview-${data?.reqId}`);
         if (!container) {
@@ -422,12 +440,24 @@ const sendEmailFunctionality = (data) => {
         }
         if (!container) return;
 
-        container.innerHTML = localCurrentData.attachmentPreview.map((file, idx) => `
-            <div class="file-preview-chip" data-idx="${idx}">
-                <span class="file-title">${file.fileName || 'file'}</span>
-                <span class="file-remove" data-idx="${idx}" style="cursor:pointer;margin-left:4px;color:#dc2626;font-weight:600;">&times;</span>
-            </div>
-        `).join('');
+        container.innerHTML = localCurrentData.attachmentPreview.map((file, idx) => {
+            const name = file.fileName || file._localName || 'file';
+            const size = file.filesize || file._localSize || 0;
+            const ext = name.includes('.') ? name.split('.').pop() : '';
+            const extColor = getExtColor(ext);
+            const sizeStr = formatFileSize(size);
+            const isUploading = !!file._uploading;
+
+            return `<div class="file-preview-chip${isUploading ? ' uploading' : ''}" data-idx="${idx}">
+                <span class="file-type-badge" style="background:${extColor}">${ext ? ext.toUpperCase() : 'FILE'}</span>
+                <span class="file-info">
+                    <span class="file-title">${name}</span>${sizeStr ? `<span class="file-size"> (${sizeStr})</span>` : ''}
+                </span>
+                ${isUploading
+                    ? '<span class="file-loader"></span>'
+                    : `<span class="file-remove" data-idx="${idx}">&times;</span>`}
+            </div>`;
+        }).join('');
 
         container.querySelectorAll('.file-remove').forEach(btn => {
             btn.addEventListener('click', (e) => {
@@ -449,6 +479,10 @@ const sendEmailFunctionality = (data) => {
 
         Array.from(files).forEach(file => {
             const mediaName = getUID(6);
+            const placeholder = { _uploading: true, _localName: file.name, _localSize: file.size, _id: mediaName };
+            localCurrentData.attachmentPreview.push(placeholder);
+            renderAttachmentPreviews();
+
             const config = {
                 file,
                 userInfoId: userId,
@@ -461,12 +495,20 @@ const sendEmailFunctionality = (data) => {
             uploader.start(
                 null,
                 (result) => {
-                    localCurrentData.attachmentPreview.push(result);
+                    const idx = localCurrentData.attachmentPreview.indexOf(placeholder);
+                    if (idx !== -1) {
+                        localCurrentData.attachmentPreview[idx] = result;
+                    } else {
+                        localCurrentData.attachmentPreview.push(result);
+                    }
                     renderAttachmentPreviews();
                     validateSendButton();
                 },
                 (err) => {
                     console.error('Email attachment upload failed:', err);
+                    const idx = localCurrentData.attachmentPreview.indexOf(placeholder);
+                    if (idx !== -1) localCurrentData.attachmentPreview.splice(idx, 1);
+                    renderAttachmentPreviews();
                 }
             );
         });
@@ -535,7 +577,10 @@ const sendEmailFunctionality = (data) => {
     function renderCollapsedRecipients() {
         if (!collapsedEl) return;
         const names = getAllRecipientNames();
-        if (!names.length) { collapsedEl.innerHTML = ''; return; }
+        if (!names.length) {
+            collapsedEl.innerHTML = '<span class="collapsed-placeholder">Recipients</span>';
+            return;
+        }
 
         collapsedEl.innerHTML = names
             .map(n => `<span class="collapsed-recipient">${n}</span>`)
@@ -565,9 +610,6 @@ const sendEmailFunctionality = (data) => {
     }
 
     function collapseRecipients() {
-        const names = getAllRecipientNames();
-        if (!names.length) return;
-
         isRecipientsCollapsed = true;
 
         if (toRowEl) toRowEl.style.display = 'none';
