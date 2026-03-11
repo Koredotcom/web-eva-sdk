@@ -1,5 +1,5 @@
 import { cloneDeep, isEmpty } from "lodash";
-import {chatWindow, chatConfig} from "@koredev/kore-web-sdk"
+import {chatWindow, chatConfig} from "kore-web-sdk"
 import store from "../../redux/store";
 import { checkHistoryAccessed, getReqIdByMessageId, getTaskIdBypId, isTask } from "../../utils/helpers";
 import { updateChatData, setBotSDKInstance, setCurrentQuestion, setEnableKoreBotSDK } from "../../redux/globalSlice";
@@ -118,7 +118,7 @@ const BotConversation = (args) => {
                         }
                         currentBotSDKInstance.chatEle = document.getElementById("chatTestComp")
                         if(state?.enableDebugging){
-                            console.log("template html: ", currentBotSDKInstance.generateMessageDOM(templatePayload))
+                        console.log("template html: ", currentBotSDKInstance.generateMessageDOM(templatePayload))                        
                         }
                         question.botConversation[detail?.messageId].template_html = currentBotSDKInstance.generateMessageDOM(templatePayload) || new chatWindow().generateMessageDOM(templatePayload)
                     }                    

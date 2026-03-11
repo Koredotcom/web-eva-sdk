@@ -208,8 +208,8 @@ const AnswerFromChip = ({ item, regeneratingAnswer }) => {
 
         const agentDetails = item?.agentMetaDetails || {}; // Assuming populated, or we fallback
         const isSupervisor = agentDetails?.isSupervisor;
-        const iconUrl = isSupervisor ? item?.supervisorAgent?.icon : agentDetails?.icon;
-        const name = isSupervisor ? item?.supervisorAgent?.name : agentDetails?.name || 'Agent';
+        const iconUrl = agentDetails?.icon;
+        const name = agentDetails?.name || 'Agent';
 
         if (iconUrl) {
             const imgSpan = document.createElement('span');
