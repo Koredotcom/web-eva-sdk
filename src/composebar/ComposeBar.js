@@ -323,10 +323,11 @@ class ComposeBar {
             if (selectedContext?.sources?.length > 0) {
                 // Get the source to pass to updateBotHeaderContent
                 const source = selectedContext?.sources?.[0];
+                const isAgent = selectedContext?.isAgent || selectedContext?.sources?.[0]?.isAgent;
                 // Update the context chip display
                 setTimeout(() => {
-                    this.updateBotHeaderContent(source);
-                }, 0);
+                    this.updateBotHeaderContent({...source, isAgent: isAgent === true});
+                }, 0);                
             } else if (!selectedContext || !selectedContext?.sources?.length) {
                 // Clear context chip if no context is set
                 const composeBarWrapperDiv = this.container.querySelector('.composebar-bot-input-wrapper');
@@ -927,36 +928,9 @@ class ComposeBar {
             if (botInputHeaderDiv) {
                 hideElementImmediately(botInputHeaderDiv);
             }
-            if (answerContextChipContainer) {
-                showElementImmediately(answerContextChipContainer, 'flex');
-                this.syncContextTrueClass(true);
-                // Hide the bot input wrapper when response context is shown
-                hideElementImmediately(composeBarWrapperDiv);
-                /*set answer inside response-as-context-truncated-text */
-                const answerContextChipText = this.container.querySelector('.response-as-context-question-text') ||
-                    this.container.querySelector('.answer-context-chip-text');
-                const currentQuestionsLength = Object.values(this.questions)?.length;
-                const currentAnswer = Object.values(this.questions)?.[currentQuestionsLength - 1]?.answer || 'Answer Context';
-                if (answerContextChipText) {
-                    answerContextChipText.innerText = markdownToPlainText(currentAnswer);
-                }
-                // answerContextChipText.innerHTML = this.answerContextHTML(markdownToPlainText(currentAnswer));
-
-            }
+            
             // composeBarWrapperDiv.innerHTML = this.answerContextHTML(markdownToPlainText(currentAnswer));
-            const answerContextCloseBtn = this.container.querySelector('.srCicon');
-            if (answerContextCloseBtn) {
-                if (!answerContextCloseBtn.eventListenerAdded) {
-                    answerContextCloseBtn.addEventListener('click', () => {
-                        this.fileUploaderInterface.clearContext({});
-                        hideElementImmediately(answerContextChipContainer);
-                        this.syncContextTrueClass(false);
-                        // Hide the bot input wrapper as well when response context is closed
-                        hideElementImmediately(composeBarWrapperDiv);
-                    });
-                    answerContextCloseBtn.eventListenerAdded = true;
-                }
-            }
+            
 
             // if (iconElement) {
             //     iconElement.src = CurvedArrowForPreview({ size: 12 });
