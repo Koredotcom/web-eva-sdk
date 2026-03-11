@@ -3340,6 +3340,99 @@ body {
             }
         }
 
+        .email-format-toolbar {
+            display: flex;
+            align-items: center;
+            gap: .25rem;
+            padding: .375rem .75rem;
+            margin: 0 .75rem .25rem;
+            background: #f5f5f5;
+            border-radius: .5rem;
+
+            .fmt-btn {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                width: 1.75rem;
+                height: 1.75rem;
+                border: none;
+                background: transparent;
+                border-radius: .25rem;
+                cursor: pointer;
+                font-family: Inter;
+                font-size: .8125rem;
+                color: #424242;
+
+                &:hover {
+                    background: #e5e5e5;
+                }
+            }
+
+            .fmt-divider {
+                width: .0625rem;
+                height: 1rem;
+                background: #d6d6d6;
+                margin: 0 .25rem;
+            }
+
+            .fmt-select {
+                border: none;
+                background: transparent;
+                font-family: Inter;
+                font-size: .75rem;
+                color: #424242;
+                cursor: pointer;
+                padding: .25rem;
+                border-radius: .25rem;
+                outline: none;
+
+                &:hover {
+                    background: #e5e5e5;
+                }
+            }
+
+            .fmt-color-wrap {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                width: 1.75rem;
+                height: 1.75rem;
+                border-radius: .25rem;
+                cursor: pointer;
+                position: relative;
+                margin-bottom: 0;
+
+                &:hover {
+                    background: #e5e5e5;
+                }
+
+                .fmt-color-icon {
+                    font-family: Inter;
+                    font-size: .8125rem;
+                    font-weight: 700;
+                    color: #424242;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+
+                    &.highlight-icon {
+                        color: #737373;
+                    }
+                }
+
+                .fmt-color-input {
+                    position: absolute;
+                    inset: 0;
+                    opacity: 0;
+                    width: 100%;
+                    height: 100%;
+                    cursor: pointer;
+                    border: none;
+                    padding: 0;
+                }
+            }
+        }
+
         .email-footer {
             display: flex;
             align-items: center;
@@ -3347,6 +3440,42 @@ body {
             gap: .75rem;
             border-top: .0625rem solid #e5e5e5;
             padding: .75rem;
+
+            .email-footer-left {
+                display: flex;
+                align-items: center;
+                gap: .25rem;
+            }
+
+            .email-options-btn {
+                display: flex;
+                align-items: center;
+                gap: .375rem;
+                padding: .5rem .625rem;
+                border: .0625rem solid #d6d6d6;
+                background: #fff;
+                border-radius: .75rem;
+                cursor: pointer;
+                font-family: Inter;
+                font-size: .875rem;
+                font-weight: 500;
+                color: #374151;
+                transition: background .15s ease, border-color .15s ease;
+
+                &:hover {
+                    background: #fafafa;
+                }
+
+                &.active {
+                    background: #f2f4f7;
+                    border-color: #a3a3a3;
+                }
+
+                svg {
+                    flex-shrink: 0;
+                    color: #737373;
+                }
+            }
 
             .email-field {
                 white-space: nowrap;

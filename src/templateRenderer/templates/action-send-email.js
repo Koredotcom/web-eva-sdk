@@ -63,16 +63,28 @@ export function render(data) {
                         ${data?.content?.body || ''}
                     </div>
                 </div>
+                <div class="email-format-toolbar" id="email-format-toolbar-${data?.reqId}" style="display:none">
+                    <button type="button" class="fmt-btn" data-cmd="bold" title="Bold"><b>B</b></button>
+                    <button type="button" class="fmt-btn" data-cmd="italic" title="Italic"><i>I</i></button>
+                    <button type="button" class="fmt-btn" data-cmd="underline" title="Underline"><u>U</u></button>
+                   
+                </div>
                 <div class="email-footer">
-                    <div class="email-field">
-                        <label for="email-attachments-${data?.reqId}" class="custom-file-upload">
-                            <input
-                                type="file"
-                                id="email-attachments-${data?.reqId}"
-                                multiple
-                            />
-                            <span class="file-upload-text">Attach</span>
-                        </label>
+                    <div class="email-footer-left">
+                        <div class="email-field">
+                            <label for="email-attachments-${data?.reqId}" class="custom-file-upload">
+                                <input
+                                    type="file"
+                                    id="email-attachments-${data?.reqId}"
+                                    multiple
+                                />
+                                <span class="file-upload-text">Attach</span>
+                            </label>
+                        </div>
+                        <button type="button" class="email-options-btn" id="email-options-btn-${data?.reqId}">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 4h12M2 8h12M2 12h8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                            <span>Options</span>
+                        </button>
                     </div>
                     <div class="email-field">
                         <sl-button class="primary-button-black" id="email-send-${data?.reqId}" variant="primary" disabled>Send</sl-button>

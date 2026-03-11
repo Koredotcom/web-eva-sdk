@@ -528,7 +528,50 @@ const sendEmailFunctionality = (data) => {
     if(emailBody) {
         emailBody.contentEditable = true;
     }
-    
+
+    // --- Formatting toolbar ---
+    const formatToolbar = document.getElementById(`email-format-toolbar-${data?.reqId}`);
+    const optionsBtn = document.getElementById(`email-options-btn-${data?.reqId}`);
+
+    if (optionsBtn && !optionsBtn.eventListenerAdded) {
+        optionsBtn.addEventListener('click', () => {
+            if (!formatToolbar) return;
+            const isVisible = formatToolbar.style.display !== 'none';
+            formatToolbar.style.display = isVisible ? 'none' : '';
+            optionsBtn.classList.toggle('active', !isVisible);
+        });
+        optionsBtn.eventListenerAdded = true;
+    }
+
+    if (formatToolbar && !formatToolbar.eventListenerAdded) {
+        formatToolbar.querySelectorAll('.fmt-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const bodyEl = document.getElementById(`email-body-${data?.reqId}`);
+                if (bodyEl) bodyEl.focus();
+                document.execCommand(btn.dataset.cmd, false, null);
+            });
+        });
+
+        formatToolbar.querySelectorAll('.fmt-select').forEach(sel => {
+            sel.addEventListener('change', () => {
+                const bodyEl = document.getElementById(`email-body-${data?.reqId}`);
+                if (bodyEl) bodyEl.focus();
+                document.execCommand(sel.dataset.cmd, false, sel.value);
+                sel.selectedIndex = 0;
+            });
+        });
+
+        formatToolbar.querySelectorAll('.fmt-color-input').forEach(input => {
+            input.addEventListener('input', () => {
+                const bodyEl = document.getElementById(`email-body-${data?.reqId}`);
+                if (bodyEl) bodyEl.focus();
+                document.execCommand(input.dataset.cmd, false, input.value);
+            });
+        });
+
+        formatToolbar.eventListenerAdded = true;
+    }
+
     //connection changes event listener
     let connectionSelect = document.getElementById(`email-connection-${data?.reqId}`);
     if(connectionSelect && !connectionSelect?.eventListenerAdded) {
