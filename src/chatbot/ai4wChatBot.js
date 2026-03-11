@@ -4,6 +4,8 @@ import NewChat from "../chat/NewChat";
 import { JoinChatThread } from "../chat";
 import { unHideRecentAgentsDiv, hideRecentAgentsDiv } from "../LandingPageRecentAgents";
 import { createHistorySidebar, initHistoryList } from "./chatbotHistory";
+import BotConversation from "../chat/botAgent/getBotConversation";
+import store from "../redux/store";
 
 const DEFAULT_CONTAINER_ID = "eva-sdk-chatbot-container";
 const DEFAULT_TITLE = "Eva Assistant";
@@ -245,13 +247,19 @@ const createPanel = (titleText) => {
       ?.querySelector?.(".eva-composebar-area")
       ?.classList?.remove("eva-composebar-area--history-selected");
     unHideRecentAgentsDiv('recent-agents-container');
-    NewChat()
+    NewChat();
+    /* Hide agent banner after Redux subscribers run, so ComposeBar does not re-show it */
+    const hideAgentBanner = () => {
+      const agentBanner = document.querySelector('.composebar-bot-input-wrapper');
+      if (agentBanner) agentBanner.style.display = "none";
+    };
+    setTimeout(hideAgentBanner, 0);
   });
 
   const chatHistoryButton = document.createElement("button");
   chatHistoryButton.type = "button";
   chatHistoryButton.className = "sdk-chatbot-newchat sdk-chatbot-chat-history";
-  chatHistoryButton.textContent = "Chat History";
+  chatHistoryButton.textContent = "Chat History";  
 
   const headerButtonContainer = document.createElement("div");
   headerButtonContainer.className = "eva-sdk-chatbot-header-buttons";
@@ -568,6 +576,18 @@ export const init = (config = {}) => {
   syncHistoryState();
   state.initialized = true;
 
+
+  let botInstance = BotConversation()
+        botInstance.initializeBotSDK({
+            "name": "ProcureBot",
+            "streamId": "st-b6012ef2-810d-5240-b33e-5404d68b680e",
+            "webhook": {
+                "clientId": "cs-79a89a6f-b0ab-5e2f-b912-8dd1e2f95da0",
+                "clientSecret": "VJNwkfbPcMZl4bOa1Qn3XtYRz6rqigwtTgOlaYX25Xs="
+            }
+        })
+        botInstance.enableEVABotSdk(true)
+
   return containerId;
 };
 
@@ -581,6 +601,10 @@ export const open = () => {
   syncQuestionsContainerClass();
   state.isOpen = true;
   syncPanelState();
+
+  if (store.getState().global.disableHistorySectionInChatSection) {
+    state.elements.chatHistoryButton.style.display = "none";
+  }
 };
 
 export const close = () => {

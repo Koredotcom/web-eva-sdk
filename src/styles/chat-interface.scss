@@ -4652,6 +4652,39 @@ body {
             }
         }
     }
+    .message-renderer {
+        color: #0F0F0F;
+        font-weight: 500;
+    }
+    .usrsChipsList {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        padding-top: 0.25rem;
+        .title {
+            width: 100%;
+            font-family: Inter;
+            font-size: 0.875rem;
+            font-style: normal;
+            font-weight: 500;
+            line-height: 1.25rem;
+            letter-spacing: 0em;
+            color: #0F0F0F;
+        }
+
+        .userChip {
+            display: flex;
+            padding: 0.5rem 0.875rem;
+            justify-content: center;
+            align-items: center;
+            gap: 0.5rem;
+            border-radius: 6.25rem;
+            border: 0.0625rem solid #D6D6D6;
+            background: #FFFFFF;
+            box-shadow: 0rem 0.0625rem 0.125rem 0rem rgba(16, 24, 40, 0.05);
+            cursor: pointer;
+        }
+    }
 }
 
 .code-renderer {
