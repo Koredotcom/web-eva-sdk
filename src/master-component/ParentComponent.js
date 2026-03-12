@@ -197,6 +197,18 @@ const renderQuestionsOnly = () => {
     // the TomSelect problem above.
     if (questionsContainer.querySelector('.slack-search-input:focus, .teams-search-input:focus')) return
 
+    // Same guard for Slack / Teams message body editor and smart compose prompt.
+    // smartComposeEmail dispatches trigger store.subscribe, which would destroy
+    // the focused message editor or smart compose input, wiping typed text and
+    // clearing the selected recipients entirely.
+    if (questionsContainer.querySelector('.slack-message-editor:focus, .teams-message-editor:focus')) return
+    if (questionsContainer.querySelector('.sc-prompt-input:focus')) return
+
+    // Guard while the smart compose panel is open — suggestion button clicks fire
+    // smartComposeEmail which triggers store.subscribe before any input has focus.
+    // Without this guard, the form re-renders and loses all recipients + message text.
+    if (questionsContainer.querySelector('.emailSmartCompose')) return
+
     const hasQuestions = questions && !isEmpty(questions);
 
     const landingPageContainer = document.querySelector('.landing-page-container');

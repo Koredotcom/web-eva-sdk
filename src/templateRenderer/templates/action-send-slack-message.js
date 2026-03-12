@@ -1,4 +1,4 @@
-import { attachmentIcon, ActionsFlashIcon, Slackimg, Teamsimg, MinimizeIcon, RadioButtonChecked, createCloseIcon, PlusIcon } from "../icons-library";
+import { attachmentIcon, ActionsFlashIcon, Slackimg, Teamsimg, MinimizeIcon, RadioButtonChecked, createCloseIcon, PlusIcon, getFileTypeIconHtml } from "../icons-library";
 import "./../styles/template.scss";
 import FileUploader from "../../utils/FileUploader";
 import { getFileExtension, getUID, generateComponentId, resolveSdkAssetPath } from "../../utils/helpers";
@@ -61,6 +61,8 @@ export function render(data) {
                     </div>
                 </div>
 
+                <div class="kiaas-attachment-list" id="slack-attachments-preview-${data?.reqId}"></div>
+
                 <div class="slackfooter-wrapper">
                     <div class="slack-message-footer">
                         <div class="slack-footer-left">
@@ -74,7 +76,7 @@ export function render(data) {
                                 <span class="attachment-icon">
                                     ${attachmentIcon({ size: 16, color: "#667085" })}
                                 </span>
-                                <span class="attachment-text">Attachments</span>
+                                <span class="attachment-text">Attach</span>
                             </label>
                             
                             <button class="slack-smart-compose-btn" id="slack-smart-compose-${data?.reqId}">
@@ -91,9 +93,6 @@ export function render(data) {
                             </sl-button>
                         </div>
                     </div>
-                </div>
-
-                <div class="slack-attachments-preview" id="slack-attachments-preview-${data?.reqId}">
                 </div>
             </div>
         </div>
@@ -413,40 +412,53 @@ const initializeSlackMessageFunctionality = (data) => {
     }
 
     const updateAttachmentsPreview = () => {
-        if (attachmentsPreview && attachedFiles.length > 0) {
-            attachmentsPreview.innerHTML = `
-                <div class="attachments-list">
-                    ${attachedFiles.map((file, index) => `
-                        <div class="attachment-item ${file.error ? 'error' : ''}">
-                            <div class="attachment-name" title="${file.name}">
-                                ${file?.extName ? `<img src="${resolveSdkAssetPath(`images/${file?.extName}.png`)}" alt="${file?.name}" style="width:18px;height:18px;vertical-align:middle;margin-right:6px;" />` : ''}
-                                <span class="attachment-filename">${file.name}</span>
-                                <span class="attachment-filesize">
-                                    (${file.size > 1024 * 1024
-                                            ? `${(file.size / (1024 * 1024)).toFixed(2)} MB`
-                                            : `${(file.size / 1024).toFixed(2)} KB`
-                                    })
-                                </span>
-                                ${file.loading ? `<span class="attachment-loading">Uploading..</span>` : '<button class="attachment-remove" data-index="${index}" title="Remove">×</button>'}                                
-                                ${file.error ? `<span class="attachment-error">${file.error}</span>` : ''}
-                            </div>                           
-                        </div>
-                    `).join('')}
-                </div>
-            `;
-            
-            attachmentsPreview.querySelectorAll('.attachment-remove').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    const index = parseInt(e.target.dataset.index);
-                    attachedFiles.splice(index, 1);
-                    updateAttachmentsPreview();
-                });
-            });
-            
-            attachmentsPreview.style.display = 'block';
-        } else if (attachmentsPreview) {
-            attachmentsPreview.style.display = 'none';
+        if (!attachmentsPreview) return;
+
+        if (attachedFiles.length === 0) {
+            attachmentsPreview.innerHTML = '';
+            return;
         }
+
+        attachmentsPreview.innerHTML = attachedFiles.map((file, index) => {
+            const ext = (file.extName || getFileExtension(file.name || '') || '').toLowerCase();
+            const isImage = ['png', 'jpg', 'jpeg', 'gif', 'webp'].includes(ext);
+            const previewSrc = file.fileUrl?.thumbnailURL || file.fileUrl?.publicUrl || file.previewUrl;
+
+            const iconHtml = isImage && previewSrc
+                ? `<img class="attachment-type" src="${previewSrc}" alt="${file.name}" />`
+                : `<span class="extIcons">${getFileTypeIconHtml(ext, 28)}</span>`;
+
+            if (file.loading) {
+                return `
+                    <div class="kiaas-attachments attachment__Loading" data-index="${index}">
+                        <div class="attachment-list-item noOverlay">${iconHtml}</div>
+                        <div class="attachment-loader"><div class="kiaas-spinner"></div></div>
+                        <span class="attachment-close" data-index="${index}"></span>
+                    </div>`;
+            }
+            if (file.error) {
+                return `
+                    <div class="kiaas-attachments" data-index="${index}" title="${file.error}">
+                        <div class="attachment-list-item noOverlay error-item">${iconHtml}</div>
+                        <span class="attachment-close" data-index="${index}"></span>
+                    </div>`;
+            }
+            return `
+                <div class="kiaas-attachments" data-index="${index}" title="${file.name || ''}">
+                    <div class="attachment-list-item ${isImage ? '' : 'noOverlay'}">${iconHtml}</div>
+                    <span class="attachment-close" data-index="${index}"></span>
+                </div>`;
+        }).join('');
+
+        attachmentsPreview.querySelectorAll('.attachment-close').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const idx = parseInt(btn.dataset.index);
+                attachedFiles.splice(idx, 1);
+                updateAttachmentsPreview();
+                validateForm();
+            });
+        });
     };
 
     let isSmartCompose = false;

@@ -586,52 +586,115 @@
         }
     }
 
-    .teams-attachments-preview {
-        display: none;
-        padding: 0.75rem;
-        background: #f9fafb;
-        border-radius: 0.375rem;
-        border: 0.0625rem solid #e5e5e5;
+    /* Attachment thumbnails — sits between Message section and footer */
+    .teams-message-container > .kiaas-attachment-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        padding: 0.5rem 0;
+        overflow: visible;
 
-        .attachments-list {
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
+        &:empty { display: none; }
 
-            .attachment-item {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                padding: 0.5rem;
+        .kiaas-attachments {
+            position: relative;
+            width: 3.75rem;
+            height: 3.75rem;
+            flex-shrink: 0;
+            overflow: visible;
+
+            &:hover .attachment-close { display: block; }
+
+            .attachment-close {
+                position: absolute;
+                top: -0.375rem;
+                right: -0.375rem;
+                width: 1.125rem;
+                height: 1.125rem;
+                border-radius: 50%;
+                background: #667085 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'%3E%3Cpath d='M8 2L2 8M2 2l6 6' stroke='%23fff' stroke-width='1.6' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat center / 0.5rem 0.5rem;
+                border: 0.125rem solid #fff;
+                cursor: pointer;
+                display: none;
+                z-index: 10;
+                box-shadow: 0 0.0625rem 0.1875rem rgba(0,0,0,0.2);
+            }
+
+            .attachment-list-item {
+                width: 3.75rem;
+                height: 3.75rem;
+                border-radius: 0.5rem;
+                border: 0.0625rem solid #D0D5DD;
                 background: #ffffff;
-                border-radius: 0.25rem;
-                border: 0.0625rem solid #d0d5dd;
+                overflow: hidden;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                position: relative;
+                cursor: pointer;
 
-                .attachment-name {
-                    font-size: 0.8125rem;
-                    color: #344054;
-                    flex: 1;
-                    overflow: hidden;
-                    text-overflow: ellipsis;
-                    white-space: nowrap;
+                &.noOverlay::before { display: none; }
+
+                &::before {
+                    content: "";
+                    position: absolute;
+                    inset: 0;
+                    background: linear-gradient(180deg, transparent 50%, rgba(32,33,36,0.15) 100%);
+                    pointer-events: none;
+                    z-index: 1;
                 }
 
-                .attachment-remove {
-                    background: none;
-                    border: none;
-                    color: #667085;
-                    font-size: 1.25rem;
-                    cursor: pointer;
-                    padding: 0 0.25rem;
-                    line-height: 1;
-                    
-                    &:hover {
-                        color: #ff0000;
+                .attachment-type {
+                    width: 100%;
+                    height: 100%;
+                    object-fit: cover;
+                }
+
+                .extIcons {
+                    width: 100%;
+                    height: 100%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+
+                    svg {
+                        width: 2rem;
+                        height: 2rem;
+                        border-radius: 0.25rem;
                     }
                 }
+
+                &.error-item {
+                    border-color: #F04438;
+                    background: #FFF1F0;
+                }
+            }
+
+            .attachment-loader {
+                position: absolute;
+                inset: 0;
+                background: rgba(255,255,255,0.7);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border-radius: 0.5rem;
+                z-index: 3;
+            }
+
+            .kiaas-spinner {
+                width: 1.25rem;
+                height: 1.25rem;
+                border: 0.1875rem solid #E5E5E5;
+                border-top-color: #611F69;
+                border-radius: 50%;
+                animation: kiaas-spin 0.7s linear infinite;
             }
         }
     }
+}
+
+@keyframes kiaas-spin {
+    to { transform: rotate(360deg); }
 }
 
 /* Teams Message Summary Card */
@@ -956,49 +1019,108 @@
         }
     }
 
-    .slack-attachments-preview {
-        display: none;
-        padding: 0.75rem;
-        background: #f9fafb;
-        border-radius: 0.375rem;
-        border: 0.0625rem solid #e5e5e5;
+    /* Attachment thumbnails — sits between Message section and footer */
+    .slack-message-container > .kiaas-attachment-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        padding: 0.5rem 0;
+        overflow: visible;
 
-        .attachments-list {
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
+        &:empty { display: none; }
 
-            .attachment-item {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                padding: 0.5rem;
+        .kiaas-attachments {
+            position: relative;
+            width: 3.75rem;
+            height: 3.75rem;
+            flex-shrink: 0;
+            overflow: visible;
+
+            &:hover .attachment-close { display: block; }
+
+            .attachment-close {
+                position: absolute;
+                top: -0.375rem;
+                right: -0.375rem;
+                width: 1.125rem;
+                height: 1.125rem;
+                border-radius: 50%;
+                background: #667085 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'%3E%3Cpath d='M8 2L2 8M2 2l6 6' stroke='%23fff' stroke-width='1.6' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat center / 0.5rem 0.5rem;
+                border: 0.125rem solid #fff;
+                cursor: pointer;
+                display: none;
+                z-index: 10;
+                box-shadow: 0 0.0625rem 0.1875rem rgba(0, 0, 0, 0.2);
+            }
+
+            .attachment-list-item {
+                width: 3.75rem;
+                height: 3.75rem;
+                border-radius: 0.5rem;
+                border: 0.0625rem solid #D0D5DD;
                 background: #ffffff;
-                border-radius: 0.25rem;
-                border: 0.0625rem solid #d0d5dd;
+                overflow: hidden;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                position: relative;
+                cursor: pointer;
 
-                .attachment-name {
-                    font-size: 0.8125rem;
-                    color: #344054;
-                    flex: 1;
-                    overflow: hidden;
-                    text-overflow: ellipsis;
-                    white-space: nowrap;
+                &.noOverlay::before { display: none; }
+
+                &::before {
+                    content: "";
+                    position: absolute;
+                    inset: 0;
+                    background: linear-gradient(180deg, transparent 50%, rgba(32, 33, 36, 0.15) 100%);
+                    pointer-events: none;
+                    z-index: 1;
                 }
 
-                .attachment-remove {
-                    background: none;
-                    border: none;
-                    color: #667085;
-                    font-size: 1.25rem;
-                    cursor: pointer;
-                    padding: 0 0.25rem;
-                    line-height: 1;
-                    
-                    &:hover {
-                        color: #ff0000;
+                .attachment-type {
+                    width: 100%;
+                    height: 100%;
+                    object-fit: cover;
+                }
+
+                .extIcons {
+                    width: 100%;
+                    height: 100%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+
+                    svg {
+                        width: 2rem;
+                        height: 2rem;
+                        border-radius: 0.25rem;
                     }
                 }
+
+                &.error-item {
+                    border-color: #F04438;
+                    background: #FFF1F0;
+                }
+            }
+
+            .attachment-loader {
+                position: absolute;
+                inset: 0;
+                background: rgba(255, 255, 255, 0.7);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border-radius: 0.5rem;
+                z-index: 3;
+            }
+
+            .kiaas-spinner {
+                width: 1.25rem;
+                height: 1.25rem;
+                border: 0.1875rem solid #E5E5E5;
+                border-top-color: #611F69;
+                border-radius: 50%;
+                animation: kiaas-spin 0.7s linear infinite;
             }
         }
     }
