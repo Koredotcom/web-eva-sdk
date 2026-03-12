@@ -67,18 +67,14 @@ const JoinChatThread = async (props) => {
             //     obj = {...obj, ...emailObj}
             // }
     
-            // if(q?.templateType === "action_send_slack_message" || q?.templateType === "action_send_msteams_message") {    
-            //     let ConnectionObj = {
-            //         canIncludeSource: q?.canIncludeSource,
-            //         externalIntegrationAction : true
-            //     }
-            //     let connMeta = getConnMetaCommon(appContext, obj)
-            //     if(connMeta) {
-            //         ConnectionObj.connMeta =  connMeta
-            //         ConnectionObj.skills = (obj?.templateType === "action_send_slack_message") ? "slack" : "msteams"
-            //     }
-            //     obj = {...obj, ...ConnectionObj}
-            // }
+            if(q?.templateType === "action_send_slack_message" || q?.templateType === "action_send_msteams_message") {    
+                let ConnectionObj = {
+                    canIncludeSource: q?.canIncludeSource,
+                    externalIntegrationAction : true,
+                    skills: (q?.templateType === "action_send_slack_message") ? "slack" : "msteams"
+                }
+                obj = {...obj, ...ConnectionObj}
+            }
             if(q?.viewType === "threadView") {
                 let params = {
                     limit: 20,

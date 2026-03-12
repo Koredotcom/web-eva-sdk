@@ -189,6 +189,14 @@ const renderQuestionsOnly = () => {
     // instance (dropdown closes, typed text lost, height jumps).
     if (questionsContainer.querySelector('.ts-control input:focus')) return
 
+    // Same guard for Slack / Teams recipient search inputs.
+    // getChannelRecepients (resolveFields) dispatches trigger store.subscribe on
+    // both pending and fulfilled, causing renderQuestionsOnly to wipe and recreate
+    // questionsContainer.innerHTML. This destroys the focused search input, fires
+    // blur, and the 500ms blur timer then closes the floating panel — identical to
+    // the TomSelect problem above.
+    if (questionsContainer.querySelector('.slack-search-input:focus, .teams-search-input:focus')) return
+
     const hasQuestions = questions && !isEmpty(questions);
 
     const landingPageContainer = document.querySelector('.landing-page-container');

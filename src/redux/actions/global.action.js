@@ -594,3 +594,19 @@ export const getRegeneratedAnswer = createAsyncThunk(
         }
     }
 );
+
+export const sendIntegrationMessage = createAsyncThunk(
+    'global/sendIntegrationMessage',
+    async (arg, { rejectWithValue }) => {
+        try {
+            const response = await axiosInstance.post(
+                `/ka/users/${arg?.userId}/connectors/${arg?.source}/actions/send_message`,
+                arg?.payload
+            );
+            return response.data;
+        } catch (error) {
+            handleErrorState(error, "Send Integration Message");
+            return rejectWithValue(error.response.data);
+        }
+    }
+);

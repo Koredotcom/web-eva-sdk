@@ -1,4 +1,4 @@
-import { searchIcon, attachmentIcon, ActionsFlashIcon, arrowCirlceUpIcon, Teamsimg, createCloseIcon, PlusIcon } from "../icons-library";
+import { attachmentIcon, ActionsFlashIcon, Slackimg, createCloseIcon, PlusIcon } from "../icons-library";
 import "./../styles/template.scss";
 import FileUploader from "../../utils/FileUploader";
 import { getFileExtension, getUID, generateComponentId, resolveSdkAssetPath } from "../../utils/helpers";
@@ -13,48 +13,48 @@ const RefreshIconSvg = (size = 12, color = '#667085') => `<svg width="${size}" h
 export function render(data) {
 
     if (data?.status === 'completed') {
-        return renderTeamsMessageSummary(data);
+        return renderSlackMessageSummary(data);
     }
 
-    let teamsList = data?.templateInfo?.connections;
+    let slackList = data?.templateInfo?.connections;
     let defaultConnectionId = data?.templateInfo?.defaultConnections;
     
     let html = `
-        <div class="teams-message-template">
-            <div class='teams-message-container'>
-                <div class="teams-header-block">
-                    <div class='connection-provider-icon'>                            
-                        ${Teamsimg({ size: 16, color: "#131316" })}
+        <div class="slack-message-template">
+            <div class='slack-message-container'>
+                <div class="slack-header-block">
+                    <div class='connection-provider-icon slack-provider-icon'>                            
+                        ${Slackimg({ size: 16, color: "#131316" })}
                     </div>
-                    <sl-select id="teams-connection-${data?.reqId}" value="${defaultConnectionId || ''}">
-                        ${teamsList?.map((team, index) =>
+                    <sl-select id="slack-connection-${data?.reqId}" value="${defaultConnectionId || ''}">
+                        ${slackList?.map((item, index) =>
         `
-                        <sl-option value="${team?.id}" id="teams-connection-${index}">${team?.label || team?.name}</sl-option>
+                        <sl-option value="${item?.id}" id="slack-connection-${index}">${item?.label || item?.name}</sl-option>
                         `
     ).join('')}
                     </sl-select>
                 </div>
                 
-                <div class="teams-recipients-section">
-                    <div class="teams-recipients-label">Channel or People</div>
-                    <div class="teams-search-field">
-                        <div class="teams-search-input-wrapper" id="teams-search-input-wrapper-${data?.reqId}">
-                            <div class="teams-selected-recipients" id="teams-selected-recipients-${data?.reqId}"></div>
+                <div class="slack-recipients-section">
+                    <div class="slack-recipients-label">Channel or People</div>
+                    <div class="slack-search-field">
+                        <div class="slack-search-input-wrapper" id="slack-search-input-wrapper-${data?.reqId}">
+                            <div class="slack-selected-recipients" id="slack-selected-recipients-${data?.reqId}"></div>
                             <input
                                 type="text"
-                                class="teams-search-input"
+                                class="slack-search-input"
                                 placeholder="Search user or user groups"
-                                id="teams-search-${data?.reqId}"
+                                id="slack-search-${data?.reqId}"
                             />
                         </div>
                     </div>
                 </div>
-                <div class="teams-message-section">
-                    <div class="teams-message-label">Message</div>
-                    <div class="teams-message-body">
+                <div class="slack-message-section">
+                    <div class="slack-message-label">Message</div>
+                    <div class="slack-message-body">
                         <div
-                            class="teams-message-editor"
-                            id="teams-message-body-${data?.reqId}"
+                            class="slack-message-editor"
+                            id="slack-message-body-${data?.reqId}"
                             contenteditable="true"
                             placeholder="Type your message here..."
                         >${data?.content?.message || ''}</div>
@@ -62,12 +62,12 @@ export function render(data) {
                 </div>
 
                 <div class="slackfooter-wrapper">
-                    <div class="teams-message-footer">
-                        <div class="teams-footer-left">
-                            <label for="teams-attachments-${data?.reqId}" class="teams-attachment-btn">
+                    <div class="slack-message-footer">
+                        <div class="slack-footer-left">
+                            <label for="slack-attachments-${data?.reqId}" class="slack-attachment-btn">
                                 <input
                                     type="file"
-                                    id="teams-attachments-${data?.reqId}"
+                                    id="slack-attachments-${data?.reqId}"
                                     multiple
                                     style="display: none;"
                                 />
@@ -77,7 +77,7 @@ export function render(data) {
                                 <span class="attachment-text">Attachments</span>
                             </label>
                             
-                            <button class="teams-smart-compose-btn" id="teams-smart-compose-${data?.reqId}">
+                            <button class="slack-smart-compose-btn" id="slack-smart-compose-${data?.reqId}">
                                 <span class="smart-compose-icon">
                                     ${ActionsFlashIcon({ size: 16, color: "#667085" })}
                                 </span>
@@ -85,50 +85,49 @@ export function render(data) {
                             </button>
                         </div>
                         
-                        <div class="teams-footer-right">
-                            <sl-button class="primary-button-black teams-send-btn" id="teams-send-${data?.reqId}" variant="primary" disabled>                            
+                        <div class="slack-footer-right">
+                            <sl-button class="primary-button-black slack-send-btn" id="slack-send-${data?.reqId}" variant="primary" disabled>                            
                                 Send
                             </sl-button>
                         </div>
                     </div>
                 </div>
 
-                <div class="teams-attachments-preview" id="teams-attachments-preview-${data?.reqId}">
-                    <!-- Attachment previews will be displayed here -->
+                <div class="slack-attachments-preview" id="slack-attachments-preview-${data?.reqId}">
                 </div>
             </div>
         </div>
     `;
 
     setTimeout(() => {
-        initializeTeamsMessageFunctionality(data);
+        initializeSlackMessageFunctionality(data);
     }, 0);
 
     return html;
 }
 
-const renderTeamsMessageSummary = (data) => {
+const renderSlackMessageSummary = (data) => {
     let recipients = data?.content?.recipients || [];    
     const tenantName = data?.content?.tenantName;
     
     let html = `
-        <div class="teams-message-small-card">
-            <div class="teams-summary-header">
-                <div class="teams-icon">
-                    ${Teamsimg({ size: 20 })}
+        <div class="slack-message-small-card">
+            <div class="slack-summary-header">
+                <div class="slack-icon">
+                    ${Slackimg({ size: 20 })}
                 </div>
-                <h3>${tenantName}</h3>
+                <h3>${tenantName || 'Slack'}</h3>
             </div>
-            <div class="teams-summary-body">
-                <div class="teams-summary-recipients">
+            <div class="slack-summary-body">
+                <div class="slack-summary-recipients">
                     <strong>To:</strong>
-                    ${recipients?.map(recipient => `<span class="recipient-tag">${recipient?.name || recipient?.email}</span>`).join('')}
+                    ${recipients?.map(recipient => `<span class="recipient-tag">${recipient?.name || recipient?.label || recipient?.email}</span>`).join('')}
                 </div>
-                <div class="teams-summary-message">
-                    ${data?.content?.message?.msg}
+                <div class="slack-summary-message">
+                    ${data?.content?.message?.msg || data?.content?.text || ''}
                 </div>
                 ${data?.content?.attachments?.length > 0 ? `
-                    <div class="teams-summary-attachments">
+                    <div class="slack-summary-attachments">
                         <strong>Attachments:</strong> ${data?.content?.attachments?.length} file(s)
                     </div>
                 ` : ''}
@@ -139,32 +138,35 @@ const renderTeamsMessageSummary = (data) => {
     return html;
 }
 
-const initializeTeamsMessageFunctionality = (data) => {
+const initializeSlackMessageFunctionality = (data) => {
     const reqId = data?.reqId;
 
     // Guard: prevent duplicate initialization when template re-renders.
-    const templateEl = document.getElementById(`teams-message-body-${reqId}`)?.closest('.teams-message-template');
+    // Without this, multiple sets of event listeners are added, causing multiple API calls.
+    const templateEl = document.getElementById(`slack-message-body-${reqId}`)?.closest('.slack-message-template');
     if (!templateEl || templateEl._functionalityInitialized) return;
     templateEl._functionalityInitialized = true;
 
     const userId = window.sdkConfig.userId;
     const connectionId = data?.connId;
-    const source = data?.provider;
-    const messageBody = document.getElementById(`teams-message-body-${reqId}`);
+    const source = data?.provider || 'slack';
+    const messageBody = document.getElementById(`slack-message-body-${reqId}`);
     const messageBodyWrapper = messageBody?.parentElement;
-    const sendButton = document.getElementById(`teams-send-${reqId}`);
-    const smartComposeBtn = document.getElementById(`teams-smart-compose-${reqId}`);
-    const attachmentInput = document.getElementById(`teams-attachments-${reqId}`);
-    const attachmentsPreview = document.getElementById(`teams-attachments-preview-${reqId}`);
+    const sendButton = document.getElementById(`slack-send-${reqId}`);
+    const smartComposeBtn = document.getElementById(`slack-smart-compose-${reqId}`);
+    const attachmentInput = document.getElementById(`slack-attachments-${reqId}`);
+    const attachmentsPreview = document.getElementById(`slack-attachments-preview-${reqId}`);
+    const connectionSelect = document.getElementById(`slack-connection-${reqId}`);
 
     let attachedFiles = [];
     
-    // Initialize Recipient Search
     const recipientSearchManager = initializeRecipientSearch({
         reqId,
         connectionId,
         userId,
         source,
+        provider: 'slack',
+        prefix: 'slack',
         onRecipientsChange: (recipients) => {
             validateForm();
         }
@@ -198,7 +200,6 @@ const initializeTeamsMessageFunctionality = (data) => {
             return;
         }
 
-        const userId = window.sdkConfig.userId;
         const userAccessToken = window.sdkConfig.accessToken;
         const cancelSource = axios.CancelToken.source();
         const mediaName = getUID(6);
@@ -206,7 +207,6 @@ const initializeTeamsMessageFunctionality = (data) => {
         const uploadConfig = {
             file: file,
             userInfoId: userId,
-            // fileContext: 'knowledge',
             fileContext: 'runtime',
             userAccessToken: userAccessToken,
             mediaName: mediaName,
@@ -300,7 +300,6 @@ const initializeTeamsMessageFunctionality = (data) => {
     }
 
     const updateAttachmentsPreview = () => {
-        console.log('updateAttachmentsPreview', attachedFiles);
         if (attachmentsPreview && attachedFiles.length > 0) {
             attachmentsPreview.innerHTML = `
                 <div class="attachments-list">
@@ -460,7 +459,7 @@ const initializeTeamsMessageFunctionality = (data) => {
     };
 
     const renderSmartComposePanel = () => {
-        const footerEl = messageBody?.closest('.teams-message-container')?.querySelector('.slackfooter-wrapper');
+        const footerEl = messageBody?.closest('.slack-message-container')?.querySelector('.slackfooter-wrapper');
         if (!footerEl) return;
 
         if (!isSmartCompose) {
@@ -569,7 +568,6 @@ const initializeTeamsMessageFunctionality = (data) => {
             const message = messageBody?.innerHTML || '';
             const uploadedAttachments = attachedFiles.filter(file => file.uploaded && !file.error);
             const selectedRecipients = recipientSearchManager.getSelectedRecipients();
-            const connectionSelect = document.getElementById(`teams-connection-${reqId}`);
             const selectedConnectionId = connectionSelect?.value || connectionId;
 
             const attachmentComponents = uploadedAttachments.map(f => ({
@@ -579,22 +577,22 @@ const initializeTeamsMessageFunctionality = (data) => {
                 fileSize: f.size,
             }));
 
-            const conversationPayload = selectedRecipients.map(r => ({
+            const channelPayload = selectedRecipients.map(r => ({
                 id: r.id,
                 name: r.label || r.name,
-                type: r.meta?.type || 'user'
+                type: r.meta?.type || 'channel'
             }));
 
             const payload = {
                 question: data?.question,
                 nodeType: "actions",
-                appId: "msteams",
+                appId: "slack",
                 eventId: "send_message",
                 connectionId: selectedConnectionId,
                 boardId: data?.boardId,
                 params: {
-                    conversations: conversationPayload,
-                    message: message,
+                    channels: channelPayload,
+                    text: message,
                     attachments: attachmentComponents,
                     components: uploadedAttachments.map(f => ({
                         componentId: f.componentId,
@@ -608,7 +606,7 @@ const initializeTeamsMessageFunctionality = (data) => {
 
             store.dispatch(sendIntegrationMessage({
                 userId,
-                source: source || 'msteams',
+                source: 'slack',
                 payload
             })).then(response => {
                 if (response?.payload && !response?.error) {
@@ -643,4 +641,3 @@ const initializeTeamsMessageFunctionality = (data) => {
 };
 
 export default { render };
-

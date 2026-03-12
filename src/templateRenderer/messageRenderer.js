@@ -13,6 +13,7 @@ import * as holdConversation from "./templates/hold-conversation-template";
 import * as errorMessage from "./templates/error-message-template";
 import * as genericErrorTemplate from "./templates/generic-error-template";
 import * as actionSendTeamsMessageTemplate from "./templates/action-send-teams-message";
+import * as actionSendSlackMessageTemplate from "./templates/action-send-slack-message";
 import * as feedbackTemplate from "./templates/feedback-template";
 import { encodeHtml, SHOELACE_ATTRS, SHOELACE_TAGS } from "./utils/helper";
 import { convertTemplateToHtml } from "../utils/helpers";
@@ -172,7 +173,13 @@ export function renderTemplateContent(
 				break;
 
 			case "integrations_action_form":
-				htmlTemplate += integrationActionTemplate.render(data);
+				if (data?.provider === 'slack' || data?.skills === 'slack') {
+					htmlTemplate += actionSendSlackMessageTemplate.render(data);
+				} else if (data?.provider === 'msteams' || data?.skills === 'msteams') {
+					htmlTemplate += actionSendTeamsMessageTemplate.render(data);
+				} else {
+					console.warn('Unknown integration action provider:', data?.provider);
+				}
 				break;
 
 			case "interruption_template":
@@ -184,10 +191,11 @@ export function renderTemplateContent(
 				break;
 
 			case "action_send_slack_message":
-				htmlTemplate += actionSendSlackMessage.render(data);
+				htmlTemplate += actionSendSlackMessageTemplate.render(data);
 				break;
 
 			case "action_send_msteams_message":
+			case "action_send_teams_message":
 				htmlTemplate += actionSendTeamsMessageTemplate.render(data);
 				break;
 
