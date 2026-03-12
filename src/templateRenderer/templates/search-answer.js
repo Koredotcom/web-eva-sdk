@@ -1,13 +1,27 @@
 import { MessageRenderer } from "../../plugins/Markdown/message-renderer";
 import { encodeHtml } from "../utils/helper";
+import { renderThoughts, setupThoughtsToggle } from "./bot-conversation";
 
 function render(data) {
-    // For search_results template type, only render the answer text
-    // Search results should NOT be displayed in the main answer area
-    // They should only appear in the SourcesSidebar when "Related Search Results" is clicked
+    let thoughtsHTML = "";
+
+    if (data?.thoughts?.length > 0) {
+        const thoughtData = {
+            messageId: data.messageId || data.id,
+            thoughts: data.thoughts,
+            question: data.answer,
+        };
+        thoughtsHTML = renderThoughts(thoughtData, data);
+
+        const thoughtTime = data.thoughts[data.thoughts.length - 1]?.thoughtTime;
+        setTimeout(() => {
+            setupThoughtsToggle(data.messageId || data.id, thoughtTime);
+        }, 500);
+    }
 
     let html = `
         <div class="search-answer-container">
+            ${thoughtsHTML}
             ${renderAnswer(data)}
         </div>
     `;
