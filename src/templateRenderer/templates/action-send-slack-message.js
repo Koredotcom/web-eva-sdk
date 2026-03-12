@@ -1,4 +1,4 @@
-import { attachmentIcon, ActionsFlashIcon, Slackimg, createCloseIcon, PlusIcon } from "../icons-library";
+import { attachmentIcon, ActionsFlashIcon, Slackimg, Teamsimg, MinimizeIcon, RadioButtonChecked, createCloseIcon, PlusIcon } from "../icons-library";
 import "./../styles/template.scss";
 import FileUploader from "../../utils/FileUploader";
 import { getFileExtension, getUID, generateComponentId, resolveSdkAssetPath } from "../../utils/helpers";
@@ -106,37 +106,150 @@ export function render(data) {
     return html;
 }
 
-const renderSlackMessageSummary = (data) => {
-    let recipients = data?.content?.recipients || [];    
-    const tenantName = data?.content?.tenantName;
-    
-    let html = `
-        <div class="slack-message-small-card">
-            <div class="slack-summary-header">
-                <div class="slack-icon">
-                    ${Slackimg({ size: 20 })}
-                </div>
-                <h3>${tenantName || 'Slack'}</h3>
+const renderSlackSuccessSmallCard = (channels, text, tenantName, attachments) => {
+    const truncated = text?.length > 108 ? text.slice(0, 98) + "<span class='seemorehtml'>...see more</span>" : (text || '');
+    const chip0 = channels?.[0];
+    const chip1 = channels?.[1];
+
+    const profilePicHtml = (chip) => {
+        if (!chip) return '';
+        if (chip.meta?.type === 'public') return `<div class="profilepic">#</div>`;
+        if (chip.meta?.type === 'people') {
+            return chip.meta?.icon
+                ? `<div class="profilepic"><img src="${chip.meta.icon}" /></div>`
+                : `<div class="profilepic groupIcon">${(chip.label || '').charAt(0).toUpperCase()}</div>`;
+        }
+        return `<div class="profilepic groupIcon">${(chip.label || '').charAt(0).toUpperCase()}</div>`;
+    };
+
+    return `
+        <div class="emailSmallCard slack-success-card" data-expanded="false">
+            <div class="headingtitle slacktitle">
+                <div class="gmailwrap">${Slackimg({ size: 20 })}</div>
+                <div class="titlechip slacktitlechip">${tenantName || 'Slack'}</div>
             </div>
-            <div class="slack-summary-body">
-                <div class="slack-summary-recipients">
-                    <strong>To:</strong>
-                    ${recipients?.map(recipient => `<span class="recipient-tag">${recipient?.name || recipient?.label || recipient?.email}</span>`).join('')}
+            <div class="bodychordwrap">
+                <div class="bodyanswer">
+                    ${chip0 ? `
+                        <div class="chordname slackchord">
+                            <div class="personname">
+                                ${profilePicHtml(chip0)}
+                                <span>${chip0.label || ''}</span>
+                            </div>
+                        </div>
+                    ` : ''}
+                    ${chip1 ? `
+                        <div class="chordname slackchord">
+                            <div class="personname">
+                                ${profilePicHtml(chip1)}
+                                <span>${chip1.label || ''}</span>
+                            </div>
+                        </div>
+                    ` : ''}
+                    ${(channels?.length || 0) > 2 ? `
+                        <div class="chordname slackmore">
+                            <div class="personname">${channels.length - 2} more</div>
+                        </div>
+                    ` : ''}
                 </div>
-                <div class="slack-summary-message">
-                    ${data?.content?.message?.msg || data?.content?.text || ''}
+                <div class="footeranswer">
+                    <span class="truncateText">${truncated}</span>
                 </div>
-                ${data?.content?.attachments?.length > 0 ? `
-                    <div class="slack-summary-attachments">
-                        <strong>Attachments:</strong> ${data?.content?.attachments?.length} file(s)
+                ${attachments?.length > 0 ? `
+                    <div class="attachementInfo">
+                        <div class="attachIcon">${attachmentIcon({ size: 14, color: '#667085' })}</div>
+                        <div class="attachText">${attachments.length} ${attachments.length > 1 ? 'Attachments' : 'Attachment'}</div>
                     </div>
                 ` : ''}
+                <div class="accountIntegratedSuccess successmsg">
+                    <div class="iconchip">${RadioButtonChecked({ size: 14 })}</div>
+                    <div class="integratetext">Sent successfully</div>
+                </div>
             </div>
         </div>
-    `
+    `;
+};
 
-    return html;
-}
+const renderSlackSuccessExpandedCard = (channels, text, tenantName, attachments) => {
+    const paragraphs = (text || '').split('\n').filter(p => p.trim() !== '');
+
+    const chipHtml = (channel) => {
+        let picHtml = '';
+        if (channel.meta?.type === 'public') picHtml = `<div class="profilepic">#</div>`;
+        else if (channel.meta?.type === 'people') {
+            picHtml = channel.meta?.icon
+                ? `<div class="profilepic"><img src="${channel.meta.icon}" /></div>`
+                : `<div class="profilepic groupIcon">${(channel.label || '').charAt(0).toUpperCase()}</div>`;
+        } else {
+            picHtml = `<div class="profilepic groupIcon">${(channel.label || '').charAt(0).toUpperCase()}</div>`;
+        }
+        return `<div class="chiphandle">${picHtml}<span>${channel.label || ''}</span></div>`;
+    };
+
+    return `
+        <div class="emailExpandedcard slackExpanedcard slack-success-card" data-expanded="true">
+            <div class="emailExpandHeader">
+                <div class="expandChip">
+                    <div class="exIcon">${Slackimg({ size: 20 })}</div>
+                    <div class="exId">${tenantName || 'Slack'}</div>
+                </div>
+                <div class="collapseChip slack-collapse-btn">${MinimizeIcon({ size: 14, color: '#667085' })}</div>
+            </div>
+            <div class="emailUserList slackuserlist">
+                <div class="listItems slacklistitems">
+                    ${(channels || []).map(chipHtml).join('')}
+                </div>
+            </div>
+            <div class="emailBody slackbody">
+                ${paragraphs.map(p => `<div>${p}</div>`).join('')}
+            </div>
+            ${attachments?.length > 0 ? `
+                <div class="kiaas-attachment-list">
+                    ${attachments.map((file) => {
+                        const name = file.originalFilename || file.name || file.fileName || '';
+                        return `<div class="kiaas-attachments"><div class="attachment-list-item noOverlay">${attachmentIcon({ size: 14, color: '#667085' })}<span class="attach-name">${name}</span></div></div>`;
+                    }).join('')}
+                </div>
+            ` : ''}
+        </div>
+    `;
+};
+
+const attachExpandCollapseListeners = (wrapper, channels, text, tenantName, attachments) => {
+    const smallCard = wrapper.querySelector('.emailSmallCard.slack-success-card');
+    if (smallCard) {
+        smallCard.addEventListener('click', () => {
+            wrapper.innerHTML = renderSlackSuccessExpandedCard(channels, text, tenantName, attachments);
+            const collapseBtn = wrapper.querySelector('.slack-collapse-btn');
+            if (collapseBtn) {
+                collapseBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    wrapper.innerHTML = renderSlackSuccessSmallCard(channels, text, tenantName, attachments);
+                    attachExpandCollapseListeners(wrapper, channels, text, tenantName, attachments);
+                });
+            }
+        });
+    }
+};
+
+const renderSlackMessageSummary = (data) => {
+    const channels = data?.content?.channels || [];
+    const tenantName = data?.content?.workSpace || data?.content?.tenantName;
+    const text = data?.content?.message?.text || data?.content?.message?.msg || '';
+    const attachments = data?.content?.message?.attachments || [];
+    const wrapperId = `slack-success-${data?.reqId || Date.now()}`;
+
+    // Bind after DOM insertion
+    setTimeout(() => {
+        const wrapper = document.getElementById(wrapperId);
+        if (wrapper && !wrapper._successInit) {
+            wrapper._successInit = true;
+            attachExpandCollapseListeners(wrapper, channels, text, tenantName, attachments);
+        }
+    }, 0);
+
+    return `<div class="slack-success-wrapper" id="${wrapperId}">${renderSlackSuccessSmallCard(channels, text, tenantName, attachments)}</div>`;
+};
 
 const initializeSlackMessageFunctionality = (data) => {
     const reqId = data?.reqId;
@@ -598,6 +711,10 @@ const initializeSlackMessageFunctionality = (data) => {
                         componentId: f.componentId,
                         fileId: f.fileId || f.docId,
                     }))
+                },
+                contextParams: {
+                    messageId: data?.messageId,
+                    dataId: data?.parentMessageId || data?.menuId
                 }
             };
 
@@ -610,15 +727,35 @@ const initializeSlackMessageFunctionality = (data) => {
                 payload
             })).then(response => {
                 if (response?.payload && !response?.error) {
-                    sendButton.textContent = 'Sent!';
-                    sendButton.classList.add('sent-success');
+                    const channels = selectedRecipients.map(r => ({
+                        id: r.id,
+                        label: r.label || r.name,
+                        meta: r.meta || {}
+                    }));
+                    const text = messageBody?.innerText || messageBody?.textContent || '';
+                    const tenantName = data?.content?.workSpace || data?.content?.tenantName || connectionSelect?.options?.[connectionSelect?.selectedIndex]?.text || 'Slack';
+                    const attachments = uploadedAttachments.map(f => ({
+                        originalFilename: f.name || f.title,
+                        name: f.name || f.title,
+                        fileName: f.name || f.title,
+                        fileType: f.type,
+                    }));
+
+                    const templateRoot = templateEl;
+                    if (templateRoot) {
+                        const successWrapper = document.createElement('div');
+                        successWrapper.className = 'slack-success-wrapper';
+                        successWrapper.innerHTML = renderSlackSuccessSmallCard(channels, text, tenantName, attachments);
+                        templateRoot.replaceWith(successWrapper);
+                        attachExpandCollapseListeners(successWrapper, channels, text, tenantName, attachments);
+                    }
                 } else {
                     sendButton.disabled = false;
-                    sendButton.textContent = 'Retry';
+                    sendButton.textContent = 'Send';
                 }
             }).catch(() => {
                 sendButton.disabled = false;
-                sendButton.textContent = 'Retry';
+                sendButton.textContent = 'Send';
             });
         });
     }

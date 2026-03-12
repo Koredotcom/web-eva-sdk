@@ -1,4 +1,4 @@
-import { searchIcon, attachmentIcon, ActionsFlashIcon, arrowCirlceUpIcon, Teamsimg, createCloseIcon, PlusIcon } from "../icons-library";
+import { searchIcon, attachmentIcon, ActionsFlashIcon, arrowCirlceUpIcon, Teamsimg, Slackimg, MinimizeIcon, RadioButtonChecked, createCloseIcon, PlusIcon } from "../icons-library";
 import "./../styles/template.scss";
 import FileUploader from "../../utils/FileUploader";
 import { getFileExtension, getUID, generateComponentId, resolveSdkAssetPath } from "../../utils/helpers";
@@ -107,37 +107,158 @@ export function render(data) {
     return html;
 }
 
-const renderTeamsMessageSummary = (data) => {
-    let recipients = data?.content?.recipients || [];    
-    const tenantName = data?.content?.tenantName;
-    
-    let html = `
-        <div class="teams-message-small-card">
-            <div class="teams-summary-header">
-                <div class="teams-icon">
-                    ${Teamsimg({ size: 20 })}
-                </div>
-                <h3>${tenantName}</h3>
+const decodeHtmlEntities = (text) => {
+    if (typeof document === 'undefined') return text;
+    const txt = document.createElement('textarea');
+    txt.innerHTML = text;
+    return txt.value;
+};
+
+const renderTeamsSuccessSmallCard = (channels, text, tenantName, attachments) => {
+    const decoded = decodeHtmlEntities(text || '');
+    const truncated = decoded.length > 108 ? decoded.slice(0, 98) + "<span class='seemorehtml'>...see more</span>" : decoded;
+    const chip0 = channels?.[0];
+    const chip1 = channels?.[1];
+
+    const profilePicHtml = (chip) => {
+        if (!chip) return '';
+        if (chip.meta?.type === 'channel') return `<div class="profilepic groupIcon">${(chip.label || '').charAt(0).toUpperCase()}</div>`;
+        if (chip.meta?.type === 'people') {
+            return chip.meta?.icon
+                ? `<div class="profilepic"><img src="${chip.meta.icon}" /></div>`
+                : `<div class="profilepic groupIcon">${(chip.label || '').charAt(0).toUpperCase()}</div>`;
+        }
+        return `<div class="profilepic groupIcon">${(chip.label || '').charAt(0).toUpperCase()}</div>`;
+    };
+
+    return `
+        <div class="emailSmallCard msTeamsSmallCard teams-success-card" data-expanded="false">
+            <div class="headingtitle slacktitle" style="background:#474876;">
+                <div class="gmailwrap">${Teamsimg({ size: 20 })}</div>
+                <div class="titlechip slacktitlechip">${tenantName || 'Teams'}</div>
             </div>
-            <div class="teams-summary-body">
-                <div class="teams-summary-recipients">
-                    <strong>To:</strong>
-                    ${recipients?.map(recipient => `<span class="recipient-tag">${recipient?.name || recipient?.email}</span>`).join('')}
+            <div class="bodychordwrap">
+                <div class="bodyanswer">
+                    ${chip0 ? `
+                        <div class="chordname slackchord" style="border-color:#bfdbfe;background:#eff6ff;">
+                            <div class="personname">
+                                ${profilePicHtml(chip0)}
+                                <span>${chip0.label || ''}</span>
+                            </div>
+                        </div>
+                    ` : ''}
+                    ${chip1 ? `
+                        <div class="chordname slackchord" style="border-color:#bfdbfe;background:#eff6ff;">
+                            <div class="personname">
+                                ${profilePicHtml(chip1)}
+                                <span>${chip1.label || ''}</span>
+                            </div>
+                        </div>
+                    ` : ''}
+                    ${(channels?.length || 0) > 2 ? `
+                        <div class="chordname slackmore">
+                            <div class="personname">${channels.length - 2} more</div>
+                        </div>
+                    ` : ''}
                 </div>
-                <div class="teams-summary-message">
-                    ${data?.content?.message?.msg}
+                <div class="footeranswer">
+                    <span class="truncateText">${truncated}</span>
                 </div>
-                ${data?.content?.attachments?.length > 0 ? `
-                    <div class="teams-summary-attachments">
-                        <strong>Attachments:</strong> ${data?.content?.attachments?.length} file(s)
+                ${attachments?.length > 0 ? `
+                    <div class="attachementInfo">
+                        <div class="attachIcon">${attachmentIcon({ size: 14, color: '#667085' })}</div>
+                        <div class="attachText">${attachments.length} ${attachments.length > 1 ? 'Attachments' : 'Attachment'}</div>
                     </div>
                 ` : ''}
+                <div class="accountIntegratedSuccess successmsg">
+                    <div class="iconchip">${RadioButtonChecked({ size: 14 })}</div>
+                    <div class="integratetext">Sent successfully</div>
+                </div>
             </div>
         </div>
-    `
+    `;
+};
 
-    return html;
-}
+const renderTeamsSuccessExpandedCard = (channels, text, tenantName, attachments) => {
+    const decoded = decodeHtmlEntities(text || '');
+    const paragraphs = decoded.split('\n').filter(p => p.trim() !== '');
+
+    const chipHtml = (channel) => {
+        let picHtml = '';
+        if (channel.meta?.type === 'channel') picHtml = `<div class="profilepic groupIcon">${(channel.label || '').charAt(0).toUpperCase()}</div>`;
+        else if (channel.meta?.type === 'people') {
+            picHtml = channel.meta?.icon
+                ? `<div class="profilepic"><img src="${channel.meta.icon}" /></div>`
+                : `<div class="profilepic groupIcon">${(channel.label || '').charAt(0).toUpperCase()}</div>`;
+        } else {
+            picHtml = `<div class="profilepic groupIcon">${(channel.label || '').charAt(0).toUpperCase()}</div>`;
+        }
+        return `<div class="chiphandle" style="border-color:#bfdbfe;background:#eff6ff;">${picHtml}<span>${channel.label || ''}</span></div>`;
+    };
+
+    return `
+        <div class="emailExpandedcard slackExpanedcard msTeamsExpandedCard teams-success-card" data-expanded="true">
+            <div class="emailExpandHeader" style="background:#474876;">
+                <div class="expandChip" style="background:#474876;">
+                    <div class="exIcon">${Teamsimg({ size: 20 })}</div>
+                    <div class="exId" style="color:#fff;">${tenantName || 'Teams'}</div>
+                </div>
+                <div class="collapseChip teams-collapse-btn">${MinimizeIcon({ size: 14, color: '#fff' })}</div>
+            </div>
+            <div class="emailUserList slackuserlist">
+                <div class="listItems slacklistitems">
+                    ${(channels || []).map(chipHtml).join('')}
+                </div>
+            </div>
+            <div class="emailBody slackbody">
+                ${paragraphs.map(p => `<div>${p}</div>`).join('')}
+            </div>
+            ${attachments?.length > 0 ? `
+                <div class="kiaas-attachment-list">
+                    ${attachments.map((file) => {
+                        const name = file.originalFilename || file.name || file.fileName || '';
+                        return `<div class="kiaas-attachments"><div class="attachment-list-item noOverlay"><span>${attachmentIcon({ size: 14, color: '#667085' })}</span><span class="attach-name">${name}</span></div></div>`;
+                    }).join('')}
+                </div>
+            ` : ''}
+        </div>
+    `;
+};
+
+const attachTeamsExpandCollapseListeners = (wrapper, channels, text, tenantName, attachments) => {
+    const smallCard = wrapper.querySelector('.emailSmallCard.teams-success-card');
+    if (smallCard) {
+        smallCard.addEventListener('click', () => {
+            wrapper.innerHTML = renderTeamsSuccessExpandedCard(channels, text, tenantName, attachments);
+            const collapseBtn = wrapper.querySelector('.teams-collapse-btn');
+            if (collapseBtn) {
+                collapseBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    wrapper.innerHTML = renderTeamsSuccessSmallCard(channels, text, tenantName, attachments);
+                    attachTeamsExpandCollapseListeners(wrapper, channels, text, tenantName, attachments);
+                });
+            }
+        });
+    }
+};
+
+const renderTeamsMessageSummary = (data) => {
+    const channels = data?.content?.conversations || data?.content?.channels || [];
+    const tenantName = data?.content?.tenantName || data?.content?.workSpace;
+    const text = data?.content?.message?.msg || data?.content?.message?.text || '';
+    const attachments = data?.content?.message?.attachments || [];
+    const wrapperId = `teams-success-${data?.reqId || Date.now()}`;
+
+    setTimeout(() => {
+        const wrapper = document.getElementById(wrapperId);
+        if (wrapper && !wrapper._successInit) {
+            wrapper._successInit = true;
+            attachTeamsExpandCollapseListeners(wrapper, channels, text, tenantName, attachments);
+        }
+    }, 0);
+
+    return `<div class="teams-success-wrapper" id="${wrapperId}">${renderTeamsSuccessSmallCard(channels, text, tenantName, attachments)}</div>`;
+};
 
 const initializeTeamsMessageFunctionality = (data) => {
     const reqId = data?.reqId;
@@ -600,6 +721,10 @@ const initializeTeamsMessageFunctionality = (data) => {
                         componentId: f.componentId,
                         fileId: f.fileId || f.docId,
                     }))
+                },
+                contextParams: {
+                    messageId: data?.messageId,
+                    dataId: data?.parentMessageId || data?.menuId
                 }
             };
 
@@ -612,15 +737,35 @@ const initializeTeamsMessageFunctionality = (data) => {
                 payload
             })).then(response => {
                 if (response?.payload && !response?.error) {
-                    sendButton.textContent = 'Sent!';
-                    sendButton.classList.add('sent-success');
+                    const channels = selectedRecipients.map(r => ({
+                        id: r.id,
+                        label: r.label || r.name,
+                        meta: r.meta || {}
+                    }));
+                    const text = messageBody?.innerText || messageBody?.textContent || '';
+                    const tenantName = data?.content?.tenantName || data?.content?.workSpace || connectionSelect?.options?.[connectionSelect?.selectedIndex]?.text || 'Teams';
+                    const attachments = uploadedAttachments.map(f => ({
+                        originalFilename: f.name || f.title,
+                        name: f.name || f.title,
+                        fileName: f.name || f.title,
+                        fileType: f.type,
+                    }));
+
+                    const templateRoot = templateEl;
+                    if (templateRoot) {
+                        const successWrapper = document.createElement('div');
+                        successWrapper.className = 'teams-success-wrapper';
+                        successWrapper.innerHTML = renderTeamsSuccessSmallCard(channels, text, tenantName, attachments);
+                        templateRoot.replaceWith(successWrapper);
+                        attachTeamsExpandCollapseListeners(successWrapper, channels, text, tenantName, attachments);
+                    }
                 } else {
                     sendButton.disabled = false;
-                    sendButton.textContent = 'Retry';
+                    sendButton.textContent = 'Send';
                 }
             }).catch(() => {
                 sendButton.disabled = false;
-                sendButton.textContent = 'Retry';
+                sendButton.textContent = 'Send';
             });
         });
     }

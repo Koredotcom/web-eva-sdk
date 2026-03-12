@@ -1706,3 +1706,451 @@
         }
     }
 }
+
+/* ─── Slack / Teams Success Cards (matching Kora-React IntegrationAction-templates) ─── */
+
+.slack-success-wrapper,
+.teams-success-wrapper {
+    display: block;
+    margin-bottom: 0.75rem;
+}
+
+.emailSmallCard {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    width: 30rem;
+    flex-shrink: 0;
+    border-radius: 0.75rem;
+    border: 0.0625rem solid #D0D5DD;
+    background: #ffffff;
+    box-shadow: 0 0.25rem 0.375rem -0.125rem rgba(16, 24, 40, 0.03), 0 0.75rem 1rem -0.25rem rgba(16, 24, 40, 0.08);
+    cursor: pointer;
+    min-height: 13.125rem;
+    overflow: hidden;
+
+    .headingtitle {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.75rem 1.5rem;
+        border-bottom: 0.0625rem solid #EAECF0;
+        width: 100%;
+        box-sizing: border-box;
+
+        .gmailwrap {
+            display: flex;
+            align-items: center;
+        }
+
+        .titlechip {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: calc(100% - 3.25rem);
+            color: #101828;
+            font-size: 1rem;
+            font-weight: 500;
+            line-height: 1.5rem;
+
+            &.slacktitlechip {
+                color: #ffffff;
+            }
+        }
+
+        &.slacktitle {
+            background-color: #4B164C;
+            border-start-start-radius: 0.75rem;
+            border-start-end-radius: 0.75rem;
+        }
+    }
+
+    .bodychordwrap {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 0.5rem 0 1rem 0;
+        gap: 0.75rem;
+        align-self: stretch;
+
+        .bodyanswer {
+            display: flex;
+            align-items: center;
+            padding: 0.5rem 0.875rem 0 1.5rem;
+            gap: 0.5rem;
+            width: 100%;
+            flex-wrap: wrap;
+            box-sizing: border-box;
+
+            .chordname {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 0.25rem 0.5rem 0.25rem 0.375rem;
+                gap: 0.375rem;
+                border-radius: 0.375rem;
+                border: 0.0625rem solid #EAECF0;
+                background: #ffffff;
+                box-shadow: 0 0.0625rem 0.125rem 0 rgba(16, 24, 40, 0.05);
+
+                &.slackmore {
+                    padding: 0.25rem 0.5rem 0.25rem 0.375rem;
+                }
+
+                &.slackchord {
+                    border: 0.0625rem solid #F6D0FE;
+                    background: #FEFAFF;
+
+                    .personname {
+                        overflow: visible;
+                        display: flex;
+                        align-items: center;
+                        gap: 0.375rem;
+                    }
+                }
+
+                .personname {
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    white-space: nowrap;
+                    max-width: 5rem;
+                    color: #344054;
+                    font-size: 0.875rem;
+                    font-weight: 500;
+                    line-height: 1.25rem;
+
+                    span {
+                        overflow: hidden;
+                        text-overflow: ellipsis;
+                        white-space: nowrap;
+                        max-width: 8rem;
+                        display: block;
+                    }
+                }
+
+                .profilepic {
+                    width: 1rem;
+                    height: 1rem;
+                    border-radius: 0.25rem;
+                    font-size: 0.625rem;
+                    font-weight: 500;
+                    text-transform: uppercase;
+                    color: #ffffff;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    background-color: #12B76A;
+                    flex-shrink: 0;
+
+                    img {
+                        width: 100%;
+                        height: 100%;
+                        max-width: 100%;
+                        border-radius: 0.25rem;
+                    }
+
+                    &.groupIcon {
+                        background-color: #12B76A;
+                    }
+                }
+            }
+        }
+
+        .footeranswer {
+            color: #101828;
+            font-size: 0.875rem;
+            font-weight: 400;
+            line-height: 1.25rem;
+            padding-left: 1.5rem;
+            padding-right: 1.5rem;
+            width: 100%;
+            box-sizing: border-box;
+
+            .truncateText {
+                display: -webkit-box;
+                -webkit-line-clamp: 2;
+                -webkit-box-orient: vertical;
+                overflow: hidden;
+                color: #101828;
+                font-size: 0.875rem;
+                font-weight: 400;
+                line-height: 1.25rem;
+                width: 100%;
+
+                .seemorehtml {
+                    color: #7F56D9;
+                    font-size: 0.875rem;
+                    font-weight: 400;
+                    line-height: 1.25rem;
+                    text-decoration: underline;
+                    cursor: pointer;
+                }
+            }
+        }
+
+        .attachementInfo {
+            display: flex;
+            align-items: center;
+            padding: 0.375rem 0.75rem;
+            gap: 0.25rem;
+            border-radius: 0.5rem;
+            border: 0.0625rem solid #EAECF0;
+            background: #F9FAFB;
+            margin: 0 1.5rem 0.25rem 1.5rem;
+
+            .attachIcon {
+                display: flex;
+                align-items: center;
+            }
+
+            .attachText {
+                color: #344054;
+                font-size: 0.75rem;
+                font-weight: 500;
+                line-height: 1.125rem;
+            }
+        }
+
+        .successmsg {
+            display: flex;
+            align-items: center;
+            padding: 0 1.5rem;
+            gap: 0.5rem;
+
+            .iconchip {
+                width: 0.875rem;
+                height: 0.875rem;
+                display: flex;
+                align-items: center;
+            }
+
+            .integratetext {
+                color: #12B76A;
+                font-size: 0.875rem;
+                font-weight: 500;
+                line-height: 1.25rem;
+            }
+        }
+    }
+}
+
+.emailExpandedcard {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    width: 100%;
+    height: auto;
+    flex-shrink: 0;
+    border-radius: 0.75rem;
+    border: 0.0625rem solid #D0D5DD;
+    background: #ffffff;
+    box-shadow: 0 0.25rem 0.375rem -0.125rem rgba(16, 24, 40, 0.03), 0 0.75rem 1rem -0.25rem rgba(16, 24, 40, 0.08);
+    overflow: hidden;
+    min-height: 15rem;
+    margin-bottom: 0.75rem;
+
+    &.slackExpanedcard {
+        .emailExpandHeader {
+            background: #4B164C;
+
+            .collapseChip {
+                &:hover {
+                    background-color: #360b37;
+                }
+            }
+
+            .expandChip {
+                background: #4B164C;
+                padding-left: 0;
+
+                .exId {
+                    color: #ffffff;
+                }
+            }
+        }
+
+        &.msTeamsExpandedCard {
+            .emailExpandHeader {
+                background: #474876;
+
+                .collapseChip {
+                    &:hover {
+                        background-color: #2f3052;
+                    }
+                }
+
+                .expandChip {
+                    background: #474876;
+
+                    .exId {
+                        color: #ffffff;
+                    }
+                }
+            }
+
+            .emailUserList .listItems .chiphandle {
+                border: 0.0625rem solid #BFDBFE;
+                background: #EFF6FF;
+            }
+        }
+    }
+
+    .emailExpandHeader {
+        display: flex;
+        height: 3rem;
+        padding: 0.5rem 0.75rem 0.5rem 1.5rem;
+        align-items: center;
+        gap: 0.5rem;
+        flex-shrink: 0;
+        align-self: stretch;
+        border-bottom: 0.0625rem solid #EAECF0;
+        background: #F9FAFB;
+        width: 100%;
+        justify-content: space-between;
+        box-sizing: border-box;
+
+        .collapseChip {
+            width: 1.5rem;
+            height: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 0.25rem;
+            cursor: pointer;
+            flex-shrink: 0;
+
+            &:hover {
+                background-color: #F2F4F7;
+            }
+        }
+
+        .expandChip {
+            display: flex;
+            padding: 0 0.5rem;
+            align-items: center;
+            border-radius: 6.25rem;
+            background: #F2F4F7;
+            gap: 0.5rem;
+
+            .exIcon {
+                width: 1.5rem;
+                height: 1.5rem;
+                display: flex;
+                align-items: center;
+            }
+
+            .exId {
+                font-size: 0.875rem;
+                font-weight: 500;
+                color: #344054;
+            }
+        }
+    }
+
+    .emailUserList {
+        display: flex;
+        padding: 0.5rem 0 0.5rem 1.5rem;
+        align-items: center;
+        gap: 0.5rem;
+        border-bottom: 0.0625rem solid #EAECF0;
+        width: 100%;
+        box-sizing: border-box;
+
+        &.slackuserlist {
+            padding: 1.125rem 0 1.125rem 1.375rem;
+            margin-bottom: 0.625rem;
+        }
+
+        .listItems {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #101828;
+
+            &.slacklistitems {
+                display: flex;
+                gap: 0.5rem;
+                flex-wrap: wrap;
+            }
+
+            .chiphandle {
+                display: flex;
+                gap: 0.375rem;
+                align-items: center;
+                padding: 0.25rem 0.5rem 0.25rem 0.375rem;
+                justify-content: center;
+                border-radius: 0.375rem;
+                border: 0.0625rem solid #F6D0FE;
+                background: #FEFAFF;
+
+                span {
+                    font-size: 0.875rem;
+                    font-weight: 500;
+                    color: #344054;
+                }
+
+                .profilepic {
+                    width: 1rem;
+                    height: 1rem;
+                    border-radius: 0.25rem;
+                    font-size: 0.625rem;
+                    font-weight: 500;
+                    text-transform: uppercase;
+                    color: #ffffff;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    background-color: #12B76A;
+                    flex-shrink: 0;
+
+                    img {
+                        width: 100%;
+                        height: 100%;
+                        max-width: 100%;
+                        border-radius: 0.25rem;
+                    }
+
+                    &.groupIcon {
+                        background-color: #12B76A;
+                    }
+                }
+            }
+        }
+    }
+
+    .emailBody {
+        font-size: 0.875rem;
+        font-weight: 400;
+        color: #101828;
+        padding: 0.5rem 0.75rem 1rem 1.5rem;
+        width: 100%;
+        word-break: break-word;
+        box-sizing: border-box;
+
+        &.slackbody {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+    }
+
+    .kiaas-attachment-list {
+        padding: 0.5rem 0.75rem 1rem 1.5rem;
+
+        .kiaas-attachments {
+            .attachment-list-item {
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+                cursor: default;
+
+                .attach-name {
+                    font-size: 0.8125rem;
+                    color: #344054;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    white-space: nowrap;
+                }
+            }
+        }
+    }
+}
