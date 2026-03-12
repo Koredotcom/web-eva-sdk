@@ -209,6 +209,12 @@ const renderQuestionsOnly = () => {
     // Without this guard, the form re-renders and loses all recipients + message text.
     if (questionsContainer.querySelector('.emailSmartCompose')) return
 
+    // Guard while a Slack/Teams message is being sent. The send button click removes
+    // focus from all inputs, so no other guard fires. But sendIntegrationMessage
+    // dispatches trigger store.subscribe, destroying templateEl before the .then()
+    // callback can replace it with the success card.
+    if (questionsContainer.querySelector('[data-sending="true"]')) return
+
     const hasQuestions = questions && !isEmpty(questions);
 
     const landingPageContainer = document.querySelector('.landing-page-container');

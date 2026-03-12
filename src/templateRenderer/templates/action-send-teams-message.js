@@ -215,7 +215,14 @@ const renderTeamsSuccessExpandedCard = (channels, text, tenantName, attachments)
                 <div class="kiaas-attachment-list">
                     ${attachments.map((file) => {
                         const name = file.originalFilename || file.name || file.fileName || '';
-                        return `<div class="kiaas-attachments"><div class="attachment-list-item noOverlay"><span>${attachmentIcon({ size: 14, color: '#667085' })}</span><span class="attach-name">${name}</span></div></div>`;
+                        const ext = (file.extName || getFileExtension(name) || '').toLowerCase();
+                        const isImage = ['png', 'jpg', 'jpeg', 'gif', 'webp', 'image'].includes(ext) || (file.fileType && file.fileType.startsWith('image'));
+                        const previewSrc = file.thumbnailURL || file.publicUrl || '';
+                        const iconHtml = isImage && previewSrc
+                            ? `<img class="attachment-type" src="${previewSrc}" alt="${name}" />`
+                            : `<span class="extIcons">${getFileTypeIconHtml(ext, 28)}</span>`;
+                        const overlayClass = isImage ? '' : 'noOverlay';
+                        return `<div class="kiaas-attachments" title="${name}"><div class="attachment-list-item ${overlayClass}">${iconHtml}</div></div>`;
                     }).join('')}
                 </div>
             ` : ''}
@@ -697,55 +704,57 @@ const initializeTeamsMessageFunctionality = (data) => {
 
     if (sendButton) {
         sendButton.addEventListener('click', () => {
-            const message = messageBody?.innerHTML || '';
+            const message = messageBody?.innerText || messageBody?.textContent || '';
             const uploadedAttachments = attachedFiles.filter(file => file.uploaded && !file.error);
             const selectedRecipients = recipientSearchManager.getSelectedRecipients();
             const connectionSelect = document.getElementById(`teams-connection-${reqId}`);
             const selectedConnectionId = connectionSelect?.value || connectionId;
 
-            const attachmentComponents = uploadedAttachments.map(f => ({
-                fileId: f.fileId || f.docId,
-                fileName: f.name || f.title,
-                fileType: f.type,
-                fileSize: f.size,
-            }));
+            const attachmentIds = uploadedAttachments.map(f => f.fileId || f.docId);
+
+            const componentPayload = uploadedAttachments.map(f => {
+                const fUrl = f.fileUrl || {};
+                return {
+                    fileType: fUrl.fileType || f.type || 'attachment',
+                    fileSize: fUrl.fileSize || f.size,
+                    fileId: fUrl.fileId || f.fileId || f.docId,
+                    fileName: fUrl.fileName || f.name || f.title,
+                    originalFilename: fUrl.originalFilename || f.name || f.title,
+                };
+            });
 
             const conversationPayload = selectedRecipients.map(r => ({
                 id: r.id,
-                name: r.label || r.name,
-                type: r.meta?.type || 'user'
+                label: r.label || r.name,
+                meta: r.meta || {}
             }));
 
             const payload = {
-                question: data?.question,
                 nodeType: "actions",
-                appId: "msteams",
                 eventId: "send_message",
                 connectionId: selectedConnectionId,
                 boardId: data?.boardId,
                 params: {
                     conversations: conversationPayload,
+                    attachments: attachmentIds,
+                    components: componentPayload,
                     message: message,
-                    attachments: attachmentComponents,
-                    components: uploadedAttachments.map(f => ({
-                        componentId: f.componentId,
-                        fileId: f.fileId || f.docId,
-                    }))
                 },
                 contextParams: {
                     messageId: data?.messageId,
-                    dataId: data?.parentMessageId || data?.menuId
                 }
             };
 
             sendButton.disabled = true;
             sendButton.textContent = 'Sending...';
+            templateEl.setAttribute('data-sending', 'true');
 
             store.dispatch(sendIntegrationMessage({
                 userId,
                 source: source || 'msteams',
                 payload
             })).then(response => {
+                templateEl.removeAttribute('data-sending');
                 if (response?.payload && !response?.error) {
                     const channels = selectedRecipients.map(r => ({
                         id: r.id,
@@ -759,6 +768,9 @@ const initializeTeamsMessageFunctionality = (data) => {
                         name: f.name || f.title,
                         fileName: f.name || f.title,
                         fileType: f.type,
+                        publicUrl: f.fileUrl?.publicUrl || f.fileUrl?.thumbnailURL || '',
+                        thumbnailURL: f.fileUrl?.thumbnailURL || f.fileUrl?.publicUrl || '',
+                        extName: f.extName || getFileExtension(f.name || f.title || '') || '',
                     }));
 
                     const templateRoot = templateEl;
@@ -774,6 +786,7 @@ const initializeTeamsMessageFunctionality = (data) => {
                     sendButton.textContent = 'Send';
                 }
             }).catch(() => {
+                templateEl.removeAttribute('data-sending');
                 sendButton.disabled = false;
                 sendButton.textContent = 'Send';
             });

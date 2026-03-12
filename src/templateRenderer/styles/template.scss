@@ -2256,21 +2256,61 @@
     }
 
     .kiaas-attachment-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
         padding: 0.5rem 0.75rem 1rem 1.5rem;
 
+        &:empty { display: none; }
+
         .kiaas-attachments {
+            position: relative;
+            width: 3.75rem;
+            height: 3.75rem;
+            flex-shrink: 0;
+
             .attachment-list-item {
+                width: 3.75rem;
+                height: 3.75rem;
+                border-radius: 0.5rem;
+                border: 0.0625rem solid #D0D5DD;
+                background: #ffffff;
+                overflow: hidden;
                 display: flex;
                 align-items: center;
-                gap: 0.5rem;
+                justify-content: center;
+                position: relative;
                 cursor: default;
 
-                .attach-name {
-                    font-size: 0.8125rem;
-                    color: #344054;
-                    overflow: hidden;
-                    text-overflow: ellipsis;
-                    white-space: nowrap;
+                &.noOverlay::before { display: none; }
+
+                &::before {
+                    content: "";
+                    position: absolute;
+                    inset: 0;
+                    background: linear-gradient(180deg, transparent 50%, rgba(32, 33, 36, 0.15) 100%);
+                    pointer-events: none;
+                    z-index: 1;
+                }
+
+                .attachment-type {
+                    width: 100%;
+                    height: 100%;
+                    object-fit: cover;
+                }
+
+                .extIcons {
+                    width: 100%;
+                    height: 100%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+
+                    svg {
+                        width: 2rem;
+                        height: 2rem;
+                        border-radius: 0.25rem;
+                    }
                 }
             }
         }
