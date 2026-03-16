@@ -1,0 +1,497 @@
+/* ─── Overlay & Modal Base ──────────────────────────────────────────────── */
+
+.sch-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  &.sch-config-overlay { z-index: 1010; }
+  &.sch-tz-overlay { z-index: 1020; }
+  &.sch-agent-overlay { z-index: 1010; }
+}
+
+.sch-modal {
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+  display: flex;
+  flex-direction: column;
+  max-height: 90vh;
+  overflow: hidden;
+}
+
+.sch-main-modal { width: 520px; }
+.sch-config-modal { width: 540px; }
+.sch-tz-modal { width: 440px; max-height: 70vh; }
+.sch-agent-modal { width: 400px; max-height: 70vh; }
+
+/* ─── Header ───────────────────────────────────────────────────────────── */
+
+.sch-modal-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 20px;
+  border-bottom: 1px solid #eee;
+}
+
+.sch-modal-title {
+  font-size: 16px;
+  font-weight: 600;
+  flex: 1;
+}
+
+.sch-shared-label {
+  font-size: 12px;
+  color: #888;
+  margin-left: 6px;
+}
+
+.sch-modal-close {
+  background: none;
+  border: none;
+  font-size: 22px;
+  cursor: pointer;
+  color: #666;
+  line-height: 1;
+  padding: 0 4px;
+  &:hover { color: #000; }
+}
+
+/* ─── Body ─────────────────────────────────────────────────────────────── */
+
+.sch-modal-body {
+  padding: 20px;
+  overflow-y: auto;
+  flex: 1;
+  &.disabled-content {
+    opacity: 0.55;
+    pointer-events: none;
+  }
+}
+
+.sch-section {
+  margin-bottom: 20px;
+}
+
+.sch-field {
+  margin-bottom: 14px;
+}
+
+.sch-field-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 5px;
+}
+
+.sch-field-desc {
+  font-size: 12px;
+  color: #888;
+  margin: 0 0 8px;
+}
+
+.sch-field-suffix {
+  font-size: 12px;
+  color: #888;
+  margin-left: 6px;
+}
+
+/* ─── Inputs ───────────────────────────────────────────────────────────── */
+
+.sch-select,
+.sch-date-input,
+.sch-number-input,
+.sch-text-input,
+.sch-textarea,
+.sch-tz-search {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid #d0d0d0;
+  border-radius: 6px;
+  font-size: 13px;
+  box-sizing: border-box;
+  outline: none;
+  &:focus { border-color: #1976d2; box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.12); }
+  &:disabled { background: #f5f5f5; color: #999; cursor: not-allowed; }
+}
+
+.sch-textarea { resize: vertical; font-family: inherit; }
+
+.sch-multi-select {
+  height: 90px;
+}
+
+.sch-inline-select {
+  width: auto;
+  display: inline-block;
+  margin-left: 6px;
+}
+
+/* ─── Two-Column Layout ────────────────────────────────────────────────── */
+
+.sch-two-col {
+  display: flex;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+.sch-col { flex: 1; }
+
+/* ─── Checkbox ─────────────────────────────────────────────────────────── */
+
+.sch-checkbox-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 6px 0 12px;
+  cursor: pointer;
+  label {
+    font-size: 13px;
+    cursor: pointer;
+  }
+}
+
+/* ─── Radio ────────────────────────────────────────────────────────────── */
+
+.sch-radio-wrap {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 8px 0;
+  cursor: pointer;
+  input[type="radio"] { margin-top: 3px; }
+}
+
+.sch-radio-label {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  strong { font-size: 13px; }
+}
+
+.sch-radio-desc {
+  font-size: 12px;
+  color: #888;
+}
+
+/* ─── Custom Repeat Row ────────────────────────────────────────────────── */
+
+.sch-custom-repeat-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  .sch-field-label { width: 100%; }
+  .sch-number-input { width: 100px; }
+}
+
+/* ─── Agent Chip ───────────────────────────────────────────────────────── */
+
+.sch-agent-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border: 1px solid #ddd;
+  border-radius: 20px;
+  background: #f8f8f8;
+  font-size: 13px;
+}
+
+.sch-agent-chip-icon {
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
+}
+
+.sch-agent-chip-remove {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  color: #888;
+  padding: 0 2px;
+  line-height: 1;
+  &:hover { color: #c00; }
+}
+
+.sch-add-agent-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 14px;
+  border: 1px dashed #bbb;
+  border-radius: 6px;
+  background: #fff;
+  font-size: 13px;
+  cursor: pointer;
+  color: #555;
+  &:hover { border-color: #1976d2; color: #1976d2; }
+}
+
+/* ─── Schedule Summary ─────────────────────────────────────────────────── */
+
+.sch-schedule-summary-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background: #fafafa;
+  text-align: left;
+  cursor: pointer;
+  font-size: 13px;
+  &:hover { border-color: #1976d2; background: #f4f9ff; }
+}
+
+.sch-schedule-icon { font-size: 18px; }
+.sch-schedule-text { flex: 1; color: #333; }
+
+/* ─── Footer ───────────────────────────────────────────────────────────── */
+
+.sch-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 14px 20px;
+  border-top: 1px solid #eee;
+}
+
+.sch-btn {
+  padding: 8px 20px;
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
+  border: 1px solid #ccc;
+  &:disabled { opacity: 0.55; cursor: not-allowed; }
+}
+
+.sch-btn-cancel {
+  background: #fff;
+  color: #333;
+  &:hover:not(:disabled) { background: #f5f5f5; }
+}
+
+.sch-btn-primary {
+  background: #1976d2;
+  color: #fff;
+  border-color: #1976d2;
+  &:hover:not(:disabled) { background: #1565c0; }
+}
+
+/* ─── Days of Week Toggle ──────────────────────────────────────────────── */
+
+.sch-days-of-week {
+  margin-bottom: 14px;
+}
+
+.sch-days-row {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+
+.sch-day-btn {
+  padding: 5px 12px;
+  border: 1px solid #d0d0d0;
+  border-radius: 16px;
+  background: #fff;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.15s;
+  &:hover { border-color: #1976d2; }
+  &.selected { background: #e3f2fd; border-color: #1976d2; color: #1976d2; font-weight: 600; }
+}
+
+/* ─── Time Autocomplete ────────────────────────────────────────────────── */
+
+.sch-time-autocomplete {
+  margin-bottom: 14px;
+}
+
+.sch-time-input-wrap {
+  position: relative;
+}
+
+.sch-time-input {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid #d0d0d0;
+  border-radius: 6px;
+  font-size: 13px;
+  box-sizing: border-box;
+  outline: none;
+  &:focus { border-color: #1976d2; box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.12); }
+  &:disabled { background: #f5f5f5; color: #999; cursor: not-allowed; }
+}
+
+.sch-time-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  max-height: 200px;
+  overflow-y: auto;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  z-index: 50;
+}
+
+.sch-time-option {
+  padding: 6px 10px;
+  font-size: 13px;
+  cursor: pointer;
+  &:hover { background: #f0f6ff; }
+  &.highlighted { background: #e3f2fd; font-weight: 600; }
+}
+
+/* ─── Timezone Dialog ──────────────────────────────────────────────────── */
+
+.sch-tz-search-wrap {
+  padding: 12px 16px 8px;
+}
+
+.sch-tz-list {
+  overflow-y: auto;
+  max-height: 50vh;
+  padding: 0 4px 12px;
+}
+
+.sch-tz-item {
+  padding: 10px 14px;
+  cursor: pointer;
+  border-radius: 6px;
+  margin: 0 4px;
+  &:hover { background: #f0f6ff; }
+  &.selected { background: #e3f2fd; }
+}
+
+.sch-tz-primary {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.sch-tz-secondary {
+  font-size: 12px;
+  color: #888;
+  margin-top: 2px;
+}
+
+.sch-tz-no-results {
+  padding: 20px;
+  text-align: center;
+  color: #888;
+  font-size: 13px;
+}
+
+/* ─── Agent Selector ───────────────────────────────────────────────────── */
+
+.sch-agent-list {
+  overflow-y: auto;
+  max-height: 55vh;
+  padding: 8px;
+}
+
+.sch-agent-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  cursor: pointer;
+  border-radius: 6px;
+  &:hover { background: #f0f6ff; }
+}
+
+.sch-agent-icon {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
+}
+
+.sch-agent-name {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.sch-agent-empty {
+  padding: 20px;
+  text-align: center;
+  color: #888;
+  font-size: 13px;
+}
+
+/* ─── Timezone Button ──────────────────────────────────────────────────── */
+
+.sch-tz-field {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid #eee;
+}
+
+.sch-tz-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  background: #fafafa;
+  cursor: pointer;
+  font-size: 13px;
+  text-align: left;
+  &:hover { border-color: #1976d2; }
+}
+
+.sch-tz-desc {
+  color: #888;
+  font-size: 12px;
+}
+
+.sch-chevron {
+  margin-left: auto;
+  color: #888;
+}
+
+/* ─── Toast ────────────────────────────────────────────────────────────── */
+
+.sch-toast-container {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 2000;
+}
+
+.sch-toast {
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-size: 13px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
+  animation: sch-toast-in 0.25s ease-out;
+  &.sch-toast-danger { background: #c62828; color: #fff; }
+  &.sch-toast-success { background: #2e7d32; color: #fff; }
+  &.sch-toast-exit { opacity: 0; transition: opacity 0.3s; }
+}
+
+@keyframes sch-toast-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
