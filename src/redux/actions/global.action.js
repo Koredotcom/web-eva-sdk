@@ -530,6 +530,20 @@ export const bookmarkAgentAction = createAsyncThunk(
     }
 );
 
+export const getSignedMediaURL = createAsyncThunk(
+    'global/getSignedMediaURL',
+    async (arg, { rejectWithValue }) => {
+        try {
+            const { userId, msgId, fileId } = arg;
+            const response = await axiosInstance.get(`/1.1/users/${userId}/${msgId}/${fileId}/signedMediaURL`);
+            return response.data;
+        } catch (error) {
+            handleErrorState(error, "Signed Media URL");
+            return rejectWithValue(error.response?.data);
+        }
+    }
+);
+
 export const deleteAnnouncementAction = createAsyncThunk(
     'global/deleteAnnouncementAction',
     async (arg, { rejectWithValue }) => {
