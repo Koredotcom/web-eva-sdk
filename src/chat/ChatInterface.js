@@ -1,4 +1,4 @@
-import { advanceSearch, cancelAdvancedSearch, stopResponseGeneration } from "../redux/actions/global.action";
+import { advanceSearch, cancelAdvancedSearch, stopResponseGeneration, getSignedMediaURL } from "../redux/actions/global.action";
 import { setChatInterfaceOptions, setCurrentQuestion, setCustomData, setEnableContextByFollowupContext, setEnabledCustomTemplates, setErrorState } from "../redux/globalSlice"
 import { updateChatData } from "../redux/globalSlice";
 import store from "../redux/store";
@@ -492,6 +492,19 @@ const ChatInterface = (props) => {
       }
     }
 
+    const fetchSignedMediaURL = async ({ msgId, fileId }) => {
+      const userId = store.getState().global?.profile?.data?.id;
+      if (!userId || !msgId || !fileId) {
+        return { error: true, message: "Missing required params: userId, msgId, or fileId" };
+      }
+      try {
+        const result = await store.dispatch(getSignedMediaURL({ userId, msgId, fileId })).unwrap();
+        return result;
+      } catch(error) {
+        return { error: true, message: error?.errors?.[0]?.msg || "Unable to fetch signed media URL" };
+      }
+    };
+
     const setAgentContext = (agent) => {
       const agentDetails = {
 			name: agent?.name,
@@ -525,7 +538,8 @@ const ChatInterface = (props) => {
         clearErrorState,
         sendMessage,
         setAgentContext,
-        stopBotAnswer
+        stopBotAnswer,
+        fetchSignedMediaURL
     }
 }
 
