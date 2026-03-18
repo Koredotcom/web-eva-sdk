@@ -69,6 +69,13 @@ function render(data) {
                             <button class="editBtn" id = "editBtn-${items?.id}-${index}">Edit</button>
                             <button class="deleteBtn" id = "deleteBtn-${items?.id}-${index}">Delete</button>
                         </div>` : ''}
+                        ${(!initialState && (task?.status === "completed" || task?.status === "discard" || task?.status === "terminated")) ? `
+                            <button class="expandBtn" id="expandBtn-${items?.id}-${index}" aria-label="Toggle task details">
+                                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" style="transform: ${task?.showResponse ? 'rotate(180deg)' : 'rotate(0deg)'}; transition: transform 0.2s;">
+                                    <path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </button>
+                        ` : ''}
                         ${task?.showResponse ? `
                             <div class="bottomCard">
                             ${html?.innerHTML}
