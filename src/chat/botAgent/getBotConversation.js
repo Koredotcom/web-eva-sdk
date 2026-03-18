@@ -1,5 +1,5 @@
 import { cloneDeep, isEmpty } from "lodash";
-import {chatWindow, chatConfig} from "@koredev/kore-web-sdk"
+import {chatWindow, chatConfig} from "kore-web-sdk"
 import store from "../../redux/store";
 import { checkHistoryAccessed, getReqIdByMessageId, getTaskIdBypId, isTask } from "../../utils/helpers";
 import { updateChatData, setBotSDKInstance, setCurrentQuestion, setEnableKoreBotSDK } from "../../redux/globalSlice";
