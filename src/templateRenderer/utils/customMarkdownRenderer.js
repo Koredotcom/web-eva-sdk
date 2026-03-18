@@ -2,6 +2,9 @@ import marked from "marked";
 import DOMPurify from "dompurify";
 import ChatInterface from "../../chat/ChatInterface";
 
+const escapeAttr = (str) =>
+	String(str).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/'/g, "&#39;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
 const renderer = new marked.Renderer();
 
 renderer.link = function (href, title, text) {
@@ -9,13 +12,15 @@ renderer.link = function (href, title, text) {
 		const url = new URL(href, window.location.origin);
 		const params = url.searchParams;
 		if (params.get("action") === "downloadFile" && params.get("fileId") && params.get("resourceId")) {
-			const fileId = params.get("fileId");
-			const msgId = params.get("resourceId");
-			const safeText = text.replace(/"/g, "&quot;");
-			return `<button class="file-download-btn" data-file-id="${fileId}" data-msg-id="${msgId}" data-label="${safeText}">📥 ${text}</button>`;
+			const fileId = escapeAttr(params.get("fileId"));
+			const msgId = escapeAttr(params.get("resourceId"));
+			const safeText = escapeAttr(text);
+			return `<button class="file-download-btn" data-file-id="${fileId}" data-msg-id="${msgId}" data-label="${safeText}">📥 ${safeText}</button>`;
 		}
 	} catch {}
-	return `<a target="_blank" href="${href}"${title ? ` title="${title}"` : ""}>${text}</a>`;
+	const safeHref = escapeAttr(href);
+	const safeTitle = title ? ` title="${escapeAttr(title)}"` : "";
+	return `<a target="_blank" href="${safeHref}"${safeTitle}>${text}</a>`;
 };
 
 marked.setOptions({
@@ -40,7 +45,9 @@ const customMarkdownRenderer = (text) => {
 	return sanitizedHtml;
 };
 
-document.addEventListener("click", async (e) => {
+let handlerAttached = false;
+
+const handleDownloadClick = async (e) => {
 	const btn = e.target.closest(".file-download-btn");
 	if (!btn || btn.disabled) return;
 
@@ -77,6 +84,11 @@ document.addEventListener("click", async (e) => {
 		btn.disabled = false;
 		btn.textContent = `📥 ${label}`;
 	}
-});
+};
+
+if (!handlerAttached) {
+	handlerAttached = true;
+	document.addEventListener("click", handleDownloadClick);
+}
 
 export default customMarkdownRenderer;
