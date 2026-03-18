@@ -62,7 +62,11 @@ const handleDownloadClick = async (e) => {
 	try {
 		const result = await ChatInterface().fetchSignedMediaURL({ msgId, fileId });
 		const downloadUrl = result?.url || result?.signedUrl || result?.mediaUrl;
-		if (!downloadUrl) return;
+		if (!downloadUrl) {
+			btn.disabled = false;
+			btn.textContent = `📥 ${label}`;
+			return;
+		}
 
 		const filename = result?.filename || label || "download";
 		try {
