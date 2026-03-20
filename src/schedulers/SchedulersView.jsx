@@ -23,7 +23,7 @@ const SchedulersView = () => {
 
   const loadSchedulers = useCallback(async () => {
     const res = await getSchedulers();
-    const list = res?.schedulers?.allAgents ?? res?.schedulers ?? res?.data;
+    const list = res?.data?? res?.data?.allAgents;
     setSchedulers(Array.isArray(list) ? list : []);
   }, []);
 

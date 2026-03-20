@@ -51,11 +51,9 @@ export const getSchedulers = async (options = {}) => {
     const raw = await store
       .dispatch(fetchSchedulers({ userId, params }))
       .unwrap();
-    const list = normalizeSchedulers(raw);
     return {
       status: "success",
-      schedulers: raw,
-      data: list,
+      data: raw
     };
   } catch (error) {
     const err =
