@@ -64,7 +64,7 @@ const handleDownloadClick = async (e) => {
 		const downloadUrl = result?.url || result?.signedUrl || result?.mediaUrl;
 		if (!downloadUrl) {
 			btn.disabled = false;
-			btn.textContent = `📥 ${label}`;
+			btn.textContent = `${label}`;
 			return;
 		}
 
