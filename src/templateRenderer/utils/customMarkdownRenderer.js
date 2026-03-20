@@ -82,7 +82,7 @@ const handleDownloadClick = async (e) => {
 	} catch(error) {
 		console.error("Error downloading file", error);
 		btn.disabled = false;
-		btn.textContent = `📥 ${label}`;
+		btn.textContent = `${label}`;
 	}
 };
 
