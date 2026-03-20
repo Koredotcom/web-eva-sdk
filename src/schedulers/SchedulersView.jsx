@@ -39,10 +39,11 @@ const SchedulersView = () => {
   };
 
   const buildAgentDetails = (scheduler) => ({
-    id: scheduler.agentId || scheduler.id,
+    id: scheduler.id,
     name: scheduler.agentName || scheduler.name,
     icon: scheduler.agentIcon || scheduler.icon,
     type: scheduler.agentType || scheduler.type,
+    agentId: scheduler.schedule?.agentId,
     schedule: {
       id: scheduler.id || scheduler._id,
       config: scheduler.schedule?.config || scheduler.config,

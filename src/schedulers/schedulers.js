@@ -1,13 +1,11 @@
 import store from "../redux/store";
-import axiosInstance from "../api/axiosInstance";
-import { fetchSchedulers as fetchSchedulersThunk, createOrUpdateScheduler as createOrUpdateSchedulerThunk, deleteScheduler as deleteSchedulerThunk } from "../redux/actions/global.action";
-import { setSchedulers } from "../redux/globalSlice";
+import {
+  fetchSchedulers,
+  createOrUpdateScheduler as createOrUpdateSchedulerThunk,
+  deleteScheduler as deleteSchedulerThunk,
+} from "../redux/actions/global.action";
+import { combineDateTimeToISO } from "./schedulerHelpers.js";
 
-/**
- * Normalizes API or store response to an array of schedulers.
- * @param {any} data - Raw response (array or object with schedulers/data)
- * @returns {Array}
- */
 const normalizeSchedulers = (data) => {
   if (Array.isArray(data)) return data;
   if (data?.schedulers) return data.schedulers;
@@ -15,13 +13,6 @@ const normalizeSchedulers = (data) => {
   return [];
 };
 
-/**
- * Returns a promise that resolves with the list of schedulers from store.
- * Uses store subscription pattern (vanilla JS style, same as agents).
- * Call fetchSchedulers() first to load data from the API.
- *
- * @returns {Promise<{ status: string, error: any, data: Array }>}
- */
 export const subscribeToSchedulers = () => {
   return new Promise((resolve) => {
     const state = store.getState();
@@ -43,17 +34,6 @@ export const subscribeToSchedulers = () => {
   });
 };
 
-/**
- * Fetches schedulers directly from the API (on demand). Does not rely on Redux
- * subscription. Use when you need data once (e.g. when a modal opens) without
- * waiting for the store.
- *
- * @param {{ userId?: string, params?: object, updateStore?: boolean }} [options]
- *   - userId: optional; defaults to store.global.profile.data.id
- *   - params: optional query/request params
- *   - updateStore: if true, updates Redux after success so the rest of the app stays in sync (default: false)
- * @returns {Promise<{ status: 'success'|'failed', error?: any, data: Array }>}
- */
 export const getSchedulers = async (options = {}) => {
   const { userId: optionsUserId, params, updateStore = false } = options;
   const state = store.getState();
@@ -68,16 +48,20 @@ export const getSchedulers = async (options = {}) => {
   }
 
   try {
-    const response = await axiosInstance.get(`1.1/users/${userId}/schedulers`, {
-      params,
-    });
-    const raw = response?.data;    
-    // const data = normalizeSchedulers(raw);  
-    store.dispatch(setSchedulers({ status: "success", 'schedulers':raw }))
-    return { status: "success", 'schedulers':raw };
+    const raw = await store
+      .dispatch(fetchSchedulers({ userId, params }))
+      .unwrap();
+    const list = normalizeSchedulers(raw);
+    return {
+      status: "success",
+      schedulers: raw,
+      data: list,
+    };
   } catch (error) {
-    const err = error?.response?.data ?? { message: error?.message };    
-    store.dispatch(setSchedulers({ status: "failed", error: err, 'schedulers':{} }))
+    const err =
+      error && typeof error === "object" && !Array.isArray(error)
+        ? error
+        : { message: String(error ?? "Unable to fetch schedulers") };
     return {
       status: "failed",
       error: err,
@@ -86,15 +70,8 @@ export const getSchedulers = async (options = {}) => {
   }
 };
 
-/** Alias for getSchedulers - fetches list of schedulers from API. */
 export const getListOfSchedulers = getSchedulers;
 
-/**
- * Deletes a scheduler by ID via the API.
- *
- * @param {string} schedulerId - The scheduler ID to delete
- * @returns {Promise<{ success: boolean, error?: string }>}
- */
 export const deleteSchedulerById = async (schedulerId) => {
   const state = store.getState();
   const userId = state.global?.profile?.data?.id;
@@ -111,14 +88,6 @@ export const deleteSchedulerById = async (schedulerId) => {
   }
 };
 
-/**
- * Toggles a scheduler's enabled state. If the scheduler has no valid schedule
- * (missing schedule or "once" without startDate), returns { openDialog: true }
- * so the caller can open the create/edit dialog instead.
- *
- * @param {object} agent - Full scheduler/agent item from the list
- * @returns {Promise<{ success: boolean, openDialog?: boolean, updatedSchedule?: object, error?: string }>}
- */
 export const toggleScheduler = async (agent) => {
   const schedule = agent?.schedule;
 
@@ -172,53 +141,6 @@ export const toggleScheduler = async (agent) => {
   }
 };
 
-/**
- * Combines a date, 12-hour time, meridian, and IANA timezone into an ISO 8601 UTC string.
- * Interprets the wall-clock time in the given timezone, then converts to UTC.
- *
- * @param {Date|string} date
- * @param {string} time - "hh:mm"
- * @param {string} meridian - "AM" or "PM"
- * @param {string} timezone - IANA timezone (e.g. "America/New_York")
- * @returns {string|null} ISO string or null if any input is missing/invalid
- */
-const combineDateTimeToISO = (date, time, meridian, timezone) => {
-  if (!date || !time || !meridian || !timezone) return null;
-
-  const d = date instanceof Date ? date : new Date(date);
-  if (isNaN(d.getTime())) return null;
-
-  const yyyy = d.getFullYear();
-  const mo = d.getMonth();
-  const dd = d.getDate();
-
-  let [hours, minutes] = time.split(":").map(Number);
-  if (meridian.toUpperCase() === "PM" && hours !== 12) hours += 12;
-  if (meridian.toUpperCase() === "AM" && hours === 12) hours = 0;
-
-  const utcGuess = Date.UTC(yyyy, mo, dd, hours, minutes, 0, 0);
-  const wallAtGuess = new Date(
-    new Date(utcGuess).toLocaleString("en-US", { timeZone: timezone })
-  );
-  const offset = wallAtGuess.getTime() - utcGuess;
-  return new Date(utcGuess - offset).toISOString();
-};
-
-/**
- * Creates or updates an agent scheduler via the platform API.
- * Automatically builds the correct payload based on repeatType and determines
- * POST (create) vs PATCH (update) based on whether schedulerId is provided.
- *
- * @param {object} params
- * @param {string|null} params.schedulerId - If truthy → PATCH (update); otherwise → POST (create)
- * @param {string} params.agentId      - Agent to schedule
- * @param {string} params.repeatType   - "once"|"hourly"|"daily"|"weekly"|"monthly"|"cron"|"custom"
- * @param {object} params.config       - Type-specific configuration (see below)
- * @param {string} params.instruction  - Instruction text sent to the agent on each run
- * @param {boolean} params.enabled     - Whether the scheduler is active
- * @param {string} params.notifications - "onCompletion" or "onStart"
- * @returns {Promise<object>} Created/updated scheduler or { error: true, message: string }
- */
 export const createScheduler = async ({
   schedulerId,
   agentId,
@@ -233,7 +155,6 @@ export const createScheduler = async ({
   const {
     timezone: configTimezone,
     useUserTimezone = false,
-    // common date fields
     date: onceDate,
     startDate,
     time,
@@ -242,20 +163,14 @@ export const createScheduler = async ({
     endTime,
     endMeridian,
     neverEnd,
-    // hourly
     intervalHours,
-    // daily
     excludeWeekends,
-    // weekly / custom
     daysOfWeek,
-    // monthly
     isLastDayOfMonth,
     daysOfMonth,
-    // cron
     cronExpression,
     startTime: cronStartTime,
     startMeridian: cronStartMeridian,
-    // custom
     recurrence,
   } = inputConfig;
 

@@ -500,7 +500,7 @@ export const openSchedulerDialog = (opts = {}) => {
   const canEdit = agentDetails?.schedule?.canEdit !== false;
   const schedule = agentDetails?.schedule || {};
 
-  let selectedAgent = isCreateFlow ? null : { id: agentDetails.id, name: agentDetails.name, icon: agentDetails.icon, type: agentDetails.type };
+  let selectedAgent = isCreateFlow ? null : { id: agentDetails.agentId, name: agentDetails.name, icon: agentDetails.icon, type: agentDetails.type };
   let schedulerConfig = isCreateFlow
     ? buildRepeatTypeConfig("daily", store.getState().global?.profile?.data?.timezone)
     : parseServerScheduleConfig(schedule.config);
@@ -675,7 +675,7 @@ export const openSchedulerDialog = (opts = {}) => {
     try {
       const result = await createScheduler({
         schedulerId: isCreateFlow ? null : schedule.id,
-        agentId: selectedAgent.id,
+        agentId: selectedAgent?.agentId || selectedAgent?.id,
         repeatType: schedulerConfig.repeatType,
         config: schedulerConfig,
         instruction: instructionToAgent,
