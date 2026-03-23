@@ -1,9 +1,11 @@
 // import BotConversation from "../chat/botAgent/getBotConversation.js"
-import { isEmpty } from "lodash";
+import { isEmpty, cloneDeep } from "lodash";
 import BotConversation from "../../chat/botAgent/getBotConversation";
 import TemplateComponents from "./index";
 import { encodeHtml } from "../../utils/helpers";
 import customMarkdownRenderer from "../utils/customMarkdownRenderer";
+import store from "../../redux/store";
+import { updateChatData } from "../../redux/globalSlice";
 
 function escapeHTML(str) {
 	if (!str) return "";
@@ -191,6 +193,21 @@ export function setupTemplates(botConversation) {
 	}
 }
 
+function setupToggleListener(props) {
+	const toggleBtn = document.getElementById(`bot-toggle-${props?.messageId}`);
+	if (toggleBtn && !toggleBtn.eventListenerAdded) {
+		toggleBtn.addEventListener("click", () => {
+			const questions = cloneDeep(store.getState().global?.questions);
+			const key = props?.isTask ? props?.stepId : (props?.reqId || props?._id);
+			if (key && questions[key]) {
+				questions[key].isExpanded = !questions[key].isExpanded;
+				store.dispatch(updateChatData(questions));
+			}
+		});
+		toggleBtn.eventListenerAdded = true;
+	}
+}
+
 function renderBotConversation(
 	props,
 	assistantIconTemplate,
@@ -199,20 +216,24 @@ function renderBotConversation(
 ) {
 	const botConversation = props?.botConversation;
 
-	if (!Object.values(botConversation || {})?.length) {
+	if (!Object.values(botConversation || {})?.length && props?.status === 'in-progress') {
 		return "";
 	}
 
 	let conversationsHTML = "";
+	const hasThreads = Object.values(botConversation || {})?.length > 0;
 
-	if(props?.status === 'completed' && props?.viewType === 'threadView') {
+	if(props?.status === 'completed' && props?.viewType === 'threadView' && !props?.isExpanded) {
 		conversationsHTML = customMarkdownRenderer(`
 			<div class="botTemplate-${props?.messageId}">
 				${props?.answer}
 			</div>
 		`);
+		if (hasThreads) {
+			conversationsHTML += `<button class="bot-toggle-btn" id="bot-toggle-${props?.messageId}">Expand</button>`;
+		}
 	}else{
-		conversationsHTML = Object.values(botConversation)
+		conversationsHTML = Object.values(botConversation || {})
 		.map((conversation) =>
 			createConversationHTML(
 				conversation,
@@ -224,6 +245,9 @@ function renderBotConversation(
 		)
 		.join("");
 
+		if (props?.status === 'completed' && props?.viewType === 'threadView' && props?.isExpanded) {
+			conversationsHTML += `<button class="bot-toggle-btn" id="bot-toggle-${props?.messageId}">Collapse</button>`;
+		}
 	}
 	return `
         <div class="bot-conversation-wrapper">
@@ -249,6 +273,7 @@ export function render(
 	timer = setTimeout(() => {
 		setupEventListeners(props?.botConversation, props);
 		setupTemplates(props?.botConversation);
+		setupToggleListener(props);
 	}, 1000);
 	return html;
 }

@@ -14,7 +14,8 @@ const multiIntentExecutionFunc = (item) => {
         saveTask: saveTaskFunc, 
         deleteNewTask: deleteNewTaskFunc, 
         deleteExistingTask: deleteExistingTaskFunc, 
-        editTask: editTaskFunc 
+        editTask: editTaskFunc,
+        fetchHistoricalTask: fetchHistoricalTaskFunc
     } = multiIntentExecutionInstance;
 
     // Wrapper functions that adapt the imported functions to work with DOM event handlers
@@ -66,6 +67,17 @@ const multiIntentExecutionFunc = (item) => {
      }
 
      item?.executionPipeline?.forEach((task, index) => {
+        const _questions = store.getState().global?.questions;
+        const mergedTask = { ...task, ..._questions?.[task?._id], isTask: true };
+
+        const expandBtn = document.getElementById(`expandBtn-${item?.id}-${index}`);
+        if(expandBtn && !expandBtn.eventListenerAdded){
+            expandBtn.addEventListener("click", () => {
+                fetchHistoricalTaskFunc(item, mergedTask);
+            });
+            expandBtn.eventListenerAdded = true;
+        }
+
         const addNewTaskBtn = document.getElementById(`addNewTaskBtn-${index}`);
         if(addNewTaskBtn && !addNewTaskBtn.eventListenerAdded){
             addNewTaskBtn.addEventListener("click", () => {
