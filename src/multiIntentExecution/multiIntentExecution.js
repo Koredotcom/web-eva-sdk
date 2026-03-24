@@ -1,4 +1,5 @@
-import { cloneDeep, isEmpty } from "lodash";
+import { cloneDeep, isEmpty, orderBy, keyBy } from "lodash";
+import BotConversation from "../chat/botAgent/getBotConversation";
 import store from "../redux/store";
 import InitiateChatConversationAction from "../chat/InitiateChatConversationAction";
 import { updateChatData } from "../redux/globalSlice";
@@ -301,9 +302,26 @@ const MultiIntentExecution = (props) => {
             if (response?.payload?.history) {
                 let executionPipeLineIds = item?.executionPipeline?.map(pipelineItem => pipelineItem?._id);
 
-                response.payload.history.map(historyTask => {
+                for (const historyTask of response.payload.history) {
                     if (historyTask?.templateType === "action_send_msteams_message") {
                         historyTask.externalIntegrationAction = true;
+                    }
+                    let botConversation = undefined;
+                    if (historyTask?.viewType === "threadView") {
+                        const botParams = { limit: 20, showdata: true, pId: historyTask?.messageId };
+                        const botChatData = await store.dispatch(getSearchHistory({ boardId: activeBoardId, params: botParams }));
+                        if (botChatData?.payload?.history?.length) {
+                            const orderedBotChatData = orderBy(botChatData.payload.history, 'msgNo', 'asc');
+                            orderedBotChatData.forEach(detail => {
+                                if (detail?.templateType === "bot_template" && state?.enableKoreBotSDK) {
+                                    detail.template_html = BotConversation().generateHTMLforBotTemplate(detail);
+                                }
+                            });
+                            botConversation = keyBy(orderedBotChatData, 'messageId');
+                        } else {
+                            botConversation = {};
+                        }
+                        historyTask.botConversation = botConversation;
                     }
 
                     if (executionPipeLineIds?.includes(historyTask?.stepId)) {
@@ -322,7 +340,7 @@ const MultiIntentExecution = (props) => {
                             responseFetched: true,
                         };
                     }
-                });
+                }
 
                 store.dispatch(updateChatData(mockQuestions));
             }
