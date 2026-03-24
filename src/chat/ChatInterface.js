@@ -326,6 +326,10 @@ const ChatInterface = (props) => {
         reqId = Object.entries(questions).find(([key, value]) => value?.reqId === detail?.data?.reqId)?.[0]
       }
       let question = cloneDeep(questions[reqId])
+      if(!question){
+        /*check whether the question is a task, by looping over existing questions and checking the reqId*/
+        question = Object.values(questions)?.find(ques => ques.reqId === detail?.data?.reqId)
+      }
 
       if(question?.status === "terminated"){        
         return;
