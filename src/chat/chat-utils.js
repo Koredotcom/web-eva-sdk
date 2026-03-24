@@ -357,7 +357,14 @@ export const constructQuestionPostCall = (data, qId) => {
             error: question?.status !== 'terminated' // Terminated status is when user interrupted the answer generation. Error is when there is a server driven error.
           };
           
-    }else{  
+    }else if(question?.isTask && question?.status !== 'completed'){
+        /*check if the question is botAgent task */
+        if(question?.viewType === 'threadView' && !isEmpty(question?.botConversation)){
+            question.botConversation[data?.payload?.messageId] = data?.payload;
+        }else{
+            questions[qId] = {...question, apiSuccess: data?.payload?.status === 'completed'};
+        }
+    }else{
         questions[qId] = {...question, apiSuccess: data?.payload?.status === 'completed'};
     }
 
