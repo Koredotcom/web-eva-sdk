@@ -9,7 +9,7 @@ import AddAdditionalGPTResponse from "./addAdditionalGPTResponse";
 import DeleteGPTResponse from "./deleteGPTResponse";
 import RemoveUploadedGPTFile from "./removeUploadedGPTFile";
 import { getCurrentQuestion } from "../../utils/helpers";
-import SubmitGPTForm from "./submitGPTForm";
+import { SubmitGPTForm } from "./submitGPTForm";
 
 const gptFormFunctionality = (formData, item) => {
 

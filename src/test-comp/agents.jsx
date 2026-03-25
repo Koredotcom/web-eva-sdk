@@ -64,9 +64,9 @@ const Agents = () => {
         <div>
             <h1>Agents</h1>
             <ul>
-                {agents && agents.data.map(agent => {
+                {agents && agents.data.map((agent, index) => {
                     return (
-                        <div>
+                        <div key={index}>
                             <li key={agent.id} onClick={() => InvokeAgent(agent)}>{agent.name}</li>
                             {pinnedAgentsList?.includes(agent.id) ? <button onClick={() => bookmarkAgentHandler(agent.id, {pinned: false})}>Unbookmark</button> : <button onClick={() => bookmarkAgentHandler(agent.id, {pinned: true})}>Bookmark</button>}
                         </div>                        
@@ -75,9 +75,9 @@ const Agents = () => {
             </ul>
             <h1>Common Agents</h1>
             <ul>
-                {commonAgents?.length > 0 && commonAgents?.map(agent => {
+                {commonAgents?.length > 0 && commonAgents?.map((agent, index) => {
                     return (
-                        <div>
+                        <div key={index}>
                             <li key={agent.id} onClick={() => ChatInterface().setAgentContext(agent)}>{agent.name}</li>
                             {pinnedAgentsList?.includes(agent.id) ? <button onClick={() => bookmarkAgentHandler(agent.id, {pinned: false})}>Unbookmark</button> : <button onClick={() => bookmarkAgentHandler(agent.id, {pinned: true})}>Bookmark</button>}
                         </div>

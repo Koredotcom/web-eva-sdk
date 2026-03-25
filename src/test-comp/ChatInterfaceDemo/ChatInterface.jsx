@@ -11,6 +11,8 @@ import { AnnouncementsInterface } from "../../Announcements";
 import Agents from "../agents";
 import MultiIntentExecutionDemo from "./MultiIntentExecutionDemo";
 import History from "../history";
+import { SchedulersView } from "../../schedulers";
+import { ExecuteFormThroughURL } from "../../chat/gptTemplate/submitGPTForm";
 
 
 
@@ -37,6 +39,7 @@ const ChatInterfaceDemo = () => {
   const [messages, setMessages] = useState(null);
   const [quickActions, setQuickActions] = useState(null);
   const [input, setInput] = useState("");
+  const [showSchedulers, setShowSchedulers] = useState(false);
 
   const chatInterface = useRef();
   const announcementInterface = useRef();
@@ -101,49 +104,66 @@ const ChatInterfaceDemo = () => {
           </div>
           
           {/* <Notifications /> */}
-          <Agents /> 
+          <Agents />
+          <div className="sidebar-nav-item" onClick={() => setShowSchedulers(true)} role="button" tabIndex={0}>Schedulers</div>
           {/* <Announcements /> */}
-          {/* <History /> */}
+          <History />
         </div>
       </div>
       <div className="chatInterfaceSec">
-        <div className="chatSec">
-          {messages &&
-            Object.values(messages).map((item, index) => {
-              if (item?.isTask) return;
-              
-              // Handle multi_intent_execution separately (pure React)
-              if (item?.templateType === "multi_intent_execution") {
-                return <MultiIntentExecutionDemo key={item?.id} data={item} />;
-              }
+        {showSchedulers ? (
+          <div className="chatSec schedulers-full-width">
+            <button type="button" className="back-from-schedulers" onClick={() => setShowSchedulers(false)}>← Back to Chat</button>
+            <SchedulersView />
+          </div>
+        ) : (
+        <>
+          <div className="chatSec">
+            {messages &&
+              Object.values(messages).map((item, index) => {
+                if (item?.isTask) return;
 
-              // For all other templates, use the HTML template renderer
-              const assistantIconTemplate = () => {
-                return <div className="logo-icon" key={index}><img src="/public/eva-black-svg.svg" alt="AiForWork" /></div>;
-              };
-              
-              let html = TemplateRenderer.generateHTMLTemplate(item, {
-                assistantIconTemplate,
-                loadingText: "Analyzing",
-              });
+                // Handle multi_intent_execution separately (pure React)
+                if (item?.templateType === "multi_intent_execution") {
+                  return <MultiIntentExecutionDemo key={item?.id} data={item} />;
+                }
 
-              return (
-                <div
-                  key={item?.id}
-                  dangerouslySetInnerHTML={{
-                    __html: html.innerHTML,
-                  }}
-                />
-              );
-            })}
-        </div>
-        <Composebar 
-          quickActions={quickActions} 
-          chatInterface={chatInterface} 
-          input={input} 
-          setInput={setInput} 
-          messages={messages} 
-        />
+                // For all other templates, use the HTML template renderer
+                const assistantIconTemplate = () => {
+                  return <div className="logo-icon" key={index}><img src="/public/eva-black-svg.svg" alt="AiForWork" /></div>;
+                };
+
+                let html = TemplateRenderer.generateHTMLTemplate(item, {
+                  assistantIconTemplate,
+                  loadingText: "Analyzing",
+                });
+
+                return (
+                  <div
+                    key={item?.id}
+                    dangerouslySetInnerHTML={{
+                      __html: html.innerHTML,
+                    }}
+                  />
+                );
+              })}
+          </div>
+          <Composebar
+            quickActions={quickActions}
+            chatInterface={chatInterface}
+            input={input}
+            setInput={setInput}
+            messages={messages}
+          />
+          <a href="#" onClick={(e) => {
+            e.preventDefault();
+            const formData = { content: "cube root of 27", prompts:'699f29cd8e37c7ffb9bff9bf',  };
+            const question = "Find the cube root of 27.";
+            const agentId = "ag-b0b6c3b6-df0a-5316-8a9f-35bf43babd1e";
+            ExecuteFormThroughURL(formData, question, agentId);
+          }}>Review peggy's plan and risk information</a>
+        </>
+        )}
       </div>
     </div>
   );

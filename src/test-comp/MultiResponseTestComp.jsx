@@ -3,7 +3,7 @@ import { GptFileUpload } from "../chat";
 import DeleteGPTResponse from "../chat/gptTemplate/deleteGPTResponse";
 import UpdateGPTPromptValue from "../chat/gptTemplate/updateGPTPromptValue";
 import AddAdditionalGPTResponse from "../chat/gptTemplate/addAdditionalGPTResponse";
-import SubmitGPTForm from "../chat/gptTemplate/submitGPTForm";
+import { SubmitGPTForm } from "../chat/gptTemplate/submitGPTForm";
 import RemoveUploadedGPTFile from "../chat/gptTemplate/removeUploadedGPTFile";
 import store from "../redux/store";
 import { use } from "marked";

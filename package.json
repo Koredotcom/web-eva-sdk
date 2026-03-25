@@ -76,6 +76,10 @@
     "./Announcements": {
       "import": "./dist/Announcements/index.esm.js",
       "require": "./dist/Announcements/index.cjs.js"
+    },
+    "./schedulers": {
+      "import": "./dist/schedulers/index.esm.js",
+      "require": "./dist/schedulers/index.cjs.js"
     }
   },
   "devDependencies": {

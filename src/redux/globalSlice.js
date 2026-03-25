@@ -2,6 +2,7 @@ import { createSlice } from '@reduxjs/toolkit';
 import {
   advanceSearch,
   fetchAgents,
+  fetchSchedulers,
   fetchConfigData,
   fetchProfileData,
   fetchHistory,
@@ -20,6 +21,7 @@ const initialState = {
   profile: {},
   config: {},
   allAgents: {},
+  schedulers: {},
   commonAgents: {},
   enabledAgents: null,
   recentAgents: null,
@@ -133,6 +135,9 @@ const globalSlice = createSlice({
     },
     setAutoRemoveWebSearchFromContext: (state, action) => {
       state.autoRemoveWebSearchFromContext = action.payload;
+    },
+    setSchedulers: (state, action) => {
+      state.schedulers = action.payload
     }
   },
   extraReducers: (builder) => {
@@ -147,6 +152,7 @@ const globalSlice = createSlice({
       state.recentAgents = action.payload.recents
       state.commonAgents = action.payload.commonAgents
     });
+    handleAsyncActions(builder, fetchSchedulers, 'schedulers');
     handleAsyncActions(builder, advanceSearch, 'advanceSearchRes', (state, action) => {
       /*
       update the botConversation of the conversation
@@ -256,7 +262,8 @@ export const {
   setEnabledDebugging,
   setQuickActions,
   setAnnouncements,
-  setAutoRemoveWebSearchFromContext
+  setAutoRemoveWebSearchFromContext,
+  setSchedulers
 } = globalSlice.actions;
 
 export default globalSlice;

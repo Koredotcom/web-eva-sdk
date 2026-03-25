@@ -31,6 +31,55 @@ export const fetchProfileData = createAsyncThunk(
     }
 );
 
+export const fetchSchedulers = createAsyncThunk(
+    'global/fetchSchedulers',
+    async (arg, { rejectWithValue }) => {
+        try {
+            const response = await axiosInstance.get(`1.1/users/${arg.userId}/schedulers`, arg?.params);
+            return response.data;
+        } catch (error) {
+            handleErrorState(error, "Schedulers");
+            return rejectWithValue(error.response?.data);
+        }
+    }
+);
+
+export const deleteScheduler = createAsyncThunk(
+    'global/deleteScheduler',
+    async (arg, { rejectWithValue }) => {
+        try {
+            const { userId, schedulerId } = arg;
+            const response = await axiosInstance.delete(`1.1/users/${userId}/schedulers/${schedulerId}`);
+            return { schedulerId, data: response.data };
+        } catch (error) {
+            handleErrorState(error, "Delete Scheduler");
+            return rejectWithValue(error.response?.data);
+        }
+    }
+);
+
+export const createOrUpdateScheduler = createAsyncThunk(
+    'global/createOrUpdateScheduler',
+    async (arg, { rejectWithValue }) => {
+        try {
+            const { userId, schedulerId, payload } = arg;
+            const isUpdate = !!schedulerId;
+            const url = isUpdate
+                ? `1.1/users/${userId}/schedulers/${schedulerId}`
+                : `1.1/users/${userId}/schedulers`;
+
+            const response = isUpdate
+                ? await axiosInstance.patch(url, payload)
+                : await axiosInstance.post(url, payload);
+
+            return response.data;
+        } catch (error) {
+            handleErrorState(error, "Create/Update Scheduler");
+            return rejectWithValue(error.response?.data);
+        }
+    }
+);
+
 export const fetchAgents = createAsyncThunk(
     'global/fetchAgents',
     async (arg, { rejectWithValue, dispatch }) => {

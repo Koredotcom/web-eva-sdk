@@ -11,7 +11,8 @@ export { default as AddAdditionalGPTResponse } from './gptTemplate/addAdditional
 export { default as DeleteGPTResponse } from './gptTemplate/deleteGPTResponse.js';
 export { default as UpdateGPTPromptValue } from './gptTemplate/updateGPTPromptValue.js';
 export { default as RemoveUploadedGPTFile } from './gptTemplate/removeUploadedGPTFile.js';
-export { default as SubmitGPTForm } from './gptTemplate/submitGPTForm.js';
+export { SubmitGPTForm, ExecuteFormThroughURL } from './gptTemplate/submitGPTForm.js';
+
 export { default as BotConversation } from './botAgent/getBotConversation.js';
 export { default as Notification } from '../notifications/notification.js';
 export { default as MultiIntentExecution } from '../multiIntentExecution/multiIntentExecution.js';
