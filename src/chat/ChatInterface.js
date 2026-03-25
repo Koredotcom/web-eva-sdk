@@ -159,8 +159,10 @@ const ChatInterface = (props) => {
       if(arg?.createIssue){
         if(arg?.from === "gptAgent"){
           params.agentType = "gptAgent"
-          params.reqId = getCidByMessageId(state.questions, payload?.messageId)
-          replaceExistingQsn = true
+          if(payload?.messageId){
+            params.reqId = getCidByMessageId(state.questions, payload?.messageId)
+            replaceExistingQsn = true
+          }            
           if(arg?.isTask){
             params.parentMsgId = arg?.parentMsgId
           }
@@ -329,6 +331,11 @@ const ChatInterface = (props) => {
       if(!question){
         /*check whether the question is a task, by looping over existing questions and checking the reqId*/
         question = Object.values(questions)?.find(ques => ques.reqId === detail?.data?.reqId)
+        /*as we dont find any question for the reqId, checking for a match in agentic flow executionPipleline */
+        if(question){
+          /*as we have found a match in agentic flow, so its messageId is the one we should target as questions object for agenticFlow is architected using messageId */
+          reqId = question?.id || question?._id
+        }
       }
 
       if(question?.status === "terminated"){        
@@ -403,7 +410,7 @@ const ChatInterface = (props) => {
         question.status = detail?.data?.status
 
         const questions = cloneDeep(state.questions)
-        questions[detail?.data?.reqId] = question
+        questions[reqId] = question
         store.dispatch(updateChatData(questions))
 
         resIndexRef = 0
