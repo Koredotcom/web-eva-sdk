@@ -1,5 +1,6 @@
 import cancelAdvanceSearch from "../../chat/cancelAdvanceSearch";
-import SubmitGPTForm from "../../chat/gptTemplate/submitGPTForm";
+import { SubmitGPTForm } from "../../chat/gptTemplate/submitGPTForm";
+
 import { getCurrentQuestion } from "../../utils/helpers";
 import RemoveUploadedGPTFile from "../../chat/gptTemplate/removeUploadedGPTFile";
 import DeleteGPTResponse from "../../chat/gptTemplate/deleteGPTResponse";

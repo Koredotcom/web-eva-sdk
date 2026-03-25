@@ -550,13 +550,41 @@ const MultiResponse = () => {
         }, 1000);
     }
 
+    const executeFormThroughURL = (formData, question, agentId) => {
+        const {agents = [], commonAgents = []} = store.getState().global.allAgents.data;
+        let payload = {};
+        const matchedAgent = [...agents, ...commonAgents]?.find(agent => agent.id === agentId);
+        payload.context = {};
+        if(matchedAgent){
+            const agentMeta = {
+                agentType: matchedAgent.type,
+                name: matchedAgent.name,
+                docId: matchedAgent.id,
+                source: matchedAgent.id,
+                title: matchedAgent.name,
+                icon: matchedAgent.icon,
+                isAgent: true,
+                type: 'agent',
+            }
+            payload.context.sources = [agentMeta];            
+            payload.context.agentType = matchedAgent.type;      
+            payload.context.title = matchedAgent.name;	                          
+        }
+        payload.question = question || `How can the "${matchedAgent.name}" agent assist me with the give values`;
+        payload.agentInitialInput = formData   
+        InitiateChatConversationAction({payload, createIssue: true, from: "gptAgent"})
+    }
+        
+    
+
     return {
         getInitialFormData,
         addAdditionalResponse,
         deleteAdditionalResponse,
         submitGPTForm,
         updatePrompt,
-        removeFile
+        removeFile,
+        executeFormThroughURL
     }
 }
 export default MultiResponse;

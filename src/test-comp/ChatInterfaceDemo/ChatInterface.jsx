@@ -12,6 +12,7 @@ import Agents from "../agents";
 import MultiIntentExecutionDemo from "./MultiIntentExecutionDemo";
 import History from "../history";
 import { SchedulersView } from "../../schedulers";
+import { ExecuteFormThroughURL } from "../../chat/gptTemplate/submitGPTForm";
 
 
 
@@ -106,7 +107,7 @@ const ChatInterfaceDemo = () => {
           <Agents />
           <div className="sidebar-nav-item" onClick={() => setShowSchedulers(true)} role="button" tabIndex={0}>Schedulers</div>
           {/* <Announcements /> */}
-          {/* <History /> */}
+          <History />
         </div>
       </div>
       <div className="chatInterfaceSec">
@@ -154,6 +155,13 @@ const ChatInterfaceDemo = () => {
             setInput={setInput}
             messages={messages}
           />
+          <a href="#" onClick={(e) => {
+            e.preventDefault();
+            const formData = { content: "cube root of 27", prompts:'699f29cd8e37c7ffb9bff9bf',  };
+            const question = "Find the cube root of 27.";
+            const agentId = "ag-b0b6c3b6-df0a-5316-8a9f-35bf43babd1e";
+            ExecuteFormThroughURL(formData, question, agentId);
+          }}>Review peggy's plan and risk information</a>
         </>
         )}
       </div>
