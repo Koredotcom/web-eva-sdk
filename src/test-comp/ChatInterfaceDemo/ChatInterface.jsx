@@ -105,9 +105,11 @@ const ChatInterfaceDemo = () => {
           
           {/* <Notifications /> */}
           <Agents />
+          <div>---------------------------------------------------------------</div>
           <div className="sidebar-nav-item" onClick={() => setShowSchedulers(true)} role="button" tabIndex={0}>Schedulers</div>
+          <div>---------------------------------------------------------------</div>
           {/* <Announcements /> */}
-          <History />
+          {/* <History /> */}
         </div>
       </div>
       <div className="chatInterfaceSec">

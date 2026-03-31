@@ -656,7 +656,7 @@ export const openSchedulerDialog = (opts = {}) => {
   doneBtn.textContent = "Done";
 
   const updateFooter = () => {
-    const disabled = !instructionToAgent?.trim() || (isCreateFlow && !selectedAgent?.id) || loading;
+    const disabled = !instructionToAgent?.trim() || loading;
     doneBtn.disabled = disabled;
     cancelBtn.disabled = loading;
   };
@@ -675,7 +675,7 @@ export const openSchedulerDialog = (opts = {}) => {
     try {
       const result = await createScheduler({
         schedulerId: isCreateFlow ? null : schedule.id,
-        agentId: selectedAgent?.agentId || selectedAgent?.id,
+        agentId: selectedAgent?.agentId || selectedAgent?.id || 'orchestrator',
         repeatType: schedulerConfig.repeatType,
         config: schedulerConfig,
         instruction: instructionToAgent,
