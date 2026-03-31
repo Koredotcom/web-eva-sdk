@@ -249,7 +249,7 @@ export const getScheduleSummary = (config) => {
 export const validateSchedulerPayload = (config, instruction, selectedAgent) => {
   const errors = [];
 
-  if (!selectedAgent?.id) errors.push("Please select an agent.");
+  // if (!selectedAgent?.id) errors.push("Please select an agent.");
   if (!instruction?.trim()) errors.push("Instruction is required.");
   if (!config?.repeatType) errors.push("Please select a repeat type.");
 

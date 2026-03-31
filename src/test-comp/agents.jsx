@@ -5,7 +5,7 @@ import recentAgents from '../agents/RecentAgents'
 import InitiateChatConversationAction from '../chat/InitiateChatConversationAction'
 import { ChatInterface, InvokeAgent } from '../chat'
 import CommonAgents from '../agents/CommonAgents'
-import { bookmarkAgent } from '../agents/actionsOnAgents'
+import { agentEnablementUserLevel, bookmarkAgent } from '../agents/actionsOnAgents'
 import pinnedAgents from '../agents/pinnedAgents'
 
 const Agents = () => {
@@ -52,6 +52,13 @@ const Agents = () => {
         }
     }
 
+    const agentEnablementUserLevelHandler = async (agentId, value) => {
+        const res = await agentEnablementUserLevel(agentId, value)
+        if(res?.success) {
+            console.log('agentEnablementUserLevelHandler', res)
+        }
+    }
+
     const agentHandler = (agent) => {
         const payload = {
             intent: "welcome",
@@ -69,6 +76,7 @@ const Agents = () => {
                         <div key={index}>
                             <li key={agent.id} onClick={() => InvokeAgent(agent)}>{agent.name}</li>
                             {pinnedAgentsList?.includes(agent.id) ? <button onClick={() => bookmarkAgentHandler(agent.id, {pinned: false})}>Unbookmark</button> : <button onClick={() => bookmarkAgentHandler(agent.id, {pinned: true})}>Bookmark</button>}
+                            {agent.enabled ? <button onClick={() => agentEnablementUserLevelHandler(agent.id, {enable: false})}>Disable</button> : <button onClick={() => agentEnablementUserLevelHandler(agent.id, {enable: true})}>Enable</button>}
                         </div>                        
                     )
                 })}

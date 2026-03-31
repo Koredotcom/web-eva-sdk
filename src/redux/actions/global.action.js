@@ -566,14 +566,14 @@ export const getChannelRecepients = createAsyncThunk(
     }
 );
 
-export const bookmarkAgentAction = createAsyncThunk(
-    'global/bookmarkAgent',
+export const updateAgentAction = createAsyncThunk(
+    'global/updateAgentAction',
     async (arg, { rejectWithValue }) => {
         try {
             const response = await axiosInstance.patch(`/1.1/users/${arg?.userId}/agents/${arg?.agentId}`, arg?.payload);
             return response.data;
         } catch (error) {
-            handleErrorState(error, "Bookmark Agent");
+            handleErrorState(error, "Update Agent");
             return rejectWithValue(error.response.data);
         }
     }
