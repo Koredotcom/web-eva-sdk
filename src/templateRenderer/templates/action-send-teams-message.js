@@ -399,6 +399,7 @@ const initializeTeamsMessageFunctionality = (data) => {
                     label: `Connection ${(response?.payload?.connections?.length || 0) + 1}`,
                     allowedCapabilities: response?.payload?.capabilities
                 };
+                eventBus.on('postOauth2Connection', handlePostOauthConnection);
                 new SSOMethods().connect(source, null, config);
             }
         } catch (err) {
@@ -407,6 +408,7 @@ const initializeTeamsMessageFunctionality = (data) => {
     };
 
     const handlePostOauthConnection = async () => {
+        eventBus.remove('postOauth2Connection', handlePostOauthConnection);
         try {
             const response = await store.dispatch(getSpecificSkills({ userId, connectorId: source }));
             const newConnections = response?.payload?.connections || [];
@@ -420,8 +422,6 @@ const initializeTeamsMessageFunctionality = (data) => {
             console.error('[TeamsTemplate] Refresh connections error:', err);
         }
     };
-
-    eventBus.on('postOauth2Connection', handlePostOauthConnection);
 
     if (connTrigger) {
         connTrigger.addEventListener('click', () => toggleAccountDropdown());
