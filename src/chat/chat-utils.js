@@ -441,7 +441,7 @@ export const constructQuestionPostCall = async (data, qId, isBot = false) => {
         const _selectedContext = store.getState().global.selectedContext;
         let context = {
             context: data?.payload?.followUpContext,
-            sources: isEmpty(data?.payload?.sources) ? _selectedContext?.data?.sources : data?.payload?.sources,
+            sources: isEmpty(data?.payload?.sources) ? ((isEmpty(_selectedContext?.data?.sources) ? [question?.agentMetaDetails] : _selectedContext?.data?.sources)) : data?.payload?.sources,
             viewType: data?.payload?.viewType,
             type: "agent",
             'isAgent': true,

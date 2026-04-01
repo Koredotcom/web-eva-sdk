@@ -110,8 +110,9 @@ const ChatInterface = (props) => {
 
         if(!isEmpty(selectedContext?.data)) {
           let _agents = cloneDeep(allAgents?.data?.agents)
-          _agents = [..._agents, ...commonAgents]?.filter(ag => !ag.disabled)          
-          let isAgentSetAsSource = _agents.find(ag => ag.id === selectedContext?.data?.sources?.[0]?.source)
+          _agents = [..._agents, ...commonAgents]?.filter(ag => !ag.disabled)        
+          const sourceIdToFind = selectedContext?.data?.sources?.[0]?.source || selectedContext?.data?.source;
+          let isAgentSetAsSource = _agents.find(ag => ag.id === sourceIdToFind)
           let isAgent = isAgentSetAsSource ? "agent" : null
           if(isAgent) {
             // when setted context is an agent
@@ -417,7 +418,7 @@ const ChatInterface = (props) => {
         return;
       }
 
-      if (question?.apiSuccess && question?.viewType !== "threadView") return; // Means adv search call success now no need to take socket updates, added condition for threadView
+      if (question?.apiSuccess && (question?.viewType !== "threadView" || question.type === 'search')) return; // Means adv search call success now no need to take socket updates, added condition for threadView
 
       if (detail?.data?.status === 'in-progress' || detail?.data?.status === 'threadRunning') {
 

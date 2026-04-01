@@ -494,4 +494,5 @@ export function render(
 	}
 	return html;
 }
+export { renderThoughts, setupThoughtsToggle };
 export default { render, setupTemplates, setupThoughtsToggle };
