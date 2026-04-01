@@ -399,10 +399,28 @@ export const thirdPartySSO = createAsyncThunk(
     'global/thirdPartySSO',
     async (arg, thunkAPI) => {
         try {
-            const response = await axiosInstance.post(`/users/${arg?.userId}/connections`, arg?.payload);
+            const body = {
+                id_token: arg?.payload?.token,
+                label: arg?.payload?.details?.name || arg?.payload?.config?.connectorName,
+                allowedCapabilities: arg?.payload?.config?.allowedCapabilities || [],
+            };
+            const response = await axiosInstance.post(`/users/${arg?.userId}/connections`, body);
             return response.data;
         } catch (error) {
             handleErrorState(error, "Third Party SSO");
+            return thunkAPI.rejectWithValue(error.response.data);
+        }
+    }
+);
+
+export const updateThirdPartySSO = createAsyncThunk(
+    'global/updateThirdPartySSO',
+    async (arg, thunkAPI) => {
+        try {
+            const response = await axiosInstance.put(`/users/${arg?.userId}/connections/${arg?.payload?.connectionId}`, arg?.payload);
+            return response.data;
+        } catch (error) {
+            handleErrorState(error, "Update Third Party SSO");
             return thunkAPI.rejectWithValue(error.response.data);
         }
     }

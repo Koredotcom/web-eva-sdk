@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8" />
+	<title>SSO Redirect</title>
+</head>
+<body>
+<script>
+	(function () {
+		var payload = {};
+		if (window.location.hash && window.location.hash.indexOf('#id_token') !== -1) {
+			payload.token = window.location.hash.replace('#id_token=', '');
+		}
+		var message = {
+			type: 'sso-ack',
+			...payload
+		};
+		var sent = false;
+		try {
+			if (window.opener && typeof window.opener.postMessage === 'function') {
+				window.opener.postMessage(message, window.location.origin);
+				sent = true;
+			}
+		} catch (e) {
+			// noop - will try fallbacks below
+		}
+		if (!sent) {
+			// Fallback 1: BroadcastChannel
+			try {
+				var bc = new BroadcastChannel('kora-sso');
+				bc.postMessage(message);
+				bc.close();
+				sent = true;
+			} catch (e1) {
+				// Fallback 2: localStorage 'storage' event
+				try {
+					localStorage.setItem('kora_sso_ack', JSON.stringify(message));
+				} catch (e2) {
+					// give up if storage is unavailable
+				}
+			}
+		}
+		// attempt to close the popup/new tab; harmless if disallowed
+		try { window.close(); } catch (e) {}
+	})();
+</script>
+</body>
+</html>

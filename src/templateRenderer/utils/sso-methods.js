@@ -1,43 +1,63 @@
 import store from "../../redux/store";
-import { thirdPartySSO } from "../../redux/actions/global.action";
+import { thirdPartySSO, updateThirdPartySSO } from "../../redux/actions/global.action";
 import eventBus from "./eventbus";
 
 export default class SSOMethods {
-	ssoListener = async (e) => {
-		if (e?.data?.type === "sso-ack") {
-			window.removeEventListener("message", this.ssoListener);
-			this.ssoWindow.close();
-			// if(this.connectionId) {
-			//     store.dispatch({
-			//         type: UPDATE_THIRD_PARTY_SSO,
-			//         payload: {
-			//             type: this.ssoType,
-			//             token: e?.data?.token,
-			//             connectionId: this.connectionId,
-			//             config: this.config,
-			//             details: this.details
-			//         },
-			//     });
-			// }
-			// else {
-			if (e?.data?.token) {
-				let userId = store.getState().global?.profile?.data?.id;
-				let payload = {
-					provider: this.ssoType,
-					token: e?.data?.token,
-					config: this.config,
-					details: this.details,
-				};
-				const res = await store.dispatch(
-					thirdPartySSO({ userId: userId, payload: payload })
-				);
-				if (res?.payload?.status === 200) {
-					eventBus.dispatch("postOauth2Connection", { res });
+	handleSsoAck = (data) => {
+		if (data?.type === 'sso-ack') {
+			this.cleanupSso();
+			try { this.ssoWindow?.close(); } catch (e) {}
+			if (this.connectionId) {
+				store.dispatch(updateThirdPartySSO({
+					userId: store.getState().global?.profile?.data?.id,
+					payload: {
+						type: this.ssoType,
+						token: data?.token,
+						connectionId: this.connectionId,
+						config: this.config,
+						details: this.details
+					}
+				})).then(res => {
+					if (res?.payload) {
+						eventBus.dispatch("postOauth2Connection", { res });
+					}
+				});
+			} else {
+				if (data?.token) {
+					store.dispatch(thirdPartySSO({
+						userId: store.getState().global?.profile?.data?.id,
+						payload: {
+							type: this.ssoType,
+							token: data?.token,
+							config: this.config,
+							details: this.details
+						}
+					})).then(res => {
+						if (res?.payload) {
+							eventBus.dispatch("postOauth2Connection", { res });
+						}
+					});
 				}
 			}
-			// }
 		}
 	};
+
+	ssoListener = (e) => {
+		this.handleSsoAck(e?.data);
+	};
+
+	cleanupSso = () => {
+		try { window.removeEventListener('message', this.ssoListener); } catch (e) {}
+		if (this.ssoBC) {
+			try { this.ssoBC.close(); } catch (e) {}
+			this.ssoBC = null;
+		}
+		if (this.onStorage) {
+			try { window.removeEventListener('storage', this.onStorage); } catch (e) {}
+			this.onStorage = null;
+		}
+	};
+
 	connect = (type, id, config, details = null) => {
 		this.ssoType = type;
 		this.connectionId = id;
@@ -45,24 +65,49 @@ export default class SSOMethods {
 		this.details = details;
 		this.apiurl = window.sdkConfig.api_url || "";
 		this.presenceUrl = window.sdkConfig.presence_url || "";
-        const popupWinWidth = 800,
-            popupWinHeight = 500,
-            // eslint-disable-next-line no-undef
-            left = (screen.width - popupWinWidth) / 2,
-            // eslint-disable-next-line no-undef
-            top = (screen.height - popupWinHeight) / 2;
-        this.ssoWindow = window.open(
-            `${this.apiurl}serviceProvider/${type}/login?redirect_url=${window.location.origin}/web-redirection.html`,
-            '_blank',
-            `width=${popupWinWidth},height=${popupWinHeight}, top=${top}, left=${left}, e_internal=true`,
-        );
-        window.addEventListener('message', this.ssoListener);
-        const timer = setInterval(() => {
-            if (this.ssoWindow.closed) {
-                clearInterval(timer);
-                window.removeEventListener('message', this.ssoListener);
-            }
-        }, 1000);
-        // this.props.showMeetPortlet({meetingNumber: 2131957515, pwd: "YWhZRDFxZzNMbDVENlJ3am12QjF3UT09"});
-    };
+		const popupWinWidth = 800,
+			popupWinHeight = 700,
+			// eslint-disable-next-line no-undef
+			left = (screen.width - popupWinWidth) / 2,
+			// eslint-disable-next-line no-undef
+			top = (screen.height - popupWinHeight) / 2;
+		const url = `${this.apiurl}serviceProvider/${type}/login?redirect_url=${window.location.origin}/web-redirection.html`;
+		this.ssoWindow = window.open(
+			url,
+			'_blank',
+			`width=${popupWinWidth},height=${popupWinHeight}, top=${top}, left=${left}, e_internal=true`,
+		);
+
+		this.ssoWindow.addEventListener('error', (error) => {
+			console.error('SSO popup error:', error);
+			try { this.ssoWindow.close(); } catch (e) {}
+			this.cleanupSso();
+		});
+
+		window.addEventListener('message', this.ssoListener);
+		try {
+			this.ssoBC = new BroadcastChannel('kora-sso');
+			this.ssoBC.onmessage = (event) => this.handleSsoAck(event?.data);
+		} catch (e) {
+			// ignore if BroadcastChannel unsupported
+		}
+		this.onStorage = (ev) => {
+			if (ev?.key === 'kora_sso_ack' && ev?.newValue) {
+				try {
+					const data = JSON.parse(ev.newValue);
+					localStorage.removeItem('kora_sso_ack');
+					this.handleSsoAck(data);
+				} catch (e1) {
+					// ignore malformed storage
+				}
+			}
+		};
+		window.addEventListener('storage', this.onStorage);
+		const timer = setInterval(() => {
+			if (this.ssoWindow.closed) {
+				clearInterval(timer);
+				this.cleanupSso();
+			}
+		}, 1000);
+	};
 }

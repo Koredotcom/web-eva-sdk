@@ -1,11 +1,13 @@
-import { attachmentIcon, ActionsFlashIcon, Slackimg, Teamsimg, MinimizeIcon, RadioButtonChecked, createCloseIcon, PlusIcon, getFileTypeIconHtml } from "../icons-library";
+import { attachmentIcon, ActionsFlashIcon, Slackimg, Teamsimg, MinimizeIcon, RadioButtonChecked, createCloseIcon, PlusIcon, CheveronDownIcon, tickMarkIcon, getFileTypeIconHtml } from "../icons-library";
 import "./../styles/template.scss";
 import FileUploader from "../../utils/FileUploader";
 import { getFileExtension, getUID, generateComponentId, resolveSdkAssetPath } from "../../utils/helpers";
 import store from "../../redux/store";
 import axios from "axios";
 import { initializeRecipientSearch } from "../../utils/searchChannelRecepients";
-import { sendIntegrationMessage, smartComposeEmail } from "../../redux/actions/global.action";
+import { sendIntegrationMessage, smartComposeEmail, getSpecificSkills } from "../../redux/actions/global.action";
+import SSOMethods from "../utils/sso-methods";
+import eventBus from "../utils/eventbus";
 
 const UndoIconSvg = (size = 12, color = '#667085') => `<svg width="${size}" height="${size}" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2 4.5H8.25C9.49264 4.5 10.5 5.50736 10.5 6.75C10.5 7.99264 9.49264 9 8.25 9H6" stroke="${color}" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M4.5 2L2 4.5L4.5 7" stroke="${color}" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 const RefreshIconSvg = (size = 12, color = '#667085') => `<svg width="${size}" height="${size}" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M1.5 2V5H4.5" stroke="${color}" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.195 7.5A4.5 4.5 0 1 0 1.5 5" stroke="${color}" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
@@ -16,23 +18,47 @@ export function render(data) {
         return renderSlackMessageSummary(data);
     }
 
+    const colorCombo = ["#9F1AB1", "#6927DA", "#A15C07", "#027A48"];
+    const backgroundCombo = ["#FBE8FF", "#ECE9FE", "#FEF7C3", "#D1FADF"];
     let slackList = data?.templateInfo?.connections;
     let defaultConnectionId = data?.templateInfo?.defaultConnections;
-    
+    let selectedConn = slackList?.find(conn => conn?.id === defaultConnectionId) || slackList?.[0];
+
     let html = `
         <div class="slack-message-template">
             <div class='slack-message-container'>
                 <div class="slack-header-block">
-                    <div class='connection-provider-icon slack-provider-icon'>                            
-                        ${Slackimg({ size: 16, color: "#131316" })}
+                    <div class="recipientslack-btn-cntr" id="slack-conn-cntr-${data?.reqId}">
+                        <div class="contentslack" id="slack-conn-trigger-${data?.reqId}">
+                            <div class="connection-provider-icon slack-provider-icon">
+                                ${Slackimg({ size: 16 })}
+                            </div>
+                            <div class="text-icon-group">
+                                <div class="orgname" id="slack-conn-label-${data?.reqId}">${selectedConn?.label || selectedConn?.name || 'Select connection'}</div>
+                                <div class="chevrondown">${CheveronDownIcon({ size: 10, color: '#D0D5DD' })}</div>
+                            </div>
+                        </div>
+                        <div class="accountadd" id="slack-accountadd-${data?.reqId}" style="display:none;">
+                            <div class="existingaccounts" id="slack-existing-accounts-${data?.reqId}">
+                                ${slackList?.map((conn, i) => `
+                                    <div class="peopleinformation" data-conn-id="${conn?.id}" data-conn-label="${conn?.label || conn?.name || ''}" data-conn-email="${conn?.emailId || ''}">
+                                        <div class="personicon" style="color:${colorCombo[i % 4]};background-color:${backgroundCombo[i % 4]}">${(conn?.label || conn?.name || '?').charAt(0)}</div>
+                                        <div class="accountperson">
+                                            <div class="personname">${conn?.label || conn?.name || ''}</div>
+                                            <div class="personemail">${conn?.emailId || ''}</div>
+                                        </div>
+                                        <div class="tickicon${selectedConn?.id === conn?.id ? ' active' : ''}">${tickMarkIcon({ size: 15, color: '#475467' })}</div>
+                                    </div>
+                                `).join('') || ''}
+                            </div>
+                            <div class="moreaccounts">
+                                <div class="accountaddition" id="slack-add-account-${data?.reqId}">
+                                    <div class="plusicon">${PlusIcon({ size: 14, color: '#155EEF' })}</div>
+                                    <div class="newaccount">Add account</div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <sl-select id="slack-connection-${data?.reqId}" value="${defaultConnectionId || ''}">
-                        ${slackList?.map((item, index) =>
-        `
-                        <sl-option value="${item?.id}" id="slack-connection-${index}">${item?.label || item?.name}</sl-option>
-                        `
-    ).join('')}
-                    </sl-select>
                 </div>
                 
                 <div class="slack-recipients-section">
@@ -267,7 +293,6 @@ const initializeSlackMessageFunctionality = (data) => {
     templateEl._functionalityInitialized = true;
 
     const userId = window.sdkConfig.userId;
-    const connectionId = data?.connId;
     const source = data?.provider || 'slack';
     const messageBody = document.getElementById(`slack-message-body-${reqId}`);
     const messageBodyWrapper = messageBody?.parentElement;
@@ -275,13 +300,25 @@ const initializeSlackMessageFunctionality = (data) => {
     const smartComposeBtn = document.getElementById(`slack-smart-compose-${reqId}`);
     const attachmentInput = document.getElementById(`slack-attachments-${reqId}`);
     const attachmentsPreview = document.getElementById(`slack-attachments-preview-${reqId}`);
-    const connectionSelect = document.getElementById(`slack-connection-${reqId}`);
 
+    const acColorCombo = ["#9F1AB1", "#6927DA", "#A15C07", "#027A48"];
+    const acBackgroundCombo = ["#FBE8FF", "#ECE9FE", "#FEF7C3", "#D1FADF"];
+
+    let connections = [...(data?.templateInfo?.connections || [])];
+    let selectedConnectionId = data?.templateInfo?.defaultConnections || connections[0]?.id;
+    let selectedConnectionLabel = connections.find(c => c?.id === selectedConnectionId)?.label || connections.find(c => c?.id === selectedConnectionId)?.name || '';
     let attachedFiles = [];
-    
-    const recipientSearchManager = initializeRecipientSearch({
+    let isAccountDropdownOpen = false;
+
+    const connTrigger = document.getElementById(`slack-conn-trigger-${reqId}`);
+    const connLabel = document.getElementById(`slack-conn-label-${reqId}`);
+    const accountAddDropdown = document.getElementById(`slack-accountadd-${reqId}`);
+    const existingAccountsContainer = document.getElementById(`slack-existing-accounts-${reqId}`);
+    const addAccountBtn = document.getElementById(`slack-add-account-${reqId}`);
+
+    let recipientSearchManager = initializeRecipientSearch({
         reqId,
-        connectionId,
+        connectionId: selectedConnectionId,
         userId,
         source,
         provider: 'slack',
@@ -290,6 +327,114 @@ const initializeSlackMessageFunctionality = (data) => {
             validateForm();
         }
     });
+
+    const toggleAccountDropdown = (forceClose) => {
+        if (forceClose || isAccountDropdownOpen) {
+            if (accountAddDropdown) accountAddDropdown.style.display = 'none';
+            isAccountDropdownOpen = false;
+            connTrigger?.classList.remove('active');
+        } else {
+            if (accountAddDropdown) accountAddDropdown.style.display = '';
+            isAccountDropdownOpen = true;
+            connTrigger?.classList.add('active');
+        }
+    };
+
+    const renderAccountList = () => {
+        if (!existingAccountsContainer) return;
+        existingAccountsContainer.innerHTML = connections.map((conn, i) => `
+            <div class="peopleinformation" data-conn-id="${conn?.id}" data-conn-label="${conn?.label || conn?.name || ''}" data-conn-email="${conn?.emailId || ''}">
+                <div class="personicon" style="color:${acColorCombo[i % 4]};background-color:${acBackgroundCombo[i % 4]}">${(conn?.label || conn?.name || '?').charAt(0)}</div>
+                <div class="accountperson">
+                    <div class="personname">${conn?.label || conn?.name || ''}</div>
+                    <div class="personemail">${conn?.emailId || ''}</div>
+                </div>
+                <div class="tickicon${selectedConnectionId === conn?.id ? ' active' : ''}">${tickMarkIcon({ size: 15, color: '#475467' })}</div>
+            </div>
+        `).join('');
+        attachAccountSelectionListeners();
+    };
+
+    const selectConnection = (connId) => {
+        const conn = connections.find(c => c?.id === connId);
+        if (!conn) return;
+        selectedConnectionId = connId;
+        selectedConnectionLabel = conn.label || conn.name || '';
+        if (connLabel) connLabel.textContent = selectedConnectionLabel;
+        toggleAccountDropdown(true);
+        renderAccountList();
+
+        recipientSearchManager.destroy();
+        recipientSearchManager = initializeRecipientSearch({
+            reqId,
+            connectionId: selectedConnectionId,
+            userId,
+            source,
+            provider: 'slack',
+            prefix: 'slack',
+            onRecipientsChange: (recipients) => {
+                validateForm();
+            }
+        });
+    };
+
+    const attachAccountSelectionListeners = () => {
+        existingAccountsContainer?.querySelectorAll('.peopleinformation').forEach(el => {
+            el.addEventListener('click', () => {
+                selectConnection(el.dataset.connId);
+            });
+        });
+    };
+
+    const handleAddAccount = async () => {
+        toggleAccountDropdown(true);
+        try {
+            const response = await store.dispatch(getSpecificSkills({ userId, connectorId: source }));
+            const authProfile = response?.payload?.authProfiles?.[0];
+            if (authProfile?.type === 'oauth2') {
+                const config = {
+                    label: `Connection ${(response?.payload?.connections?.length || 0) + 1}`,
+                    allowedCapabilities: response?.payload?.capabilities
+                };
+                new SSOMethods().connect(source, null, config);
+            }
+        } catch (err) {
+            console.error('[SlackTemplate] Add account error:', err);
+        }
+    };
+
+    const handlePostOauthConnection = async () => {
+        try {
+            const response = await store.dispatch(getSpecificSkills({ userId, connectorId: source }));
+            const newConnections = response?.payload?.connections || [];
+            connections = newConnections;
+            renderAccountList();
+            if (newConnections.length > 0) {
+                const lastConn = newConnections[newConnections.length - 1];
+                selectConnection(lastConn.id);
+            }
+        } catch (err) {
+            console.error('[SlackTemplate] Refresh connections error:', err);
+        }
+    };
+
+    eventBus.on('postOauth2Connection', handlePostOauthConnection);
+
+    if (connTrigger) {
+        connTrigger.addEventListener('click', () => toggleAccountDropdown());
+    }
+    if (addAccountBtn) {
+        addAccountBtn.addEventListener('click', handleAddAccount);
+    }
+
+    document.addEventListener('click', (e) => {
+        const cntr = document.getElementById(`slack-conn-cntr-${reqId}`);
+        if (cntr && !cntr.contains(e.target) && isAccountDropdownOpen) {
+            toggleAccountDropdown(true);
+        }
+    });
+
+    attachAccountSelectionListeners();
 
     if (messageBody) {
         if (messageBodyWrapper) {
@@ -700,7 +845,6 @@ const initializeSlackMessageFunctionality = (data) => {
             const message = messageBody?.innerText || messageBody?.textContent || '';
             const uploadedAttachments = attachedFiles.filter(file => file.uploaded && !file.error);
             const selectedRecipients = recipientSearchManager.getSelectedRecipients();
-            const selectedConnectionId = connectionSelect?.value || connectionId;
 
             const attachmentIds = uploadedAttachments.map(f => f.fileId || f.docId);
 
@@ -756,7 +900,7 @@ const initializeSlackMessageFunctionality = (data) => {
                         meta: r.meta || {}
                     }));
                     const text = messageBody?.innerText || messageBody?.textContent || '';
-                    const tenantName = data?.content?.workSpace || data?.content?.tenantName || connectionSelect?.options?.[connectionSelect?.selectedIndex]?.text || 'Slack';
+                    const tenantName = data?.content?.workSpace || data?.content?.tenantName || selectedConnectionLabel || 'Slack';
                     const attachments = uploadedAttachments.map(f => ({
                         originalFilename: f.name || f.title,
                         name: f.name || f.title,
