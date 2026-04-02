@@ -1402,9 +1402,9 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 		// (!!item?.sources?.length || !!item?.agentId) && viewType !== threadView && templateType !== bot_template
 		// Note: We used to exclude Enterprise Knowledge here, but Kora-React shows MenuOptions for them.
 		// Kora-React parity: MenuOptions (copy/export/set-context/three-dot) show only after
-		// the answer is completed successfully (apiSuccess). This prevents early rendering
-		// while streaming partial chunks.
-		const shouldShowActionChips = (hasSources || hasAgent) && !isThreadView && !isBotTemplate && !!item?.apiSuccess;
+		// the answer is completed successfully (apiSuccess) OR it is historical data.
+		// This prevents early rendering while streaming partial chunks.
+		const shouldShowActionChips = (hasSources || hasAgent) && !isThreadView && !isBotTemplate && (!!item?.apiSuccess || !!item?.historicalData);
 
 		if (shouldShowActionChips) {
 			let actionChipsHTML = `<div class="answerActionChips">`;
@@ -1427,25 +1427,46 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 					`;
 				}
 
-				// 2. EXPORT TO WORD — shown when displayMenu && answer exists
-				if (item?.answer && !state?.ansFromChipElements?.disableExporttoWordDoc) {
-					actionChipsHTML += `
-						<div class="exportWordButton" id="exportWordButton-${item?.messageId}">
-							<sl-tooltip placement="bottom">
-								<div slot="content" class="caTooltips">
-									<div class="tooltip-title">Export Response:</div>
-									<div class="tooltip-subtitle">Export the response as a file.</div>
-								</div>
-								${getExportWordIcon()}
-							</sl-tooltip>
+			// 2. EXPORT DROPDOWN (PDF + Word) — shown when displayMenu && answer exists
+			if (item?.answer && !state?.ansFromChipElements?.disableExporttoWordDoc) {
+				actionChipsHTML += `
+					<div class="exportButton" id="exportButton-${item?.messageId}">
+						<sl-tooltip placement="bottom">
+							<div slot="content" class="caTooltips">
+								<div class="tooltip-title">Export Response:</div>
+								<div class="tooltip-subtitle">Export the response as a file.</div>
+							</div>
+							${getExportWordIcon()}
+						</sl-tooltip>
+						<div class="exportDropdownMenu" id="exportDropdownMenu-${item?.messageId}" style="display:none;">
+							<div class="exportDropdownItem" data-export-type="pdf" data-message-id="${item?.messageId}">
+								<svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z" stroke="#667085" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M14 2v6h6" stroke="#667085" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M9 17H7v-6h2a2 2 0 0 1 0 4H7M17 11h-3v6M14 14h2.5" stroke="#D83B01" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+								<span>PDF Document</span>
+							</div>
+							<div class="exportDropdownItem" data-export-type="word" data-message-id="${item?.messageId}">
+								<svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z" stroke="#667085" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M14 2v6h6" stroke="#667085" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 17l1.5-6 2.5 4 2.5-4 1.5 6" stroke="#2B579A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+								<span>Word Document</span>
+							</div>
 						</div>
-					`;
-				}
+					</div>
+				`;
+			}
 
-			// 3. SET AS CONTEXT (Kora-React MenuOptions.jsx lines 1117-1122)
-			// Conditions: !llm && !testAgentFlow && showSetAsSource && !isPersonalKnowledge && !isAAAgent
-			const isAAAgent = item?.context?.agentType === 'aAAgent';
-			const shouldShowSetAsContext = !llm && !testAgentFlow && showSetAsSource && !isPersonalKnowledge && !isAAAgent;
+		// 3. SET AS CONTEXT (Kora-React MenuOptions.jsx lines 1117-1122)
+		// Conditions: !llm && !testAgentFlow && showSetAsSource && !isPersonalKnowledge && !isAAAgent
+		// isAAAgent check covers all the places agentType can be stored on a question:
+		//  - item.context.agentType        : live/standard aAAgent questions
+		//  - item.agentType                : set by agentThoughts handler after utterance-triggered aAAgent call
+		//  - item.followUpContext.agentType : used in reqFlow/socket events
+		//  - item.sources[*].agentType     : present on source objects returned by the API
+		//  - item.context.sources[*].agentType : present on context source objects
+		const isAAAgent =
+			item?.context?.agentType === 'aAAgent' ||
+			item?.agentType === 'aAAgent' ||
+			item?.followUpContext?.agentType === 'aAAgent' ||
+			item?.sources?.some(s => s?.agentType === 'aAAgent') ||
+			item?.context?.sources?.some(s => s?.agentType === 'aAAgent');
+		const shouldShowSetAsContext = !llm && !testAgentFlow && showSetAsSource && !isPersonalKnowledge && !isAAAgent;
 				if (shouldShowSetAsContext) {
 					actionChipsHTML += setContextChip();
 				}
@@ -1476,9 +1497,9 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 			actionChipsHTML += `</div>`;
 
 			// Only add the wrapper if we actually have action chips to show
-			if (actionChipsHTML.includes('copyAnswerButton') || actionChipsHTML.includes('exportWordButton') ||
-				actionChipsHTML.includes('setContextButton') || actionChipsHTML.includes('setContextDropdown') ||
-				actionChipsHTML.includes('feedbackChip') || actionChipsHTML.includes('three-dot-menu-container')) {
+		if (actionChipsHTML.includes('copyAnswerButton') || actionChipsHTML.includes('exportButton') ||
+			actionChipsHTML.includes('setContextButton') || actionChipsHTML.includes('setContextDropdown') ||
+			actionChipsHTML.includes('feedbackChip') || actionChipsHTML.includes('three-dot-menu-container')) {
 				// Wrap action chips in a separate ansFromChip div (matching Kora-React structure line 1213)
 				const actionChipsWrapper = `<div class="ansFromChip">${actionChipsHTML}</div>`;
 				chipHTML += actionChipsWrapper;

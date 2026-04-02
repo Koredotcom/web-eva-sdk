@@ -106,7 +106,7 @@ export function render(
 		// Kora-React parity: action/menu options (AnsFromChip + three-dot) should only appear
 		// after the answer is completed successfully. During streaming/loading we may already
 		// have partial `answer` chunks, but MenuOptions must stay hidden until `apiSuccess`.
-		if ((!!data?.sources?.length || !!data?.agentId) && supportsFeedback(data.templateType) && data?.apiSuccess) {
+		if ((!!data?.sources?.length || !!data?.agentId) && supportsFeedback(data.templateType) && (data?.apiSuccess || data?.historicalData)) {
 			let chip = AnsFromChip({ item: data });
 			content += DOMPurify.sanitize(chip, {
 				ADD_TAGS: SHOELACE_TAGS,

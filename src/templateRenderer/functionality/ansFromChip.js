@@ -341,11 +341,169 @@ const AnsFromChipFunctionality = ({ item }) => {
 			// Clean up
 			URL.revokeObjectURL(url);
 
-			console.log("Answer exported to Word document");
-		} catch (err) {
-			console.error("Failed to export answer to Word:", err);
+		console.log("Answer exported to Word document");
+	} catch (err) {
+		console.error("Failed to export answer to Word:", err);
+	}
+};
+
+// Convert HTML to formatted plain text (for PDF export, ported from Kora-React MenuOptions)
+const htmlToFormattedText = (html) => {
+	const tempDiv = document.createElement('div');
+	tempDiv.innerHTML = html;
+	const processNode = (node, indent = '') => {
+		let result = '';
+		if (node.nodeType === Node.TEXT_NODE) {
+			return node.textContent.replace(/\s+/g, ' ');
 		}
+		if (node.nodeType !== Node.ELEMENT_NODE) return '';
+		const tagName = node.tagName.toLowerCase();
+		const children = Array.from(node.childNodes);
+		switch (tagName) {
+			case 'h1': result += '\n' + processChildren(children, indent) + '\n\n'; break;
+			case 'h2': result += '\n' + processChildren(children, indent) + '\n\n'; break;
+			case 'h3': case 'h4': case 'h5': case 'h6':
+				result += '\n' + processChildren(children, indent) + '\n\n'; break;
+			case 'p': result += processChildren(children, indent) + '\n\n'; break;
+			case 'br': result += '\n'; break;
+			case 'ul': result += processChildren(children, indent + '  ', 'ul') + '\n'; break;
+			case 'ol': result += processChildren(children, indent + '  ', 'ol', 0) + '\n'; break;
+			case 'li': result += indent + '- ' + processChildren(children, indent + '  ').trim() + '\n'; break;
+			case 'strong': case 'b': result += processChildren(children, indent); break;
+			case 'em': case 'i': result += processChildren(children, indent); break;
+			case 'code': result += '`' + processChildren(children, indent) + '`'; break;
+			case 'pre': result += '\n' + processChildren(children, indent) + '\n\n'; break;
+			case 'blockquote': result += '\n> ' + processChildren(children, indent).trim() + '\n\n'; break;
+			case 'table': result += processTable(node, indent) + '\n'; break;
+			case 'a': result += processChildren(children, indent); break;
+			default: result += processChildren(children, indent); break;
+		}
+		return result;
 	};
+	const processChildren = (children, indent, listType, startNum) => {
+		let result = '';
+		let num = startNum !== undefined ? startNum : 1;
+		children.forEach(child => {
+			if (child.nodeType === Node.ELEMENT_NODE && child.tagName.toLowerCase() === 'li' && listType === 'ol') {
+				result += indent + num + '. ' + processNode(child, indent + '   ').replace(/^- /, '').trim() + '\n';
+				num++;
+			} else {
+				result += processNode(child, indent);
+			}
+		});
+		return result;
+	};
+	const processTable = (table, indent) => {
+		let result = '\n';
+		const rows = table.querySelectorAll('tr');
+		rows.forEach((row, rowIdx) => {
+			const cells = Array.from(row.querySelectorAll('td, th')).map(c => c.textContent.trim());
+			result += indent + cells.join(' | ') + '\n';
+			if (rowIdx === 0) result += indent + cells.map(() => '---').join(' | ') + '\n';
+		});
+		return result;
+	};
+	return processNode(tempDiv, '').trim();
+};
+
+// Sanitize text to ASCII-safe characters for PDF (basic fonts don't support Unicode)
+const sanitizeForPDF = (text) => {
+	let result = text.replace(/[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]|[\u{1F600}-\u{1F64F}]|[\u{1F680}-\u{1F6FF}]|[\u{1F1E0}-\u{1F1FF}]/gu, '');
+	const replacements = {
+		'•': '-', '●': '-', '○': '-', '◦': '-', '▪': '-', '▫': '-', '◆': '-', '◇': '-',
+		'►': '>', '▶': '>', '→': '->', '←': '<-', '↓': 'v', '↑': '^',
+		'\u2018': "'", '\u2019': "'", '\u201C': '"', '\u201D': '"', '\u201E': '"', '\u201A': "'", '`': "'",
+		'\u2013': '-', '\u2014': '-', '\u2015': '-', '\u2010': '-',
+		'\u00A0': ' ', '\u2003': ' ', '\u2002': ' ', '\u2009': ' ',
+		'\u00B7': '.', '\u2022': '-', '\u25CF': '-', '\u25CB': 'o',
+		'\u00AE': '(R)', '\u00A9': '(C)', '\u2122': '(TM)',
+		'\u00B0': 'deg', '\u00B1': '+/-', '\u00D7': 'x', '\u00F7': '/',
+		'\u2026': '...', '\u2019': "'",
+	};
+	Object.entries(replacements).forEach(([k, v]) => { result = result.split(k).join(v); });
+	// Remove remaining non-ASCII characters
+	result = result.replace(/[^\x00-\x7E]/g, '?');
+	return result;
+};
+
+// Pure JS PDF Generator (ported from Kora-React MenuOptions)
+const createPDF = (textContent) => {
+	const pageWidth = 595, pageHeight = 842, margin = 50, lineHeight = 16, fontSize = 11;
+	const maxLineWidth = pageWidth - margin * 2;
+	const charsPerLine = Math.floor(maxLineWidth / (fontSize * 0.5));
+	const escapePdfText = (text) => text.replace(/\\/g, '\\\\').replace(/\(/g, '\\(').replace(/\)/g, '\\)').replace(/[\r\n]+/g, ' ');
+	const wrapText = (text, maxChars) => {
+		const lines = [];
+		text.split('\n').forEach(line => {
+			if (line.trim() === '') { lines.push(''); return; }
+			const leading = line.match(/^(\s*)/)[1];
+			const trimmed = line.trim();
+			const effMax = maxChars - leading.length;
+			if (trimmed.length <= effMax) { lines.push(leading + trimmed); return; }
+			const words = trimmed.split(/\s+/);
+			let cur = leading;
+			words.forEach(word => {
+				const test = cur + (cur.trim() ? ' ' : '') + word;
+				if (test.length <= maxChars) { cur = test; }
+				else { if (cur.trim()) lines.push(cur); cur = leading + word; }
+			});
+			if (cur.trim()) lines.push(cur);
+		});
+		return lines;
+	};
+	const allLines = wrapText(textContent, charsPerLine);
+	const linesPerPage = Math.floor((pageHeight - margin * 2) / lineHeight);
+	const pages = [];
+	for (let i = 0; i < allLines.length; i += linesPerPage) pages.push(allLines.slice(i, i + linesPerPage));
+	if (pages.length === 0) pages.push(['']);
+	let offsets = [];
+	let pdf = '%PDF-1.4\n';
+	const addObj = (c) => { offsets.push(pdf.length); pdf += c; };
+	addObj('1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n');
+	const pageRefs = pages.map((_, i) => `${3 + i * 2} 0 R`).join(' ');
+	addObj(`2 0 obj\n<< /Type /Pages /Kids [${pageRefs}] /Count ${pages.length} >>\nendobj\n`);
+	let objNum = 3;
+	const fontObjNum = 3 + pages.length * 2;
+	pages.forEach(pageLines => {
+		const contentObjNum = objNum + 1;
+		addObj(`${objNum} 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${pageWidth} ${pageHeight}] /Contents ${contentObjNum} 0 R /Resources << /Font << /F1 ${fontObjNum} 0 R >> >> >>\nendobj\n`);
+		objNum++;
+		let stream = `BT\n/F1 ${fontSize} Tf\n${margin} ${pageHeight - margin} Td\n0 -${lineHeight} Td\n`;
+		pageLines.forEach(line => { stream += `(${escapePdfText(line)}) Tj\n0 -${lineHeight} Td\n`; });
+		stream += 'ET';
+		addObj(`${objNum} 0 obj\n<< /Length ${stream.length} >>\nstream\n${stream}\nendstream\nendobj\n`);
+		objNum++;
+	});
+	addObj(`${fontObjNum} 0 obj\n<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>\nendobj\n`);
+	const xref = pdf.length;
+	const total = fontObjNum + 1;
+	pdf += `xref\n0 ${total}\n0000000000 65535 f \n`;
+	offsets.forEach(o => { pdf += o.toString().padStart(10, '0') + ' 00000 n \n'; });
+	pdf += `trailer\n<< /Size ${total} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF`;
+	return pdf;
+};
+
+const exportAnswerToPDF = () => {
+	try {
+		if (!item?.answer) { console.warn("No answer to export"); return; }
+		const rendered = customMarkdownRenderer(item.answer);
+		const tempDiv = document.createElement('div');
+		tempDiv.innerHTML = rendered;
+		const formatted = htmlToFormattedText(rendered);
+		const plain = sanitizeForPDF(formatted);
+		const pdfContent = createPDF(plain);
+		const blob = new Blob([pdfContent], { type: 'application/pdf' });
+		const link = document.createElement('a');
+		link.href = URL.createObjectURL(blob);
+		link.download = 'Response.pdf';
+		document.body.appendChild(link);
+		link.click();
+		document.body.removeChild(link);
+		URL.revokeObjectURL(link.href);
+	} catch (err) {
+		console.error('Error generating PDF:', err);
+	}
+};
 
 	const onSetAsSource = (e, data) => {
 		e.stopPropagation();
@@ -802,16 +960,38 @@ const AnsFromChipFunctionality = ({ item }) => {
 			}
 		}
 
-		// 5. Export to Word Button
+		// 5. Export Dropdown (PDF + Word)
 		if (item?.answer) {
-			let exportWordButton = document.getElementById(`exportWordButton-${messageId}`);
-			if (exportWordButton && !exportWordButton.eventListenerAdded) {
-				exportWordButton.addEventListener("click", (e) => {
+			const exportButton = document.getElementById(`exportButton-${messageId}`);
+			const exportDropdownMenu = document.getElementById(`exportDropdownMenu-${messageId}`);
+			if (exportButton && exportDropdownMenu && !exportButton.exportEventAdded) {
+				exportButton.addEventListener("click", (e) => {
 					e?.preventDefault();
 					e?.stopPropagation();
-					exportAnswerToWord();
+					const isOpen = exportDropdownMenu.style.display !== 'none';
+					exportDropdownMenu.style.display = isOpen ? 'none' : 'block';
+					exportButton.classList.toggle('active', !isOpen);
 				});
-				exportWordButton.eventListenerAdded = true;
+				// Close dropdown when clicking outside
+				document.addEventListener('click', (e) => {
+					if (!exportButton.contains(e.target)) {
+						exportDropdownMenu.style.display = 'none';
+						exportButton.classList.remove('active');
+					}
+				});
+				// Handle dropdown item clicks
+				exportDropdownMenu.querySelectorAll('.exportDropdownItem').forEach(dropItem => {
+					dropItem.addEventListener('click', (e) => {
+						e?.preventDefault();
+						e?.stopPropagation();
+						const type = dropItem.getAttribute('data-export-type');
+						exportDropdownMenu.style.display = 'none';
+						exportButton.classList.remove('active');
+						if (type === 'pdf') exportAnswerToPDF();
+						else if (type === 'word') exportAnswerToWord();
+					});
+				});
+				exportButton.exportEventAdded = true;
 			}
 		}
 
@@ -889,26 +1069,30 @@ const AnsFromChipFunctionality = ({ item }) => {
 						return;
 					}
 
-					const feedbackPopup = document.getElementById(`feedbackPopup-${messageId}`);
-					if (feedbackPopup) {
-						if (feedbackPopup.tagName.toLowerCase() === 'sl-popup' && typeof feedbackPopup.show !== 'function') {
-							if (window.customElements && window.customElements.upgrade) customElements.upgrade(feedbackPopup);
-						}
-						const isOpen = feedbackPopup.hasAttribute('active') || feedbackPopup.active;
-						if (isOpen) {
-							if (typeof feedbackPopup.hide === 'function') feedbackPopup.hide();
-							else feedbackPopup.removeAttribute('active');
-							feedbackDislikeButton.classList.remove('active');
-						} else {
-							feedbackPopup.anchor = feedbackDislikeButton;
-							if (typeof feedbackPopup.show === "function") feedbackPopup.show();
-							else feedbackPopup.setAttribute('active', '');
-							feedbackDislikeButton.classList.add('active');
-						}
+				const feedbackPopup = document.getElementById(`feedbackPopup-${messageId}`);
+				if (feedbackPopup) {
+					if (feedbackPopup.tagName.toLowerCase() === 'sl-popup' && typeof feedbackPopup.show !== 'function') {
+						if (window.customElements && window.customElements.upgrade) customElements.upgrade(feedbackPopup);
 					}
-				});
-				feedbackDislikeButton.eventListenerAdded = true;
-			}
+					const isOpen = feedbackPopup.hasAttribute('active') || feedbackPopup.active;
+					// Identify the question block so we can suppress the hover copy icon while popup is open
+					const questionBlock = feedbackDislikeButton.closest('.question');
+					if (isOpen) {
+						if (typeof feedbackPopup.hide === 'function') feedbackPopup.hide();
+						else feedbackPopup.removeAttribute('active');
+						feedbackDislikeButton.classList.remove('active');
+						questionBlock?.classList.remove('feedback-popup-open');
+					} else {
+						feedbackPopup.anchor = feedbackDislikeButton;
+						if (typeof feedbackPopup.show === "function") feedbackPopup.show();
+						else feedbackPopup.setAttribute('active', '');
+						feedbackDislikeButton.classList.add('active');
+						questionBlock?.classList.add('feedback-popup-open');
+					}
+				}
+			});
+			feedbackDislikeButton.eventListenerAdded = true;
+		}
 
 			// Feedback Popup logic (options, submit, outside-click)
 			const feedbackPopup = document.getElementById(`feedbackPopup-${messageId}`);
@@ -971,7 +1155,10 @@ const AnsFromChipFunctionality = ({ item }) => {
 					});
 				}
 
-				const handlePopupHide = () => feedbackDislikeButton?.classList.remove('active');
+				const handlePopupHide = () => {
+				feedbackDislikeButton?.classList.remove('active');
+				feedbackDislikeButton?.closest('.question')?.classList.remove('feedback-popup-open');
+			};
 				feedbackPopup.addEventListener('sl-hide', handlePopupHide);
 				feedbackPopup.addEventListener('sl-after-hide', handlePopupHide);
 

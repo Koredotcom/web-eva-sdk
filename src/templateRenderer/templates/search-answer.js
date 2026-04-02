@@ -5,7 +5,10 @@ import { renderThoughts, setupThoughtsToggle } from "./bot-conversation";
 function render(data) {
     let thoughtsHTML = "";
 
-    if (data?.thoughts?.length > 0) {
+    // Only render standalone thoughts when there is NO reqFlow.
+    // When reqFlow exists (first agent-triggering question), thoughts are rendered
+    // inside the response-query-flow expanded section (matching Kora-React's QueryResponseFlow).
+    if (data?.thoughts?.length > 0 && !data?.reqFlow?.length) {
         const thoughtData = {
             messageId: data.messageId || data.id,
             thoughts: data.thoughts,

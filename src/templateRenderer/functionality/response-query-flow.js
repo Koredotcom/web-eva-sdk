@@ -83,7 +83,14 @@ function applyExpandedState(queryResponseFlow, expanded, content) {
     } else {
         icon.innerHTML = `${cheveronRightIcon({ size: 10, color: "#667085" })}`;
         if (displayDiv) displayDiv.style.display = 'none';
-        if (queryResponseHeader) queryResponseHeader.innerText = content || queryResponseHeader.innerText;
+        // Kora-React parity: when thoughts exist, collapsed header says "Thoughts for X secs"
+        // (stored as data-thought-time on the root element), not the last reqFlow content.
+        const thoughtTime = queryResponseFlow.getAttribute('data-thought-time');
+        if (thoughtTime) {
+            if (queryResponseHeader) queryResponseHeader.innerText = `Thoughts for ${thoughtTime} secs`;
+        } else {
+            if (queryResponseHeader) queryResponseHeader.innerText = content || queryResponseHeader.innerText;
+        }
     }
 }
 

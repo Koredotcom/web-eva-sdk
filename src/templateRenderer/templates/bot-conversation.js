@@ -266,9 +266,10 @@ export function setupTemplates(botConversation) {
 const renderThoughts = (conversation, props) => {
 	const uniqueId = `thought-wrapper-${conversation?.messageId}`;
 	const isCollapsed = conversation?.question?.length > 0 || props?.status === "completed";
+	const thoughtTime = conversation?.thoughts?.[conversation?.thoughts?.length - 1]?.thoughtTime;
 	return `
 		<div class='thought-wrapper ${isCollapsed ? 'collapsed' : 'expanded'}' id='${uniqueId}' data-toggle-thoughts>
-			<span class='thoughts-header' id='thoughts-header-${conversation?.messageId}'>Thought ${isCollapsed ? `for ${conversation?.thoughts?.[conversation?.thoughts?.length - 1]?.thoughtTime} secs` : ''}</span>
+			<span class='thoughts-header' id='thoughts-header-${conversation?.messageId}'>${isCollapsed ? `Thoughts for ${thoughtTime} secs` : 'Thinking'}</span>
 			<span class='spanIcon'>${cheveronRightIcon({ size: 8, color: "#70707B" })}</span>
 			<div class="expand-thoughts-container">
 				${expandThoughts(conversation)}
