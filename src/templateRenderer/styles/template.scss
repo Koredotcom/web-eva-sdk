@@ -2496,3 +2496,128 @@
         }
     }
 }
+// Agent Auth Challenge — matches Kora-React botConversation.scss
+.autonomous-authorise-systems-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+
+    .autonomous-title {
+        margin-top: 0.5rem;
+        margin-bottom: 0.75rem;
+        font-size: 0.875rem;
+        font-weight: 400;
+        line-height: 1.25rem;
+        color: #101828;
+    }
+
+    .auth-profiles {
+        display: flex;
+        padding: 0.75rem 1rem 0.75rem 1.5rem;
+        align-items: center;
+        gap: 1rem;
+        align-self: stretch;
+        border-radius: 1rem;
+        border: 0.0625rem solid #F5F3F1;
+        background: #ffffff;
+        cursor: pointer;
+        margin-bottom: 0.5rem;
+        justify-content: space-between;
+        transition: box-shadow 0.15s ease;
+
+        &.disabledClick {
+            pointer-events: none;
+        }
+
+        &:hover {
+            box-shadow: 0rem 0.25rem 0.5rem -0.125rem rgba(16, 24, 40, 0.10), 0rem 0.125rem 0.25rem -0.125rem rgba(16, 24, 40, 0.06);
+            .right-sec .auth-profile-status .authorize {
+                background: #F2F4F7;
+            }
+        }
+
+        .auth-profile-name {
+            flex-grow: 1;
+            font-size: 0.875rem;
+            font-weight: 500;
+            line-height: 1.25rem;
+            color: #101828;
+        }
+
+        .right-sec {
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+
+            .autonomous-loader {
+                position: relative;
+                width: 2rem;
+
+                .waLoader {
+                    width: 1.25rem;
+                    height: 1.25rem;
+                    border-radius: 50%;
+                    border: 0.1875rem solid #e5e5e5;
+                    border-bottom: 0.1875rem solid #131316;
+                    border-inline-start: 0.1875rem solid #131316;
+                    animation: auth-challenge-spin 0.75s linear infinite;
+                }
+            }
+
+            .auth-profile-status .authorize {
+                font-size: 0.75rem;
+                font-weight: 500;
+                line-height: 1.25rem;
+                color: #131316;
+                padding: 0.25rem 0.75rem;
+                border-radius: 0.5rem;
+                background: #ffffff;
+            }
+
+            .auth-selected {
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+
+                .tickicon { display: flex; }
+
+                .selected-title {
+                    font-size: 0.75rem;
+                    font-weight: 500;
+                    line-height: 1.25rem;
+                    color: #17B26A;
+                }
+            }
+        }
+    }
+
+    .continue-btn {
+        .kr-primary-btn-black {
+            display: inline-flex;
+            align-items: center;
+            flex-direction: row;
+            padding: 0.625rem 1.125rem;
+            border-radius: 0.5rem;
+            border: none;
+            cursor: pointer;
+            font-size: 0.875rem;
+            font-weight: 500;
+            line-height: 1.25rem;
+            background: #131316;
+            color: #ffffff;
+            gap: 0.375rem;
+
+            &.disabled {
+                background: #F4F4F5;
+                cursor: not-allowed;
+                color: #A0A0AB;
+            }
+        }
+    }
+}
+
+@keyframes auth-challenge-spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}

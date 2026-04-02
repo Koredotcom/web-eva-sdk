@@ -1,8 +1,8 @@
 import { cloneDeep } from "lodash";
-import { updateChatData, setAnswerSources } from "../../redux/globalSlice";
+import { updateChatData, setAnswerSources, setSelectedContext } from "../../redux/globalSlice";
 import store from "../../redux/store";
 import { sessionItemHandler } from "../../Attachments/createContext";
-import { getRelevantQuestions } from "../../redux/actions/global.action";
+import { getRelevantQuestions, submitFeedback } from "../../redux/actions/global.action";
 import { highlightQuotedText } from "../utils/helper";
 import { InitiateChatConversationAction } from "../../chat";
 import { submitUserFeedback } from "../../Feedback";
@@ -10,7 +10,7 @@ import customMarkdownRenderer from "../utils/customMarkdownRenderer";
 import chatInterface from "../../chat/ChatInterface";
 import SourcesSidebarInstance from "../../sources/SourcesSidebar.js";
 import { renderIcons } from "../../utils/helpers";
-import { tickMarkIcon } from "../icons-library";
+import { createThumbsUp, createThumbsUpFilled, createThumbsDown, createThumbsDownFilled, tickMarkIcon } from "../icons-library";
 
 const AnsFromChipFunctionality = ({ item }) => {
 	/**
@@ -508,6 +508,10 @@ const AnsFromChipFunctionality = ({ item }) => {
 				intent: 'sendEmail'
 			}
 		}
+		// When initiating integration actions from the 3-dot menu, we must not reuse any
+		// previously selected agent/attachment context; it can cause agent welcome template
+		// to get re-inserted as the latest question.
+		store.dispatch(setSelectedContext(null));
 		chatInterface().initiateChatConversationAction({ payload, "action": "send" })
 	}
 	/*need to make advance search api call */
@@ -523,6 +527,7 @@ const AnsFromChipFunctionality = ({ item }) => {
 			},
 		}
 		/*need to make advance search api call */
+		store.dispatch(setSelectedContext(null));
 		chatInterface().initiateChatConversationAction({ payload })
 	}
 
@@ -812,31 +817,75 @@ const AnsFromChipFunctionality = ({ item }) => {
 
 		// 6. Feedback (Like / Dislike)
 		if (!item?.disableFeedback) {
+			const cId = item?.cId || item?.reqId;
+
+			const updateFeedbackUI = (newFeedback) => {
+				const likeBtn = document.getElementById(`feedbackLikeButton-${messageId}`);
+				const dislikeBtn = document.getElementById(`feedbackDislikeButton-${messageId}`);
+				const isLiked = newFeedback === 'like';
+				const isDisliked = newFeedback === 'dislike';
+				if (likeBtn) {
+					likeBtn.classList.toggle('active', isLiked);
+					const span = likeBtn.querySelector('span');
+					if (span) span.innerHTML = isLiked ? createThumbsUpFilled({ size: 16, color: '#12B76A' }) : createThumbsUp({ size: 16, color: '#667085' });
+				}
+				if (dislikeBtn) {
+					dislikeBtn.classList.toggle('active', isDisliked);
+					const span = dislikeBtn.querySelector('span');
+					if (span) span.innerHTML = isDisliked ? createThumbsDownFilled({ size: 16, color: '#F04438' }) : createThumbsDown({ size: 16, color: '#667085' });
+				}
+			};
+
+			const dispatchFeedback = async (payload) => {
+				const state = store.getState().global;
+				const msgId = item?.messageId;
+				return store.dispatch(submitFeedback({
+					boardId: state.activeBoardId,
+					messageId: msgId,
+					cId,
+					payload
+				}));
+			};
+
+			const syncReduxFeedback = (newFeedback) => {
+				const questions = cloneDeep(store.getState().global.questions);
+				if (questions[cId]) {
+					questions[cId].feedback = newFeedback;
+					questions[cId].userFeedback = newFeedback ? { type: newFeedback } : null;
+					store.dispatch(updateChatData(questions));
+				}
+			};
+
 			let feedbackLikeButton = document.getElementById(`feedbackLikeButton-${messageId}`);
 			if (feedbackLikeButton && !feedbackLikeButton.eventListenerAdded) {
-				feedbackLikeButton.addEventListener("click", (e) => {
+				feedbackLikeButton.addEventListener("click", async (e) => {
 					e?.preventDefault();
 					e?.stopPropagation();
-					submitUserFeedback({
-						type: "like",
-						cId: item?.cId || item?.reqId,
-						payload: { feedback: "like" },
-					});
+					const isCurrentlyLiked = feedbackLikeButton.classList.contains('active');
+					const payload = isCurrentlyLiked ? { action: "undo" } : { feedback: "like" };
+					const result = await dispatchFeedback(payload);
+					if (result?.payload) {
+						const newFeedback = isCurrentlyLiked ? null : 'like';
+						updateFeedbackUI(newFeedback);
+						syncReduxFeedback(newFeedback);
+					}
 				});
 				feedbackLikeButton.eventListenerAdded = true;
 			}
 
 			let feedbackDislikeButton = document.getElementById(`feedbackDislikeButton-${messageId}`);
 			if (feedbackDislikeButton && !feedbackDislikeButton.eventListenerAdded) {
-				feedbackDislikeButton.addEventListener("click", (e) => {
+				feedbackDislikeButton.addEventListener("click", async (e) => {
 					e?.preventDefault();
 					e?.stopPropagation();
-					if (item?.feedback === "dislike") {
-						submitUserFeedback({
-							type: "dislike",
-							cId: item?.cId || item?.reqId,
-							payload: { "action": "undo" }
-						});
+					const isCurrentlyDisliked = feedbackDislikeButton.classList.contains('active');
+
+					if (isCurrentlyDisliked) {
+						const result = await dispatchFeedback({ action: "undo" });
+						if (result?.payload) {
+							updateFeedbackUI(null);
+							syncReduxFeedback(null);
+						}
 						return;
 					}
 
@@ -898,18 +947,20 @@ const AnsFromChipFunctionality = ({ item }) => {
 
 				const submitBtn = feedbackPopup.querySelector('button[data-action="submit-feedback"]');
 				if (submitBtn) {
-					submitBtn.addEventListener('click', (e) => {
+					submitBtn.addEventListener('click', async (e) => {
 						e.preventDefault(); e.stopPropagation();
 						const selectedOptionsData = feedbackPopup.getAttribute('data-selected-options');
 						const selectedOptions = selectedOptionsData ? JSON.parse(selectedOptionsData) : [];
 						const comment = textarea ? textarea.value.trim() : '';
 
-						submitUserFeedback({
-							type: "dislike",
-							cId: item?.cId || item?.reqId,
-							messageId,
-							payload: { feedback: "dislike", comment, category: selectedOptions.map(opt => opt.label) },
+						const result = await dispatchFeedback({
+							feedback: "dislike", comment, category: selectedOptions.map(opt => opt.label)
 						});
+
+						if (result?.payload) {
+							updateFeedbackUI('dislike');
+							syncReduxFeedback('dislike');
+						}
 
 						const successText = feedbackPopup.querySelector('.feedbacksuccesstext');
 						if (successText) successText.style.display = 'block';

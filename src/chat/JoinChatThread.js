@@ -2,15 +2,19 @@ import { keyBy, orderBy } from "lodash"
 import { getSearchHistory } from "../redux/actions/global.action"
 import store from "../redux/store"
 import { v4 as uuid } from 'uuid';
-import { setActiveBoardId, updateChatData, setChatHistoryMoreAvailable, setCurrentQuestion } from "../redux/globalSlice";
+import { setActiveBoardId, updateChatData, setChatHistoryMoreAvailable, setCurrentQuestion, setSelectedContext, setAutonomousAsyncPending } from "../redux/globalSlice";
 import constructGptForm from "./gptTemplate/gptTemplateBody";
 import gptFormFunctionality from "./gptTemplate/gptTemplateFunc";
 import MultiResponse from "./gptTemplate/MultiResponse";
 import BotConversation from "./botAgent/getBotConversation";
+import { cleanupAllAuthChallenges } from "../templateRenderer/functionality/agent-auth-challenge";
 
 let chatHistoryOffset = 0;
 
 const JoinChatThread = async (props) => {
+    cleanupAllAuthChallenges();
+    store.dispatch(setSelectedContext({}));
+    store.dispatch(setAutonomousAsyncPending({}));
     const state = store.getState().global;
 
 	if (props?.pagination) {

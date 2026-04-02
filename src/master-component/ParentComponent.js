@@ -4,6 +4,7 @@ import RenderComposeBar from "../composebar/RenderComposeBar";
 import RecentAgentsFunc from "../LandingPageRecentAgents/RecentAgents";
 import { TemplateRenderer } from "../templateRenderer";
 import { resolveSdkAssetPath } from "../utils/helpers";
+import { cleanupAllAuthChallenges } from "../templateRenderer/functionality/agent-auth-challenge";
 const {renderRecentAgents} = RecentAgentsFunc();
 
 let questions = {}
@@ -225,6 +226,7 @@ const renderQuestionsOnly = () => {
     }
 
     if (!hasQuestions) {
+        cleanupAllAuthChallenges();
         questionsContainer.innerHTML = '';
         prevQuestionCount = 0;
         setTimeout(() => updateScrollArrowVisibility(), 150)
@@ -233,8 +235,30 @@ const renderQuestionsOnly = () => {
 
     const prevScrollTop = questionsContainer.scrollTop
 
+    // Defensive de-dupe: in some flows (notably 3-dot integration actions),
+    // the same server message can transiently exist in `questions` under multiple keys.
+    // Rendering `Object.values(questions)` would then show a duplicated "question" block
+    // (commonly `agent_welcome_template`) even though only one advanceSearch happened.
+    //
+    // We prefer the most recently materialized copy (iterate from end).
+    const questionList = Object.values(questions);
+    const seen = new Set();
+    const deduped = [];
+    for (let i = questionList.length - 1; i >= 0; i--) {
+        const item = questionList[i];
+        const key =
+            (item?.messageId ? `m:${item.messageId}` : null) ||
+            (item?.reqId ? `r:${item.reqId}` : null) ||
+            (item?.cId ? `c:${item.cId}` : null) ||
+            (item?.id ? `i:${item.id}` : `idx:${i}`);
+        if (seen.has(key)) continue;
+        seen.add(key);
+        deduped.push(item);
+    }
+    deduped.reverse();
+
     let questionsHTML = '';
-    questionsHTML = Object.values(questions).map((item, index) => {
+    questionsHTML = deduped.map((item) => {
         if (item?.isTask) return '';
 
         const el = TemplateRenderer.generateHTMLTemplate(item, {

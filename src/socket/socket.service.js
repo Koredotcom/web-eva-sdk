@@ -90,23 +90,31 @@ class WebSocketClient {
 
             this.socket.on("botMessage", (data) => {
                 console.log("bot message received:", data);
+                if (data?.message?.followUpContext?.agentType === 'aAAgent') {
+                    ChatInterface().handleAutoAgentBotMessage(data);
+                    return;
+                }
                 BotConversation().setBotConversation(data)
             });
 
             this.socket.on('live', (msg) => {
+                if(msg?.entity === "answerContext") {
+                    ChatInterface().agentThoughts(msg)
+                }
                 if(msg?.entity === "answersuggestion" || msg?.entity === "thoughts") {
-                    /*In answer suggestion, will receive thoughts of agents, need to append to the question*/                    
-                        ChatInterface().agentThoughts(msg)                                        
+                    ChatInterface().agentThoughts(msg)                                        
                 }
                 if(msg?.entity === "answerChunk"){
                     ChatInterface().contentStreaming(msg)
                 }
                 if (msg?.entity === "boardName") {
-                    /*update the name in the history board */
                     HistoryInterface().updateHistoryBoardNameonSocketEvent(msg?.data)
                 }
                 if(msg?.entity === "announcements"){
                     AnnouncementsInterface().setNewAnnouncements(msg)
+                }
+                if(msg?.entity === "reqFlow"){
+                    ChatInterface().responseFlowGeneration(msg)
                 }
             });
             this.socket.on("notification", (msg) => {

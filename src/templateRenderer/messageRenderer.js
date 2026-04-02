@@ -22,6 +22,7 @@ import customMarkdownRenderer from "./utils/customMarkdownRenderer";
 import * as itemsAmbiguityTemplate from "./templates/items-ambiguity-template";
 import * as responseQueryFlow from "./templates/response-query-flow";
 import AnsFromChip from "./templates/ansFromChip";
+import * as agentAuthChallenge from "./templates/agent-auth-challenge";
 import DOMPurify from "dompurify";
 import store from "../redux/store";
 
@@ -102,7 +103,10 @@ export function render(
 				ADD_ATTR: SHOELACE_ATTRS,
 			});
 		}
-		if ((!!data?.sources?.length || !!data?.agentId) && supportsFeedback(data.templateType) && (data?.status === "completed" || !!data?.answer)) {
+		// Kora-React parity: action/menu options (AnsFromChip + three-dot) should only appear
+		// after the answer is completed successfully. During streaming/loading we may already
+		// have partial `answer` chunks, but MenuOptions must stay hidden until `apiSuccess`.
+		if ((!!data?.sources?.length || !!data?.agentId) && supportsFeedback(data.templateType) && data?.apiSuccess) {
 			let chip = AnsFromChip({ item: data });
 			content += DOMPurify.sanitize(chip, {
 				ADD_TAGS: SHOELACE_TAGS,
@@ -211,6 +215,10 @@ export function renderTemplateContent(
 
 			case "agent_welcome_template":
 				htmlTemplate += agentWelcomeTemplate.render(data);
+				break;
+
+			case "agent_auth_challenge":
+				htmlTemplate += agentAuthChallenge.render(data);
 				break;
 			// case "bot_template":
 			// 	console.log("bottttt", data.template_html);

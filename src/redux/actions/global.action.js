@@ -628,3 +628,50 @@ export const sendIntegrationMessage = createAsyncThunk(
         }
     }
 );
+
+export const checkAuthStatus = createAsyncThunk(
+    'global/checkAuthStatus',
+    async (arg, { rejectWithValue }) => {
+        try {
+            const response = await axiosInstance.get(
+                `kora/boards/${arg?.boardId}/messages/${arg?.messageId}/authStatus`
+            );
+            return response.data;
+        } catch (error) {
+            handleErrorState(error, "Check Auth Status");
+            return rejectWithValue(error?.response?.data);
+        }
+    }
+);
+
+export const uploadFileToAgenticPlatform = createAsyncThunk(
+    'global/uploadFileToAgenticPlatform',
+    async (arg, { rejectWithValue }) => {
+        try {
+            const response = await axiosInstance.post(
+                `kora/boards/${arg?.boardId}/messages/${arg?.messageId}/agentSession/addFile`,
+                arg?.payload
+            );
+            return response.data;
+        } catch (error) {
+            handleErrorState(error, "Upload File to Agentic Platform");
+            return rejectWithValue({ error: true, fileId: arg?.payload?.fileId });
+        }
+    }
+);
+
+export const removeFileFromAgenticPlatform = createAsyncThunk(
+    'global/removeFileFromAgenticPlatform',
+    async (arg, { rejectWithValue }) => {
+        try {
+            const response = await axiosInstance.post(
+                `kora/boards/${arg?.boardId}/messages/${arg?.messageId}/agentSession/removeFile`,
+                arg?.payload
+            );
+            return response.data;
+        } catch (error) {
+            handleErrorState(error, "Remove File from Agentic Platform");
+            return rejectWithValue(error?.response?.data);
+        }
+    }
+);

@@ -1,5 +1,5 @@
 import { abortAdvanceSearch, advanceSearch, cancelAdvancedSearch, resolveAgentAction, stopResponseGeneration } from "../redux/actions/global.action";
-import { setChatInterfaceOptions, setCurrentQuestion, setCustomData, setEnableContextByFollowupContext, setEnabledCustomTemplates, setErrorState, setAnsFromChipElements, setChatInterfaceElements } from "../redux/globalSlice"
+import { setChatInterfaceOptions, setCurrentQuestion, setCustomData, setEnableContextByFollowupContext, setEnabledCustomTemplates, setErrorState, setAnsFromChipElements, setChatInterfaceElements, setAutonomousAsyncPending } from "../redux/globalSlice"
 import { updateChatData } from "../redux/globalSlice";
 import store from "../redux/store";
 import { v4 as uuid } from 'uuid';
@@ -16,6 +16,42 @@ const {hideRecentAgentsDiv} = RecentAgentsFunc();
 
 const ChatInterface = (props) => {
     let state = store.getState().global, input = '', resIndexRef = 0;
+
+    /**
+     * Kora-React parity helper:
+     * Questions can be keyed by different IDs (reqId/messageId/_id) across flows (history, retries, agentic tasks).
+     * For aAAgent updates (reqFlow/thoughts/botMessage), resolve the actual key before updating to avoid duplicates
+     * or missed updates.
+     */
+    const findQuestionEntry = (questionsMap, { reqId, messageId, parentMessageId } = {}) => {
+      const qs = questionsMap || {};
+      if (!qs || !Object.keys(qs).length) return { key: null, question: null };
+
+      // 1) direct key lookup (reqId is most common)
+      if (reqId && Object.prototype.hasOwnProperty.call(qs, reqId)) {
+        return { key: reqId, question: qs[reqId] };
+      }
+
+      // 2) by reqId property
+      if (reqId) {
+        const byReqId = Object.entries(qs).find(([, q]) => q?.reqId === reqId);
+        if (byReqId) return { key: byReqId[0], question: byReqId[1] };
+      }
+
+      // 3) by messageId property (server message id)
+      if (messageId) {
+        const byMsgId = Object.entries(qs).find(([, q]) => q?.messageId === messageId || q?._id === messageId || q?.id === messageId);
+        if (byMsgId) return { key: byMsgId[0], question: byMsgId[1] };
+      }
+
+      // 4) by parent message id (autonomous agent socket chunk case)
+      if (parentMessageId) {
+        const byParent = Object.entries(qs).find(([, q]) => q?._id === parentMessageId || q?.messageId === parentMessageId);
+        if (byParent) return { key: byParent[0], question: byParent[1] };
+      }
+
+      return { key: null, question: null };
+    };
 
     const getScrollableChatElement = () => {
       if (typeof document === "undefined") return null;
@@ -178,8 +214,8 @@ const ChatInterface = (props) => {
 
     const initiateChatConversationAction = async (arg) => {
       hideRecentAgentsDiv('recent-agents-container');
-      const { enabledAgents, selectedContext } = state
       state = store.getState().global
+      const { enabledAgents, selectedContext } = state
       let params = { reqId: generateShortUUID() }
       let payload = {}
       let replaceExistingQsn = false;
@@ -346,6 +382,7 @@ const ChatInterface = (props) => {
     let quesId = detail?.data?.reqId;
     let questions = cloneDeep(store.getState().global.questions);
     let question = questions[quesId];
+    const parentMessageId = detail?.data?.parentMessageId;
 
     if (!question) {
       //Checking whether the question is one among the multi intent execution
@@ -362,8 +399,15 @@ const ChatInterface = (props) => {
         }
       })
       if (!question) {
-        //If the question is not found, then return
-        return;
+        // aAAgent parity: sometimes reqFlow arrives with parentMessageId; resolve by parent id.
+        if (parentMessageId) {
+          const match = findQuestionEntry(questions, { parentMessageId });
+          if (match?.key) {
+            quesId = match.key;
+            question = match.question;
+          }
+        }
+        if (!question) return;
       }
     }
 
@@ -410,7 +454,15 @@ const ChatInterface = (props) => {
       }
       let question = cloneDeep(_questions[reqId])
 
-      /*if api returns a non 200 response, an error, straming should be stopped */
+      if (!question && detail?.data?.hasOwnProperty('parentMessageId')) {
+        const parentMsgId = detail?.data?.parentMessageId;
+        const match = Object.entries(_questions).find(([, q]) => q?._id === parentMsgId || q?.messageId === parentMsgId);
+        if (match) {
+          reqId = match[0];
+          question = cloneDeep(match[1]);
+        }
+      }
+
       if(question?.status === "error"){
         question.streamingStatus = "aborted"
         _questions[reqId] = question
@@ -530,13 +582,44 @@ const ChatInterface = (props) => {
         reqId = cQFromStore?.cId
       }
       let currentQuestion = _questions[reqId]
+      // aAAgent parity: if key isn't direct (history/retry), resolve by reqId/message/parent id.
+      if (!currentQuestion) {
+        const match = findQuestionEntry(_questions, {
+          reqId: detail?.data?.reqId,
+          messageId: detail?.data?.answerMeta?.messageId,
+          parentMessageId: detail?.data?.parentMessageId || detail?.data?.answerMeta?.parentMessageId,
+        });
+        if (match?.key) {
+          reqId = match.key;
+          currentQuestion = match.question;
+        }
+      }
+      if (!currentQuestion) return;
+
+      const agentType = detail?.data?.agentType || detail?.data?.answerMeta?.agentType;
+      const isThreadView = currentQuestion?.viewType === 'threadView';
+
+      if (agentType === 'aAAgent' && !isThreadView) {
+        if (detail?.data?.answerMeta?.isAsync === true) {
+          if (reqId) {
+            const pending = { ...(store.getState().global.autonomousAsyncPending || {}) };
+            pending[reqId] = true;
+            store.dispatch(setAutonomousAsyncPending(pending));
+          }
+          return;
+        }
+        currentQuestion = { ...currentQuestion, ...detail?.data?.answerMeta, agentType };
+        _questions[reqId] = currentQuestion;
+        store.dispatch(updateChatData(_questions));
+        return;
+      }
+
       if(currentQuestion.viewType === 'threadView'){
         if(detail?.entity !== "answerContext"){      
           if(detail?.data?.answerMeta?.hasOwnProperty('messageId')) {
             currentQuestion = {...currentQuestion, ...detail?.data?.answerMeta}      
             currentQuestion.botConversation = {}  
           }
-          /*we have to create botConversation with the outputMessageId add thoughts to it, once the advanceSearchApi is completed, need to replace that outputMessageId with the response of advSearch API */
           if(detail?.data?.answerMeta?.hasOwnProperty('outputMessageId')){
             if(!currentQuestion?.botConversation) {
                   currentQuestion.botConversation = {}
@@ -559,6 +642,40 @@ const ChatInterface = (props) => {
       console.log("currentQuestion in agentThoughts", currentQuestion)
       _questions[reqId] = currentQuestion      
       store.dispatch(updateChatData(_questions))      
+    }
+
+    const handleAutoAgentBotMessage = (data) => {
+      const globalState = store.getState().global;
+      // reqId can be at data.reqId or nested in data.message.reqId (defensive lookup)
+      const reqId = data?.reqId || data?.message?.reqId;
+
+      // Kora-React parity: ALWAYS clear autonomousAsyncPending first — even if the question
+      // isn't found — so the Stop response button disappears immediately.
+      // (Bug: previous code returned early before clearing if question was not found.)
+      if (reqId) {
+        const pending = { ...(globalState.autonomousAsyncPending || {}) };
+        if (pending[reqId]) {
+          delete pending[reqId];
+          store.dispatch(setAutonomousAsyncPending(pending));
+        }
+      }
+
+      if (!reqId) return;
+
+      let questions = cloneDeep(globalState.questions);
+      const resolved = findQuestionEntry(questions, {
+        reqId,
+        messageId: data?.message?.messageId,
+        parentMessageId: data?.message?.followUpContext?.parentMessageId,
+      });
+      const qKey = resolved.key || reqId;
+      let question = resolved.question || questions[qKey];
+      if (!question) return;
+
+      question = { ...question, ...data?.message };
+      questions[qKey] = question;
+
+      store.dispatch(updateChatData(questions));
     }
 
     const options = (_options) => {
@@ -681,6 +798,7 @@ const ChatInterface = (props) => {
         getCustomData,
         contentStreaming,
         agentThoughts,
+        handleAutoAgentBotMessage,
         options,
         enableContextByFollowupContext,
         clearErrorState,

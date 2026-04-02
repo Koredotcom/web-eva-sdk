@@ -1401,7 +1401,10 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 		// The entire action chips block is only rendered when these are true:
 		// (!!item?.sources?.length || !!item?.agentId) && viewType !== threadView && templateType !== bot_template
 		// Note: We used to exclude Enterprise Knowledge here, but Kora-React shows MenuOptions for them.
-		const shouldShowActionChips = (hasSources || hasAgent) && !isThreadView && !isBotTemplate;
+		// Kora-React parity: MenuOptions (copy/export/set-context/three-dot) show only after
+		// the answer is completed successfully (apiSuccess). This prevents early rendering
+		// while streaming partial chunks.
+		const shouldShowActionChips = (hasSources || hasAgent) && !isThreadView && !isBotTemplate && !!item?.apiSuccess;
 
 		if (shouldShowActionChips) {
 			let actionChipsHTML = `<div class="answerActionChips">`;
@@ -1439,9 +1442,10 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 					`;
 				}
 
-				// 3. SET AS CONTEXT (Kora-React MenuOptions.jsx lines 1117-1122)
-				// Conditions: !llm && !testAgentFlow && showSetAsSource && !isPersonalKnowledge
-				const shouldShowSetAsContext = !llm && !testAgentFlow && showSetAsSource && !isPersonalKnowledge;
+			// 3. SET AS CONTEXT (Kora-React MenuOptions.jsx lines 1117-1122)
+			// Conditions: !llm && !testAgentFlow && showSetAsSource && !isPersonalKnowledge && !isAAAgent
+			const isAAAgent = item?.context?.agentType === 'aAAgent';
+			const shouldShowSetAsContext = !llm && !testAgentFlow && showSetAsSource && !isPersonalKnowledge && !isAAAgent;
 				if (shouldShowSetAsContext) {
 					actionChipsHTML += setContextChip();
 				}
