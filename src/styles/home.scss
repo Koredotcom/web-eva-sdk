@@ -94,14 +94,6 @@
                 padding: 0 0.5rem;
                 @include scrollbar;
 
-                &.feedback-popup-open {
-                    .question .message-content .questcopy {
-                        visibility: hidden !important;
-                        opacity: 0 !important;
-                        pointer-events: none !important;
-                    }
-                }
-
                 .message-container {
                     width: 48.75rem;
                     margin: 0 auto;

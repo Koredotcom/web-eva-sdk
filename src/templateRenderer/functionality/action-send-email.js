@@ -12,7 +12,10 @@ const sendEmailFunctionality = (data) => {
 
     const getState = () => {
         let state = store?.getState()?.global
-        const currentData = state?.questions?.[data?.reqId];
+        // For multi-intent task steps, the question is keyed by cId/id (stepId), not reqId.
+        // Fallback chain: cId → id → reqId
+        const key = data?.cId || data?.id || data?.reqId;
+        const currentData = state?.questions?.[key];
         return { state, currentData };
     };
 
@@ -53,7 +56,7 @@ const sendEmailFunctionality = (data) => {
         let obj = {
             value: text,
             connectionSource: currentData?.provider,
-            connectionId: currentData?.templateInfo?.defaultConnections,
+            connectionId: currentData?.templateInfo?.defaultConnections || currentData?.connId || data?.templateInfo?.defaultConnections || data?.connId,
             fieldTo: type
         };
 
@@ -219,7 +222,12 @@ const sendEmailFunctionality = (data) => {
         const includeSource =  localCurrentData?.includeSource;
         const subject = emailSubject?.value || '';
         const body = emailBody?.innerHTML || '';
-        const connectionId = document.getElementById(`email-connection-${data?.reqId}`)?.value || '';
+        const connectionId = document.getElementById(`email-connection-${data?.reqId}`)?.value
+            || localCurrentData?.templateInfo?.defaultConnections
+            || localCurrentData?.connId
+            || data?.templateInfo?.defaultConnections
+            || data?.connId
+            || '';
         const attachments =  localCurrentData?.attachmentPreview;
         const attachmentsIds = [], attachmentComponents= []
         attachments?.map(attach => {
@@ -233,7 +241,7 @@ const sendEmailFunctionality = (data) => {
 
         let params = {
             userId: state?.profile?.data?.id,
-            provider: localCurrentData?.provider
+            provider: localCurrentData?.provider || data?.provider
         }
 
         const payload = {

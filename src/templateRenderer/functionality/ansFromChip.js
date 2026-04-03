@@ -226,9 +226,11 @@ const AnsFromChipFunctionality = ({ item }) => {
 
 			const messageDiv = document.querySelector(`#answer-${item?.messageId} .message-renderer`);
 			if (messageDiv && navigator.clipboard?.write && typeof ClipboardItem !== "undefined") {
-				const htmlData = messageDiv.outerHTML;
-				const blob = new Blob([htmlData], { type: "text/html" });
-				const clipboardItem = new ClipboardItem({ "text/html": blob });
+				const htmlData = messageDiv.innerHTML;
+				const plainText = messageDiv.innerText || messageDiv.textContent || item.answer;
+				const htmlBlob = new Blob([htmlData], { type: "text/html" });
+				const textBlob = new Blob([plainText], { type: "text/plain" });
+				const clipboardItem = new ClipboardItem({ "text/html": htmlBlob, "text/plain": textBlob });
 				await navigator.clipboard.write([clipboardItem]);
 				showCopiedMessage();
 				return;
@@ -1096,18 +1098,15 @@ const exportAnswerToPDF = () => {
 						if (window.customElements && window.customElements.upgrade) customElements.upgrade(feedbackPopup);
 					}
 					const isOpen = feedbackPopup.hasAttribute('active') || feedbackPopup.active;
-					const questionsContainer = document.getElementById('questions-container');
 					if (isOpen) {
 						if (typeof feedbackPopup.hide === 'function') feedbackPopup.hide();
 						else feedbackPopup.removeAttribute('active');
 						feedbackDislikeButton.classList.remove('active');
-						questionsContainer?.classList.remove('feedback-popup-open');
 					} else {
 						feedbackPopup.anchor = feedbackDislikeButton;
 						if (typeof feedbackPopup.show === "function") feedbackPopup.show();
 						else feedbackPopup.setAttribute('active', '');
 						feedbackDislikeButton.classList.add('active');
-						questionsContainer?.classList.add('feedback-popup-open');
 					}
 				}
 			});
@@ -1177,7 +1176,6 @@ const exportAnswerToPDF = () => {
 
 				const handlePopupHide = () => {
 				feedbackDislikeButton?.classList.remove('active');
-				document.getElementById('questions-container')?.classList.remove('feedback-popup-open');
 			};
 				feedbackPopup.addEventListener('sl-hide', handlePopupHide);
 				feedbackPopup.addEventListener('sl-after-hide', handlePopupHide);
@@ -1188,7 +1186,6 @@ const exportAnswerToPDF = () => {
 						if (typeof feedbackPopup.hide === "function") feedbackPopup.hide();
 						else feedbackPopup.removeAttribute('active');
 						feedbackDislikeButton?.classList.remove('active');
-						document.getElementById('questions-container')?.classList.remove('feedback-popup-open');
 					}
 				}
 			});

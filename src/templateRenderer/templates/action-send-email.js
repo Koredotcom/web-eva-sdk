@@ -10,8 +10,11 @@ export function render(data) {
     }
 
     let emailList = data?.templateInfo?.connections;
-    let defaultConnectionId = data?.templateInfo?.defaultConnections;
-    const defaultConnectionProvider = data?.templateInfo?.connections?.find(email => email?.id === defaultConnectionId)?.provider;
+    let defaultConnectionId = data?.templateInfo?.defaultConnections || data?.connId;
+    if (!defaultConnectionId && emailList?.length) {
+        defaultConnectionId = emailList[0]?.id;
+    }
+    const defaultConnectionProvider = emailList?.find(email => email?.id === defaultConnectionId)?.provider;
     let html = `
         <div class="email-template">
             <div class='email-selection-field'>
@@ -108,7 +111,8 @@ const renderEmailSummary = (data) => {
     const bccRecipients = data?.content?.bcc || [];
     const allRecipients = [...toRecipients, ...ccRecipients, ...bccRecipients];
 
-    const defaultConn = data?.templateInfo?.connections?.find(c => c?.id === data?.templateInfo?.defaultConnections);
+    const defaultConnId = data?.templateInfo?.defaultConnections || data?.connId;
+    const defaultConn = data?.templateInfo?.connections?.find(c => c?.id === defaultConnId);
     const provider = data?.provider || defaultConn?.provider || 'gmail';
     const providerIcon = provider === 'gmail' ? Gmail({ size: 16, color: "#131316" }) : Outlookimg({ size: 16, color: "#131316" });
     const senderName = data?.content?.from?.name || data?.senderName || defaultConn?.name || defaultConn?.displayName || defaultConn?.emailId || '';

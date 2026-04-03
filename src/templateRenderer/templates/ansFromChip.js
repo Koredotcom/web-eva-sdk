@@ -623,6 +623,21 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 					};
 				}
 			}
+
+			// 4. Try top-level item properties and context (common in history API responses)
+			if (!agentMetaDetails) {
+				const fallbackName = item?.agentName || item?.context?.title || item?.context?.name;
+				const fallbackIcon = item?.agentIcon || item?.context?.icon || item?.context?.iconUrl
+					|| item?.context?.sources?.[0]?.icon;
+				if (fallbackName) {
+					agentMetaDetails = {
+						name: fallbackName,
+						icon: fallbackIcon,
+						isSupervisor: item?.context?.isSupervisor || false,
+						agentType: item?.context?.agentType
+					};
+				}
+			}
 		}
 
 		// 1. Special Case: Attachments (agentId === 'attachment')
@@ -719,7 +734,9 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 			}
 
 			// If agentMetaDetails is not available yet, show skeleton loader (like Kora-React)
+			// For historical data, never show skeleton — just skip the "Answer from" section
 			if (!agentMetaDetails || !name) {
+				if (item?.historicalData) return '';
 				return `
 					<div class="agentMetaDetailsWrapper">
 						<span class="agentMetaDetailsLabel">Answer from:</span>
@@ -1220,7 +1237,7 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 			id="feedbackPopup-${item?.messageId}" 
 			class="feedback-popup"
 			placement="top-end" 
-			strategy="absolute"
+			strategy="fixed"
 			auto-size="vertical">
 			<div class="p-overlaypanel feedbackDownvoteOverlay">
 				<div class="p-overlaypanel-content">

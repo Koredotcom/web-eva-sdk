@@ -38,7 +38,7 @@ function renderAnswer(data) {
     if (!data.answer) return "";
 
     let html = `
-        <div id="answer-${data.id}" class="threadName maxLength">
+        <div id="answer-${data.messageId || data.id}" class="threadName maxLength">
             ${MessageRenderer(data.answer)}
         </div>
     `;
