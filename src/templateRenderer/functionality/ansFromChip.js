@@ -624,7 +624,6 @@ const exportAnswerToPDF = () => {
 			}
 		}
 		if (source === 'msteams') {
-			/*append the above payload */
 			payload = {
 				question: "Send as Teams message",
 				contextParams: {
@@ -634,8 +633,6 @@ const exportAnswerToPDF = () => {
 				intent: 'sendTeamsMessage'
 			}
 		}
-
-
 		if (source === 'slack') {
 			payload = {
 				question: "Send as Slack message",
@@ -666,10 +663,34 @@ const exportAnswerToPDF = () => {
 				intent: 'sendEmail'
 			}
 		}
-		// When initiating integration actions from the 3-dot menu, we must not reuse any
-		// previously selected agent/attachment context; it can cause agent welcome template
-		// to get re-inserted as the latest question.
+		// Clear any existing agent/attachment context first, then set the integration
+		// agent as the new context so the compose bar banner updates to show the
+		// integration (Gmail/Slack/Teams/Outlook/Jira) instead of the previous agent.
 		store.dispatch(setSelectedContext(null));
+
+		const state = store.getState()?.global;
+		const allAgents = state?.allAgents?.data?.agents || [];
+		const integrationAgent = allAgents.find(
+			a => a?.appId === source && a?.custom === false && a?.type === 'dataAgent'
+		);
+		if (integrationAgent) {
+			const contextData = {
+				data: {
+					sources: [{
+						source: integrationAgent.id || integrationAgent._id,
+						title: integrationAgent.name,
+						name: integrationAgent.name,
+						icon: integrationAgent.icon || integrationAgent.iconUrl,
+						isAgent: true,
+						agentType: integrationAgent.type,
+						appId: integrationAgent.appId,
+					}],
+					isAgent: true,
+				}
+			};
+			store.dispatch(setSelectedContext(contextData));
+		}
+
 		chatInterface().initiateChatConversationAction({ payload, "action": "send" })
 	}
 	/*need to make advance search api call */
@@ -1075,19 +1096,18 @@ const exportAnswerToPDF = () => {
 						if (window.customElements && window.customElements.upgrade) customElements.upgrade(feedbackPopup);
 					}
 					const isOpen = feedbackPopup.hasAttribute('active') || feedbackPopup.active;
-					// Identify the question block so we can suppress the hover copy icon while popup is open
-					const questionBlock = feedbackDislikeButton.closest('.question');
+					const questionsContainer = document.getElementById('questions-container');
 					if (isOpen) {
 						if (typeof feedbackPopup.hide === 'function') feedbackPopup.hide();
 						else feedbackPopup.removeAttribute('active');
 						feedbackDislikeButton.classList.remove('active');
-						questionBlock?.classList.remove('feedback-popup-open');
+						questionsContainer?.classList.remove('feedback-popup-open');
 					} else {
 						feedbackPopup.anchor = feedbackDislikeButton;
 						if (typeof feedbackPopup.show === "function") feedbackPopup.show();
 						else feedbackPopup.setAttribute('active', '');
 						feedbackDislikeButton.classList.add('active');
-						questionBlock?.classList.add('feedback-popup-open');
+						questionsContainer?.classList.add('feedback-popup-open');
 					}
 				}
 			});
@@ -1157,7 +1177,7 @@ const exportAnswerToPDF = () => {
 
 				const handlePopupHide = () => {
 				feedbackDislikeButton?.classList.remove('active');
-				feedbackDislikeButton?.closest('.question')?.classList.remove('feedback-popup-open');
+				document.getElementById('questions-container')?.classList.remove('feedback-popup-open');
 			};
 				feedbackPopup.addEventListener('sl-hide', handlePopupHide);
 				feedbackPopup.addEventListener('sl-after-hide', handlePopupHide);
@@ -1168,7 +1188,7 @@ const exportAnswerToPDF = () => {
 						if (typeof feedbackPopup.hide === "function") feedbackPopup.hide();
 						else feedbackPopup.removeAttribute('active');
 						feedbackDislikeButton?.classList.remove('active');
-						feedbackDislikeButton?.closest('.question')?.classList.remove('feedback-popup-open');
+						document.getElementById('questions-container')?.classList.remove('feedback-popup-open');
 					}
 				}
 			});

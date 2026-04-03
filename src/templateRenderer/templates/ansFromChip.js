@@ -1438,16 +1438,20 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 							</div>
 							${getExportWordIcon()}
 						</sl-tooltip>
-						<div class="exportDropdownMenu" id="exportDropdownMenu-${item?.messageId}" style="display:none;">
-							<div class="exportDropdownItem" data-export-type="pdf" data-message-id="${item?.messageId}">
-								<svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z" stroke="#667085" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M14 2v6h6" stroke="#667085" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M9 17H7v-6h2a2 2 0 0 1 0 4H7M17 11h-3v6M14 14h2.5" stroke="#D83B01" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-								<span>PDF Document</span>
-							</div>
-							<div class="exportDropdownItem" data-export-type="word" data-message-id="${item?.messageId}">
-								<svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z" stroke="#667085" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M14 2v6h6" stroke="#667085" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 17l1.5-6 2.5 4 2.5-4 1.5 6" stroke="#2B579A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-								<span>Word Document</span>
-							</div>
-						</div>
+					<ul class="exportDropdownMenu p-menu-list" id="exportDropdownMenu-${item?.messageId}" role="menu" style="display:none;">
+						<li class="exportDropdownItem p-menuitem" role="none" data-export-type="pdf" data-message-id="${item?.messageId}">
+							<a href="#" class="p-menuitem-link" role="menuitem" tabindex="0">
+								<svg xmlns="http://www.w3.org/2000/svg" class="wa-FilePdf" width="14" height="14" viewBox="0 0 17 17" fill="none"><rect y="0.0513916" width="16.0047" height="16.0047" rx="3.20093" fill="#F04438"></rect><path fill-rule="evenodd" clip-rule="evenodd" d="M2.4007 4.8923H4.36436C4.77864 4.8923 5.0921 4.96411 5.30476 5.10773C5.51743 5.25134 5.66104 5.46124 5.73561 5.73742C5.81018 6.01361 5.84746 6.38921 5.84746 6.86425C5.84746 7.31167 5.81294 7.67347 5.7439 7.94965C5.67485 8.22584 5.534 8.44264 5.32133 8.60007C5.10867 8.75749 4.78968 8.8362 4.36436 8.8362H3.72638V11.2151H2.4007V4.8923ZM4.02465 7.70937C4.18484 7.70937 4.29531 7.6928 4.35607 7.65966C4.41683 7.62652 4.45826 7.55471 4.48036 7.44424C4.50245 7.33376 4.5135 7.14044 4.5135 6.86425C4.5135 6.58807 4.50383 6.39474 4.4845 6.28427C4.46517 6.17379 4.42374 6.10199 4.36022 6.06884C4.29669 6.0357 4.1876 6.01913 4.03294 6.01913H3.72638V7.70937H4.02465ZM6.56894 4.8923H8.17633C8.77841 4.8923 9.20787 4.97654 9.46472 5.14501C9.72157 5.31348 9.88038 5.57724 9.94114 5.93628C10.0019 6.29532 10.0323 6.89739 10.0323 7.74252C10.0323 8.58212 10.0019 9.80521 9.94114 10.167C9.88038 10.5288 9.72157 10.794 9.46472 10.9624C9.20787 11.1309 8.77841 11.2151 8.17633 11.2151H6.56894V4.8923ZM8.16804 10.08C8.36689 10.08 8.49808 10.0538 8.5616 10.0013C8.62513 9.94883 8.68589 9.51736 8.68589 8.98534C8.68589 8.45333 8.71488 8.36117 8.71488 7.74252C8.71488 7.12939 8.70522 6.7165 8.68589 6.50383C8.66655 6.29117 8.62374 6.1586 8.55746 6.10613C8.49118 6.05365 8.36137 6.02742 8.16804 6.02742H7.88633V10.08H8.16804ZM10.8863 11.2151V4.8923H13.604V6.02742H12.212V7.28681H13.43V8.42193H12.212V11.2151H10.8863Z" fill="white"></path></svg>
+								<span class="p-menuitem-text">PDF Document (.pdf)</span>
+							</a>
+						</li>
+						<li class="exportDropdownItem p-menuitem" role="none" data-export-type="word" data-message-id="${item?.messageId}">
+							<a href="#" class="p-menuitem-link" role="menuitem" tabindex="0">
+								<svg xmlns="http://www.w3.org/2000/svg" class="wa-FileWord" width="14" height="14" viewBox="0 0 17 17" fill="none"><rect y="0.0794067" width="16.0047" height="16.0047" rx="3.20093" fill="#2970FF"></rect><path d="M4.68755 4.3045H3.14618L5.22659 11.8587H6.5259L8.00181 6.51382L9.47385 11.8587H10.7732L12.8587 4.3045H11.3124L10.1127 9.20857L8.76169 4.3045H7.23822L5.8866 9.20857L4.68755 4.3045Z" fill="white"></path></svg>
+								<span class="p-menuitem-text">Word Document (.doc)</span>
+							</a>
+						</li>
+					</ul>
 					</div>
 				`;
 			}
