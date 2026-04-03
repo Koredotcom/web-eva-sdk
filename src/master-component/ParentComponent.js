@@ -240,11 +240,12 @@ const renderQuestionsOnly = () => {
     // Rendering `Object.values(questions)` would then show a duplicated "question" block
     // (commonly `agent_welcome_template`) even though only one advanceSearch happened.
     //
-    // We prefer the most recently materialized copy (iterate from end).
+    // Keep the FIRST occurrence so that items stay in their original chronological position
+    // (e.g., agent_welcome_template stays at the top, not shifted below a later integration action).
     const questionList = Object.values(questions);
     const seen = new Set();
     const deduped = [];
-    for (let i = questionList.length - 1; i >= 0; i--) {
+    for (let i = 0; i < questionList.length; i++) {
         const item = questionList[i];
         const key =
             (item?.messageId ? `m:${item.messageId}` : null) ||
@@ -255,7 +256,6 @@ const renderQuestionsOnly = () => {
         seen.add(key);
         deduped.push(item);
     }
-    deduped.reverse();
 
     let questionsHTML = '';
     questionsHTML = deduped.map((item) => {

@@ -1162,14 +1162,16 @@ const exportAnswerToPDF = () => {
 				feedbackPopup.addEventListener('sl-hide', handlePopupHide);
 				feedbackPopup.addEventListener('sl-after-hide', handlePopupHide);
 
-				document.addEventListener('click', (event) => {
-					if (!feedbackPopup.contains(event.target) && !feedbackDislikeButton?.contains(event.target)) {
-						if (feedbackPopup.hasAttribute('active') || feedbackPopup.active) {
-							if (typeof feedbackPopup.hide === "function") feedbackPopup.hide();
-							else feedbackPopup.removeAttribute('active');
-						}
+			document.addEventListener('click', (event) => {
+				if (!feedbackPopup.contains(event.target) && !feedbackDislikeButton?.contains(event.target)) {
+					if (feedbackPopup.hasAttribute('active') || feedbackPopup.active) {
+						if (typeof feedbackPopup.hide === "function") feedbackPopup.hide();
+						else feedbackPopup.removeAttribute('active');
+						feedbackDislikeButton?.classList.remove('active');
+						feedbackDislikeButton?.closest('.question')?.classList.remove('feedback-popup-open');
 					}
-				});
+				}
+			});
 
 				feedbackPopup.popupListenersAdded = true;
 			}

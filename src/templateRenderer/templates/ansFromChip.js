@@ -1104,7 +1104,7 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 						<div class="tooltip-title">Not Helpful:</div>
 						<div class="tooltip-subtitle">Response is incorrect or not relavant on your query.</div>
 					</div>
-					<span style="display: flex; align-items: center; justify-content: center; width: 100%; height: 100%;">${getThumbsDownIcon(true)}</span>
+					<span style="display: flex; background: #FEF3F2; align-items: center; justify-content: center; width: 100%; height: 100%;">${getThumbsDownIcon(true)}</span>
 				</sl-tooltip>
 				</div>`
 				:
