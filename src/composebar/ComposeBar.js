@@ -33,6 +33,7 @@ class ComposeBar {
         this.isLoading = false;
         this.isRecording = false;
         this.recognition = null;
+        this.silenceTimeout = null; // auto-close recording after silence (Kora-React parity)
         this.unsubscribe = null;
         this.fileUploaderUnsubscribe = null;
         this.selectedContextUnsubscribe = null;
@@ -905,6 +906,9 @@ class ComposeBar {
                         }
                     }
                 }
+
+                // Kora-React parity: reset the 2.5s silence auto-close timer on every transcript event
+                this._resetSilenceTimeout();
             };
 
             this.recognition.onend = () => {
@@ -923,6 +927,7 @@ class ComposeBar {
 
             this.recognition.onerror = (event) => {
                 this.isRecording = false;
+                this._clearSilenceTimeout();
                 this.updateSpeechButton();
                 console.error('Speech recognition error:', event.error);
             };
@@ -1925,26 +1930,19 @@ class ComposeBar {
     }
 
     /**
-     * Update microphone button based on input length
+     * Update microphone button icon — always shows mic when not recording (Kora-React parity).
+     * Does NOT swap to close icon when text is present; the mic is only replaced by the
+     * recording animation / close-on-hover logic handled by updateSpeechButton().
      */
     updateMicrophoneButton() {
-        // Skip if MS env (mic button is hidden)
         if (this.isMSEnv) return;
+        if (this.isRecording) return; // recording animation is managed by updateSpeechButton
 
         const micButton = this.container.querySelector('[data-eva-speech]');
-        if (!micButton) {
-            return;
-        }
+        if (!micButton) return;
 
-
-
-        if (this.input?.length > 0) {
-            micButton.innerHTML = Close({ size: 12, color: "#0F0F0F" });
-            micButton.title = "Clear input";
-        } else {
-            micButton.innerHTML = microphoneIcon({ size: 16, color: "#0F0F0F" });
-            micButton.title = "Search using voice";
-        }
+        micButton.innerHTML = microphoneIcon({ size: 16, color: "#0F0F0F" });
+        micButton.title = "Search using voice";
     }
 
     /**
@@ -2113,7 +2111,7 @@ class ComposeBar {
     }
 
     /**
-     * Handle speech to text button click or clear input
+     * Handle speech to text button click
      */
     handleSpeechToText() {
 
@@ -2124,23 +2122,55 @@ class ComposeBar {
 
         if (this.isRecording) {
             this.isRecording = false;
+            this._clearSilenceTimeout();
             this.updateSpeechButton();
             this.recognition.stop();
         } else {
 
             this.isRecording = true;
             this.updateSpeechButton();
+            this._resetSilenceTimeout(); // start the 2.5s silence auto-close timer
             try {
                 this.recognition.start();
             } catch (error) {
                 console.error('Error starting speech recognition:', error);
                 this.isRecording = false;
+                this._clearSilenceTimeout();
                 this.updateSpeechButton();
             }
         }
 
         if (this.callbacks.onSpeechToText) {
             this.callbacks.onSpeechToText(this.isRecording);
+        }
+    }
+
+    /**
+     * Reset the 2.5s silence auto-close timer (Kora-React parity).
+     * Called on every transcript result so that speech is only stopped after
+     * 2.5 seconds of actual silence.
+     */
+    _resetSilenceTimeout() {
+        this._clearSilenceTimeout();
+        this.silenceTimeout = setTimeout(() => {
+            if (this.isRecording) {
+                this.isRecording = false;
+                this.updateSpeechButton();
+                try { this.recognition.stop(); } catch (e) { /* noop */ }
+                if (this.callbacks.onSpeechToText) {
+                    this.callbacks.onSpeechToText(false);
+                }
+            }
+        }, 2500);
+    }
+
+    /**
+     * Clear the silence auto-close timer.
+     */
+    _clearSilenceTimeout() {
+        if (this.silenceTimeout) {
+            clearTimeout(this.silenceTimeout);
+            this.silenceTimeout = null;
         }
     }
 
@@ -2654,7 +2684,11 @@ class ComposeBar {
     }
 
     /**
-     * Update speech button appearance based on recording state
+     * Update speech button appearance based on recording state (Kora-React parity).
+     * States:
+     *   recording + hovering  → Close icon  ("Stop listening")
+     *   recording + not hover → sonar-wrapper gif animation ("Stop listening")
+     *   not recording         → Microphone icon ("Search using voice")
      */
     updateSpeechButton() {
         const speechBtn = this.container.querySelector('[data-eva-speech]');
@@ -2669,13 +2703,8 @@ class ComposeBar {
                     speechBtn.innerHTML = Close({ size: 12, color: "#424242" });
                     if (tooltipContent) tooltipContent.textContent = 'Stop listening';
                 } else {
-                    speechBtn.innerHTML = `
-                        <div class="sonar-wrapper">
-                            <div class="sonar-wave"></div>
-                            <div class="sonar-wave"></div>
-                            <img src="images/waves-animation.gif" alt="" />
-                        </div>
-                    `;
+                    // Matches Kora-React: sonar-wrapper contains only the gif, no sonar-wave divs
+                    speechBtn.innerHTML = `<div class="sonar-wrapper"><img src="images/waves-animation.gif" alt="" /></div>`;
                     if (tooltipContent) tooltipContent.textContent = 'Stop listening';
                 }
                 speechBtn.setAttribute('title', 'Stop listening');
@@ -2683,7 +2712,7 @@ class ComposeBar {
                 speechBtn.classList.remove('animatedImge', 'recording');
                 speechBtn.innerHTML = microphoneIcon({ size: 16, color: "#0F0F0F" });
                 if (tooltipContent) tooltipContent.textContent = 'Search using voice';
-                speechBtn.setAttribute('title', 'Voice input');
+                speechBtn.setAttribute('title', 'Search using voice');
             }
         }
     }
