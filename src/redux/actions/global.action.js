@@ -31,6 +31,58 @@ export const fetchProfileData = createAsyncThunk(
     }
 );
 
+export const fetchAboutMe = createAsyncThunk(
+    'global/fetchAboutMe',
+    async (userId, { rejectWithValue }) => {
+        try {
+            const response = await axiosInstance.get(`1.1/users/${userId}/memory/aboutme`);
+            return response.data;
+        } catch (error) {
+            handleErrorState(error, "AboutMe");
+            return rejectWithValue(error.response?.data);
+        }
+    }
+);
+
+export const editAboutMe = createAsyncThunk(
+    'global/editAboutMe',
+    async ({ userId, instruction }, { rejectWithValue }) => {
+        try {
+            const response = await axiosInstance.post(`1.1/users/${userId}/memory/aboutme/edits`, { instruction });
+            return response.data;
+        } catch (error) {
+            handleErrorState(error, "EditAboutMe");
+            return rejectWithValue(error.response?.data);
+        }
+    }
+);
+
+export const fetchMemoryInstructions = createAsyncThunk(
+    'global/fetchMemoryInstructions',
+    async ({ userId, params }, { rejectWithValue }) => {
+        try {
+            const response = await axiosInstance.get(`1.1/users/${userId}/memory/instructions`, { params });
+            return response.data;
+        } catch (error) {
+            handleErrorState(error, "GetInstructions");
+            return rejectWithValue(error.response?.data);
+        }
+    }
+);
+
+export const createMemoryInstruction = createAsyncThunk(
+    'global/createMemoryInstruction',
+    async ({ userId, payload }, { rejectWithValue }) => {
+        try {
+            const response = await axiosInstance.post(`1.1/users/${userId}/memory/instructions`, payload);
+            return response.data;
+        } catch (error) {
+            handleErrorState(error, "CreateInstruction");
+            return rejectWithValue(error.response?.data);
+        }
+    }
+);
+
 export const fetchSchedulers = createAsyncThunk(
     'global/fetchSchedulers',
     async (arg, { rejectWithValue }) => {

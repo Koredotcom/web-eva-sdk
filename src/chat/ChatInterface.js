@@ -1,5 +1,5 @@
 import { advanceSearch, cancelAdvancedSearch, stopResponseGeneration, getSignedMediaURL } from "../redux/actions/global.action";
-import { setChatInterfaceOptions, setCurrentQuestion, setCustomData, setEnableContextByFollowupContext, setEnabledCustomTemplates, setErrorState } from "../redux/globalSlice"
+import { setChatInterfaceOptions, setCurrentQuestion, setCustomData, setEnableContextByFollowupContext, setEnabledCustomTemplates, setErrorState, setUserSelectedLLMModel } from "../redux/globalSlice"
 import { updateChatData } from "../redux/globalSlice";
 import store from "../redux/store";
 import { v4 as uuid } from 'uuid';
@@ -61,9 +61,12 @@ const ChatInterface = (props) => {
     const sendMessageAction = async (value) => {
       const state = store.getState()?.global
       if (value) {
-        const { allAgents, selectedContext, commonAgents} = state
+        const { allAgents, selectedContext, commonAgents, userSelectedLLMModel} = state
         let params = { reqId: generateShortUUID() }
         let payload = { question: value }
+        if(userSelectedLLMModel) {
+          payload.llmIntegrationId = userSelectedLLMModel
+        }
         if(state.activeBoardId) {
           payload.boardId = state.activeBoardId
         }
@@ -468,6 +471,10 @@ const ChatInterface = (props) => {
       store.dispatch(setErrorState([]))
     }
 
+    const storeUserSelectedLLMModel = (model) => {
+      store.dispatch(setUserSelectedLLMModel(model))
+    }
+
     /**
      * Sends a message to either a bot conversation or initiates a regular chat message
      * 
@@ -550,7 +557,8 @@ const ChatInterface = (props) => {
         sendMessage,
         setAgentContext,
         stopBotAnswer,
-        fetchSignedMediaURL
+        fetchSignedMediaURL,
+        storeUserSelectedLLMModel
     }
 }
 

@@ -14,6 +14,8 @@ export * from './Feedback'
 export * from "./templateRenderer";
 export * from "./Announcements";
 export * from "./schedulers";
+export * from "./profile";
+export * from "./sdkAgents";
 
 
 // Redux store exports
