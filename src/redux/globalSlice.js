@@ -57,7 +57,8 @@ const initialState = {
   enableDebugging: false,
   quickActions: [],
   announcements: {},
-  autoRemoveWebSearchFromContext: false
+  autoRemoveWebSearchFromContext: false,
+  userSelectedLLMModel: null
 };
 
 const globalSlice = createSlice({
@@ -138,6 +139,9 @@ const globalSlice = createSlice({
     },
     setSchedulers: (state, action) => {
       state.schedulers = action.payload
+    },
+    setUserSelectedLLMModel: (state, action) => {
+      state.userSelectedLLMModel = action.payload
     }
   },
   extraReducers: (builder) => {
@@ -263,7 +267,8 @@ export const {
   setQuickActions,
   setAnnouncements,
   setAutoRemoveWebSearchFromContext,
-  setSchedulers
+  setSchedulers,
+  setUserSelectedLLMModel
 } = globalSlice.actions;
 
 export default globalSlice;
