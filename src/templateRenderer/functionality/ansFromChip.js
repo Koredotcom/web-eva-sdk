@@ -995,14 +995,18 @@ const exportAnswerToPDF = () => {
 					exportDropdownMenu.style.display = isOpen ? 'none' : 'block';
 					exportButton.classList.toggle('active', !isOpen);
 				});
-				// Close dropdown when clicking outside
-				document.addEventListener('click', (e) => {
-					if (!exportButton.contains(e.target)) {
-						exportDropdownMenu.style.display = 'none';
-						exportButton.classList.remove('active');
-					}
-				});
-				// Handle dropdown item clicks
+				if (!document._exportDropdownCloseAttached) {
+					document.addEventListener('click', (e) => {
+						document.querySelectorAll('.exportButton').forEach(btn => {
+							const menu = btn.querySelector('.exportDropdownMenu');
+							if (menu && !btn.contains(e.target)) {
+								menu.style.display = 'none';
+								btn.classList.remove('active');
+							}
+						});
+					});
+					document._exportDropdownCloseAttached = true;
+				}
 				exportDropdownMenu.querySelectorAll('.exportDropdownItem').forEach(dropItem => {
 					dropItem.addEventListener('click', (e) => {
 						e?.preventDefault();

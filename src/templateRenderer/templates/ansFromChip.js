@@ -1299,7 +1299,7 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 
 		return `
 			<div class="three-dot-menu-container">
-				<sl-dropdown>
+				<sl-dropdown hoist>
 					<button class="three-dot-trigger" data-three-dot-trigger="${messageId}" title="More options" slot="trigger">${getThreeDotIcon()}</button>				
 					<sl-menu class="three-dot-dropdown" data-three-dot-dropdown="${messageId}">
 						${integrationMenuItems}

@@ -12,6 +12,31 @@ import { InitiateChatConversationAction } from "../../chat";
  * Key: messageId → { interval, authProfiles, boardId, data, destroyed }
  */
 const activeSessions = new Map();
+let _storeUnsubscribe = null;
+let _prevBoardId = null;
+
+function ensureStoreWatcher() {
+    if (_storeUnsubscribe) return;
+    _prevBoardId = store.getState()?.global?.activeBoardId;
+
+    _storeUnsubscribe = store.subscribe(() => {
+        if (activeSessions.size === 0) return;
+
+        const state = store.getState()?.global;
+        const currentBoardId = state?.activeBoardId;
+        const questions = state?.questions;
+
+        if (currentBoardId !== _prevBoardId) {
+            _prevBoardId = currentBoardId;
+            cleanupAllAuthChallenges();
+            return;
+        }
+
+        if (!questions || Object.keys(questions).length === 0) {
+            cleanupAllAuthChallenges();
+        }
+    });
+}
 
 export function cleanupAuthChallenge(messageId) {
     const session = activeSessions.get(messageId);
@@ -101,6 +126,17 @@ function startPolling(session) {
     session.interval = setInterval(() => {
         if (session.destroyed) { stopPolling(session); return; }
 
+        const state = store.getState()?.global;
+        const currentBoardId = state?.activeBoardId;
+        const questions = state?.questions;
+
+        const boardChanged = currentBoardId && currentBoardId !== boardId;
+        const questionsCleared = !questions || Object.keys(questions).length === 0;
+        if (boardChanged || questionsCleared) {
+            cleanupAuthChallenge(messageId);
+            return;
+        }
+
         store.dispatch(checkAuthStatus({ boardId, messageId }))
             .then((result) => {
                 if (session.destroyed) return;
@@ -139,6 +175,7 @@ const AgentAuthChallengeFunc = (data) => {
     // Retrieve or bootstrap session
     let session = activeSessions.get(messageId);
     if (!session) {
+        ensureStoreWatcher();
         session = {
             messageId,
             boardId,

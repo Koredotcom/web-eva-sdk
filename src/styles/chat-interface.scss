@@ -1457,6 +1457,7 @@ body {
 
             .exportButton {
                 position: relative;
+                overflow: visible;
 
                 &.active {
                     background: #f5f5f5;
@@ -4037,6 +4038,10 @@ body {
                         cursor: pointer;
                         position: relative;
                     }
+                }
+
+                .exportButton {
+                    overflow: visible;
                 }
 
                 .setContextDropdown {
