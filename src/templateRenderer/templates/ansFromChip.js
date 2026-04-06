@@ -623,6 +623,21 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 					};
 				}
 			}
+
+			// 4. Try top-level item properties and context (common in history API responses)
+			if (!agentMetaDetails) {
+				const fallbackName = item?.agentName || item?.context?.title || item?.context?.name;
+				const fallbackIcon = item?.agentIcon || item?.context?.icon || item?.context?.iconUrl
+					|| item?.context?.sources?.[0]?.icon;
+				if (fallbackName) {
+					agentMetaDetails = {
+						name: fallbackName,
+						icon: fallbackIcon,
+						isSupervisor: item?.context?.isSupervisor || false,
+						agentType: item?.context?.agentType
+					};
+				}
+			}
 		}
 
 		// 1. Special Case: Attachments (agentId === 'attachment')
@@ -719,7 +734,9 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 			}
 
 			// If agentMetaDetails is not available yet, show skeleton loader (like Kora-React)
+			// For historical data, never show skeleton — just skip the "Answer from" section
 			if (!agentMetaDetails || !name) {
+				if (item?.historicalData) return '';
 				return `
 					<div class="agentMetaDetailsWrapper">
 						<span class="agentMetaDetailsLabel">Answer from:</span>
@@ -1104,7 +1121,7 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 						<div class="tooltip-title">Not Helpful:</div>
 						<div class="tooltip-subtitle">Response is incorrect or not relavant on your query.</div>
 					</div>
-					<span style="display: flex; align-items: center; justify-content: center; width: 100%; height: 100%;">${getThumbsDownIcon(true)}</span>
+					<span style="display: flex; background: #FEF3F2; align-items: center; justify-content: center; width: 100%; height: 100%;">${getThumbsDownIcon(true)}</span>
 				</sl-tooltip>
 				</div>`
 				:
@@ -1220,7 +1237,7 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 			id="feedbackPopup-${item?.messageId}" 
 			class="feedback-popup"
 			placement="top-end" 
-			strategy="absolute"
+			strategy="fixed"
 			auto-size="vertical">
 			<div class="p-overlaypanel feedbackDownvoteOverlay">
 				<div class="p-overlaypanel-content">
@@ -1282,7 +1299,7 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 
 		return `
 			<div class="three-dot-menu-container">
-				<sl-dropdown>
+				<sl-dropdown hoist>
 					<button class="three-dot-trigger" data-three-dot-trigger="${messageId}" title="More options" slot="trigger">${getThreeDotIcon()}</button>				
 					<sl-menu class="three-dot-dropdown" data-three-dot-dropdown="${messageId}">
 						${integrationMenuItems}
@@ -1401,7 +1418,10 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 		// The entire action chips block is only rendered when these are true:
 		// (!!item?.sources?.length || !!item?.agentId) && viewType !== threadView && templateType !== bot_template
 		// Note: We used to exclude Enterprise Knowledge here, but Kora-React shows MenuOptions for them.
-		const shouldShowActionChips = (hasSources || hasAgent) && !isThreadView && !isBotTemplate;
+		// Kora-React parity: MenuOptions (copy/export/set-context/three-dot) show only after
+		// the answer is completed successfully (apiSuccess) OR it is historical data.
+		// This prevents early rendering while streaming partial chunks.
+		const shouldShowActionChips = (hasSources || hasAgent) && !isThreadView && !isBotTemplate && (!!item?.apiSuccess || !!item?.historicalData);
 
 		if (shouldShowActionChips) {
 			let actionChipsHTML = `<div class="answerActionChips">`;
@@ -1424,24 +1444,50 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 					`;
 				}
 
-				// 2. EXPORT TO WORD — shown when displayMenu && answer exists
-				if (item?.answer && !state?.ansFromChipElements?.disableExporttoWordDoc) {
-					actionChipsHTML += `
-						<div class="exportWordButton" id="exportWordButton-${item?.messageId}">
-							<sl-tooltip placement="bottom">
-								<div slot="content" class="caTooltips">
-									<div class="tooltip-title">Export Response:</div>
-									<div class="tooltip-subtitle">Export the response as a file.</div>
-								</div>
-								${getExportWordIcon()}
-							</sl-tooltip>
-						</div>
-					`;
-				}
+			// 2. EXPORT DROPDOWN (PDF + Word) — shown when displayMenu && answer exists
+			if (item?.answer && !state?.ansFromChipElements?.disableExporttoWordDoc) {
+				actionChipsHTML += `
+					<div class="exportButton" id="exportButton-${item?.messageId}">
+						<sl-tooltip placement="bottom">
+							<div slot="content" class="caTooltips">
+								<div class="tooltip-title">Export Response:</div>
+								<div class="tooltip-subtitle">Export the response as a file.</div>
+							</div>
+							${getExportWordIcon()}
+						</sl-tooltip>
+					<ul class="exportDropdownMenu p-menu-list" id="exportDropdownMenu-${item?.messageId}" role="menu" style="display:none;">
+						<li class="exportDropdownItem p-menuitem" role="none" data-export-type="pdf" data-message-id="${item?.messageId}">
+							<a href="#" class="p-menuitem-link" role="menuitem" tabindex="0">
+								<svg xmlns="http://www.w3.org/2000/svg" class="wa-FilePdf" width="14" height="14" viewBox="0 0 17 17" fill="none"><rect y="0.0513916" width="16.0047" height="16.0047" rx="3.20093" fill="#F04438"></rect><path fill-rule="evenodd" clip-rule="evenodd" d="M2.4007 4.8923H4.36436C4.77864 4.8923 5.0921 4.96411 5.30476 5.10773C5.51743 5.25134 5.66104 5.46124 5.73561 5.73742C5.81018 6.01361 5.84746 6.38921 5.84746 6.86425C5.84746 7.31167 5.81294 7.67347 5.7439 7.94965C5.67485 8.22584 5.534 8.44264 5.32133 8.60007C5.10867 8.75749 4.78968 8.8362 4.36436 8.8362H3.72638V11.2151H2.4007V4.8923ZM4.02465 7.70937C4.18484 7.70937 4.29531 7.6928 4.35607 7.65966C4.41683 7.62652 4.45826 7.55471 4.48036 7.44424C4.50245 7.33376 4.5135 7.14044 4.5135 6.86425C4.5135 6.58807 4.50383 6.39474 4.4845 6.28427C4.46517 6.17379 4.42374 6.10199 4.36022 6.06884C4.29669 6.0357 4.1876 6.01913 4.03294 6.01913H3.72638V7.70937H4.02465ZM6.56894 4.8923H8.17633C8.77841 4.8923 9.20787 4.97654 9.46472 5.14501C9.72157 5.31348 9.88038 5.57724 9.94114 5.93628C10.0019 6.29532 10.0323 6.89739 10.0323 7.74252C10.0323 8.58212 10.0019 9.80521 9.94114 10.167C9.88038 10.5288 9.72157 10.794 9.46472 10.9624C9.20787 11.1309 8.77841 11.2151 8.17633 11.2151H6.56894V4.8923ZM8.16804 10.08C8.36689 10.08 8.49808 10.0538 8.5616 10.0013C8.62513 9.94883 8.68589 9.51736 8.68589 8.98534C8.68589 8.45333 8.71488 8.36117 8.71488 7.74252C8.71488 7.12939 8.70522 6.7165 8.68589 6.50383C8.66655 6.29117 8.62374 6.1586 8.55746 6.10613C8.49118 6.05365 8.36137 6.02742 8.16804 6.02742H7.88633V10.08H8.16804ZM10.8863 11.2151V4.8923H13.604V6.02742H12.212V7.28681H13.43V8.42193H12.212V11.2151H10.8863Z" fill="white"></path></svg>
+								<span class="p-menuitem-text">PDF Document (.pdf)</span>
+							</a>
+						</li>
+						<li class="exportDropdownItem p-menuitem" role="none" data-export-type="word" data-message-id="${item?.messageId}">
+							<a href="#" class="p-menuitem-link" role="menuitem" tabindex="0">
+								<svg xmlns="http://www.w3.org/2000/svg" class="wa-FileWord" width="14" height="14" viewBox="0 0 17 17" fill="none"><rect y="0.0794067" width="16.0047" height="16.0047" rx="3.20093" fill="#2970FF"></rect><path d="M4.68755 4.3045H3.14618L5.22659 11.8587H6.5259L8.00181 6.51382L9.47385 11.8587H10.7732L12.8587 4.3045H11.3124L10.1127 9.20857L8.76169 4.3045H7.23822L5.8866 9.20857L4.68755 4.3045Z" fill="white"></path></svg>
+								<span class="p-menuitem-text">Word Document (.doc)</span>
+							</a>
+						</li>
+					</ul>
+					</div>
+				`;
+			}
 
-				// 3. SET AS CONTEXT (Kora-React MenuOptions.jsx lines 1117-1122)
-				// Conditions: !llm && !testAgentFlow && showSetAsSource && !isPersonalKnowledge
-				const shouldShowSetAsContext = !llm && !testAgentFlow && showSetAsSource && !isPersonalKnowledge;
+		// 3. SET AS CONTEXT (Kora-React MenuOptions.jsx lines 1117-1122)
+		// Conditions: !llm && !testAgentFlow && showSetAsSource && !isPersonalKnowledge && !isAAAgent
+		// isAAAgent check covers all the places agentType can be stored on a question:
+		//  - item.context.agentType        : live/standard aAAgent questions
+		//  - item.agentType                : set by agentThoughts handler after utterance-triggered aAAgent call
+		//  - item.followUpContext.agentType : used in reqFlow/socket events
+		//  - item.sources[*].agentType     : present on source objects returned by the API
+		//  - item.context.sources[*].agentType : present on context source objects
+		const isAAAgent =
+			item?.context?.agentType === 'aAAgent' ||
+			item?.agentType === 'aAAgent' ||
+			item?.followUpContext?.agentType === 'aAAgent' ||
+			item?.sources?.some(s => s?.agentType === 'aAAgent') ||
+			item?.context?.sources?.some(s => s?.agentType === 'aAAgent');
+		const shouldShowSetAsContext = !llm && !testAgentFlow && showSetAsSource && !isPersonalKnowledge && !isAAAgent;
 				if (shouldShowSetAsContext) {
 					actionChipsHTML += setContextChip();
 				}
@@ -1472,9 +1518,9 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 			actionChipsHTML += `</div>`;
 
 			// Only add the wrapper if we actually have action chips to show
-			if (actionChipsHTML.includes('copyAnswerButton') || actionChipsHTML.includes('exportWordButton') ||
-				actionChipsHTML.includes('setContextButton') || actionChipsHTML.includes('setContextDropdown') ||
-				actionChipsHTML.includes('feedbackChip') || actionChipsHTML.includes('three-dot-menu-container')) {
+		if (actionChipsHTML.includes('copyAnswerButton') || actionChipsHTML.includes('exportButton') ||
+			actionChipsHTML.includes('setContextButton') || actionChipsHTML.includes('setContextDropdown') ||
+			actionChipsHTML.includes('feedbackChip') || actionChipsHTML.includes('three-dot-menu-container')) {
 				// Wrap action chips in a separate ansFromChip div (matching Kora-React structure line 1213)
 				const actionChipsWrapper = `<div class="ansFromChip">${actionChipsHTML}</div>`;
 				chipHTML += actionChipsWrapper;

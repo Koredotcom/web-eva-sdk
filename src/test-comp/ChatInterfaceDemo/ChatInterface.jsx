@@ -1,9 +1,7 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
 import { TemplateRenderer } from "../../templateRenderer";
 import { BotConversation, ChatInterface } from "../../chat";
 import NewChat from "../../chat/NewChat";
-// Removing React Composebar - we'll use the JavaScript version
-// import Composebar from "./Composebar";
 
 import "../../styles/chat-interface.scss"
 import "../../styles/composebar.scss"
@@ -16,6 +14,7 @@ import RecentAgentsFunc from "../../LandingPageRecentAgents/RecentAgents";
 import { isUserNearBottom } from "../../utils/helpers";
 import { RightArrow } from "../../templateRenderer/icons-library";
 import Announcements from "../announcements";
+import { cleanupAllAuthChallenges } from "../../templateRenderer/functionality/agent-auth-challenge";
 const {renderRecentAgents, unHideRecentAgentsDiv} = RecentAgentsFunc();
 
 
@@ -38,8 +37,36 @@ const {renderRecentAgents, unHideRecentAgentsDiv} = RecentAgentsFunc();
 //   return <div ref={ref} />;
 // }
 
+const deduplicateQuestions = (questions) => {
+  const questionList = Object.values(questions);
+  const seen = new Set();
+  const deduped = [];
+  for (let i = 0; i < questionList.length; i++) {
+    const item = questionList[i];
+    const key =
+      (item?.messageId ? `m:${item.messageId}` : null) ||
+      (item?.reqId ? `r:${item.reqId}` : null) ||
+      (item?.cId ? `c:${item.cId}` : null) ||
+      (item?.id ? `i:${item.id}` : `idx:${i}`);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    deduped.push(item);
+  }
+  return deduped;
+};
+
+const shouldSkipRender = (container) => {
+  if (!container) return false;
+  if (container.querySelector('.ts-control input:focus')) return true;
+  if (container.querySelector('.slack-search-input:focus, .teams-search-input:focus')) return true;
+  if (container.querySelector('.slack-message-editor:focus, .teams-message-editor:focus')) return true;
+  if (container.querySelector('.sc-prompt-input:focus')) return true;
+  if (container.querySelector('.emailSmartCompose')) return true;
+  if (container.querySelector('[data-sending="true"]')) return true;
+  return false;
+};
+
 const ChatInterfaceDemo = () => {
-  const [messages, setMessages] = useState(null);
   const [quickActions, setQuickActions] = useState(null);
   const [input, setInput] = useState("");
   const [announcements, setAnnouncements] = useState(null);
@@ -47,12 +74,52 @@ const ChatInterfaceDemo = () => {
   const [wasScrollToBottomClicked, setWasScrollToBottomClicked] = useState(false);
   const [isComposebarBotInputVisible, setIsComposebarBotInputVisible] = useState(false);
   const [isComposebarBotInputExpanded, setIsComposebarBotInputExpanded] = useState(false);
+  const [, forceUpdate] = useState(0);
 
   const chatInterface = useRef();
-  const composeBarRef = useRef(); // Reference for the ComposeBar instance
+  const composeBarRef = useRef();
   const scrollContainerRef = useRef(null);
+  const messagesContainerRef = useRef(null);
   const preventScrollRef = useRef(false);
   const getBottomHeight = useRef(0);
+  const questionsRef = useRef(null);
+
+  const renderMessages = useCallback((questions) => {
+    const container = messagesContainerRef.current;
+    if (!container) return;
+    if (shouldSkipRender(container)) return;
+
+    if (!questions || Object.keys(questions).length === 0) {
+      container.innerHTML = '';
+      return;
+    }
+
+    const prevScrollTop = scrollContainerRef.current?.scrollTop || 0;
+    const deduped = deduplicateQuestions(questions);
+
+    const botWrapper = document.querySelector('#eva-composebar .composebar-bot-input-wrapper');
+    const botVisible = botWrapper && window.getComputedStyle(botWrapper).display !== 'none' && botWrapper.getClientRects().length > 0;
+    const botExpanded = botVisible && !botWrapper.classList.contains('details-hidden');
+    const extraClasses = [
+      botVisible ? 'composebar-bot-input-visible' : '',
+      botExpanded ? 'composebar-bot-input-expanded' : '',
+    ].filter(Boolean).join(' ');
+
+    const html = deduped.map((item) => {
+      if (item?.isTask) return '';
+      const el = TemplateRenderer.generateHTMLTemplate(item, {
+        loadingText: "Analyzing",
+      });
+      const cls = `chat-message-container${extraClasses ? ' ' + extraClasses : ''}`;
+      return `<div class="${cls}">${el.innerHTML}</div>`;
+    }).join('');
+
+    container.innerHTML = html;
+
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTop = prevScrollTop;
+    }
+  }, []);
 
   useEffect(() => {
     chatInterface.current = ChatInterface();
@@ -68,24 +135,23 @@ const ChatInterfaceDemo = () => {
         })
     botInstance.enableEVABotSdk(true)
 
-    // fetchAnnouncementData()   
-
-    // Subscribe to updates
     const unsubscribe = chatInterface.current.subscribe(
       (question, searchResponse, moreAvailable, errorStates, quickActions) => {
-        setMessages(question);
-        setQuickActions(quickActions);        
+        questionsRef.current = question;
+        renderMessages(question);
+        setQuickActions(quickActions);
+        forceUpdate(c => c + 1);
       }
     );
 
     return () => {
       unsubscribe();
-      // Cleanup ComposeBar
+      cleanupAllAuthChallenges();
       if (composeBarRef.current) {
         composeBarRef.current.destroy();
       }
     };
-  }, []);
+  }, [renderMessages]);
 
   // Separate useEffect for ComposeBar initialization
   useEffect(() => {
@@ -114,10 +180,12 @@ const ChatInterfaceDemo = () => {
       const el = getBotWrapper();
       const isVisible = computeVisible(el);
       setIsComposebarBotInputVisible(isVisible);
-      // Expanded means details are shown (i.e., "Hide Details" state)
       setIsComposebarBotInputExpanded(
         !!(isVisible && el && !el.classList.contains('details-hidden'))
       );
+      if (questionsRef.current) {
+        renderMessages(questionsRef.current);
+      }
     };
 
     const start = () => {
@@ -145,20 +213,21 @@ const ChatInterfaceDemo = () => {
     };
   }, []);
 
-  // Simple one-time check on mount to show scroll button if needed
+  // Check on mount/update to show scroll button if needed
   useEffect(() => {
     const timer = setTimeout(() => {
       const el = scrollContainerRef.current;
+      if (!el) return;
       const scrollBottom = el.scrollHeight - el.scrollTop - el.clientHeight;      
-      if (el && scrollBottom > 0) {
+      if (scrollBottom > 0) {
         setShowScrollToBottom(true);
-      }else{
+      } else {
         setShowScrollToBottom(false);
       }
     }, 100);
 
     return () => clearTimeout(timer);
-  }, [messages]); 
+  });
 
 
   const fetchAnnouncementData = async () => {
@@ -210,36 +279,7 @@ const ChatInterfaceDemo = () => {
           ref={scrollContainerRef}
         >
 
-          <div className="chatSec-inner" id ="chat-sec-container">
-          {messages &&
-            Object.values(messages).map((item, index) => {
-              if (item?.isTask) return;
-              const assistantIconTemplate = () => {
-                return <div className="logo-icon"><img src="/eva-black-svg.svg" alt="AiForWork" /></div>;
-              };
-
-              
-              let html = TemplateRenderer.generateHTMLTemplate(item, {
-                assistantIconTemplate,
-                loadingText: "Analyzing",
-              });
-
-              return (
-                <div 
-                  className={[
-                    'chat-message-container',
-                    isComposebarBotInputVisible ? 'composebar-bot-input-visible' : '',
-                    isComposebarBotInputExpanded ? 'composebar-bot-input-expanded' : '',
-                  ].filter(Boolean).join(' ')}
-                  key={index}
-                  dangerouslySetInnerHTML={{
-                    __html: html.innerHTML,
-                  }}
-                />
-              );
-
-            })}
-          </div>
+          <div className="chatSec-inner" id="chat-sec-container" ref={messagesContainerRef} />
           
         </div>
         {/* Replace the React Composebar with plain JavaScript ComposeBar container */}

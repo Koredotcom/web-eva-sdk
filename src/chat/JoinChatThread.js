@@ -1,16 +1,20 @@
 import { keyBy, orderBy } from "lodash"
-import { getSearchHistory } from "../redux/actions/global.action"
+import { getSearchHistory, resolveAgentAction } from "../redux/actions/global.action"
 import store from "../redux/store"
 import { v4 as uuid } from 'uuid';
-import { setActiveBoardId, updateChatData, setChatHistoryMoreAvailable, setCurrentQuestion } from "../redux/globalSlice";
+import { setActiveBoardId, updateChatData, setChatHistoryMoreAvailable, setCurrentQuestion, setSelectedContext, setAutonomousAsyncPending } from "../redux/globalSlice";
 import constructGptForm from "./gptTemplate/gptTemplateBody";
 import gptFormFunctionality from "./gptTemplate/gptTemplateFunc";
 import MultiResponse from "./gptTemplate/MultiResponse";
 import BotConversation from "./botAgent/getBotConversation";
+import { cleanupAllAuthChallenges } from "../templateRenderer/functionality/agent-auth-challenge";
 
 let chatHistoryOffset = 0;
 
 const JoinChatThread = async (props) => {
+    cleanupAllAuthChallenges();
+    store.dispatch(setSelectedContext({}));
+    store.dispatch(setAutonomousAsyncPending({}));
     const state = store.getState().global;
 
 	if (props?.pagination) {
@@ -44,6 +48,7 @@ const JoinChatThread = async (props) => {
 
         historyData = orderBy(history, 'cOn', 'asc')
         let updatedQuestions = {}
+        let agentIds = [];
         for(const q of historyData){
         let msgId = q?.reqId || uuid();
             let obj = {
@@ -53,6 +58,10 @@ const JoinChatThread = async (props) => {
                 context: {...q?.context, messageId: q?.id},
                 type: q?.postType === "follow-up" ? "followup" : "search",
                 historicalData: true
+            }
+
+            if (q?.agentId) {
+                agentIds.push(q.agentId);
             }
     
             // if(q?.templateType === "action_send_email" && q?.status === "draft") {    
@@ -67,18 +76,14 @@ const JoinChatThread = async (props) => {
             //     obj = {...obj, ...emailObj}
             // }
     
-            // if(q?.templateType === "action_send_slack_message" || q?.templateType === "action_send_msteams_message") {    
-            //     let ConnectionObj = {
-            //         canIncludeSource: q?.canIncludeSource,
-            //         externalIntegrationAction : true
-            //     }
-            //     let connMeta = getConnMetaCommon(appContext, obj)
-            //     if(connMeta) {
-            //         ConnectionObj.connMeta =  connMeta
-            //         ConnectionObj.skills = (obj?.templateType === "action_send_slack_message") ? "slack" : "msteams"
-            //     }
-            //     obj = {...obj, ...ConnectionObj}
-            // }
+            if(q?.templateType === "action_send_slack_message" || q?.templateType === "action_send_msteams_message") {    
+                let ConnectionObj = {
+                    canIncludeSource: q?.canIncludeSource,
+                    externalIntegrationAction : true,
+                    skills: (q?.templateType === "action_send_slack_message") ? "slack" : "msteams"
+                }
+                obj = {...obj, ...ConnectionObj}
+            }
             if(q?.viewType === "threadView") {
                 let params = {
                     limit: 20,
@@ -153,6 +158,27 @@ const JoinChatThread = async (props) => {
         store.dispatch(setCurrentQuestion(currentQuestion))
         store.dispatch(setChatHistoryMoreAvailable(moreAvailable))
         store.dispatch(updateChatData(_questions))
+
+        // Resolve agent metadata for history items (matching Kora-React getChatHistoryPaginationData.js)
+        const uniqueAgentIds = [...new Set(agentIds)];
+        if (uniqueAgentIds.length > 0) {
+            const agentDetailsRes = await store.dispatch(resolveAgentAction({ payload: uniqueAgentIds }));
+            if (agentDetailsRes?.payload?.length) {
+                const questions = { ...store.getState().global.questions };
+                let updated = false;
+                for (const agentDetail of agentDetailsRes.payload) {
+                    Object.values(questions).forEach(q => {
+                        if (q?.agentId === agentDetail?.id && !q?.agentMetaDetails) {
+                            q.agentMetaDetails = agentDetail;
+                            updated = true;
+                        }
+                    });
+                }
+                if (updated) {
+                    store.dispatch(updateChatData({ ...questions }));
+                }
+            }
+        }
     }
     await afterApiCallSuccess()
     if(state?.enableDebugging){

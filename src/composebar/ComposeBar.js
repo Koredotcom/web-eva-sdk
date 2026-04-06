@@ -5,7 +5,9 @@ import store from "../redux/store.js";
 import { fetchAgents } from "../redux/actions/global.action.js";
 import { ActionsFlashIcon, arrowCirlceUpIcon, attachmentIcon, CheveronDownIcon, createCloseIcon, createDeleteIcon, createThumbsUpFilled, microphoneIcon, searchIcon, settingsIcon, Close, StopIcon, CurvedArrowForPreview, PlusIcon } from "../templateRenderer/icons-library.js";
 import FileUpload from "../Attachments/fileUpload.js";
-import { getAgentType, getFileExtension, hideElementImmediately, showElementImmediately, showElementDelayed, getIconsList, markdownToPlainText, resolveSdkAssetPath } from "../utils/helpers.js";
+import FileUploader from "../utils/FileUploader.js";
+import { uploadFileToAgenticPlatform, removeFileFromAgenticPlatform } from "../redux/actions/global.action.js";
+import { getAgentType, getFileExtension, getUID, hideElementImmediately, showElementImmediately, showElementDelayed, getIconsList, markdownToPlainText, resolveSdkAssetPath } from "../utils/helpers.js";
 import { renderRecentFiles } from "./RenderRecentAttachments.js";
 import { isMSEnv } from "../utils/helpers.js";
 
@@ -31,6 +33,7 @@ class ComposeBar {
         this.isLoading = false;
         this.isRecording = false;
         this.recognition = null;
+        this.silenceTimeout = null; // auto-close recording after silence (Kora-React parity)
         this.unsubscribe = null;
         this.fileUploaderUnsubscribe = null;
         this.selectedContextUnsubscribe = null;
@@ -75,6 +78,12 @@ class ComposeBar {
             onSpeechToText: null
         };
         this.isSpeechHovering = false;
+
+        // aAAgent (autonomous agent) file upload state
+        this.autonomousUploadedFiles = [];
+        this.autonomousFileIds = [];
+        this._showAutonomousUpload = false;
+
         this.init();
     }
 
@@ -96,7 +105,18 @@ class ComposeBar {
             if (typeof this.chatInterface.subscribe === 'function') {
                 this.unsubscribe = this.chatInterface.subscribe((questions, searchResponse, moreAvailable, errorStates, quickActions) => {
                     // Toggle loading state based on async status
-                    const isLoading = searchResponse?.status === 'loading';
+                    let isLoading = searchResponse?.status === 'loading';
+
+                    // Keep loading active while aAAgent async operations are pending
+                    const asyncPending = store.getState()?.global?.autonomousAsyncPending || {};
+                    // if (!isLoading && Object.keys(asyncPending).length > 0) {
+                    //     const lastQuestion = Object.values(questions)?.[Object.values(questions)?.length - 1];
+                    //     const reqIdForPending = lastQuestion?.reqId;
+                    //     if (reqIdForPending && asyncPending[reqIdForPending]) {
+                    //         isLoading = true;
+                    //     }
+                    // }
+
                     const wasLoading = !!this._prevIsLoading;
                     this._prevIsLoading = !!isLoading;
                     if (Object.values(questions)?.some(question => question?.loading)) {
@@ -123,6 +143,8 @@ class ComposeBar {
                     this.renderQuickReplies();
                     if (Object.keys(questions).length > 0) {
                         this.questions = questions;
+                        // Track aAAgent followUpContext for autonomous file upload
+                        this.updateAutonomousUploadState();
                         // this.showBotComposeBarHeader = Object.values(questions)?.find(question => question?.status === 'threadRunning');
                         // if(this.showBotComposeBarHeader){
                         //     console.log("showBotComposeBarHeader", this.showBotComposeBarHeader);
@@ -158,14 +180,19 @@ class ComposeBar {
                             hideElementImmediately(ifBotHeaderPresent, { enableLogging: true });
                         }
                         setTimeout(() => {
-                            // if (this.selectedAgent) {
-                            //     this.handleRemoveSelectedContext();
-                            // }
                             this.placeholder = 'Ask or Search Anything...';
                             this.updatePlaceholder();
                             this.botEndConversationLoader = false;
                         }, 0);
                         this.questions = {};
+                        // Reset autonomous upload state on new chat
+                        this.autonomousUploadedFiles = [];
+                        this.autonomousFileIds = [];
+                        this._showAutonomousUpload = false;
+                        this.renderAutonomousAttachmentUI();
+                        // Re-show normal attachment button
+                        const normalAttachBtn = this.container.querySelector('[data-eva-attachment]');
+                        if (normalAttachBtn) normalAttachBtn.style.display = '';
                     }
                 });
             }
@@ -440,6 +467,247 @@ class ComposeBar {
     //     }
     // }
 
+    /**
+     * Determine whether the autonomous agent file upload UI should be shown,
+     * based on the current question's followUpContext (matching Kora-React RightActionBar.jsx).
+     */
+    updateAutonomousUploadState() {
+        const questionValues = Object.values(this.questions || {});
+        const lastQuestion = questionValues[questionValues.length - 1];
+        const followUpContext = lastQuestion?.followUpContext;
+        const isAAAgent = followUpContext?.agentType === 'aAAgent';
+        const canUploadFile = !!followUpContext?.agentContext?.canUploadFile;
+        const prevShow = this._showAutonomousUpload;
+        this._showAutonomousUpload = isAAAgent && canUploadFile;
+
+        // Cache agent context details for upload calls
+        this._autonomousAgentContext = isAAAgent ? followUpContext?.agentContext : null;
+        this._autonomousBoardId = lastQuestion?.boardId;
+        this._autonomousMessageId = followUpContext?.fMsgId || followUpContext?.parentMessageId || lastQuestion?.messageId;
+        this._autonomousFileTypes = this._autonomousAgentContext?.fileTypes || [];
+
+        // When the flag changes, re-render the attachment area
+        if (prevShow !== this._showAutonomousUpload) {
+            this.renderAutonomousAttachmentUI();
+        }
+
+        // For aAAgent without canUploadFile, hide normal attachment button too
+        const normalAttachBtn = this.container.querySelector('[data-eva-attachment]');
+        if (normalAttachBtn) {
+            normalAttachBtn.style.display = isAAAgent && !canUploadFile ? 'none' : '';
+        }
+        // When aAAgent with canUploadFile, hide normal attachment, show autonomous
+        if (normalAttachBtn && this._showAutonomousUpload) {
+            normalAttachBtn.style.display = 'none';
+        }
+    }
+
+    /**
+     * Render autonomous agent attachment UI.
+     * Layout matches Kora-React screenshot: everything inline in right-actions
+     * on the same row as voice/send → [chips…] [upload btn] [attachment] [voice] [send]
+     */
+    renderAutonomousAttachmentUI() {
+        const rightActions = this.container.querySelector('.right-actions');
+
+        // ── Clean up previous autonomous elements ───────────────────────────
+        this.container.querySelector('.eva-autonomous-upload-slot')?.remove();
+
+        if (!this._showAutonomousUpload) return;
+        if (!rightActions) return;
+
+        const acceptTypes = this._autonomousFileTypes?.length
+            ? this._autonomousFileTypes.map(ft => '.' + ft).join(',')
+            : '*/*';
+
+        const visibleFiles = (this.autonomousUploadedFiles || []).filter(f => f?.enable || f?.loading);
+
+        const chipsHtml = visibleFiles.map((file) => {
+            const name = file?.fileName || file?.title || 'File';
+            const uid = file?.fileId || file?.docId || file?.mediaName || '';
+            return `
+                <div class="eva-autonomous-file-chip" title="${name}">
+                    <span class="chip-icon">
+                        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12.25 8.75V11.0833C12.25 11.3928 12.1271 11.6895 11.9083 11.9083C11.6895 12.1271 11.3928 12.25 11.0833 12.25H2.91667C2.60725 12.25 2.3105 12.1271 2.09171 11.9083C1.87292 11.6895 1.75 11.3928 1.75 11.0833V8.75" stroke="#667085" stroke-width="1.16" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M4.08331 5.83301L6.99998 8.74967L9.91665 5.83301" stroke="#667085" stroke-width="1.16" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M7 8.75V1.75" stroke="#667085" stroke-width="1.16" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </span>
+                    <span class="chip-name">${name}</span>
+                    ${file?.loading
+                        ? `<span class="chip-loader"><span class="waLoader"></span></span>`
+                        : `<span class="chip-remove" data-autonomous-remove-uid="${uid}">
+                                <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M9 3L3 9M3 3L9 9" stroke="#667085" stroke-width="1.33" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                           </span>`
+                    }
+                </div>
+            `;
+        }).join('');
+
+        const slot = document.createElement('div');
+        slot.className = 'eva-autonomous-upload-slot';
+        slot.innerHTML = `
+            ${chipsHtml}
+            <sl-tooltip content="Upload files">
+                <button class="eva-autonomous-upload-btn" data-eva-autonomous-upload>
+                    ${attachmentIcon({ size: 16, color: "#667085" })}
+                </button>
+            </sl-tooltip>
+            <input type="file" style="display: none;" data-eva-autonomous-file-input accept="${acceptTypes}" />
+        `;
+        rightActions.insertBefore(slot, rightActions.firstChild);
+
+        this.attachAutonomousEventListeners();
+    }
+
+    /**
+     * Attach event listeners for autonomous file upload and remove
+     */
+    attachAutonomousEventListeners() {
+        const uploadBtn = this.container.querySelector('[data-eva-autonomous-upload]');
+        const fileInput = this.container.querySelector('[data-eva-autonomous-file-input]');
+
+        if (uploadBtn && !uploadBtn._evaBound) {
+            uploadBtn._evaBound = true;
+            uploadBtn.addEventListener('click', () => {
+                if (fileInput) fileInput.click();
+            });
+        }
+
+        if (fileInput && !fileInput._evaBound) {
+            fileInput._evaBound = true;
+            fileInput.addEventListener('change', (e) => {
+                this.handleAutonomousFileUpload(e);
+            });
+        }
+
+        // Remove buttons
+        this.container.querySelectorAll('[data-autonomous-remove-uid]').forEach(btn => {
+            if (btn._evaBound) return;
+            btn._evaBound = true;
+            btn.addEventListener('click', () => {
+                const uid = btn.getAttribute('data-autonomous-remove-uid');
+                this.handleAutonomousFileRemove(uid);
+            });
+        });
+    }
+
+    /**
+     * Upload a file to the agentic platform.
+     * Flow (matches Kora-React agents-file-upload.js):
+     *   1. Validate size (<5 MB)
+     *   2. Add a loading chip immediately
+     *   3. FileUploader: token → chunk/upload → onSuccess returns { fileUrl.fileId }
+     *   4. Call addFile endpoint with { fileId }
+     */
+    handleAutonomousFileUpload(event) {
+        const file = event.target.files?.[0];
+        if (!file) return;
+
+        if (file.size > 5_000_000) {
+            console.warn('[ComposeBar] File exceeds 5 MB limit');
+            event.target.value = '';
+            return;
+        }
+
+        const mediaName = getUID(6);
+        const loaderEntry = { mediaName, loading: true, enable: true };
+
+        this.autonomousUploadedFiles = [...this.autonomousUploadedFiles, loaderEntry];
+        this.renderAutonomousAttachmentUI();
+
+        const userId = window.sdkConfig?.userId;
+        const accessToken = window.sdkConfig?.accessToken;
+
+        const uploader = new FileUploader({
+            file,
+            userInfoId: userId,
+            fileContext: 'knowledge',
+            userAccessToken: accessToken,
+            mediaName,
+        });
+
+        loaderEntry.fileName = uploader.file?.name;
+        loaderEntry.title = uploader.file?.name;
+        loaderEntry.extName = uploader.file?.name?.split('.').pop()?.toLowerCase();
+        this.renderAutonomousAttachmentUI();
+
+        uploader.start(
+            () => {},
+            (uploadedFile) => {
+                const docId = uploadedFile?.fileUrl?.fileId;
+                this._uploadFileToAgentic(docId, mediaName);
+            },
+            (error) => {
+                console.error('[ComposeBar] FileUploader error:', error);
+                this.autonomousUploadedFiles = this.autonomousUploadedFiles.filter(f => f.mediaName !== mediaName);
+                this.renderAutonomousAttachmentUI();
+            },
+        );
+
+        event.target.value = '';
+    }
+
+    /**
+     * After FileUploader finishes, call the addFile endpoint with { fileId }.
+     */
+    async _uploadFileToAgentic(fileId, mediaName) {
+        if (!fileId) {
+            this.autonomousUploadedFiles = this.autonomousUploadedFiles.filter(f => f.mediaName !== mediaName);
+            this.renderAutonomousAttachmentUI();
+            return;
+        }
+
+        try {
+            const result = await store.dispatch(uploadFileToAgenticPlatform({
+                boardId: this._autonomousBoardId,
+                messageId: this._autonomousMessageId,
+                payload: { fileId },
+            }));
+
+            if (result?.payload?.agentContext?.sources) {
+                this.autonomousUploadedFiles = result.payload.agentContext.sources;
+                const newIds = this.autonomousUploadedFiles.map(f => f?.fileId || f?.docId).filter(Boolean);
+                this.autonomousFileIds = [...new Set([...this.autonomousFileIds, ...newIds])];
+            } else {
+                this.autonomousUploadedFiles = this.autonomousUploadedFiles.filter(f => f.mediaName !== mediaName);
+            }
+        } catch (err) {
+            console.error('[ComposeBar] addFile API error:', err);
+            this.autonomousUploadedFiles = this.autonomousUploadedFiles.filter(f => f.mediaName !== mediaName);
+        }
+
+        this.renderAutonomousAttachmentUI();
+    }
+
+    /**
+     * Remove a file from the agentic platform
+     */
+    async handleAutonomousFileRemove(fileId) {
+        try {
+            const result = await store.dispatch(removeFileFromAgenticPlatform({
+                boardId: this._autonomousBoardId,
+                messageId: this._autonomousMessageId,
+                payload: { fileIds: [fileId] },
+            }));
+
+            if (result?.payload?.agentContext?.sources) {
+                this.autonomousUploadedFiles = result.payload.agentContext.sources;
+            } else {
+                this.autonomousUploadedFiles = this.autonomousUploadedFiles.filter(f => (f?.fileId || f?.docId) !== fileId);
+            }
+            this.autonomousFileIds = this.autonomousFileIds.filter(id => id !== fileId);
+        } catch (err) {
+            console.error('[ComposeBar] Autonomous file remove error:', err);
+            this.autonomousUploadedFiles = this.autonomousUploadedFiles.filter(f => (f?.fileId || f?.docId) !== fileId);
+        }
+
+        this.renderAutonomousAttachmentUI();
+    }
+
     renderAttachments() {
         const attachmentsContainer = this.container.querySelector('[data-eva-attachments]');
 
@@ -638,6 +906,9 @@ class ComposeBar {
                         }
                     }
                 }
+
+                // Kora-React parity: reset the 2.5s silence auto-close timer on every transcript event
+                this._resetSilenceTimeout();
             };
 
             this.recognition.onend = () => {
@@ -656,6 +927,7 @@ class ComposeBar {
 
             this.recognition.onerror = (event) => {
                 this.isRecording = false;
+                this._clearSilenceTimeout();
                 this.updateSpeechButton();
                 console.error('Speech recognition error:', event.error);
             };
@@ -1226,6 +1498,7 @@ class ComposeBar {
                                 data-eva-input
                                 ></textarea>
                             </div>
+                            <div class="eva-autonomous-upload-area" data-eva-autonomous-upload-wrapper style="display: none;"></div>
                             <div class="right-actions">
                                 <sl-tooltip>
                                     <div slot="content" class="caTooltips" data-eva-attachment-tooltip-content>
@@ -1657,26 +1930,19 @@ class ComposeBar {
     }
 
     /**
-     * Update microphone button based on input length
+     * Update microphone button icon — always shows mic when not recording (Kora-React parity).
+     * Does NOT swap to close icon when text is present; the mic is only replaced by the
+     * recording animation / close-on-hover logic handled by updateSpeechButton().
      */
     updateMicrophoneButton() {
-        // Skip if MS env (mic button is hidden)
         if (this.isMSEnv) return;
+        if (this.isRecording) return; // recording animation is managed by updateSpeechButton
 
         const micButton = this.container.querySelector('[data-eva-speech]');
-        if (!micButton) {
-            return;
-        }
+        if (!micButton) return;
 
-
-
-        if (this.input?.length > 0) {
-            micButton.innerHTML = Close({ size: 12, color: "#0F0F0F" });
-            micButton.title = "Clear input";
-        } else {
-            micButton.innerHTML = microphoneIcon({ size: 16, color: "#0F0F0F" });
-            micButton.title = "Search using voice";
-        }
+        micButton.innerHTML = microphoneIcon({ size: 16, color: "#0F0F0F" });
+        micButton.title = "Search using voice";
     }
 
     /**
@@ -1845,7 +2111,7 @@ class ComposeBar {
     }
 
     /**
-     * Handle speech to text button click or clear input
+     * Handle speech to text button click
      */
     handleSpeechToText() {
 
@@ -1856,23 +2122,55 @@ class ComposeBar {
 
         if (this.isRecording) {
             this.isRecording = false;
+            this._clearSilenceTimeout();
             this.updateSpeechButton();
             this.recognition.stop();
         } else {
 
             this.isRecording = true;
             this.updateSpeechButton();
+            this._resetSilenceTimeout(); // start the 2.5s silence auto-close timer
             try {
                 this.recognition.start();
             } catch (error) {
                 console.error('Error starting speech recognition:', error);
                 this.isRecording = false;
+                this._clearSilenceTimeout();
                 this.updateSpeechButton();
             }
         }
 
         if (this.callbacks.onSpeechToText) {
             this.callbacks.onSpeechToText(this.isRecording);
+        }
+    }
+
+    /**
+     * Reset the 2.5s silence auto-close timer (Kora-React parity).
+     * Called on every transcript result so that speech is only stopped after
+     * 2.5 seconds of actual silence.
+     */
+    _resetSilenceTimeout() {
+        this._clearSilenceTimeout();
+        this.silenceTimeout = setTimeout(() => {
+            if (this.isRecording) {
+                this.isRecording = false;
+                this.updateSpeechButton();
+                try { this.recognition.stop(); } catch (e) { /* noop */ }
+                if (this.callbacks.onSpeechToText) {
+                    this.callbacks.onSpeechToText(false);
+                }
+            }
+        }, 2500);
+    }
+
+    /**
+     * Clear the silence auto-close timer.
+     */
+    _clearSilenceTimeout() {
+        if (this.silenceTimeout) {
+            clearTimeout(this.silenceTimeout);
+            this.silenceTimeout = null;
         }
     }
 
@@ -2386,7 +2684,11 @@ class ComposeBar {
     }
 
     /**
-     * Update speech button appearance based on recording state
+     * Update speech button appearance based on recording state (Kora-React parity).
+     * States:
+     *   recording + hovering  → Close icon  ("Stop listening")
+     *   recording + not hover → sonar-wrapper gif animation ("Stop listening")
+     *   not recording         → Microphone icon ("Search using voice")
      */
     updateSpeechButton() {
         const speechBtn = this.container.querySelector('[data-eva-speech]');
@@ -2401,13 +2703,8 @@ class ComposeBar {
                     speechBtn.innerHTML = Close({ size: 12, color: "#424242" });
                     if (tooltipContent) tooltipContent.textContent = 'Stop listening';
                 } else {
-                    speechBtn.innerHTML = `
-                        <div class="sonar-wrapper">
-                            <div class="sonar-wave"></div>
-                            <div class="sonar-wave"></div>
-                            <img src="images/waves-animation.gif" alt="" />
-                        </div>
-                    `;
+                    // Matches Kora-React: sonar-wrapper contains only the gif, no sonar-wave divs
+                    speechBtn.innerHTML = `<div class="sonar-wrapper"><img src="images/waves-animation.gif" alt="" /></div>`;
                     if (tooltipContent) tooltipContent.textContent = 'Stop listening';
                 }
                 speechBtn.setAttribute('title', 'Stop listening');
@@ -2415,7 +2712,7 @@ class ComposeBar {
                 speechBtn.classList.remove('animatedImge', 'recording');
                 speechBtn.innerHTML = microphoneIcon({ size: 16, color: "#0F0F0F" });
                 if (tooltipContent) tooltipContent.textContent = 'Search using voice';
-                speechBtn.setAttribute('title', 'Voice input');
+                speechBtn.setAttribute('title', 'Search using voice');
             }
         }
     }

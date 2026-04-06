@@ -399,10 +399,28 @@ export const thirdPartySSO = createAsyncThunk(
     'global/thirdPartySSO',
     async (arg, thunkAPI) => {
         try {
-            const response = await axiosInstance.post(`/users/${arg?.userId}/connections`, arg?.payload);
+            const body = {
+                id_token: arg?.payload?.token,
+                label: arg?.payload?.details?.name || arg?.payload?.config?.connectorName,
+                allowedCapabilities: arg?.payload?.config?.allowedCapabilities || [],
+            };
+            const response = await axiosInstance.post(`/users/${arg?.userId}/connections`, body);
             return response.data;
         } catch (error) {
             handleErrorState(error, "Third Party SSO");
+            return thunkAPI.rejectWithValue(error.response.data);
+        }
+    }
+);
+
+export const updateThirdPartySSO = createAsyncThunk(
+    'global/updateThirdPartySSO',
+    async (arg, thunkAPI) => {
+        try {
+            const response = await axiosInstance.put(`/users/${arg?.userId}/connections/${arg?.payload?.connectionId}`, arg?.payload);
+            return response.data;
+        } catch (error) {
+            handleErrorState(error, "Update Third Party SSO");
             return thunkAPI.rejectWithValue(error.response.data);
         }
     }
@@ -591,6 +609,69 @@ export const getRegeneratedAnswer = createAsyncThunk(
         } catch (error) {
             handleErrorState(error, "Regenerate Answer");
             return thunkAPI.rejectWithValue(error.response.data);
+        }
+    }
+);
+
+export const sendIntegrationMessage = createAsyncThunk(
+    'global/sendIntegrationMessage',
+    async (arg, { rejectWithValue }) => {
+        try {
+            const response = await axiosInstance.post(
+                `/ka/users/${arg?.userId}/connectors/${arg?.source}/actions/send_message`,
+                arg?.payload
+            );
+            return response.data;
+        } catch (error) {
+            handleErrorState(error, "Send Integration Message");
+            return rejectWithValue(error.response.data);
+        }
+    }
+);
+
+export const checkAuthStatus = createAsyncThunk(
+    'global/checkAuthStatus',
+    async (arg, { rejectWithValue }) => {
+        try {
+            const response = await axiosInstance.get(
+                `kora/boards/${arg?.boardId}/messages/${arg?.messageId}/authStatus`
+            );
+            return response.data;
+        } catch (error) {
+            handleErrorState(error, "Check Auth Status");
+            return rejectWithValue(error?.response?.data);
+        }
+    }
+);
+
+export const uploadFileToAgenticPlatform = createAsyncThunk(
+    'global/uploadFileToAgenticPlatform',
+    async (arg, { rejectWithValue }) => {
+        try {
+            const response = await axiosInstance.post(
+                `kora/boards/${arg?.boardId}/messages/${arg?.messageId}/agentSession/addFile`,
+                arg?.payload
+            );
+            return response.data;
+        } catch (error) {
+            handleErrorState(error, "Upload File to Agentic Platform");
+            return rejectWithValue({ error: true, fileId: arg?.payload?.fileId });
+        }
+    }
+);
+
+export const removeFileFromAgenticPlatform = createAsyncThunk(
+    'global/removeFileFromAgenticPlatform',
+    async (arg, { rejectWithValue }) => {
+        try {
+            const response = await axiosInstance.post(
+                `kora/boards/${arg?.boardId}/messages/${arg?.messageId}/agentSession/removeFile`,
+                arg?.payload
+            );
+            return response.data;
+        } catch (error) {
+            handleErrorState(error, "Remove File from Agentic Platform");
+            return rejectWithValue(error?.response?.data);
         }
     }
 );

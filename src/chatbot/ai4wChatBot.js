@@ -6,6 +6,8 @@ import { unHideRecentAgentsDiv, hideRecentAgentsDiv } from "../LandingPageRecent
 import { createHistorySidebar, initHistoryList } from "./chatbotHistory";
 import BotConversation from "../chat/botAgent/getBotConversation";
 import store from "../redux/store";
+import { setAutonomousAsyncPending } from "../redux/globalSlice";
+import { cleanupAllAuthChallenges } from "../templateRenderer/functionality/agent-auth-challenge";
 
 const DEFAULT_CONTAINER_ID = "eva-sdk-chatbot-container";
 const DEFAULT_TITLE = "Eva Assistant";
@@ -612,6 +614,8 @@ export const close = () => {
     return;
   }
 
+  cleanupAllAuthChallenges();
+  store.dispatch(setAutonomousAsyncPending({}));
   state.isOpen = false;
   state.isHistoryOpen = false;
   syncPanelState();

@@ -79,12 +79,10 @@
     background: #b91c1c;
 }
 
+/* Default dropdown (inside .ts-wrapper) */
 .ts-dropdown {
     position: absolute;
-    top: 100%;
-    left: 0;
-    right: 0;
-    z-index: 1000;
+    z-index: 99999;
     background: white;
     border: .0625rem solid #d1d5db;
     border-radius: .375rem;
@@ -94,6 +92,40 @@
     margin-top: .125rem;
 }
 
+/*
+ * When dropdownParent:'body' is used, the dropdown is a direct child of <body>.
+ * The CDN CSS rule ".ts-wrapper.dropdown-active .ts-dropdown { display: block }"
+ * no longer matches, so we handle display via onDropdownOpen/onDropdownClose JS callbacks.
+ * This rule sets the initial hidden state and ensures proper z-index.
+ */
+body > .ts-dropdown {
+    display: none;
+    z-index: 99999;
+    border: .0625rem solid #e5e5e5;
+    border-radius: .5rem;
+    box-shadow: 0 .25rem .375rem -0.125rem rgba(16, 24, 40, .03),
+                0 .75rem 1rem -0.25rem rgba(16, 24, 40, .08);
+}
+
+body > .ts-dropdown .ts-dropdown-content {
+    padding: .5rem;
+    max-height: unset;
+}
+
+body > .ts-dropdown .option {
+    padding: 0.5rem 0.9375rem 0.5rem 0.625rem;
+    border-radius: 0.5rem;
+    margin-bottom: 0.1875rem;
+}
+
+body > .ts-dropdown .option div:first-of-type {
+    display: flex;
+}
+
+body > .ts-dropdown .option.active {
+    background-color: #F2F4F7;
+    color: #202124;
+}
 .ts-dropdown .ts-dropdown-content {
     padding: .25rem 0;
 }
@@ -173,4 +205,7 @@
 
 .ts-dropdown::-webkit-scrollbar-thumb:hover {
     background: #a8a8a8;
-} 
+}
+.ts-avatar {
+    flex-shrink: 0;
+}

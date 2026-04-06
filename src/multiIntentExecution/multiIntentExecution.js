@@ -358,7 +358,7 @@ const MultiIntentExecution = (props) => {
                 let executionPipeLineIds = item?.executionPipeline?.map(pipelineItem => pipelineItem?._id);
 
                 response.payload.history.map(historyTask => {
-                    if (historyTask?.templateType === "action_send_msteams_message") {
+                    if (historyTask?.templateType === "action_send_msteams_message" || historyTask?.templateType === "action_send_slack_message") {
                         historyTask.externalIntegrationAction = true;
                     }
 

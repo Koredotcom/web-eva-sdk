@@ -7,6 +7,7 @@ import { encodeHtml } from "../../utils/helpers";
 import customMarkdownRenderer from "../utils/customMarkdownRenderer";
 import { MessageRenderer } from "../../plugins/Markdown/message-renderer";
 import { cheveronRightIcon, MaximizeIcon, MinimizeIcon } from "../icons-library";
+import store from "../../redux/store";
 
 function escapeHTML(str) {
 	if (!str) return "";
@@ -219,24 +220,50 @@ function setupEventListeners(botConversation, props) {
 	});
 }
 
-const renderQuickRepliesTemplate = (payload) => {
+const renderQuickRepliesTemplate = (payload, messageId) => {
 	const payloadText = payload?.text;
 	const templateHTML = `
-        <div class="usrsChipsList quickRepliesTemplate">
+        <div class="usrsChipsList quickRepliesTemplate" data-message-id="${escapeHTML(messageId || '')}">
             <div class="title">${payloadText ? payloadText : ''}</div>
             ${payload?.quick_replies
-			?.map((data) => `<div class="userChip">${data?.title}</div>`)
+			?.map((data) => `<div class="userChip" data-payload="${escapeHTML(data?.payload || data?.title)}">${data?.title}</div>`)
 			.join("")}
         </div>
     `;
 
-	// Convert the string to a DOM element
 	const templateFragment = document
 		.createRange()
 		.createContextualFragment(templateHTML);
 
 	return templateFragment;
 };
+function attachQuickReplyChipListeners() {
+	const chips = document.querySelectorAll('.quickRepliesTemplate .userChip:not([data-listener-attached])');
+	chips.forEach(chip => {
+		chip.setAttribute('data-listener-attached', 'true');
+		chip.addEventListener('click', (e) => {
+			e.preventDefault();
+			e.stopPropagation();
+
+			const chipPayload = chip.dataset.payload || chip.textContent?.trim();
+			const messageId = chip.closest('.quickRepliesTemplate')?.dataset?.messageId;
+			if (!chipPayload) return;
+
+			const globalState = store.getState().global;
+			const currentQuestion = globalState?.currentQuestion;
+			const cId = currentQuestion?.cId ?? currentQuestion?.reqId;
+
+			BotConversation().submitBotResponse({
+				input: chipPayload,
+				cId,
+				messageId,
+				context: currentQuestion?.context,
+				source: "bot"
+			});
+		});
+	});
+}
+
 export function setupTemplates(botConversation) {
 
 	if (!isEmpty(botConversation)) {
@@ -248,7 +275,7 @@ export function setupTemplates(botConversation) {
 			templateConversations.forEach((conversation) => {
 				if (conversation?.templateType === "bot_template" && conversation?.content?.payload?.template_type === "quick_replies") {
 					if (!conversation.template_html?.querySelector(".quickRepliesTemplate"))
-						conversation.template_html?.appendChild(renderQuickRepliesTemplate(conversation?.content?.payload))
+						conversation.template_html?.appendChild(renderQuickRepliesTemplate(conversation?.content?.payload, conversation?.messageId))
 				}
 				const templateDiv = document.querySelector(
 					`.botTemplate-${conversation?.messageId}`
@@ -259,6 +286,7 @@ export function setupTemplates(botConversation) {
 					}
 				}
 			});
+			attachQuickReplyChipListeners();
 		}
 	}
 }
@@ -266,9 +294,10 @@ export function setupTemplates(botConversation) {
 const renderThoughts = (conversation, props) => {
 	const uniqueId = `thought-wrapper-${conversation?.messageId}`;
 	const isCollapsed = conversation?.question?.length > 0 || props?.status === "completed";
+	const thoughtTime = conversation?.thoughts?.[conversation?.thoughts?.length - 1]?.thoughtTime;
 	return `
 		<div class='thought-wrapper ${isCollapsed ? 'collapsed' : 'expanded'}' id='${uniqueId}' data-toggle-thoughts>
-			<span class='thoughts-header' id='thoughts-header-${conversation?.messageId}'>Thought ${isCollapsed ? `for ${conversation?.thoughts?.[conversation?.thoughts?.length - 1]?.thoughtTime} secs` : ''}</span>
+			<span class='thoughts-header' id='thoughts-header-${conversation?.messageId}'>${isCollapsed ? `Thoughts for ${thoughtTime} secs` : 'Thinking'}</span>
 			<span class='spanIcon'>${cheveronRightIcon({ size: 8, color: "#70707B" })}</span>
 			<div class="expand-thoughts-container">
 				${expandThoughts(conversation)}

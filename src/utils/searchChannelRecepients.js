@@ -1,375 +1,461 @@
 /**
  * searchChannelRecepients
- * Functional module for managing recipient search functionality for Teams messages
- * Handles user/group search, selection, and UI updates
+ * Matches the Kora-React searchChannelPeopleSlack + SlackChannelDropDown behavior.
+ *
+ * Key design decisions:
+ * - Dropdown is appended to document.body with position:fixed (like TomSelect),
+ *   so it can never be clipped by parent overflow:hidden containers in the chat widget.
+ * - _recipientSearchInit guard on the wrapper element prevents duplicate event
+ *   listeners when the template re-renders (which would cause multiple API calls).
+ * - Only ONE fetchData() path on initial click: the wrapper's click handler.
+ *   The focus handler ONLY sets isSearchFocused (matching Kora-React onFocus).
  */
 
 import { getChannelRecepients } from "../redux/actions/global.action";
 import store from "../redux/store";
+import { createCloseIcon } from "../templateRenderer/icons-library";
 
-/**
- * Get default mock data for users and groups
- */
-const getDefaultDataSource = () => {
-    return [
-        { id: 'user-1', name: 'John Doe', email: 'john.doe@company.com', type: 'user' },
-        { id: 'user-2', name: 'Jane Smith', email: 'jane.smith@company.com', type: 'user' },
-        { id: 'user-3', name: 'Robert Johnson', email: 'robert.j@company.com', type: 'user' },
-        { id: 'user-4', name: 'Emily Davis', email: 'emily.davis@company.com', type: 'user' },
-        { id: 'user-5', name: 'Michael Brown', email: 'michael.b@company.com', type: 'user' },
-        { id: 'group-1', name: 'Engineering Team', type: 'group', memberCount: 15 },
-        { id: 'group-2', name: 'Marketing Team', type: 'group', memberCount: 8 },
-        { id: 'group-3', name: 'Sales Team', type: 'group', memberCount: 12 },
-        { id: 'group-4', name: 'Product Team', type: 'group', memberCount: 10 },
-        { id: 'group-5', name: 'Design Team', type: 'group', memberCount: 6 },
-    ];
-};
+const MAX_RECIPIENTS = 5;
+const INITIAL_RESULTS_PER_GROUP = 3;
+const BLUR_DELAY = 500;
 
-/**
- * Initialize recipient search functionality
- * @param {Object} config - Configuration object
- * @param {string} config.reqId - Request ID for unique element identification
- * @param {Function} config.onRecipientsChange - Callback when recipients change
- * @param {Array} config.searchDataSource - Optional custom data source
- * @returns {Object} - API object with methods to interact with the search manager
- */
 export const initializeRecipientSearch = (config) => {
-    const { reqId, onRecipientsChange = () => {}, searchDataSource = getDefaultDataSource() } = config;
-    
-    // DOM Elements
+    const {
+        reqId,
+        onRecipientsChange = () => {},
+        provider = 'msteams',
+        prefix = 'teams'
+    } = config;
+
+    const appId = provider === 'slack' ? 'slack' : 'msteams';
+    const elementPrefix = prefix;
+
     let searchInputWrapper = null;
     let searchInput = null;
     let searchDropdown = null;
     let searchDropdownList = null;
     let selectedRecipientsContainer = null;
-    
-    // State
+
     let selectedRecipients = [];
-    let dataSource = searchDataSource;
+    let isSearchFocused = false;
+    let searchText = '';
+    let blurTimer = null;
+    let isFetching = false;
 
-    /**
-     * Initialize DOM references and event listeners
-     */
+    // ─── Floating dropdown positioning (like TomSelect) ───────────────────────
+    const positionDropdown = () => {
+        if (!searchInputWrapper || !searchDropdown) return;
+        const rect = searchInputWrapper.getBoundingClientRect();
+        // position:fixed coordinates are ALWAYS viewport-relative.
+        // getBoundingClientRect() already returns viewport-relative values.
+        // DO NOT add window.scrollY/scrollX — that double-counts the scroll offset
+        // and places the dropdown off-screen on any scrolled page.
+        searchDropdown.style.top = `${rect.bottom + 4}px`;
+        searchDropdown.style.left = `${rect.left}px`;
+        searchDropdown.style.width = `${rect.width}px`;
+    };
+
+    const handleRepositionOnScroll = () => {
+        if (searchDropdown && searchDropdown.style.display !== 'none') {
+            positionDropdown();
+        }
+    };
+
+    // ─── Initialization ────────────────────────────────────────────────────────
     const initialize = () => {
-        searchInputWrapper = document.getElementById(`teams-search-input-wrapper-${reqId}`);
-        searchInput = document.getElementById(`teams-search-${reqId}`);
-        searchDropdown = document.getElementById(`teams-search-dropdown-${reqId}`);
-        searchDropdownList = document.getElementById(`teams-search-dropdown-list-${reqId}`);
-        selectedRecipientsContainer = document.getElementById(`teams-selected-recipients-${reqId}`);
-        
-        attachEventListeners();
-    };
+        searchInputWrapper = document.getElementById(`${elementPrefix}-search-input-wrapper-${reqId}`);
+        searchInput = document.getElementById(`${elementPrefix}-search-${reqId}`);
+        selectedRecipientsContainer = document.getElementById(`${elementPrefix}-selected-recipients-${reqId}`);
 
-    /**
-     * Attach all event listeners
-     */
-    const attachEventListeners = () => {
-        // Click on wrapper focuses input
-        if (searchInputWrapper) {
-            searchInputWrapper.addEventListener('click', (e) => {
-                if (!e.target.closest('sl-tag')) {
-                    searchInput?.focus();
-                }
-            });
-        }
-
-        // Search input events
-        if (searchInput) {
-            searchInput.addEventListener('input', (e) => {
-                handleSearchInput(e.target.value);
-            });
-
-            searchInput.addEventListener('focus', () => {
-                handleSearchFocus();
-            });
-        }
-
-        // Click outside to close dropdown
-        document.addEventListener('click', (e) => {
-            if (searchDropdown && 
-                !searchInputWrapper?.contains(e.target) && 
-                !searchDropdown.contains(e.target)) {
-                hideDropdown();
-            }
-        });
-    };
-
-    /**
-     * Search recipients based on query
-     * @param {string} query - Search query
-     * @returns {Array} - Filtered recipients
-     */
-    const searchRecipients = async (query) => {                        
-        const lowerQuery = query.toLowerCase();
-        const payload = {
-            nodeType: "actions",
-            appId: "msteams",
-            eventId: "send_message",
-            dataType: "listConversation",
-            fieldId: "channel",
-            params: {
-                keyword: lowerQuery
-            },
-            meta: {},
-            connectionId: config.connectionId,
-        }
-        return store.dispatch(getChannelRecepients({userId: config.userId, source: config.source, payload})).then(response => {
-            console.log(response);
-            return response.payload;
-        });        
-    };
-
-    /**
-     * Handle search input changes
-     * @param {string} query - Search query
-     */
-    const handleSearchInput = async (query) => {
-        const results = await searchRecipients(query);
-        renderSearchDropdown(results);
-        
-        if (results.length > 0 || query.trim() !== '') {
-            showDropdown();
-        } else {
-            hideDropdown();
-        }
-    };
-
-    /**
-     * Handle search input focus
-     */
-    const handleSearchFocus = async () => {
-        const results = await searchRecipients(searchInput?.value || '');
-        renderSearchDropdown(results);
-        showDropdown();
-    };
-
-    /**
-     * Render search dropdown with results
-     * @param {Array} results - Search results (grouped structure)
-     */
-    const renderSearchDropdown = async (results) => {
-        if (!searchDropdownList) return;
-        
-        // Check if results is empty or has no groups
-        if (!results?.groupedChoices || !Array.isArray(results?.groupedChoices) || results?.groupedChoices?.length === 0) {
-            searchDropdownList.innerHTML = '<div class="no-results">No results found</div>';
+        if (!searchInput || !searchInputWrapper) {
+            console.warn(`[RecipientSearch] DOM elements not found for prefix=${elementPrefix}, reqId=${reqId}`);
             return;
         }
 
-        // Render grouped results
-        searchDropdownList.innerHTML = results?.groupedChoices?.map(group => {            
+        // Guard: prevent duplicate event listeners when template re-renders.
+        // This is the primary fix for multiple API calls on click.
+        if (searchInputWrapper._recipientSearchInit) return;
+        searchInputWrapper._recipientSearchInit = true;
 
-            // Render group header
-            const groupHeader = `
-                <div class="dropdown-group-header">
-                    <div class="dropdown-group-name">${group.groupName}</div>                   
+        // Create floating dropdown and append to body (like TomSelect's dropdownParent:'body').
+        // This ensures the dropdown is never clipped by parent overflow:hidden elements
+        // in the chat widget scroll container.
+        searchDropdown = document.createElement('div');
+        searchDropdown.id = `${elementPrefix}-search-dropdown-${reqId}`;
+        searchDropdown.className = 'recipient-floating-dropdown';
+        searchDropdown.style.display = 'none';
+
+        searchDropdownList = document.createElement('div');
+        searchDropdownList.id = `${elementPrefix}-search-dropdown-list-${reqId}`;
+        searchDropdownList.className = 'recipient-floating-dropdown-list';
+        searchDropdown.appendChild(searchDropdownList);
+
+        document.body.appendChild(searchDropdown);
+
+        window.addEventListener('scroll', handleRepositionOnScroll, true);
+        window.addEventListener('resize', handleRepositionOnScroll);
+
+        attachEventListeners();
+    };
+
+    // ─── Event Listeners ──────────────────────────────────────────────────────
+    const attachEventListeners = () => {
+        // Kora-React pattern: wrapper onClick focuses input + calls fetchData if empty.
+        // This is the ONLY path that triggers a fetch on initial click.
+        if (searchInputWrapper) {
+            searchInputWrapper.addEventListener('click', (e) => {
+                // Don't interfere with chip close buttons or the floating dropdown itself
+                if (e.target.closest('.selectedChoice-close')) return;
+                if (e.target.closest('.selectedChoice')) return;
+                searchInput?.focus();
+                if (searchText.length === 0) {
+                    fetchData();
+                }
+            });
+        }
+
+        if (searchInput) {
+            // Kora-React onFocus: ONLY sets the flag. Does NOT call fetchData.
+            searchInput.addEventListener('focus', () => {
+                isSearchFocused = true;
+            });
+
+            searchInput.addEventListener('blur', (e) => {
+                e.stopPropagation();
+                if (blurTimer) clearTimeout(blurTimer);
+                blurTimer = setTimeout(() => {
+                    isSearchFocused = false;
+                    hideDropdown();
+                }, BLUR_DELAY);
+            });
+
+            // Kora-React: useEffect([searchText]) → fetchData on every text change.
+            searchInput.addEventListener('input', (e) => {
+                isSearchFocused = true;
+                searchText = e.target.value;
+                if (selectedRecipients.length < MAX_RECIPIENTS) {
+                    fetchData();
+                }
+            });
+
+            // Kora-React handleKeyDown: Backspace removes last selection when input is empty
+            searchInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Backspace' && searchText.length === 0) {
+                    if (selectedRecipients.length > 0) {
+                        removeRecipient(selectedRecipients[selectedRecipients.length - 1]);
+                    }
+                }
+            });
+
+            searchInput.addEventListener('paste', (e) => {
+                e.preventDefault();
+                const text = (e.originalEvent || e).clipboardData.getData('text/plain');
+                searchInput.value = text;
+                searchText = text;
+                isSearchFocused = true;
+                fetchData();
+            });
+        }
+    };
+
+    // ─── Data Fetching ────────────────────────────────────────────────────────
+    const fetchData = async () => {
+        if (!isSearchFocused) return;
+        if (selectedRecipients.length >= MAX_RECIPIENTS) return;
+        // isFetching prevents concurrent calls from the same closure instance
+        if (isFetching) return;
+
+        isFetching = true;
+        showDropdown();
+        if (searchDropdownList) {
+            searchDropdownList.innerHTML = '<div class="rfd-no-results">Loading...</div>';
+        }
+
+        try {
+            const results = await searchRecipients(searchText);
+            afterResultsSuccess(results);
+        } catch (err) {
+            console.error('[RecipientSearch] API error:', err);
+            if (searchDropdownList) {
+                searchDropdownList.innerHTML = '<div class="rfd-no-results">Failed to load. Try again.</div>';
+            }
+        } finally {
+            isFetching = false;
+        }
+    };
+
+    const afterResultsSuccess = (data) => {
+        if (!data?.groupedChoices) {
+            if (searchDropdownList) {
+                searchDropdownList.innerHTML = '<div class="rfd-no-results">No results found</div>';
+            }
+            // Dropdown was already shown (Loading...) — keep it visible with the message
+            if (isSearchFocused) showDropdown();
+            return;
+        }
+
+        let groupedResults;
+        if (searchText.length === 0) {
+            // Kora-React: slice to INITIAL_RESULTS_PER_GROUP per group for empty search
+            groupedResults = data.groupedChoices.map(group => ({
+                ...group,
+                choices: (group.choices || []).slice(0, INITIAL_RESULTS_PER_GROUP)
+            }));
+        } else {
+            groupedResults = data.groupedChoices;
+        }
+
+        renderDropdown(groupedResults);
+        // Always show the dropdown after results arrive (as long as input is focused).
+        // Don't gate on groupedResults.some(...) — the dropdown was already open for
+        // "Loading..." and must stay open to display the rendered results.
+        if (isSearchFocused) {
+            showDropdown();
+        }
+    };
+
+    const searchRecipients = async (query) => {
+        let payload;
+        if (appId === 'slack') {
+            payload = {
+                connectionId: config.connectionId,
+                fieldId: "channel",
+                dataType: "listConversation",
+                keyword: query,
+                params: {},
+                meta: { page: 0 }
+            };
+        } else {
+            payload = {
+                nodeType: "actions",
+                appId: "msteams",
+                eventId: "send_message",
+                dataType: "listConversation",
+                fieldId: "channel",
+                params: { keyword: query },
+                meta: {},
+                connectionId: config.connectionId,
+            };
+        }
+
+        const response = await store.dispatch(getChannelRecepients({
+            userId: config.userId,
+            source: config.source,
+            payload
+        }));
+        return response.payload;
+    };
+
+    // ─── Dropdown Rendering (matches SlackChannelDropDown.jsx) ────────────────
+    const renderDropdown = (groupedResults) => {
+        if (!searchDropdownList) return;
+
+        if (!groupedResults || groupedResults.length === 0) {
+            searchDropdownList.innerHTML = '<div class="rfd-no-results">No results found</div>';
+            return;
+        }
+
+        searchDropdownList.innerHTML = groupedResults.map(group => {
+            const isPeopleGroup = group.groupId === 'peopleAndGroup';
+
+            const headerHtml = `
+                <div class="rfd-headerwrapper${isPeopleGroup ? ' peopleGroup' : ''}">
+                    <div class="rfd-groupName ${group.choices?.length ? '' : 'highlighted'}">${group.groupName}</div>
+                    ${isPeopleGroup ? `<div class="rfd-infocircle" title="Displaying only threads you interacted">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M8 14.667C11.682 14.667 14.667 11.682 14.667 8C14.667 4.318 11.682 1.333 8 1.333C4.318 1.333 1.333 4.318 1.333 8C1.333 11.682 4.318 14.667 8 14.667Z" stroke="#98A2B3" stroke-width="1.33" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M8 10.667V8M8 5.333H8.007" stroke="#98A2B3" stroke-width="1.33" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </div>` : ''}
                 </div>
             `;
 
-            // Render group items
-            const groupItems = group?.choices?.map(item => {
-                const isSelected = selectedRecipients.some(r => r.id === item.id);
-                const itemType = item.meta?.type || 'user';
-                
-                // Get first letter of label for avatar
-                const firstLetter = item.label?.charAt(0)?.toUpperCase() || '?';
-                
-                // Build subtitle based on type
-                let subtitle = '';
-                if (itemType === 'channel' && item.meta?.teamLabel) {
-                    subtitle = item.meta.teamLabel;
-                } else if (itemType === 'user' && item.meta?.email) {
-                    subtitle = item.meta.email;
-                } else if (itemType === 'group' && item.meta?.memberCount) {
-                    subtitle = `${item.meta.memberCount} members`;
+            const choicesHtml = `<div class="rfd-choicewrap">${(group.choices || []).map(choice => {
+                const isSelected = selectedRecipients.some(s => s.id === choice.id);
+                const itemType = choice.meta?.type || 'user';
+                const isPublic = itemType === 'public';
+                const firstLetter = choice.label?.charAt(0)?.toUpperCase() || '?';
+
+                let profileIconHtml;
+                if (isPublic) {
+                    profileIconHtml = `<div class="rfd-hash">#</div>`;
+                } else if (itemType === 'people' && choice.meta?.icon) {
+                    profileIconHtml = `<img src="${choice.meta.icon}" alt="${choice.label}" />`;
+                } else {
+                    profileIconHtml = `<div class="rfd-groupIcon">${firstLetter}</div>`;
                 }
+
+                const subtitle = choice.meta?.email || choice.meta?.teamLabel || choice.meta?.subLabel || '';
 
                 return `
-                    <div class="dropdown-item ${isSelected ? 'selected' : ''}" data-id="${item.id}" data-type="${itemType}">
-                        <div class="dropdown-item-content">
-                            <div class="dropdown-item-avatar">${firstLetter}</div>
-                            <div class="dropdown-item-details">
-                                <div class="dropdown-item-name">${item.label}</div>
-                                ${subtitle ? `<div class="dropdown-item-subtitle">${subtitle}</div>` : ''}
+                    <div class="rfd-choice${isPublic ? ' channelChoice' : ''}" data-id="${choice.id}">
+                        <div class="rfd-profileinfo">
+                            <div class="rfd-groupBox${isPublic ? ' publicGroupBox' : ''}">
+                                ${profileIconHtml}
+                            </div>
+                            <div class="rfd-details">
+                                <div class="rfd-name">${choice.label}</div>
+                                ${subtitle ? `<div class="rfd-sub">${subtitle}</div>` : ''}
                             </div>
                         </div>
-                        ${isSelected ? `
-                            <span class="dropdown-item-checkmark">
-                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M13.3332 4L5.99984 11.3333L2.6665 8" stroke="#12B76A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                </svg>
-                            </span>
-                        ` : ''}
+                        ${isSelected ? `<div class="rfd-tick">
+                            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M10 3L4.5 8.5L2 6" stroke="#101828" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </div>` : ''}
                     </div>
                 `;
-            }).join('');
+            }).join('')}</div>`;
 
-            return groupHeader + groupItems;
+            return headerHtml + choicesHtml;
         }).join('');
 
-        // Attach click handlers to dropdown items
-        searchDropdownList.querySelectorAll('.dropdown-item').forEach(item => {
-            item.addEventListener('click', (e) => {
-                const itemId = e.currentTarget.getAttribute('data-id');
-                const itemType = e.currentTarget.getAttribute('data-type');
-                
-                // Find the item in the results
-                let selectedItem = null;
-                for (const group of results.groupedChoices) {
-                    if (group.choices) {
-                        selectedItem = group.choices.find(choice => choice.id === itemId);
-                        if (selectedItem) break;
-                    }
+        attachChoiceListeners(groupedResults);
+    };
+
+    const attachChoiceListeners = (groupedResults) => {
+        if (!searchDropdownList) return;
+        searchDropdownList.querySelectorAll('.rfd-choice').forEach(choiceEl => {
+            choiceEl.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const itemId = choiceEl.getAttribute('data-id');
+                let found = null;
+                for (const group of groupedResults) {
+                    found = (group.choices || []).find(c => c.id === itemId);
+                    if (found) break;
                 }
-                
-                if (selectedItem) {
-                    if (searchInput) {
-                        searchInput.value = '';
-                    }
-                    toggleRecipient(selectedItem);
-                }
+                if (found) addRecipient(found);
             });
         });
     };
 
-    /**
-     * Toggle recipient selection
-     * @param {Object} recipient - Recipient to toggle
-     */
-    const toggleRecipient = async (recipient) => {
-        const existingIndex = selectedRecipients.findIndex(r => r.id === recipient.id);
-        
-        if (existingIndex >= 0) {
-            selectedRecipients.splice(existingIndex, 1);
-        } else {
-            selectedRecipients.push(recipient);
-        }
-        
-        updateSelectedRecipients();
-        const results = await searchRecipients(searchInput?.value || '');
-        renderSearchDropdown(results);
+    // ─── Selection Management (matches searchChannelPeopleSlack.jsx) ──────────
+    const addRecipient = (selection) => {
+        if (selectedRecipients.some(s => s.id === selection.id)) return;
+        if (selectedRecipients.length >= MAX_RECIPIENTS) return;
+
+        selectedRecipients.push(selection);
+        searchText = '';
+        if (searchInput) searchInput.value = '';
+        updateSelectedUI();
+        notifyRecipientsChange();
+        fetchData();
+    };
+
+    const removeRecipient = (selection) => {
+        selectedRecipients = selectedRecipients.filter(s => s.id !== selection.id);
+        updateSelectedUI();
         notifyRecipientsChange();
     };
 
-    /**
-     * Update selected recipients UI
-     */
-    const updateSelectedRecipients = () => {
+    const updateSelectedUI = () => {
         if (!selectedRecipientsContainer) return;
-        
+
+        // Remove stale limit text
+        const existingLimit = searchInputWrapper?.querySelector('.reachLimitText');
+        if (existingLimit) existingLimit.remove();
+
         if (selectedRecipients.length === 0) {
-            selectedRecipientsContainer.style.display = 'none';
             selectedRecipientsContainer.innerHTML = '';
             if (searchInput) {
+                searchInput.style.display = '';
                 searchInput.placeholder = 'Search user or user groups';
             }
             return;
         }
-        
-        selectedRecipientsContainer.style.display = 'flex';
-        selectedRecipientsContainer.innerHTML = selectedRecipients.map(recipient => {
-            const recipientType = recipient.meta?.type || recipient.type || 'user';
-            const variant = recipientType === 'group' ? 'primary' : (recipientType === 'channel' ? 'success' : 'neutral');
-            const displayName = recipient.label || recipient.name || 'Unknown';
+
+        // Render selected chips — display:contents on the container makes chips
+        // appear as direct flex items of the wrapper (matching Kora-React's layout)
+        selectedRecipientsContainer.innerHTML = selectedRecipients.map(sel => {
+            const itemType = sel.meta?.type || 'user';
+            const firstLetter = sel.label?.charAt(0)?.toUpperCase() || '?';
+
+            let profileHtml;
+            if (itemType === 'public') {
+                profileHtml = `<div class="hashsymbol">#</div>`;
+            } else if (itemType === 'people' && sel.meta?.icon) {
+                profileHtml = `<div class="personimg"><img src="${sel.meta.icon}" /></div>`;
+            } else {
+                profileHtml = `<div class="groupIcon">${firstLetter}</div>`;
+            }
+
             return `
-                <sl-tag variant="${variant}" size="small" removable data-id="${recipient.id}">
-                    ${displayName}
-                </sl-tag>
+                <div class="selectedChoice" data-id="${sel.id}">
+                    <div class="profilechoice">${profileHtml}</div>
+                    <div class="selectionLabel">${sel.label}</div>
+                    <div class="selectedChoice-close">
+                        ${createCloseIcon({ size: 10, color: '#667085' })}
+                    </div>
+                </div>
             `;
         }).join('');
 
-        if (searchInput) {
-            searchInput.placeholder = '';
-        }
-
-        // Attach remove handlers to tags
-        selectedRecipientsContainer.querySelectorAll('sl-tag').forEach(tag => {
-            tag.addEventListener('sl-remove', (e) => {
-                const recipientId = e.target.getAttribute('data-id');
-                const recipient = selectedRecipients.find(r => r.id === recipientId);
-                if (recipient) {
-                    toggleRecipient(recipient);
-                }
+        selectedRecipientsContainer.querySelectorAll('.selectedChoice-close').forEach(closeEl => {
+            closeEl.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const choiceEl = closeEl.closest('.selectedChoice');
+                const id = choiceEl?.getAttribute('data-id');
+                const sel = selectedRecipients.find(s => s.id === id);
+                if (sel) removeRecipient(sel);
             });
         });
+
+        if (selectedRecipients.length >= MAX_RECIPIENTS) {
+            if (searchInput) searchInput.style.display = 'none';
+            const limitEl = document.createElement('div');
+            limitEl.className = 'reachLimitText';
+            limitEl.textContent = 'You reached the maximum limit.';
+            searchInput.insertAdjacentElement('afterend', limitEl);
+        } else {
+            if (searchInput) {
+                searchInput.style.display = '';
+                searchInput.placeholder = '';
+            }
+        }
     };
 
-    /**
-     * Show the dropdown
-     */
+    // ─── Dropdown Visibility ──────────────────────────────────────────────────
     const showDropdown = () => {
-        if (searchDropdown) {
-            searchDropdown.style.display = 'block';
-        }
+        if (!searchDropdown) return;
+        positionDropdown();
+        searchDropdown.style.display = 'block';
     };
 
-    /**
-     * Hide the dropdown
-     */
     const hideDropdown = () => {
-        if (searchDropdown) {
-            searchDropdown.style.display = 'none';
-        }
+        if (searchDropdown) searchDropdown.style.display = 'none';
     };
 
-    /**
-     * Notify parent of recipients change
-     */
+    // ─── Public API ───────────────────────────────────────────────────────────
     const notifyRecipientsChange = () => {
         onRecipientsChange([...selectedRecipients]);
     };
 
-    /**
-     * Get currently selected recipients
-     * @returns {Array} - Array of selected recipients
-     */
-    const getSelectedRecipients = () => {
-        return [...selectedRecipients];
-    };
+    const getSelectedRecipients = () => [...selectedRecipients];
 
-    /**
-     * Set recipients programmatically
-     * @param {Array} recipients - Array of recipients to set
-     */
     const setSelectedRecipients = (recipients) => {
         selectedRecipients = [...recipients];
-        updateSelectedRecipients();
+        updateSelectedUI();
         notifyRecipientsChange();
     };
 
-    /**
-     * Clear all selected recipients
-     */
     const clearSelectedRecipients = () => {
         selectedRecipients = [];
-        updateSelectedRecipients();
+        updateSelectedUI();
         notifyRecipientsChange();
     };
 
-    /**
-     * Update the data source for search
-     * @param {Array} newDataSource - New data source
-     */
-    const setDataSource = (newDataSource) => {
-        dataSource = newDataSource;
-        if (searchInput) {
-            handleSearchInput(searchInput.value || '');
-        }
-    };
-
-    /**
-     * Destroy the manager and clean up event listeners
-     */
     const destroy = () => {
-        // Remove event listeners
-        if (searchInput) {
-            searchInput.replaceWith(searchInput.cloneNode(true));
+        if (blurTimer) clearTimeout(blurTimer);
+        window.removeEventListener('scroll', handleRepositionOnScroll, true);
+        window.removeEventListener('resize', handleRepositionOnScroll);
+        if (searchDropdown && document.body.contains(searchDropdown)) {
+            searchDropdown.remove();
         }
         if (searchInputWrapper) {
-            searchInputWrapper.replaceWith(searchInputWrapper.cloneNode(true));
+            searchInputWrapper._recipientSearchInit = false;
         }
-        
-        // Clear references
         searchInputWrapper = null;
         searchInput = null;
         searchDropdown = null;
@@ -378,18 +464,14 @@ export const initializeRecipientSearch = (config) => {
         selectedRecipients = [];
     };
 
-    // Initialize on creation
     initialize();
 
-    // Return public API
     return {
         getSelectedRecipients,
         setSelectedRecipients,
         clearSelectedRecipients,
-        setDataSource,
         destroy
     };
 };
 
 export default initializeRecipientSearch;
-

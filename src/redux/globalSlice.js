@@ -71,6 +71,7 @@ const initialState = {
   unifiedSearchResults: null,
   /* disableHistorySectionInChatSection is used to disable the history section in the chat section */
   disableHistorySectionInChatSection: false,
+  autonomousAsyncPending: {},
 };
 
 const globalSlice = createSlice({
@@ -163,6 +164,9 @@ const globalSlice = createSlice({
       },
       setDisableHistorySectionInChatSection: (state, action) => {
         state.disableHistorySectionInChatSection = action.payload;
+      },
+      setAutonomousAsyncPending: (state, action) => {
+        state.autonomousAsyncPending = action.payload;
       }
     },
     extraReducers: (builder) => {
@@ -294,7 +298,8 @@ export const {
 	setChatInterfaceElements,
 	setAnswerSources,
 	setUnifiedSearchResults,
-	setDisableHistorySectionInChatSection
+	setDisableHistorySectionInChatSection,
+	setAutonomousAsyncPending
 } = globalSlice.actions;
 
 export default globalSlice;

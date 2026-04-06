@@ -4,6 +4,7 @@ import RenderComposeBar from "../composebar/RenderComposeBar";
 import RecentAgentsFunc from "../LandingPageRecentAgents/RecentAgents";
 import { TemplateRenderer } from "../templateRenderer";
 import { resolveSdkAssetPath } from "../utils/helpers";
+import { cleanupAllAuthChallenges } from "../templateRenderer/functionality/agent-auth-challenge";
 const {renderRecentAgents} = RecentAgentsFunc();
 
 let questions = {}
@@ -180,57 +181,110 @@ const initScrollArrow = () => {
 
 const renderQuestionsOnly = () => {
     const questionsContainer = document.getElementById('questions-container')
-    if (questionsContainer) {
-        // Generate questions HTML like ChatInterface does
-        let questionsHTML = '';
-        const hasQuestions = questions && !isEmpty(questions);
-        
-        if (hasQuestions) {
-            questionsHTML = Object.values(questions).map((item, index) => {
-                if (item?.isTask) return '';
-                
-                const assistantIconTemplate = () => {
-                    return `<div class="logo-icon"><img src="${resolveSdkAssetPath("images/eva-black-svg.svg")}" alt="AiForWork" /></div>`;
-                };
+    if (!questionsContainer) return
 
-                let html = TemplateRenderer.generateHTMLTemplate(item, {
-                    // assistantIconTemplate,
-                    loadingText: "Analyzing",
-                });
+    // When a TomSelect input has focus (user is typing/selecting recipients),
+    // skip the re-render entirely. store.subscribe fires on EVERY Redux dispatch
+    // — including getSuggestedContactListNew pending/fulfilled which don't change
+    // any visible state. Re-rendering during that window destroys the TomSelect
+    // instance (dropdown closes, typed text lost, height jumps).
+    if (questionsContainer.querySelector('.ts-control input:focus')) return
 
-                return html.outerHTML;
-            }).join('');
-        }
-        
-        // Add or remove class based on questions existence
-        const landingPageContainer = document.querySelector('.landing-page-container');
-        if (hasQuestions) {
-            /*append  results-page-container to the class of landing-page-container*/
-            landingPageContainer.classList.add('results-page-container');
-        } else {
-            landingPageContainer.classList.remove('results-page-container');
-        }
-        
-        const prevScrollTop = questionsContainer.scrollTop
+    // Same guard for Slack / Teams recipient search inputs.
+    // getChannelRecepients (resolveFields) dispatches trigger store.subscribe on
+    // both pending and fulfilled, causing renderQuestionsOnly to wipe and recreate
+    // questionsContainer.innerHTML. This destroys the focused search input, fires
+    // blur, and the 500ms blur timer then closes the floating panel — identical to
+    // the TomSelect problem above.
+    if (questionsContainer.querySelector('.slack-search-input:focus, .teams-search-input:focus')) return
 
-        questionsContainer.innerHTML = questionsHTML
+    // Same guard for Slack / Teams message body editor and smart compose prompt.
+    // smartComposeEmail dispatches trigger store.subscribe, which would destroy
+    // the focused message editor or smart compose input, wiping typed text and
+    // clearing the selected recipients entirely.
+    if (questionsContainer.querySelector('.slack-message-editor:focus, .teams-message-editor:focus')) return
+    if (questionsContainer.querySelector('.sc-prompt-input:focus')) return
 
-        const messageContainers = questionsContainer.querySelectorAll('.message-container')
-        const currentQuestionCount = messageContainers.length
+    // Guard while the smart compose panel is open — suggestion button clicks fire
+    // smartComposeEmail which triggers store.subscribe before any input has focus.
+    // Without this guard, the form re-renders and loses all recipients + message text.
+    if (questionsContainer.querySelector('.emailSmartCompose')) return
 
-        if (currentQuestionCount > prevQuestionCount && currentQuestionCount >= 2) {
-            pinLatestQuestionToTop()
-        } else if (currentQuestionCount >= 2) {
-            const lastMessage = messageContainers[messageContainers.length - 1]
-            const visibleHeight = questionsContainer.clientHeight - getOverlayHeight()
-            const lastMessageHeight = lastMessage.offsetHeight
-            lastMessage.style.marginBottom = Math.max(0, visibleHeight - lastMessageHeight) + 'px'
-            questionsContainer.scrollTop = prevScrollTop
-        }
-        prevQuestionCount = currentQuestionCount
+    // Guard while a Slack/Teams message is being sent. The send button click removes
+    // focus from all inputs, so no other guard fires. But sendIntegrationMessage
+    // dispatches trigger store.subscribe, destroying templateEl before the .then()
+    // callback can replace it with the success card.
+    if (questionsContainer.querySelector('[data-sending="true"]')) return
 
-        setTimeout(() => updateScrollArrowVisibility(), 150)
+    const hasQuestions = questions && !isEmpty(questions);
+
+    const landingPageContainer = document.querySelector('.landing-page-container');
+    if (hasQuestions) {
+        landingPageContainer?.classList.add('results-page-container');
+    } else {
+        landingPageContainer?.classList.remove('results-page-container');
     }
+
+    if (!hasQuestions) {
+        cleanupAllAuthChallenges();
+        questionsContainer.innerHTML = '';
+        prevQuestionCount = 0;
+        setTimeout(() => updateScrollArrowVisibility(), 150)
+        return;
+    }
+
+    const prevScrollTop = questionsContainer.scrollTop
+
+    // Defensive de-dupe: in some flows (notably 3-dot integration actions),
+    // the same server message can transiently exist in `questions` under multiple keys.
+    // Rendering `Object.values(questions)` would then show a duplicated "question" block
+    // (commonly `agent_welcome_template`) even though only one advanceSearch happened.
+    //
+    // Keep the FIRST occurrence so that items stay in their original chronological position
+    // (e.g., agent_welcome_template stays at the top, not shifted below a later integration action).
+    const questionList = Object.values(questions);
+    const seen = new Set();
+    const deduped = [];
+    for (let i = 0; i < questionList.length; i++) {
+        const item = questionList[i];
+        const key =
+            (item?.messageId ? `m:${item.messageId}` : null) ||
+            (item?.reqId ? `r:${item.reqId}` : null) ||
+            (item?.cId ? `c:${item.cId}` : null) ||
+            (item?.id ? `i:${item.id}` : `idx:${i}`);
+        if (seen.has(key)) continue;
+        seen.add(key);
+        deduped.push(item);
+    }
+
+    let questionsHTML = '';
+    questionsHTML = deduped.map((item) => {
+        if (item?.isTask) return '';
+
+        const el = TemplateRenderer.generateHTMLTemplate(item, {
+            loadingText: "Analyzing",
+        });
+
+        return el.outerHTML;
+    }).join('');
+
+    questionsContainer.innerHTML = questionsHTML
+
+    const messageContainers = questionsContainer.querySelectorAll('.message-container')
+    const currentQuestionCount = messageContainers.length
+
+    if (currentQuestionCount > prevQuestionCount && currentQuestionCount >= 2) {
+        pinLatestQuestionToTop()
+    } else if (currentQuestionCount >= 2) {
+        const lastMessage = messageContainers[messageContainers.length - 1]
+        const visibleHeight = questionsContainer.clientHeight - getOverlayHeight()
+        const lastMessageHeight = lastMessage.offsetHeight
+        lastMessage.style.marginBottom = Math.max(0, visibleHeight - lastMessageHeight) + 'px'
+        questionsContainer.scrollTop = prevScrollTop
+    }
+    prevQuestionCount = currentQuestionCount
+
+    setTimeout(() => updateScrollArrowVisibility(), 150)
 }
 
 const constructParentComponent = () => {

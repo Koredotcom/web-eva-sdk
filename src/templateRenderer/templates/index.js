@@ -212,6 +212,9 @@ export function renderLoading(
         //     ${displayTimestamp ? renderQuestionBubbleTimeStamp(data.timestamp) : ""}
         // </div>
 
+        const responseFlowHTML = responseQueryFlow.render(data);
+        const hasResponseFlow = data?.reqFlow?.length > 0;
+
         html = `             
             <div class="message-bubble question">
                     <div class="message-content">                        
@@ -228,7 +231,7 @@ export function renderLoading(
             </div>
             <div class="message-bubble loading">
                 ${assistantIconTemplate ? assistantIconTemplate : ""}
-                ${responseQueryFlow.render(data)}
+                ${hasResponseFlow ? responseFlowHTML : `<div class="loading-text">${encodeHtml(text)}</div>`}
             </div>`
     }
 	return html;

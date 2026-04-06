@@ -1,5 +1,9 @@
 import { CheveronDownIcon, cheveronRightIcon } from "../icons-library";
 
+// Kora-React parity: persist open/close state for specific agents (Work aAAgent / supervisor)
+// across re-renders so the response flow doesn't unexpectedly collapse/expand.
+const persistedStateMap = new Map();
+
 const ResponseQueryFlowFunctionality = ({ data, uniqueId }) => {
     
 
@@ -27,9 +31,25 @@ const ResponseQueryFlowFunctionality = ({ data, uniqueId }) => {
                     headerContainer.parentNode.replaceChild(newHeaderContainer, headerContainer);
                     
                     newHeaderContainer.addEventListener('click', function(event) {
-                        console.log('Click handler triggered for messageId:', data.messageId || data.id);
-                        toggleResponseFlow(event, data?.reqFlow?.[data?.reqFlow?.length - 1]?.content);
+                        const key = data?.id || data?.messageId || data?.reqId || uniqueId;
+                        const isPersisted = shouldPersistState(data);
+                        toggleResponseFlow(event, data?.reqFlow?.[data?.reqFlow?.length - 1]?.content, {
+                            persistKey: isPersisted ? key : null,
+                        });
                     });
+
+                    // Kora-React behavior: for Work aAAgent / supervisor, default to expanded
+                    // after completion unless user manually toggled.
+                    const key = data?.id || data?.messageId || data?.reqId || uniqueId;
+                    if (shouldPersistState(data)) {
+                        const persisted = persistedStateMap.get(key) || {};
+                        const manual = !!persisted.manualInteraction;
+                        const desiredExpanded = manual ? !!persisted.isOpen : true;
+                        applyExpandedState(queryResponseFlow, desiredExpanded, data?.reqFlow?.[data?.reqFlow?.length - 1]?.content);
+                        if (!manual) {
+                            persistedStateMap.set(key, { ...persisted, isOpen: desiredExpanded });
+                        }
+                    }
                 } else {
                     
                 }
@@ -42,39 +62,59 @@ const ResponseQueryFlowFunctionality = ({ data, uniqueId }) => {
     }
 }
 
-function toggleResponseFlow(event, content) {
-    console.log('toggleResponseFlow called');
+function shouldPersistState(data) {
+    const f = data?.followUpContext;
+    return !!(
+        !data?.historicalData &&
+        (f?.isSupervisor || (f?.agentType === 'aAAgent' && f?.title === 'Work'))
+    );
+}
+
+function applyExpandedState(queryResponseFlow, expanded, content) {
+    const icon = queryResponseFlow.querySelector('.query-response-flow-header-icon');
+    const displayDiv = queryResponseFlow.querySelector('.display-query-response-flow');
+    const queryResponseHeader = queryResponseFlow.querySelector('.query-response-flow-header-text');
+    if (!icon) return;
+
+    if (expanded) {
+        icon.innerHTML = `${CheveronDownIcon({ size: 10, color: "#667085" })}`;
+        if (displayDiv) displayDiv.style.display = 'block';
+        if (queryResponseHeader) queryResponseHeader.innerText = "Response Flow";
+    } else {
+        icon.innerHTML = `${cheveronRightIcon({ size: 10, color: "#667085" })}`;
+        if (displayDiv) displayDiv.style.display = 'none';
+        // Kora-React parity: when thoughts exist, collapsed header says "Thoughts for X secs"
+        // (stored as data-thought-time on the root element), not the last reqFlow content.
+        const thoughtTime = queryResponseFlow.getAttribute('data-thought-time');
+        if (thoughtTime) {
+            if (queryResponseHeader) queryResponseHeader.innerText = `Thoughts for ${thoughtTime} secs`;
+        } else {
+            if (queryResponseHeader) queryResponseHeader.innerText = content || queryResponseHeader.innerText;
+        }
+    }
+}
+
+function toggleResponseFlow(event, content, options = {}) {
 
     const queryResponseFlow = event.currentTarget.closest('.query-response-flow');
     if (!queryResponseFlow) {
-        console.log('Query response flow not found');
         return;
     }
     
     const icon = queryResponseFlow.querySelector('.query-response-flow-header-icon');
-    const displayDiv = queryResponseFlow.querySelector('.display-query-response-flow');
-    const queryResponseHeader = queryResponseFlow.querySelector('.query-response-flow-header-text');
-    
-    
     if (!icon) return;
-    
-    // Check current state based on icon content
+
     const isCurrentlyExpanded = icon.innerHTML.includes('wa-CheveronDownIcon');
-    
-    if (isCurrentlyExpanded) {
-        // Collapse: Switch to right chevron and hide display div
-        icon.innerHTML = `${cheveronRightIcon({ size: 10, color: "#667085" })}`;
-        if (displayDiv) {
-            displayDiv.style.display = 'none';
-            queryResponseHeader.innerText = content;
-        }
-    } else {
-        // Expand: Switch to down chevron and show display div
-        icon.innerHTML = `${CheveronDownIcon({ size: 10, color: "#667085" })}`;
-        if (displayDiv) {
-            displayDiv.style.display = 'block';
-            queryResponseHeader.innerText = "Response Flow";
-        }
+    const nextExpanded = !isCurrentlyExpanded;
+    applyExpandedState(queryResponseFlow, nextExpanded, content);
+
+    if (options?.persistKey) {
+        const current = persistedStateMap.get(options.persistKey) || {};
+        persistedStateMap.set(options.persistKey, {
+            ...current,
+            isOpen: nextExpanded,
+            manualInteraction: true,
+        });
     }
 }
 

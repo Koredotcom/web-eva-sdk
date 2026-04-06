@@ -13,6 +13,7 @@ import * as holdConversation from "./templates/hold-conversation-template";
 import * as errorMessage from "./templates/error-message-template";
 import * as genericErrorTemplate from "./templates/generic-error-template";
 import * as actionSendTeamsMessageTemplate from "./templates/action-send-teams-message";
+import * as actionSendSlackMessageTemplate from "./templates/action-send-slack-message";
 import * as feedbackTemplate from "./templates/feedback-template";
 import { encodeHtml, SHOELACE_ATTRS, SHOELACE_TAGS } from "./utils/helper";
 import { convertTemplateToHtml } from "../utils/helpers";
@@ -21,6 +22,7 @@ import customMarkdownRenderer from "./utils/customMarkdownRenderer";
 import * as itemsAmbiguityTemplate from "./templates/items-ambiguity-template";
 import * as responseQueryFlow from "./templates/response-query-flow";
 import AnsFromChip from "./templates/ansFromChip";
+import * as agentAuthChallenge from "./templates/agent-auth-challenge";
 import DOMPurify from "dompurify";
 import store from "../redux/store";
 
@@ -101,7 +103,10 @@ export function render(
 				ADD_ATTR: SHOELACE_ATTRS,
 			});
 		}
-		if ((!!data?.sources?.length || !!data?.agentId) && supportsFeedback(data.templateType) && (data?.status === "completed" || !!data?.answer)) {
+		// Kora-React parity: action/menu options (AnsFromChip + three-dot) should only appear
+		// after the answer is completed successfully. During streaming/loading we may already
+		// have partial `answer` chunks, but MenuOptions must stay hidden until `apiSuccess`.
+		if ((!!data?.sources?.length || !!data?.agentId) && supportsFeedback(data.templateType) && (data?.apiSuccess || data?.historicalData)) {
 			let chip = AnsFromChip({ item: data });
 			content += DOMPurify.sanitize(chip, {
 				ADD_TAGS: SHOELACE_TAGS,
@@ -172,7 +177,13 @@ export function renderTemplateContent(
 				break;
 
 			case "integrations_action_form":
-				htmlTemplate += integrationActionTemplate.render(data);
+				if (data?.provider === 'slack' || data?.skills === 'slack') {
+					htmlTemplate += actionSendSlackMessageTemplate.render(data);
+				} else if (data?.provider === 'msteams' || data?.skills === 'msteams') {
+					htmlTemplate += actionSendTeamsMessageTemplate.render(data);
+				} else {
+					console.warn('Unknown integration action provider:', data?.provider);
+				}
 				break;
 
 			case "interruption_template":
@@ -184,10 +195,11 @@ export function renderTemplateContent(
 				break;
 
 			case "action_send_slack_message":
-				htmlTemplate += actionSendSlackMessage.render(data);
+				htmlTemplate += actionSendSlackMessageTemplate.render(data);
 				break;
 
 			case "action_send_msteams_message":
+			case "action_send_teams_message":
 				htmlTemplate += actionSendTeamsMessageTemplate.render(data);
 				break;
 
@@ -203,6 +215,10 @@ export function renderTemplateContent(
 
 			case "agent_welcome_template":
 				htmlTemplate += agentWelcomeTemplate.render(data);
+				break;
+
+			case "agent_auth_challenge":
+				htmlTemplate += agentAuthChallenge.render(data);
 				break;
 			// case "bot_template":
 			// 	console.log("bottttt", data.template_html);

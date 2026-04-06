@@ -39,10 +39,12 @@ function render(data, type = 'question') {
             copyButton.addEventListener('click', () => {
                 if (type === 'answer') {
                     const messageDiv = document.querySelector(`#answer-${data?.messageId} .message-renderer`);
-                    if (messageDiv) {
-                        const htmlData = messageDiv.outerHTML;
-                        const blob = new Blob([htmlData], { type: 'text/html' });
-                        const clipboardItem = new ClipboardItem({ 'text/html': blob });
+                    if (messageDiv && navigator.clipboard?.write && typeof ClipboardItem !== 'undefined') {
+                        const htmlData = messageDiv.innerHTML;
+                        const plainText = messageDiv.innerText || messageDiv.textContent || data?.answer;
+                        const htmlBlob = new Blob([htmlData], { type: 'text/html' });
+                        const textBlob = new Blob([plainText], { type: 'text/plain' });
+                        const clipboardItem = new ClipboardItem({ 'text/html': htmlBlob, 'text/plain': textBlob });
                         navigator.clipboard.write([clipboardItem])
                             .then(() => console.log('Copied with formatting!'))
                             .catch(err => console.error('Clipboard copy failed:', err));

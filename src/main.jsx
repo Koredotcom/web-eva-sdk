@@ -5,12 +5,12 @@ import { initializeSDK} from './index'; // Adjust the import according to your S
 
 
 
-const getAccessToken = 'SGGA_-8gi9TJ-tkSxnVMB-NecI_B58OMXPok-fY3INVl8XMjTiJGB3pVtqnnrY7H'; 
+const getAccessToken = '67zpv0_OIsu0th5G5n0A3gbMBJ312KfIHKmzmAgZ4xKNow02kX-ZMl06snflv-S-'; 
 initializeSDK({
     accessToken: getAccessToken,
-    api_url: 'https://work.kore.ai/api/',
-    presence_url: 'https://work.kore.ai/',
-    userId: "u-93300cde-2893-5b97-aeec-4e9c4741b60e",
+    api_url: 'https://work-qa.kore.ai/api/',
+    presence_url: 'https://work-qa.kore.ai/',
+    userId: "u-82f7e419-e905-5a5c-8634-831763a65174",
     initializeBotSDK:{
         "name": "ProcureBot",
         "streamId": "st-b6012ef2-810d-5240-b33e-5404d68b680e",

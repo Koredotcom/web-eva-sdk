@@ -589,9 +589,90 @@ export function agentThreadIcon({ size = config.size, color = config.color, clas
           <defs>
           <linearGradient id="paint0_linear_2882_3348" x1="2.1967" y1="15.6485" x2="14.9036" y2="5.25191" gradientUnits="userSpaceOnUse">
           <stop stop-color="#528BFF"/>
-          <stop offset="1" stop-color="#22CCEE"/>
+            <stop offset="1" stop-color="#22CCEE"/>
           </linearGradient>
           </defs>
         </svg>
     `;
+}
+
+// ─── File-type icons for attachment previews (matching Kora-React) ───────────
+
+export function filePdfIcon({ size = 20 } = {}) {
+  return `<svg width="${size}" height="${size}" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect width="20" height="20" rx="4" fill="#F04438"/>
+    <text x="3" y="14" font-family="Arial,sans-serif" font-size="7" font-weight="700" fill="#fff">PDF</text>
+  </svg>`;
+}
+
+export function fileWordIcon({ size = 20 } = {}) {
+  return `<svg width="${size}" height="${size}" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect width="20" height="20" rx="4" fill="#2B579A"/>
+    <text x="3" y="14" font-family="Arial,sans-serif" font-size="6" font-weight="700" fill="#fff">DOC</text>
+  </svg>`;
+}
+
+export function fileExcelIcon({ size = 20 } = {}) {
+  return `<svg width="${size}" height="${size}" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect width="20" height="20" rx="4" fill="#217346"/>
+    <text x="5" y="14" font-family="Arial,sans-serif" font-size="7" font-weight="700" fill="#fff">X</text>
+  </svg>`;
+}
+
+export function filePptIcon({ size = 20 } = {}) {
+  return `<svg width="${size}" height="${size}" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect width="20" height="20" rx="4" fill="#D04423"/>
+    <text x="3" y="14" font-family="Arial,sans-serif" font-size="6" font-weight="700" fill="#fff">PPT</text>
+  </svg>`;
+}
+
+export function fileImageIcon({ size = 20 } = {}) {
+  return `<svg width="${size}" height="${size}" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect width="20" height="20" rx="4" fill="#7A5AF8"/>
+    <path d="M3 14l4-5 3 4 2-2.5 5 6.5H3z" fill="#fff" opacity="0.9"/>
+    <circle cx="14" cy="6" r="2" fill="#fff" opacity="0.9"/>
+  </svg>`;
+}
+
+export function fileVideoIcon({ size = 20 } = {}) {
+  return `<svg width="${size}" height="${size}" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect width="20" height="20" rx="4" fill="#F79009"/>
+    <path d="M7 6v8l7-4-7-4z" fill="#fff"/>
+  </svg>`;
+}
+
+export function fileMusicIcon({ size = 20 } = {}) {
+  return `<svg width="${size}" height="${size}" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect width="20" height="20" rx="4" fill="#EE46BC"/>
+    <path d="M8 14V7l7-1.5V13M8 14a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm7-1a2 2 0 1 1-4 0 2 2 0 0 1 4 0z" stroke="#fff" stroke-width="1.2" fill="none"/>
+  </svg>`;
+}
+
+export function fileZipIcon({ size = 20 } = {}) {
+  return `<svg width="${size}" height="${size}" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect width="20" height="20" rx="4" fill="#667085"/>
+    <text x="3" y="14" font-family="Arial,sans-serif" font-size="6" font-weight="700" fill="#fff">ZIP</text>
+  </svg>`;
+}
+
+export function fileGeneralIcon({ size = 20 } = {}) {
+  return `<svg width="${size}" height="${size}" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect width="20" height="20" rx="4" fill="#98A2B3"/>
+    <path d="M6 4h5l4 4v8H6V4z" fill="#fff" opacity="0.3"/>
+    <path d="M11 4l4 4h-4V4z" fill="#fff" opacity="0.6"/>
+    <path d="M8 10h5M8 12h4M8 14h3" stroke="#fff" stroke-width="1" stroke-linecap="round"/>
+  </svg>`;
+}
+
+export function getFileTypeIconHtml(extension, size = 20) {
+  const ext = (extension || '').toLowerCase();
+  if (ext === 'pdf') return filePdfIcon({ size });
+  if (['doc', 'docx', 'odt'].includes(ext)) return fileWordIcon({ size });
+  if (['xls', 'xlsx', 'ods', 'csv'].includes(ext)) return fileExcelIcon({ size });
+  if (['ppt', 'pptx'].includes(ext)) return filePptIcon({ size });
+  if (['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg'].includes(ext)) return fileImageIcon({ size });
+  if (['mp4', 'mov', 'mkv', 'webm', 'avi'].includes(ext)) return fileVideoIcon({ size });
+  if (['mp3', 'wav', 'ogg', 'aac'].includes(ext)) return fileMusicIcon({ size });
+  if (['zip', 'rar', '7z', 'tar', 'gz'].includes(ext)) return fileZipIcon({ size });
+  return fileGeneralIcon({ size });
 }
