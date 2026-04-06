@@ -521,6 +521,9 @@ const ChatInterface = (props) => {
                         "thoughts": question.botConversation[detail?.data?.outputMessageId]?.thoughts || [],
                     }
               }
+              if (question.loading) {
+                delete question.loading;
+              }
               _questions[reqId] = question
               store.dispatch(updateChatData(_questions))
               return;               
@@ -609,6 +612,9 @@ const ChatInterface = (props) => {
           return;
         }
         currentQuestion = { ...currentQuestion, ...detail?.data?.answerMeta, agentType };
+        if (currentQuestion.loading) {
+          delete currentQuestion.loading;
+        }
         _questions[reqId] = currentQuestion;
         store.dispatch(updateChatData(_questions));
         return;

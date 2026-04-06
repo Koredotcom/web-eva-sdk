@@ -183,6 +183,9 @@ const renderQuestionsOnly = () => {
     const questionsContainer = document.getElementById('questions-container')
     if (!questionsContainer) return
 
+    const chatbotPanel = questionsContainer.closest('.eva-sdk-chatbot-panel');
+    if (chatbotPanel && !chatbotPanel.classList.contains('eva-sdk-chatbot-panel--open')) return
+
     // When a TomSelect input has focus (user is typing/selecting recipients),
     // skip the re-render entirely. store.subscribe fires on EVERY Redux dispatch
     // — including getSuggestedContactListNew pending/fulfilled which don't change

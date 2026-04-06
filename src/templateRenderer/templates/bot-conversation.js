@@ -332,9 +332,9 @@ const expandThoughts = (conversation) => {
 const setupThoughtsToggle = (messageId, thoughtTime, retryCount = 0) => {
 	const maxRetries = 10;
 	const retryDelay = 500;
-	const thoughtWrapper = document.getElementById(`thought-wrapper-${messageId}`);
+	const wrappers = document.querySelectorAll(`#thought-wrapper-${messageId}`);
 
-	if (!thoughtWrapper) {
+	if (!wrappers.length) {
 		if (retryCount < maxRetries) {
 			setTimeout(() => setupThoughtsToggle(messageId, thoughtTime, retryCount + 1), retryDelay);
 			return;
@@ -342,54 +342,44 @@ const setupThoughtsToggle = (messageId, thoughtTime, retryCount = 0) => {
 		return;
 	}
 
-	const toggleThoughts = (event, thoughtTime) => {
-		event.preventDefault();
-		event.stopPropagation();
-		const isCurrentlyCollapsed = thoughtWrapper.classList.contains('collapsed');
-		const iconSpan = thoughtWrapper.querySelector('.spanIcon');
-		const thoughtsHeader = document.getElementById(`thoughts-header-${messageId}`);
-		if (isCurrentlyCollapsed) {
-			try {
-				thoughtWrapper.classList.remove('collapsed');
-				thoughtWrapper.classList.add('expanded');
-
-
-				// Ensure icon rotation for expanded state (chevron down)
+	wrappers.forEach((thoughtWrapper) => {
+		const toggleThoughts = (event) => {
+			event.preventDefault();
+			event.stopPropagation();
+			const isCurrentlyCollapsed = thoughtWrapper.classList.contains('collapsed');
+			const iconSpan = thoughtWrapper.querySelector('.spanIcon');
+			const thoughtsHeader = thoughtWrapper.querySelector(`#thoughts-header-${messageId}`) ||
+				document.getElementById(`thoughts-header-${messageId}`);
+			if (isCurrentlyCollapsed) {
+				try {
+					thoughtWrapper.classList.remove('collapsed');
+					thoughtWrapper.classList.add('expanded');
+					if (iconSpan) {
+						iconSpan.style.transform = 'rotate(90deg)';
+						iconSpan.style.transition = 'transform 0.3s ease';
+					}
+					if (thoughtsHeader) thoughtsHeader.textContent = `Thoughts`;
+				}
+				catch (error) {
+					console.log('error', error);
+				}
+			} else {
+				thoughtWrapper.classList.remove('expanded');
+				thoughtWrapper.classList.add('collapsed');
+				if (thoughtsHeader) thoughtsHeader.textContent = `Thoughts for ${thoughtTime} secs`;
 				if (iconSpan) {
-					iconSpan.style.transform = 'rotate(90deg)';
+					iconSpan.style.transform = 'rotate(0deg)';
 					iconSpan.style.transition = 'transform 0.3s ease';
 				}
-				thoughtsHeader.textContent = `Thoughts`;
 			}
-			catch (error) {
-				console.log('error', error);
-			}
+		};
 
-		} else {
-			thoughtWrapper.classList.remove('expanded');
-			thoughtWrapper.classList.add('collapsed');
-			/* update the thoughts header text */
-
-			thoughtsHeader.textContent = `Thoughts for ${thoughtTime} secs`;
-
-			// Ensure icon rotation for collapsed state (chevron right)
-			if (iconSpan) {
-				iconSpan.style.transform = 'rotate(0deg)';
-				iconSpan.style.transition = 'transform 0.3s ease';
-			}
+		if (thoughtWrapper._toggleHandler) {
+			thoughtWrapper.removeEventListener('click', thoughtWrapper._toggleHandler);
 		}
-	};
-
-	// Remove any existing listener first to prevent multiple listeners
-	if (thoughtWrapper._toggleHandler) {
-		thoughtWrapper.removeEventListener('click', thoughtWrapper._toggleHandler);
-	}
-
-	// Create and store the handler function
-	thoughtWrapper._toggleHandler = (event) => toggleThoughts(event, thoughtTime);
-
-	// Add click event listener with thoughtTime passed correctly
-	thoughtWrapper.addEventListener('click', thoughtWrapper._toggleHandler);
+		thoughtWrapper._toggleHandler = toggleThoughts;
+		thoughtWrapper.addEventListener('click', thoughtWrapper._toggleHandler);
+	});
 }
 
 function renderBotConversation(
