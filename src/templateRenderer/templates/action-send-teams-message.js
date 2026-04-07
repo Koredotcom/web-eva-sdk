@@ -6,6 +6,8 @@ import store from "../../redux/store";
 import axios from "axios";
 import { initializeRecipientSearch } from "../../utils/searchChannelRecepients";
 import { sendIntegrationMessage, smartComposeEmail, getSpecificSkills } from "../../redux/actions/global.action";
+import { updateChatData } from "../../redux/globalSlice";
+import { cloneDeep } from "lodash";
 import SSOMethods from "../utils/sso-methods";
 import eventBus from "../utils/eventbus";
 
@@ -921,6 +923,29 @@ const initializeTeamsMessageFunctionality = (data) => {
                         successWrapper.innerHTML = renderTeamsSuccessSmallCard(channels, text, tenantName, attachments);
                         templateRoot.replaceWith(successWrapper);
                         attachTeamsExpandCollapseListeners(successWrapper, channels, text, tenantName, attachments);
+                    }
+
+                    // Persist the completed state in the Redux store so that if the
+                    // questions container re-renders (e.g. new user question), the
+                    // render() function sees status='completed' and returns the summary
+                    // card instead of re-showing the compose form.
+                    const _questions = cloneDeep(store.getState().global.questions);
+                    const storeKey = Object.keys(_questions).find(k =>
+                        k === data?.reqId || _questions[k]?.reqId === data?.reqId
+                    );
+                    if (storeKey) {
+                        _questions[storeKey] = {
+                            ..._questions[storeKey],
+                            status: 'completed',
+                            content: {
+                                ...(_questions[storeKey]?.content || {}),
+                                conversations: channels,
+                                channels,
+                                message: { msg: text, text, attachments },
+                                tenantName,
+                            },
+                        };
+                        store.dispatch(updateChatData(_questions));
                     }
                 } else {
                     sendButton.disabled = false;
