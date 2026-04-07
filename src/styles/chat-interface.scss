@@ -7202,6 +7202,17 @@ sl-dialog.gpt-form-dialog {
                             visibility: visible;
                             opacity: 1;
                         }
+
+                        .utterance.tooltipForEllipsis {
+                            cursor: pointer;
+                        }
+                    }
+
+                    .utterance.tooltipForEllipsis {
+                        overflow: hidden;
+                        text-overflow: ellipsis;
+                        white-space: nowrap;
+                        cursor: pointer;
                     }
                 }
             }

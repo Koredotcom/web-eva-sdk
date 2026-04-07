@@ -85,7 +85,7 @@ function render(data) {
                                                 `).join('')}
                                                 </div>
                                             ` : ''}                                    
-                                            <div class="utterance">${task?.utterance}</div>                                            
+                                            <div class="utterance tooltipForEllipsis" id="utteranceText-${task?._id}" title="${task?.utterance}">${task?.utterance}</div>                                            
                                         </div>
                                     </div>
                                     <div class="rightBlock">

@@ -835,6 +835,18 @@ const multiIntentExecutionFunc = (item) => {
             editBtn.eventListenerAdded = true;
         }
 
+        const utteranceTextEl = document.getElementById(`utteranceText-${task?._id}`);
+        if(utteranceTextEl && !utteranceTextEl.eventListenerAdded){
+            utteranceTextEl.addEventListener("click", (e) => {
+                e?.stopPropagation?.();
+                const currentStatus = store.getState()?.global?.questions?.[item?.reqId]?.status || item?.status;
+                if(currentStatus === 'draft'){
+                    editTask(index, task);
+                }
+            });
+            utteranceTextEl.eventListenerAdded = true;
+        }
+
         const historyBtn = document.getElementById(`historyBtn-${task?._id}`);
         let _questions = cloneDeep(state?.questions);
         if(historyBtn && !historyBtn.eventListenerAdded){
