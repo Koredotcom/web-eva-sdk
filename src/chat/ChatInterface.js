@@ -439,21 +439,31 @@ const ChatInterface = (props) => {
         reqId = Object.entries(_questions).find(([key, value]) => value?.reqId === detail?.data?.reqId)?.[0]
       }
       let currentQuestion = _questions[reqId]
-      if(detail?.data?.answerMeta?.hasOwnProperty('messageId')) {
-        currentQuestion = {...currentQuestion, ...detail?.data?.answerMeta}      
-        currentQuestion.botConversation = {}  
+      if(state?.enableDebugging){
+        console.log("currentQuestion in agent thoughts function before thoughts", currentQuestion)
       }
-      /*we have to create botConversation with the outputMessageId add thoughts to it, once the advanceSearchApi is completed, need to replace that outputMessageId with the response of advSearch API */
-      if(detail?.data?.answerMeta?.hasOwnProperty('outputMessageId')){
-        if(!currentQuestion?.botConversation) {
-              currentQuestion.botConversation = {}
+      if(currentQuestion.viewType === 'threadView'){
+        if(detail?.data?.answerMeta?.hasOwnProperty('messageId')) {
+          currentQuestion = {...currentQuestion, ...detail?.data?.answerMeta}      
+          currentQuestion.botConversation = {}  
         }
-        currentQuestion.botConversation[detail?.data?.answerMeta?.outputMessageId] = {
-            "suggestion":detail?.data?.suggestion,
-            "thoughts":detail?.data?.answerMeta?.thoughts,
-            "templateType": detail?.data?.templateType || "search_answer",
-        }
-      }      
+        /*we have to create botConversation with the outputMessageId add thoughts to it, once the advanceSearchApi is completed, need to replace that outputMessageId with the response of advSearch API */
+        if(detail?.data?.answerMeta?.hasOwnProperty('outputMessageId')){
+          if(!currentQuestion?.botConversation) {
+                currentQuestion.botConversation = {}
+          }
+          currentQuestion.botConversation[detail?.data?.answerMeta?.outputMessageId] = {
+              "suggestion":detail?.data?.suggestion,
+              "thoughts":detail?.data?.answerMeta?.thoughts,
+              "templateType": detail?.data?.templateType || "search_answer",
+          }
+        }  
+      }else{
+        currentQuestion = {...currentQuestion, ...detail?.data?.answerMeta}      
+      }
+      if(state?.enableDebugging){
+        console.log("currentQuestion in agent thoughts function after thoughts", currentQuestion)
+      }
       _questions[reqId] = currentQuestion      
       store.dispatch(updateChatData(_questions))
       if(state?.enableDebugging){
