@@ -112,6 +112,7 @@ const MultiIntentExecution = (props) => {
 
         const params = {
             cId: _item?.id,
+            reqId: _item?.id,
             type: _item?.type,
             stepId: task?._id,
             task,
@@ -120,15 +121,23 @@ const MultiIntentExecution = (props) => {
             isTask: true
         };
 
+        const selectedAgentId = task?.intents?.[0]?.agentId;
+        const selectedIntentId = task?.intents?.[0]?.id;
+
+        // mcpAgent parity: intentId must NOT be sent for mcpAgent (matches Kora-React MultiIntentExecution.jsx)
+        const allAgents = state?.allAgents?.data?.agents || [];
+        const selectedAgentType = allAgents.find(a => a?.id === selectedAgentId)?.type;
+        const context = {
+            agentId: selectedAgentId,
+            stepId: task?._id,
+            ...(selectedAgentType !== 'mcpAgent' ? { intentId: selectedIntentId } : {})
+        };
+
         const payload = {
             question: task?.utterance,
             boardId: activeBoardId,
             parentId: _item?.messageId,
-            context: {
-            intentId: task?.intents?.[0]?.id,
-            agentId: task?.intents?.[0]?.agentId,
-            stepId: task?._id
-            }
+            context
         };
 
         InitiateChatConversationAction({
@@ -358,7 +367,7 @@ const MultiIntentExecution = (props) => {
                 let executionPipeLineIds = item?.executionPipeline?.map(pipelineItem => pipelineItem?._id);
 
                 response.payload.history.map(historyTask => {
-                    if (historyTask?.templateType === "action_send_msteams_message" || historyTask?.templateType === "action_send_slack_message") {
+                    if (historyTask?.templateType === "action_send_email" || historyTask?.templateType === "action_send_msteams_message" || historyTask?.templateType === "action_send_slack_message") {
                         historyTask.externalIntegrationAction = true;
                     }
 

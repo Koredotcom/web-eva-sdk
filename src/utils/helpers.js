@@ -296,8 +296,16 @@ export const getAgentType = (type) => {
             return 'Autonomous Agent';
         case 'dataAgent':
             return 'API Agent';
+        case 'galeAgent':
+            return 'Workflow Agent';
+        case 'searchAgent':
+            return 'Search Agent';
+        case 'agenticApp':
+            return 'Agentic Flow';
+        case 'mcpAgent':
+            return 'MCP Agent';
         default:
-            return 'Agent';
+            return type || 'Agent';
     }
 }
 
@@ -518,7 +526,7 @@ export const isTask = (messageId) => {
 
 export const getTaskIdBypId = (messageId) => {
     let questions = cloneDeep(store.getState().global?.questions)
-    const currentQuestion = Object.values(questions).find(question => (question?.pId === messageId && question?.status === 'threadRunning'))
+    const currentQuestion = Object.values(questions).find(question => question?.pId === messageId)
     if (currentQuestion?.isTask) {
         return currentQuestion?.cId;
     }

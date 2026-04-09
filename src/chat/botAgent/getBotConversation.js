@@ -36,20 +36,37 @@ const BotConversation = (args) => {
             renderTxt is the object that cotains the data to be rendered at the client application
             */
             if (msg) {
-                if(state?.enableDebugging){
+                const freshState = store.getState().global;
+                let activeQuestion = freshState?.currentQuestion;
+
+                if (!activeQuestion?.botConversation) {
+                    activeQuestion = Object.values(freshState?.questions || {}).find((question) =>
+                        question?.botConversation &&
+                        Object.values(question.botConversation || {}).some(
+                            (conversation) =>
+                                conversation?.status === "in-progress" &&
+                                conversation?.hasOwnProperty("template_html")
+                        )
+                    );
+                }
+
+                if(freshState?.enableDebugging){
                     console.log(msg, renderTxt)
                 }
-               const cId = state?.currentQuestion?.cId ?? state?.currentQuestion?.reqId;
+                const cId = activeQuestion?.cId ?? activeQuestion?.reqId;
+                const messageId = Object.values(activeQuestion?.botConversation || {})?.find(
+                    c => c?.hasOwnProperty("template_html") && c?.status === "in-progress"
+                )?.messageId;
+
+                if (!cId || !messageId) {
+                    return;
+                }
 
                 submitBotResponse({
                     input: msg,
                     cId,
-                    messageId: Object.values(
-                        store.getState().global?.currentQuestion?.botConversation
-                    )?.find(
-                        c => c.hasOwnProperty("template_html") && c.status === "in-progress"
-                    )?.messageId,
-                    context: state?.currentQuestion?.context,
+                    messageId,
+                    context: activeQuestion?.context,
                     source: "bot",
                     renderMsgPayload: renderTxt?.renderMsg
                 });
@@ -60,8 +77,56 @@ const BotConversation = (args) => {
     
     const setBotConversation = (detail) => {
         state = store.getState().global
+        currentBotSDKInstance = getBotInstance();
         let question;
+        const templateHtmlMap = {};
+        Object.entries(state?.questions || {}).forEach(([qKey, q]) => {
+            Object.entries(q?.botConversation || {}).forEach(([mId, conv]) => {
+                if (conv?.template_html instanceof Node) {
+                    templateHtmlMap[`${qKey}::${mId}`] = conv.template_html;
+                }
+            });
+        });
         let questions = cloneDeep(state?.questions)
+        Object.entries(templateHtmlMap).forEach(([compositeKey, domNode]) => {
+            const [qKey, mId] = compositeKey.split('::');
+            if (questions?.[qKey]?.botConversation?.[mId]) {
+                questions[qKey].botConversation[mId].template_html = domNode;
+            }
+        });
+        const resolveTaskQuestionKeyByStepId = (message) => {
+            const stepId = message?.context?.stepId || message?.stepId;
+            if (!stepId || isEmpty(questions)) {
+                return null;
+            }
+            if (questions?.[stepId]?.isTask) {
+                return stepId;
+            }
+            return Object.keys(questions).find(
+                (key) => questions[key]?.isTask && (questions[key]?.cId === stepId || questions[key]?.id === stepId)
+            ) || null;
+        };
+        const resolveQuestionKeyByConversationMessageId = (messageId) => {
+            if (!messageId || isEmpty(questions)) {
+                return null;
+            }
+
+            // 1) Root question keyed by server/root message id or req id
+            const directQuestionKey = resolveQuestionKeyByMessageId(messageId);
+            if (directQuestionKey) {
+                return directQuestionKey;
+            }
+
+            // 2) Nested bot conversation message under a parent question/task
+            return Object.keys(questions).find((key) => {
+                const botConversation = questions[key]?.botConversation || {};
+                return Object.values(botConversation).some(
+                    (conv) =>
+                        conv?.messageId === messageId ||
+                        conv?.outputMessageId === messageId
+                );
+            });
+        };
         const resolveQuestionKeyByMessageId = (messageId) => {
             if (!messageId || isEmpty(questions)) {
                 return null;
@@ -90,7 +155,9 @@ const BotConversation = (args) => {
             return;
         }     
         if(detail?.action === "create"){
-            const questionKey = resolveQuestionKeyByMessageId(detail?.pId)
+            const questionKey =
+                resolveTaskQuestionKeyByStepId(detail?.message) ||
+                resolveQuestionKeyByConversationMessageId(detail?.pId)
             question = questions[questionKey]
             if (isEmpty(question)) {
                 //corresponding bot question is unavailable
@@ -102,7 +169,10 @@ const BotConversation = (args) => {
                 if (!question?.hasOwnProperty('botConversation')) {
                     question.botConversation = {}
                 }
-                question.botConversation[detail?.messageId] = detail?.message
+                question.botConversation[detail?.messageId] = {
+                    ...(question.botConversation?.[detail?.messageId] || {}),
+                    ...detail?.message
+                }
                 if (detail?.message?.templateType === "bot_template" || detail?.message?.templateType === "hold_conversation"){
                     if (state.enableKoreBotSDK){                        
                         const templatePayload = {
@@ -217,17 +287,30 @@ const BotConversation = (args) => {
         if(Object.keys(questions || {}).length === 0){
             return;
         }            
-        question = questions[getReqIdByMessageId(detail?.message?.pId)] /*in order to update the already existing messages of botConversation, we will depend on pId */
+        const taskQuestionKey = resolveTaskQuestionKeyByStepId(detail?.message);
+        const ownerQuestionKey =
+            resolveQuestionKeyByConversationMessageId(detail?.message?.pId) ||
+            getReqIdByMessageId(detail?.message?.pId);
+        question = questions[taskQuestionKey || ownerQuestionKey] /*in order to update the already existing messages of botConversation, we will depend on pId */
         /*need to check whther the pId is a task or not */
-        if(isTask(detail?.message?.pId)){
-            question = questions[getTaskIdBypId(detail?.message?.pId)]
+        if(!taskQuestionKey && isTask(detail?.message?.pId)){
+            const taskQuestionId = getTaskIdBypId(detail?.message?.pId)
+            if(taskQuestionId){
+                question = questions[taskQuestionId]
+            }
         }
         if(question){//found the question with pId, so need to update the conversation present in botConversation
             /*if question is a task, update can happen for the parentQuestion or the childQuestion, so first checking for the parentQuestion */
             if(question?.messageId === detail?.message?.messageId){ /*this happens when the agentic flow xo bot conversation step is completed, so need to execute the next step in agentic flow if we have any */            
                 question = {...question, 'answer': detail?.message?.answer, 'status': detail?.message?.status}
             }else{
-                question.botConversation[detail?.message?.messageId] = detail?.message
+                if (!question?.hasOwnProperty('botConversation')) {
+                    question.botConversation = {}
+                }
+                question.botConversation[detail?.message?.messageId] = {
+                    ...(question.botConversation?.[detail?.message?.messageId] || {}),
+                    ...detail?.message
+                }
             }
         }else{
             question = questions[detail?.message?.reqId] /*to update the parent message itself, */
@@ -277,7 +360,7 @@ const BotConversation = (args) => {
         questions[question?.reqId] = question        
     }
     store.dispatch(updateChatData(questions))
-    setupTemplates(question.botConversation);
+    setupTemplates(question.botConversation, question);
 }
 
 
@@ -314,6 +397,9 @@ const BotConversation = (args) => {
             console.log("payload:", payload);
         }
 
+        // Optimistically reflect the user's compose-bar reply immediately in the active bot thread.
+        addLoadingStateToCurrentQuestion(data?.cId, data?.messageId, data?.input);
+
         const res = await store.dispatch(
             advanceSearch({
             params,
@@ -327,6 +413,7 @@ const BotConversation = (args) => {
 
 
     const addLoadingStateToCurrentQuestion = (quesReqId, messageId, input) => {
+        state = store.getState().global;
         let reqId = quesReqId
         let questions = cloneDeep(state?.questions)
         const isHistoryAccessed = checkHistoryAccessed(questions)

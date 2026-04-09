@@ -80,7 +80,7 @@ function createConversationHTML(
 				content += `<div class="message-bubble loading">
 					<div class="bot-flex-wrapper">
 						<div class="bot-icon-container">${assistantIconTemplate ? assistantIconTemplate : ""}</div>
-						<div class="message-container"><div class="loading-text">${encodeHtml(loadingText)}</div></div>
+						<div class="message-container"><div class="loading-text"><div class="thought-loader-wrapper"><div class="thought-loader"></div></div></div></div>
 					</div>
 					<div class="min-view-container"></div>
 			</div>`;
@@ -237,7 +237,7 @@ const renderQuickRepliesTemplate = (payload, messageId) => {
 
 	return templateFragment;
 };
-function attachQuickReplyChipListeners() {
+function attachQuickReplyChipListeners(props) {
 	const chips = document.querySelectorAll('.quickRepliesTemplate .userChip:not([data-listener-attached])');
 	chips.forEach(chip => {
 		chip.setAttribute('data-listener-attached', 'true');
@@ -249,44 +249,57 @@ function attachQuickReplyChipListeners() {
 			const messageId = chip.closest('.quickRepliesTemplate')?.dataset?.messageId;
 			if (!chipPayload) return;
 
-			const globalState = store.getState().global;
-			const currentQuestion = globalState?.currentQuestion;
-			const cId = currentQuestion?.cId ?? currentQuestion?.reqId;
-
 			BotConversation().submitBotResponse({
 				input: chipPayload,
-				cId,
+				cId: props?.cId || props?.reqId,
 				messageId,
-				context: currentQuestion?.context,
+				context: props?.context,
 				source: "bot"
 			});
 		});
 	});
 }
 
-export function setupTemplates(botConversation) {
+export function setupTemplates(botConversation, props) {
 
 	if (!isEmpty(botConversation)) {
 		const templateConversations = Object.values(botConversation)?.filter(
-			(conversation) => conversation?.hasOwnProperty("template_html")
+			(conversation) =>
+				conversation?.hasOwnProperty("template_html") ||
+				(conversation?.templateType === "bot_template" && conversation?.content?.payload)
 		);
 
 		if (templateConversations?.length) {
 			templateConversations.forEach((conversation) => {
-				if (conversation?.templateType === "bot_template" && conversation?.content?.payload?.template_type === "quick_replies") {
-					if (!conversation.template_html?.querySelector(".quickRepliesTemplate"))
-						conversation.template_html?.appendChild(renderQuickRepliesTemplate(conversation?.content?.payload, conversation?.messageId))
-				}
-				const templateDiv = document.querySelector(
-					`.botTemplate-${conversation?.messageId}`
-				);
-				if (templateDiv && conversation?.template_html) {
-					if (!templateDiv.contains(conversation.template_html)) {
-						templateDiv.appendChild(conversation.template_html);
+				try {
+					const isValidNode = conversation?.template_html instanceof Node;
+					if ((!conversation?.template_html || !isValidNode) && conversation?.templateType === "bot_template" && conversation?.content) {
+						try {
+							conversation.template_html = BotConversation().generateHTMLforBotTemplate(conversation);
+						} catch (e) {
+							// If template generation fails, keep the conversation visible via fallback text rendering.
+						}
 					}
+					if (!isValidNode && !(conversation?.template_html instanceof Node)) {
+						return;
+					}
+					if (conversation?.templateType === "bot_template" && conversation?.content?.payload?.template_type === "quick_replies") {
+						if (!conversation.template_html?.querySelector(".quickRepliesTemplate"))
+							conversation.template_html?.appendChild(renderQuickRepliesTemplate(conversation?.content?.payload, conversation?.messageId))
+					}
+					const templateDiv = document.querySelector(
+						`.botTemplate-${conversation?.messageId}`
+					);
+					if (templateDiv && conversation?.template_html) {
+						if (!templateDiv.contains(conversation.template_html)) {
+							templateDiv.appendChild(conversation.template_html);
+						}
+					}
+				} catch (e) {
+					// Guard against corrupted template_html (e.g. cloneDeep destroys DOM nodes)
 				}
 			});
-			attachQuickReplyChipListeners();
+			attachQuickReplyChipListeners(props);
 		}
 	}
 }
@@ -389,6 +402,7 @@ function renderBotConversation(
 	loadingText
 ) {
 	const botConversation = props?.botConversation;
+	const finalAnswer = props?.parentMessage?.answer || props?.answer;
 
 	if (!Object.values(botConversation || {})?.length) {
 		return "";
@@ -408,6 +422,14 @@ function renderBotConversation(
 	// }
 
 	conversationsHTML = Object.values(botConversation)
+		.sort((a, b) => {
+			const aMsgNo = Number(a?.msgNo ?? 0);
+			const bMsgNo = Number(b?.msgNo ?? 0);
+			if (aMsgNo !== bMsgNo) return aMsgNo - bMsgNo;
+			const aTime = new Date(a?.cOn || 0).getTime();
+			const bTime = new Date(b?.cOn || 0).getTime();
+			return aTime - bTime;
+		})
 		.map((conversation) =>
 			createConversationHTML(
 				conversation,
@@ -443,7 +465,7 @@ function renderBotConversation(
 					${conversationsHTML}
 				</div>
 				<div class="bot-conversation-summary" data-message-id="${props?.messageId}" style="display: none;">
-					${props?.answer ? MessageRenderer(props?.answer) : ''}
+					${finalAnswer ? MessageRenderer(finalAnswer) : ''}
 				</div>
 			</div>		
         </div>	
@@ -478,39 +500,13 @@ export function render(
 	// Try immediately first
 	setupAllThoughtToggles();
 
-	// Also try after DOM is more likely to be ready
-	let timer;
-	timer = setTimeout(() => {
+	// Defer one frame so the HTML exists before wiring templates/listeners.
+	requestAnimationFrame(() => {
 		setupEventListeners(props?.botConversation, props);
-		setupTemplates(props?.botConversation);
+		setupTemplates(props?.botConversation, props);
 
-		// Try again in case some elements were added later
 		setupAllThoughtToggles();
-	}, 1000);
-
-	// Also use MutationObserver to catch dynamically added elements
-	if (typeof window !== 'undefined' && window.MutationObserver) {
-		const observer = new MutationObserver((mutations) => {
-			mutations.forEach((mutation) => {
-				mutation.addedNodes.forEach((node) => {
-					if (node.nodeType === 1) { // Element node
-						// Check if added node is a thought wrapper or contains one
-						if (node.classList?.contains('thought-wrapper') || node.querySelector?.('.thought-wrapper')) {
-							setupAllThoughtToggles();
-						}
-					}
-				});
-			});
-		});
-
-		observer.observe(document.body, {
-			childList: true,
-			subtree: true
-		});
-
-		// Clean up observer after 10 seconds to avoid memory leaks
-		setTimeout(() => observer.disconnect(), 10000);
-	}
+	});
 	return html;
 }
 export { renderThoughts, setupThoughtsToggle };

@@ -141,7 +141,7 @@ export function renderTemplateContent(
 	htmlTemplate = responseQueryFlow.render(data);
 	/*customQNAAPI is for ms */
 	if (!state.chatInterfaceElements.disableAppAvatar) {
-		if (data?.context?.agentType === "gptAgent") {
+		if (data?.context?.agentType === "gptAgent" || data?.context?.agentType === "galeAgent") {
 			htmlTemplate += TemplateComponents.renderAppAvatar(data?.context?.title, data?.context?.sources?.[0]?.icon || data?.sources?.[0]?.icon, data.timestamp);
 		}
 		else {
@@ -217,22 +217,33 @@ export function renderTemplateContent(
 				htmlTemplate += agentWelcomeTemplate.render(data);
 				break;
 
-			case "agent_auth_challenge":
-				htmlTemplate += agentAuthChallenge.render(data);
-				break;
-			// case "bot_template":
-			// 	console.log("bottttt", data.template_html);
-			// 	htmlTemplate = renderBotConversation(data);
-			// 	break;
+		case "agent_auth_challenge":
+			htmlTemplate += agentAuthChallenge.render(data);
+			break;
 
-			case "search_answer":
-			case "search_results":
-				htmlTemplate += searchAnswer.render(data);
-				break;
+		case "bot_template":
+			// bot_template arrives as a standalone templateType (not inside botConversation thread).
+			// Route through the botConversation renderer which handles hold_conversation, quick-replies, etc.
+			htmlTemplate += botConversation.render(data, assistantIconTemplate, userIconTemplate, loadingText);
+			return `<div class="message-bubble answer">
+						<div class="answerCntr">${htmlTemplate}</div>
+					</div>`;
 
-			case "multi_intent_execution":
+		case "search_answer":
+		case "search_results":
+			htmlTemplate += searchAnswer.render(data);
+			break;
+
+		case "multi_intent_execution":
+			// Kora-React parity: show terminated message when pipeline is empty
+			if (data?.executionPipeline?.length === 0 && data?.status !== 'terminated') {
 				htmlTemplate += multiIntentExecution.render(data);
-				break;
+			} else if (data?.status === 'terminated' || data?.executionPipeline?.length === 0) {
+				htmlTemplate += `<div class="threadName">I see you interrupted the answer generation. Please feel free to provide more details or let me know how can I assist you further</div>`;
+			} else {
+				htmlTemplate += multiIntentExecution.render(data);
+			}
+			break;
 
 			case "multi_responses":
 				htmlTemplate += multiResponses.render(data);

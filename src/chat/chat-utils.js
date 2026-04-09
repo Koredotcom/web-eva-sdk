@@ -243,8 +243,8 @@ export const constructQuestionPostCall = async (data, qId, isBot = false) => {
     //     question = {...question, ...obj}
     // }
 
-    if((data?.res?.templateType === "action_send_slack_message" || data?.res?.templateType === "action_send_teams_message" || data?.res?.templateType === "action_send_msteams_message") && data?.res?.status === "draft") {    
-        question = {...question, ...{externalIntegrationAction : true, skills: `${data?.res?.templateType === "action_send_teams_message" || data?.res?.templateType === "action_send_msteams_message" ? "msteams" : "slack"}`}}
+    if((data?.res?.templateType === "action_send_email" || data?.res?.templateType === "action_send_slack_message" || data?.res?.templateType === "action_send_teams_message" || data?.res?.templateType === "action_send_msteams_message") && data?.res?.status === "draft") {    
+        question = {...question, ...{externalIntegrationAction : true, skills: `${data?.res?.templateType === "action_send_email" ? (data?.res?.provider || 'gmail') : (data?.res?.templateType === "action_send_teams_message" || data?.res?.templateType === "action_send_msteams_message" ? "msteams" : "slack")}`}}
     }
 
     // if(data?.res?.templateType === 'resolve_ambiguity' || data?.res?.templateType === 'intent_ambiguity'){
@@ -279,9 +279,13 @@ export const constructQuestionPostCall = async (data, qId, isBot = false) => {
 	} else if (data?.meta?.arg?.multiIntentExecution || question?.isMultiIntentExecution) {
 		const stepIndex = question?.stepIndex;
 		question = { ...question, ...data?.payload, showResponse: true};
-		questions[question?.parentMsgId].executingActionId = question?.stepId
-		if(stepIndex === 0) {
-		    questions[question?.parentMsgId].status = 'in-progress'
+		const parentQuestion = question?.parentMsgId ? questions?.[question?.parentMsgId] : null;
+		if (parentQuestion) {
+		    parentQuestion.executingActionId = question?.stepId;
+		    if(stepIndex === 0) {
+		        parentQuestion.status = 'in-progress';
+		    }
+		    questions[question?.parentMsgId] = parentQuestion;
 		}
 		if(question?.isTask) {
 				const stepIndex = question?.stepIndex;
@@ -299,16 +303,12 @@ export const constructQuestionPostCall = async (data, qId, isBot = false) => {
     //         }, 1000);
     // }}
     else if(data?.payload?.history?.status === msgStatus.TERMINATED){
-        // For multi-intent execution "Continue Flow", we silently cancel a task to proceed.
-        // Do not replace the UI with interruption text in that case.
-        if (question?.isTask && question?._continueFlow) {
-            // Keep existing status/answer; just stop loading and clear the flag.
+        // If the task was already terminated by continue flow, don't override its state.
+        if (question?.isTask && question?.status === 'terminated') {
             question = {
                 ...question,
                 loading: false,
-                _continueFlow: false,
             };
-            // No runNextTask here because Continue Flow already triggers the next task.
         }
         else {
         if(data?.payload?.history?.templateType === chatTemplateTypes.GPT_FORM_TEMPLATE){

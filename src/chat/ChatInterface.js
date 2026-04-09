@@ -1,6 +1,6 @@
 import { abortAdvanceSearch, advanceSearch, cancelAdvancedSearch, resolveAgentAction, stopResponseGeneration } from "../redux/actions/global.action";
 import { setChatInterfaceOptions, setCurrentQuestion, setCustomData, setEnableContextByFollowupContext, setEnabledCustomTemplates, setErrorState, setAnsFromChipElements, setChatInterfaceElements, setAutonomousAsyncPending } from "../redux/globalSlice"
-import { updateChatData } from "../redux/globalSlice";
+import { updateChatData, updateQuestionData } from "../redux/globalSlice";
 import store from "../redux/store";
 import { v4 as uuid } from 'uuid';
 import { constructQuestionInitial, constructQuestionPostCall } from "./chat-utils";
@@ -425,8 +425,7 @@ const ChatInterface = (props) => {
     const contentStreaming = (detail) => {
       let reqId;
       const {currentQuestion, questions, chatInterfaceOptions} = store.getState().global;
-      let _questions = cloneDeep(questions);
-      if(Object.keys(_questions).length === 0){
+      if(Object.keys(questions || {}).length === 0){
         return;
       }
       // if contentStreaming set to false by client than it will not stream the content
@@ -436,7 +435,7 @@ const ChatInterface = (props) => {
 
       /*when resuming the conversation from history, the history data is structured using uuid, so using redId, we can extract the question to be resumed, so need to target the id, present in question with the help of reqId */
       /*function to check the questions are from history */
-      const isHistoryAccessed = checkHistoryAccessed(_questions)
+      const isHistoryAccessed = checkHistoryAccessed(questions)
       /*In case of multi intent execution, we need to get the id as we are putting that task as key in questions,
       so to get that firstly, we will check whether the currentQuestion is a task by checking the isTask flag
       if it is a task, then we will get the id from the currentQuestion
@@ -450,23 +449,28 @@ const ChatInterface = (props) => {
       }
       if(isHistoryAccessed){
         /*function to fetch the questio id based on the  requestId*/
-        reqId = Object.entries(_questions).find(([key, value]) => value?.reqId === detail?.data?.reqId)?.[0]
+        reqId = Object.entries(questions).find(([key, value]) => value?.reqId === detail?.data?.reqId)?.[0]
       }
-      let question = cloneDeep(_questions[reqId])
+      let question = cloneDeep(questions?.[reqId])
 
       if (!question && detail?.data?.hasOwnProperty('parentMessageId')) {
         const parentMsgId = detail?.data?.parentMessageId;
-        const match = Object.entries(_questions).find(([, q]) => q?._id === parentMsgId || q?.messageId === parentMsgId);
+        const match = Object.entries(questions).find(([, q]) => q?._id === parentMsgId || q?.messageId === parentMsgId);
         if (match) {
           reqId = match[0];
           question = cloneDeep(match[1]);
         }
       }
 
+      if (!reqId || !question) return;
+
+      const commitQuestionUpdate = () => {
+        store.dispatch(updateQuestionData({ key: reqId, question }));
+      };
+
       if(question?.status === "error"){
         question.streamingStatus = "aborted"
-        _questions[reqId] = question
-        store.dispatch(updateChatData(_questions))
+        commitQuestionUpdate()
         return;
       }
 
@@ -524,8 +528,7 @@ const ChatInterface = (props) => {
               if (question.loading) {
                 delete question.loading;
               }
-              _questions[reqId] = question
-              store.dispatch(updateChatData(_questions))
+              commitQuestionUpdate()
               return;               
             }
             
@@ -540,17 +543,15 @@ const ChatInterface = (props) => {
         if (question?.loading) {
           delete question?.loading
         }
-        
-        _questions[reqId] = question
-        store.dispatch(updateChatData(_questions))
+
+        commitQuestionUpdate()
       }
 
       if (detail?.data?.status === 'completed' || detail?.data?.status === 'aborted') {
         question.streamingStatus = detail?.data?.status // 'completed' or 'aborted'
         question.apiSuccess = true
         question.status = detail?.data?.status
-        _questions[reqId] = question
-        store.dispatch(updateChatData(_questions))
+        commitQuestionUpdate()
 
         resIndexRef = 0
 

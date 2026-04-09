@@ -2,8 +2,8 @@ import { cloneDeep, isEmpty, isUndefined } from "lodash";
 import store from "../../redux/store";
 import InitiateChatConversationAction from "../../chat/InitiateChatConversationAction";
 import ChatInterface from "../../chat/ChatInterface.js";
-import { updateChatData } from "../../redux/globalSlice";
-import { executionPipelineActions } from "../../redux/actions/global.action";
+import { updateChatData, setCurrentQuestion } from "../../redux/globalSlice";
+import { executionPipelineActions, cancelAdvancedSearch } from "../../redux/actions/global.action";
 import { createCloseIcon, tickMarkIcon } from "../icons-library.js";
 import { cancelOngoingCall } from "../utils/helper.js";
 import MultiIntentExecution from "../../multiIntentExecution/multiIntentExecution.js";
@@ -79,15 +79,23 @@ const multiIntentExecutionFunc = (item) => {
 
       const params = { cId: _item?.id, type: _item?.type, stepId: task?._id, task, currentRunningQuestion: _item, parentMsgId: _item?.reqId , reqId : _item?.id}
 
+        const selectedAgentId = task?.intents?.[0]?.agentId;
+        const selectedIntentId = task?.intents?.[0]?.id;
+
+        // mcpAgent parity: intentId must NOT be sent for mcpAgent (matches Kora-React MultiIntentExecution.jsx)
+        const allAgents = state?.allAgents?.data?.agents || [];
+        const selectedAgentType = allAgents.find(a => a?.id === selectedAgentId)?.type;
+        const context = {
+          agentId: selectedAgentId,
+          stepId: task?._id,
+          ...(selectedAgentType !== 'mcpAgent' ? { intentId: selectedIntentId } : {})
+        };
+
         const payload = {
             "question": task?.utterance,
             "boardId": activeBoardId,
             "parentId": _item?.messageId,
-            "context": {
-              "intentId": task?.intents?.[0]?.id,
-              "agentId": task?.intents?.[0]?.agentId,
-              "stepId": task?._id
-            }
+            "context": context
           }
 
         InitiateChatConversationAction({params, payload, multiIntentExecution: true })
@@ -102,6 +110,7 @@ const multiIntentExecutionFunc = (item) => {
       }
 
    const addNewTask = (index, task, item) => {
+        state = store.getState().global;
         const _questions = cloneDeep(state?.questions);
         const questionId = item?.reqId || item?.id;
         const question = _questions[questionId] || {};
@@ -115,7 +124,7 @@ const multiIntentExecutionFunc = (item) => {
         if (isEmpty(question?.savedExecutionPipeline)) {
           _questions[questionId] = {
             ...question,
-            savedExecutionPipeline: currentExecutionPipeline
+            savedExecutionPipeline: cloneDeep(currentExecutionPipeline)
           };
         } else {
           if(addedTaskIndex !== -1 && index > 0 && addedTaskIndex < index){
@@ -155,23 +164,48 @@ const multiIntentExecutionFunc = (item) => {
       let _questions = cloneDeep(state?.questions);
       let utterance = document.getElementById(`utterance-${task?._id}`)?.value;
 
+      // CRITICAL: task is a render-time snapshot. Intents/utterance are updated in the store
+      // via addIntent()/persistUtterance() after the listener was registered.
+      // Always read the fresh task from the store to get the latest intents.
+      const freshTask = _questions[item?.reqId]?.executionPipeline?.[index] || task;
+      const taskType = freshTask?.type || task?.type;
+
       let payload = {
         utterance: utterance,
-        action: task?.type == 'addTask' ? 'add' : 'update',
+        action: taskType === 'addTask' ? 'add' : 'update',
       }
 
-      if(task?.type === 'addTask'){
-        // Use the insertion index to find the previous real step id (avoid relying on temp _id)
-        payload.stepId = executionPipeline?.[index - 1]?._id;
-      }else if(task?.type === 'modify'){
-        payload.stepId = task?._id;        
-        /*check for additional intents that might have been added */
-        let additionalIntents = task?.intents?.filter(intent => !intent?._id);
-        if(additionalIntents?.length > 0){
-          payload.addIntents = additionalIntents?.map(intent => intent?.id);
+      // Compute intents diff (same for both addTask and modify — matches Kora-React logic)
+      const baselinePipeline = cloneDeep(_questions[item?.reqId]?.savedExecutionPipeline || item?.executionPipeline || []);
+      const savedIntentsAtIndex = baselinePipeline?.[index]?.intents || [];
+      const currentIntents = freshTask?.intents || [];
+
+      const addedIntents = currentIntents
+        .filter(({ agentId }) => !savedIntentsAtIndex.some(s => s?.agentId === agentId))
+        .map(intent => intent?.agentId)
+        .filter(Boolean);
+
+      const deletedIntents = savedIntentsAtIndex
+        .filter(({ agentId }) => !currentIntents.some(c => c?.agentId === agentId))
+        .map(intent => intent?._id)
+        .filter(Boolean);
+
+      if(taskType === 'addTask'){
+        // Kora-React: for multi_intent_execution templateType, send index only (not stepId)
+        payload.index = index;
+        if(addedIntents?.length > 0){
+          payload.addIntents = addedIntents;
+        }
+      } else if(taskType === 'modify'){
+        payload.stepId = freshTask?._id || task?._id;
+        payload.index = index;
+        if(addedIntents?.length > 0){
+          payload.addIntents = addedIntents;
+        }
+        if(deletedIntents?.length > 0){
+          payload.deletedIntents = deletedIntents;
         }
       }
-      payload.index = index;
 
       let params = {
         messageId: item?.messageId,
@@ -196,12 +230,34 @@ const multiIntentExecutionFunc = (item) => {
         // Refresh again after await to avoid overwriting newer store changes
         state = store.getState().global;
         _questions = cloneDeep(state?.questions);
+        const responsePipeline = cloneDeep(response?.payload?.executionPipeline || []);
+        const localPipeline = cloneDeep(_questions[item?.reqId]?.executionPipeline || []);
+
+        // Kora-React parity: preserve local step UI state on the first modify/update
+        // if the API response omits transient client-side fields like intents/showResponse.
+        responsePipeline.forEach((serverTask, pipelineIndex) => {
+          const localTaskAtIndex = localPipeline?.[pipelineIndex];
+          if (!serverTask || !localTaskAtIndex) return;
+
+          const sameTask =
+            (serverTask?._id && localTaskAtIndex?._id && serverTask._id === localTaskAtIndex._id) ||
+            pipelineIndex === index;
+
+          if (!sameTask) return;
+
+          if ((!Array.isArray(serverTask?.intents) || serverTask.intents.length === 0) && Array.isArray(localTaskAtIndex?.intents) && localTaskAtIndex.intents.length > 0) {
+            serverTask.intents = localTaskAtIndex.intents;
+          }
+          if (localTaskAtIndex?.showResponse !== undefined && serverTask?.showResponse === undefined) {
+            serverTask.showResponse = localTaskAtIndex.showResponse;
+          }
+        });
         const updatedQuestions = {
           ..._questions,
           [item?.reqId]: {
             ..._questions[item?.reqId],
-            executionPipeline: response?.payload?.executionPipeline,
-            savedExecutionPipeline: response?.payload?.executionPipeline
+            executionPipeline: responsePipeline,
+            savedExecutionPipeline: responsePipeline
           }
         };
         store.dispatch(updateChatData(updatedQuestions))
@@ -209,6 +265,7 @@ const multiIntentExecutionFunc = (item) => {
     }
 
     const deleteNewTask = (taskId) => {
+        state = store.getState().global;
         const _questions = cloneDeep(state?.questions);
         /*remove type key from the savedExecutionPipeline of that particular task which is having _id as task?._id*/
       const taskIndex = _questions[item?.reqId].savedExecutionPipeline?.findIndex(task => task?._id === taskId);
@@ -228,6 +285,7 @@ const multiIntentExecutionFunc = (item) => {
     }
 
     const deleteExistingTask = async (index, task) => {
+      state = store.getState().global;
       let _questions = cloneDeep(state?.questions);
 
       let params = {
@@ -256,12 +314,13 @@ const multiIntentExecutionFunc = (item) => {
     }
 
     const editTask = (index, task) => {
+      state = store.getState().global;
       const _questions = cloneDeep(state?.questions);
       let currentExecutionPipeline = cloneDeep(_questions[item?.reqId]?.executionPipeline);
       const addTaskIndexExists = currentExecutionPipeline?.findIndex(el => el?.type === 'addTask');
 
       if(isEmpty(_questions[item?.reqId]?.savedExecutionPipeline)){
-        _questions[item?.reqId].savedExecutionPipeline = currentExecutionPipeline;
+        _questions[item?.reqId].savedExecutionPipeline = cloneDeep(currentExecutionPipeline);
       }
       else{
         if( addTaskIndexExists !== -1 && addTaskIndexExists < index && index > 0){
@@ -306,18 +365,16 @@ const multiIntentExecutionFunc = (item) => {
       }
       // Preserve baseline savedExecutionPipeline (used to enable Done)
       let savedExecutionPipeline = cloneDeep(currentQuestion?.savedExecutionPipeline || currentExecutionPipeline);
-      if(!currentExecutionPipeline[index].intents){
-        currentExecutionPipeline[index].intents = [];
-      }
-      currentExecutionPipeline[index].intents.push({
+      // Kora-React parity: single selection. Replace existing intents instead of appending.
+      currentExecutionPipeline[index].intents = [{
         agentId: selectedAgent.id,
         agentMeta: {
           name: selectedAgent.name,
           icon: selectedAgent.icon
         },
         name: selectedAgent.name,
-        id: selectedAgent.id
-      });
+        id: selectedAgent.name
+      }];
       
       const updatedQuestions = {
         ..._questions,
@@ -527,6 +584,7 @@ const multiIntentExecutionFunc = (item) => {
     }
 
     const deleteIntent = (index, intentToDelete) => {
+      state = store.getState().global;
       const _questions = cloneDeep(state?.questions);
       let currentQuestion = cloneDeep(_questions[item?.reqId]);
       let currentExecutionPipeline = cloneDeep(currentQuestion?.executionPipeline);
@@ -539,7 +597,7 @@ const multiIntentExecutionFunc = (item) => {
       
       /*lets check whether the utterance is changed or not for the executionPipeline with this index */
       const utteranceInput = document.getElementById(`utterance-${task?._id}`);
-      const utterance = utteranceInput.value || '';
+      const utterance = utteranceInput?.value || '';
       const currentUtterance = currentExecutionPipeline[index]?.utterance || '';
       if(utterance !== currentUtterance){
         currentExecutionPipeline[index].utterance = utterance;
@@ -606,16 +664,17 @@ const multiIntentExecutionFunc = (item) => {
       }
     };
 
-    const reorderExecutionPipeline = (fromIndex, toIndex) => {
+    const reorderExecutionPipeline = async (fromIndex, toIndex) => {
+      state = store.getState().global;
       const _questions = cloneDeep(state?.questions);
       let currentExecutionPipeline = cloneDeep(_questions[item?.reqId]?.executionPipeline);
       
-      // Remove the dragged item
+      if(!currentExecutionPipeline || currentExecutionPipeline.length <= 1) return;
+
       const draggedItem = currentExecutionPipeline.splice(fromIndex, 1)[0];
-      
-      // Insert it at the new position
       currentExecutionPipeline.splice(toIndex, 0, draggedItem);
-      
+
+      // Optimistic UI update
       const updatedQuestions = {
         ..._questions,
         [item?.reqId]: {
@@ -624,12 +683,61 @@ const multiIntentExecutionFunc = (item) => {
           savedExecutionPipeline: currentExecutionPipeline
         }
       };
-      
       store.dispatch(updateChatData(updatedQuestions));
+
+      // Persist reorder to server (same as Kora-React: action: 'reOrder')
+      const params = {
+        messageId: item?.messageId,
+        boardId: state?.activeBoardId,
+      };
+      const payload = {
+        action: 'reOrder',
+        stepId: draggedItem?._id,
+        index: toIndex,
+      };
+      const response = await store.dispatch(executionPipelineActions({ params, payload }));
+      if(response?.payload?.executionPipeline){
+        state = store.getState().global;
+        const freshQuestions = cloneDeep(state?.questions);
+        const serverPipeline = cloneDeep(response.payload.executionPipeline || []);
+        const localPipeline = cloneDeep(freshQuestions?.[item?.reqId]?.executionPipeline || currentExecutionPipeline || []);
+
+        // Preserve client-side step metadata the reorder API may omit.
+        const localById = new Map(
+          localPipeline
+            .filter(step => step?._id)
+            .map(step => [step._id, step])
+        );
+
+        const mergedPipeline = serverPipeline.map((serverStep) => {
+          const localStep = localById.get(serverStep?._id);
+          if (!localStep) return serverStep;
+          return {
+            ...localStep,
+            ...serverStep,
+            intents: (Array.isArray(serverStep?.intents) && serverStep.intents.length > 0)
+              ? serverStep.intents
+              : (localStep?.intents || []),
+            showResponse: serverStep?.showResponse ?? localStep?.showResponse,
+            showResponseFlow: serverStep?.showResponseFlow ?? localStep?.showResponseFlow,
+          };
+        });
+        store.dispatch(updateChatData({
+          ...freshQuestions,
+          [item?.reqId]: {
+            ...freshQuestions[item?.reqId],
+            executionPipeline: mergedPipeline,
+            savedExecutionPipeline: mergedPipeline
+          }
+        }));
+      }
     };
 
     const setupDragAndDrop = () => {
-      const taskItems = document.querySelectorAll('.dragTaskItem[draggable="true"]');
+      const multiIntentRoot = document.getElementById(`multiIntentExecution-${item?.reqId}`);
+      const taskItems = multiIntentRoot
+        ? multiIntentRoot.querySelectorAll('.dragTaskItem[draggable="true"]')
+        : document.querySelectorAll('.dragTaskItem[draggable="true"]');
       
       taskItems.forEach((taskItem, index) => {
         
@@ -761,50 +869,69 @@ const multiIntentExecutionFunc = (item) => {
         editButton.eventListenerAdded = true;
      }
 
+     // "Add step" button after the last task
+     const addNewTaskLastBtn = document.getElementById(`addNewTaskLastBtn-${item?.reqId}`);
+     if(addNewTaskLastBtn && !addNewTaskLastBtn.eventListenerAdded){
+        addNewTaskLastBtn.addEventListener("click", () => {
+            const lastIndex = (store.getState()?.global?.questions?.[item?.reqId]?.executionPipeline?.length) || item?.executionPipeline?.length;
+            const lastTask = item?.executionPipeline?.[lastIndex - 1];
+            addNewTask(lastIndex, lastTask, item);
+        });
+        addNewTaskLastBtn.eventListenerAdded = true;
+     }
+
+     // Cheveron (history toggle) button for completed/terminated tasks
+     item?.executionPipeline?.forEach((task) => {
+        const cheveronBtn = document.getElementById(`cheveronBtn-${task?._id}`);
+        if(cheveronBtn && !cheveronBtn.eventListenerAdded){
+            cheveronBtn.addEventListener("click", async (e) => {
+                e?.stopPropagation?.();
+                state = store.getState().global;
+                let _qs = cloneDeep(state?.questions);
+                if(_qs?.hasOwnProperty(task?._id) && _qs[task?._id]?.hasOwnProperty('showResponse')){
+                    _qs[task?._id].showResponse = !_qs[task?._id].showResponse;
+                    store.dispatch(updateChatData(_qs));
+                }else{
+                    await fetchHistoricalTask(item, task);
+                }
+            });
+            cheveronBtn.eventListenerAdded = true;
+        }
+     });
+
      item?.executionPipeline?.forEach((task, index) => {
-        const addNewTaskBtn = document.getElementById(`addNewTaskBtn-${index}`);
+        const addNewTaskBtn = document.getElementById(`addNewTaskBtn-${item?.reqId}-${index}`);
         const continueBtn = document.getElementById(`continueBtn-${task?._id}`);
         if(continueBtn && !continueBtn.eventListenerAdded){
             continueBtn.addEventListener("click", async () => {
-                // "Continue Flow" should move to next task without showing interruption UI.
-                // We silently cancel the current task request and immediately run the next task.
                 state = store.getState().global;
                 const currentTaskQ = state?.questions?.[task?._id];
-                if (currentTaskQ?.reqId) {
-                    const updated = cloneDeep(state.questions);
-                    updated[task._id] = {
-                        ...updated[task._id],
-                        _continueFlow: true,
-                        // Mark this task as discarded and show the interruption text only for this task.
-                        status: "discard",
-                        answer:
-                            "I see you interrupted the answer generation. Please feel free to provide more details or let me know how can I assist you further",
-                        // Force a minimal render (avoid showing previous template/thread UI).
-                        templateType: "search_answer",
-                        viewType: undefined,
-                        botConversation: null,
-                        template_html: undefined,
-                        sources: [],
-                        data: [],
-                        showResponse: true,
-                        loading: false,
-                    };
-                    store.dispatch(updateChatData(updated));
-                    // Force cancel API call even for bot agent threadView tasks.
-                    // Skip post-call UI mutation because we already updated the task UI above.
-                    // IMPORTANT: wait for cancelRequest success before moving to next task.
-                    try {
-                        const cancelResp = await ChatInterface().cancelMessageReqAction(
-                            currentTaskQ.reqId,
-                            { forceCancelApi: true, skipPostCall: true }
-                        );
-                        const isFulfilled = cancelResp?.meta?.requestStatus === 'fulfilled';
-                        if (isFulfilled) {
-                            try { MultiIntentExecution().runTask(item, index + 1, updated[task._id]); } catch (e) {}
-                        }
-                    } catch (e) {}
-                } else {
+                if (!currentTaskQ) {
                     cancelTask(task);
+                    return;
+                }
+                const updated = cloneDeep(state.questions);
+                updated[task._id] = {
+                    ...updated[task._id],
+                    status: "terminated",
+                    loading: false,
+                };
+                store.dispatch(updateChatData(updated));
+                store.dispatch(setCurrentQuestion(null));
+                const reqIdForCancel = currentTaskQ?.isTask ? currentTaskQ?.reqId : task?._id;
+                try {
+                    await store.dispatch(cancelAdvancedSearch({
+                        userId: state?.profile?.data?.id,
+                        reqId: reqIdForCancel,
+                        payload: { boardId: state?.activeBoardId }
+                    }));
+                } catch (e) {
+                    // Proceed to next task even if cancel API fails
+                } finally {
+                    try {
+                        const stepIndex = currentTaskQ?.stepIndex ?? index;
+                        MultiIntentExecution().runNextTask(stepIndex, 'completed', updated[task._id]);
+                    } catch (e) {}
                 }
             });
             continueBtn.eventListenerAdded = true;
@@ -847,10 +974,23 @@ const multiIntentExecutionFunc = (item) => {
             utteranceTextEl.eventListenerAdded = true;
         }
 
+        // Entire taskItem card is clickable to trigger edit for draft pipeline (matches Kora-React)
+        const taskItemEl = document.getElementById(`taskItem-${task?._id}`);
+        if(taskItemEl && !taskItemEl.eventListenerAdded){
+            taskItemEl.addEventListener("click", (e) => {
+                const currentStatus = store.getState()?.global?.questions?.[item?.reqId]?.status || item?.status;
+                if(currentStatus === 'draft'){
+                    editTask(index, task);
+                }
+            });
+            taskItemEl.eventListenerAdded = true;
+        }
+
         const historyBtn = document.getElementById(`historyBtn-${task?._id}`);
-        let _questions = cloneDeep(state?.questions);
         if(historyBtn && !historyBtn.eventListenerAdded){
             historyBtn.addEventListener("click", async () => {
+                state = store.getState().global;
+                let _questions = cloneDeep(state?.questions);
                 if(_questions?.hasOwnProperty(task?._id) && _questions[task?._id]?.hasOwnProperty('showResponse')){                    
                     /*update the task in the store after the toggle*/
                     _questions[task?._id].showResponse = !_questions[task?._id].showResponse;
@@ -889,15 +1029,18 @@ const multiIntentExecutionFunc = (item) => {
            const taskIntents = currentTask?.intents || [];
            const currentTaskSavedIntents = currentState?.questions[item?.reqId]?.savedExecutionPipeline?.[index]?.intents || [];
            
-           const hasChanges = 
-             domUtterance !== savedUtterance || compareArrays(taskIntents, currentTaskSavedIntents);
+           // Done button disabled if utterance is empty (matches Kora-React) or no meaningful changes
+           const utteranceEmpty = !domUtterance || domUtterance.trim().length === 0;
+           const hasChanges = !utteranceEmpty && (domUtterance !== savedUtterance || compareArrays(taskIntents, currentTaskSavedIntents));
            
            if (hasChanges) {
              doneBtn.disabled = false;
+             doneBtn.classList.remove('disabled');
              doneBtn.style.opacity = '1';
              doneBtn.style.cursor = 'pointer';
            } else {
              doneBtn.disabled = true;
+             doneBtn.classList.add('disabled');
              doneBtn.style.opacity = '0.5';
              doneBtn.style.cursor = 'not-allowed';
            }
@@ -934,7 +1077,15 @@ const multiIntentExecutionFunc = (item) => {
                e.preventDefault();
                return;
              }
-             saveTask(index, task, item?.executionPipeline);
+             // Show loading state in-button while the API call is in-flight
+             doneBtn.textContent = 'Loading...';
+             doneBtn.disabled = true;
+             doneBtn.classList.add('disabled');
+             doneBtn.style.opacity = '0.5';
+             doneBtn.style.cursor = 'not-allowed';
+             // Pass fresh pipeline from store so saveTask reads up-to-date intents
+             const freshPipeline = store.getState()?.global?.questions?.[item?.reqId]?.executionPipeline || item?.executionPipeline;
+             saveTask(index, task, freshPipeline);
            });
            doneBtn.eventListenerAdded = true;
          }
@@ -952,8 +1103,39 @@ const multiIntentExecutionFunc = (item) => {
            addIntentBtn.eventListenerAdded = true;
          }
 
+         // Power tools buttons (common agents quick-select)
+         const powerToolBtns = document.querySelectorAll(`[id^="powerToolBtn-${task?._id}-"]`);
+         powerToolBtns.forEach(btn => {
+           if(btn && !btn.eventListenerAdded){
+             btn.addEventListener("click", (e) => {
+               e.preventDefault();
+               e.stopPropagation();
+               const powerToolId = btn.dataset.powerToolId;
+               const freshState = store.getState().global;
+               const allCommonAgents = freshState?.commonAgents || [];
+               const agents = Array.isArray(allCommonAgents) ? allCommonAgents : (allCommonAgents?.data || []);
+               const selectedAgent = agents.find(a => a?.id === powerToolId);
+               if(selectedAgent){
+                 addIntent(index, task, selectedAgent);
+                 if(doneBtn && doneBtn.checkForChanges){
+                   setTimeout(() => doneBtn.checkForChanges(), 50);
+                 }
+               }
+             });
+             btn.eventListenerAdded = true;
+           }
+         });
+
+         // Refresh Start button disabled state after any pipeline edit/add change
+         const _startBtn = document.getElementById(`startBtn-${item?.reqId}`);
+         if(_startBtn){
+           const freshPipeline = store.getState()?.global?.questions?.[item?.reqId]?.executionPipeline || [];
+           const _hasEditOrAddTask = freshPipeline.some(t => t?.type === 'addTask' || t?.type === 'modify');
+           _startBtn.disabled = _hasEditOrAddTask;
+         }
+
          task?.intents?.forEach((intent, idx) => {
-          const deleteIntentBtn = document.getElementById(`deleteIntent-${task?._id}-${intent?.agentMeta?.agentId}`);
+         const deleteIntentBtn = document.getElementById(`deleteIntent-${task?._id}-${intent?.agentId}`);
           if(deleteIntentBtn && !deleteIntentBtn.eventListenerAdded){
             deleteIntentBtn.addEventListener("click", () => {
               deleteIntent(index, intent);
