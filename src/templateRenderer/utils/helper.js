@@ -651,8 +651,13 @@ export const cancelOngoingCall = (currentTaskId) => {
 	updatedQuestions[currentTaskId].status = "terminated";
 	updatedQuestions[currentTaskId].loading = false;
 	updatedQuestions[currentTaskId].answer = interruptedTaskMessage;
+	updatedQuestions[currentTaskId].templateType = "search_answer";
 	updatedQuestions[currentTaskId].streamingStatus = "aborted";
 	updatedQuestions[currentTaskId].showResponse = true;
+	delete updatedQuestions[currentTaskId].viewType;
+	delete updatedQuestions[currentTaskId].botConversation;
+	delete updatedQuestions[currentTaskId].reqFlow;
+	delete updatedQuestions[currentTaskId].thoughts;
 	store.dispatch(updateChatData(updatedQuestions));
 	store.dispatch(setCurrentQuestion(null));
 	const reqIdForCancel = updatedQuestions[currentTaskId]?.isTask

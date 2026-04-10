@@ -45,8 +45,13 @@ const ensureContinueFlowDelegate = () => {
             status: "terminated",
             loading: false,
             answer: INTERRUPTED_TASK_MESSAGE,
+            templateType: "search_answer",
             streamingStatus: "aborted",
             showResponse: true,
+            viewType: undefined,
+            botConversation: undefined,
+            reqFlow: undefined,
+            thoughts: undefined,
         };
         store.dispatch(updateChatData(updated));
         store.dispatch(setCurrentQuestion(null));
