@@ -92,15 +92,13 @@ const renderRecentAgents = (divId) => {
     isRecentAgentsLoading = true;
     currentRecentAgents = [];
     targetElement.innerHTML = constructRecentAgentsList();
-    
+
     // Fetch and render recent agents
     RecentAgents()
         .then(result => {
-            isRecentAgentsLoading = false;            
+            isRecentAgentsLoading = false;
             currentRecentAgents = result?.data || [];
             targetElement.innerHTML = constructRecentAgentsList(currentRecentAgents);
-            
-            // Setup click handlers after DOM is updated
             setupClickHandlers(divId);
         })
         .catch(error => {

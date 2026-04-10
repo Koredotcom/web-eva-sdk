@@ -13,18 +13,27 @@ const constructRecents = (enabledAgents, recentAgents) => {
 
 const recentAgents = () => {
     return new Promise((resolve) => {
-        const unsubscribe = store.subscribe(()=> {
+        const checkState = () => {
             const state = store.getState()
-            const {status, error, data} = state.global.allAgents
-            const enabledAgents = state.global.enabledAgents
-            const recentAgents = state.global.recentAgents
-            if(status !== 'loading') {
+            const { status, error, data } = state.global.allAgents
+            const recentAgentIds = state.global.recentAgents
+            if (status !== 'loading') {
+                return { resolved: true, result: { status, error, data: constructRecents(data?.agents, recentAgentIds) } }
+            }
+            return { resolved: false }
+        }
+
+        const current = checkState()
+        if (current.resolved) {
+            resolve(current.result)
+            return
+        }
+
+        const unsubscribe = store.subscribe(() => {
+            const check = checkState()
+            if (check.resolved) {
                 unsubscribe()
-                resolve({
-                    status,
-                    error,
-                    data : constructRecents(data?.agents, recentAgents)
-                })
+                resolve(check.result)
             }
         })
     })
