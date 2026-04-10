@@ -453,6 +453,23 @@ const ChatInterface = (props) => {
       }
       let question = cloneDeep(questions?.[reqId])
 
+      /*
+       * Kora-React parity: if the question was not found (or we landed on the parent multi_intent_execution
+       * question instead of the task), fall back to searching all questions for a task whose reqId matches
+       * the streaming event's reqId. Task questions are keyed by task._id but carry reqId = parent.id,
+       * so a direct lookup via detail?.data?.reqId returns the parent, not the task.
+       */
+      if (!question || (question?.templateType === 'multi_intent_execution' && !question?.isTask)) {
+        const taskEntry = Object.entries(questions).find(([, ques]) =>
+          ques?.reqId === detail?.data?.reqId && ques?.isTask
+        );
+        if (taskEntry) {
+          reqId = taskEntry[0];
+          question = cloneDeep(taskEntry[1]);
+          if (question) question.showResponseFlow = true;
+        }
+      }
+
       if (!question && detail?.data?.hasOwnProperty('parentMessageId')) {
         const parentMsgId = detail?.data?.parentMessageId;
         const match = Object.entries(questions).find(([, q]) => q?._id === parentMsgId || q?.messageId === parentMsgId);
@@ -466,6 +483,24 @@ const ChatInterface = (props) => {
 
       const commitQuestionUpdate = () => {
         store.dispatch(updateQuestionData({ key: reqId, question }));
+        /*
+         * ParentComponent uses object-identity (`item === prevItem`) to skip re-rendering
+         * questions that haven't changed. When streaming updates a TASK question via
+         * updateQuestionData, only questions[task._id] gets a new reference; the parent
+         * multi_intent_execution question keeps its old reference and is skipped, so the
+         * streaming answer never renders until constructQuestionPostCall does a full updateChatData.
+         *
+         * Fix (Kora-React parity): touch the parent question with a shallow copy so its
+         * reference changes, forcing ParentComponent to re-render the multi-intent template
+         * on every streaming chunk.
+         */
+        if (question?.isTask && question?.parentMsgId) {
+          const currentQuestions = store.getState().global.questions;
+          const parentQ = currentQuestions?.[question.parentMsgId];
+          if (parentQ) {
+            store.dispatch(updateQuestionData({ key: question.parentMsgId, question: { ...parentQ } }));
+          }
+        }
       };
 
       if(question?.status === "error"){
@@ -586,6 +621,17 @@ const ChatInterface = (props) => {
         reqId = cQFromStore?.cId
       }
       let currentQuestion = _questions[reqId]
+      // Kora-React parity: fallback to searching task questions by reqId if the direct lookup
+      // landed on the parent multi_intent_execution question instead of the task question.
+      if (!currentQuestion || (currentQuestion?.templateType === 'multi_intent_execution' && !currentQuestion?.isTask)) {
+        const taskEntry = Object.entries(_questions).find(([, ques]) =>
+          ques?.reqId === detail?.data?.reqId && ques?.isTask
+        );
+        if (taskEntry) {
+          reqId = taskEntry[0];
+          currentQuestion = _questions[reqId];
+        }
+      }
       // aAAgent parity: if key isn't direct (history/retry), resolve by reqId/message/parent id.
       if (!currentQuestion) {
         const match = findQuestionEntry(_questions, {

@@ -647,12 +647,16 @@ export const cancelOngoingCall = (currentTaskId) => {
 	let { questions } = state;
 	let updatedQuestions = cloneDeep(questions);
 	if (!updatedQuestions[currentTaskId]) return;
+	const interruptedTaskMessage = "I see you interrupted the answer generation. Please feel free to provide more details or let me know how can I assist you further";
 	updatedQuestions[currentTaskId].status = "terminated";
 	updatedQuestions[currentTaskId].loading = false;
+	updatedQuestions[currentTaskId].answer = interruptedTaskMessage;
+	updatedQuestions[currentTaskId].streamingStatus = "aborted";
+	updatedQuestions[currentTaskId].showResponse = true;
 	store.dispatch(updateChatData(updatedQuestions));
 	store.dispatch(setCurrentQuestion(null));
 	const reqIdForCancel = updatedQuestions[currentTaskId]?.isTask
-		? updatedQuestions[currentTaskId]?.reqId
+		? (updatedQuestions[currentTaskId]?.reqId || updatedQuestions[currentTaskId]?.cId || currentTaskId)
 		: currentTaskId;
 	store.dispatch(cancelAdvancedSearch({
 		userId: state?.profile?.data?.id,

@@ -42,7 +42,6 @@ export const constructQuestionInitial = (args) => {
             parentMsgId: args?.parentMsgId,
 			cId: args?.stepId,
 			reqId: args?.reqId,
-			showResponse: true,
 		}
 
 		questions[args?.stepId] = obj;
@@ -133,11 +132,7 @@ export const constructQuestionPostCall = async (data, qId, isBot = false) => {
     const originalQuestion = question?.question;
     delete question?.loading;
 
-    if(data?.payload?.agentId){
-        const agentDetails = await store.dispatch(resolveAgentAction({ payload: [data?.payload?.agentId] }));
-        // console.log('agentDetails', agentDetails);
-        question.agentMetaDetails = agentDetails?.payload?.[0];
-    }
+    const pendingAgentId = data?.payload?.agentId;
     
     // Preserve context data in question object (including originalContext for renderReferenceToResponseContext)
     // Matching Kora-React: use originalContext first, fallback to context
@@ -441,7 +436,7 @@ export const constructQuestionPostCall = async (data, qId, isBot = false) => {
         const _selectedContext = store.getState().global.selectedContext;
         let context = {
             context: data?.payload?.followUpContext,
-            sources: isEmpty(data?.payload?.sources) ? ((isEmpty(_selectedContext?.data?.sources) ? [question?.agentMetaDetails] : _selectedContext?.data?.sources)) : data?.payload?.sources,
+            sources: isEmpty(data?.payload?.sources) ? (_selectedContext?.data?.sources || data?.payload?.context?.sources || []) : data?.payload?.sources,
             viewType: data?.payload?.viewType,
             type: "agent",
             'isAgent': true,
@@ -453,25 +448,17 @@ export const constructQuestionPostCall = async (data, qId, isBot = false) => {
     }
     store.dispatch(updateChatData(questions))
 
-    // if(data?.payload?.context?.sessionId){
-    //     let _selectedContext = cloneDeep(store.getState().global.selectedContext);
-    //     console.log('selected context', _selectedContext);
-    //     if(!isEmpty(_selectedContext)){
-    //         _selectedContext.data.sessionId = data?.payload?.context?.sessionId;
-    //         store.dispatch(setSelectedContext({data: _selectedContext.data}))
-    //     }
-    // }
-
-    // if(question?.isTask) {
-    //     setTimeout(() => {
-    //         const stepIndex = question?.stepIndex;
-    //         props.MultiIntentExecutionRef.current.runNextTask(stepIndex, data?.res?.status)
-    //     }, 1000);
-    //     setTimeout(() => {
-    //         let getEl = document.querySelector('.taskItem.loading')
-    //         getEl?.scrollIntoView({ block: "nearest", behavior: 'smooth' });
-    //     }, 1500);
-    // }
+    if (pendingAgentId) {
+        store.dispatch(resolveAgentAction({ payload: [pendingAgentId] })).then((agentDetails) => {
+            const agentMeta = agentDetails?.payload?.[0];
+            if (!agentMeta) return;
+            const freshQuestions = cloneDeep(store.getState().global.questions);
+            if (freshQuestions?.[qId]) {
+                freshQuestions[qId].agentMetaDetails = agentMeta;
+                store.dispatch(updateChatData(freshQuestions));
+            }
+        }).catch(() => {});
+    }
 }
 
 const removeOutputMessageId = (question, apiResponse) => {

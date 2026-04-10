@@ -3,7 +3,7 @@ import store from "../../redux/store";
 import { multiIntentExecutionFunc } from "../functionality/multi-intent-execution";
 import TemplateRenderer from "../templateRenderer";
 import "./../styles/template.scss";
-import { Close, PlusIcon, DragHandleIcon, RadioButtonChecked, createDeleteIcon, EditIcon, HistoryIcon, AddStepFilledIcon, WarningStrokeCircle, tickMarkIcon, LoadingSpinner, AgenticSearchIcon, CheveronDownIcon, cheveronRightIcon } from "../icons-library";
+import { Close, PlusIcon, DragHandleIcon, RadioButtonChecked, createDeleteIcon, EditIcon, HistoryIcon, AddStepFilledIcon, WarningStrokeCircle, tickMarkIcon, IconLoader, AgenticSearchIcon, CheveronDownIcon, cheveronRightIcon } from "../icons-library";
 
 const multiIntentRenderTimers = new Map();
 
@@ -98,7 +98,7 @@ function render(data) {
                                 <div class="topCard" ${((task?.status === "completed" || task?.status === "terminated") && items?.historicalData) ? `id="historyBtn-${task?._id}"` : ''}>
                                     <div class="leftBlock">
                                 ${task?.loading ? `<div class="statusIcon">
-                                    <span class="spinLoader">${LoadingSpinner({ size: 16 })}</span>
+                                    <span class="spinLoader">${IconLoader({ size: 16 })}</span>
                                 </div>` :
                                 task?.status === "completed"
                                     ? tickMarkIcon({ size: 16, color: "#475467" })
@@ -140,7 +140,7 @@ function render(data) {
                                     <div class="bottomCard">
                                         ${html?.innerHTML || ''}
                                         ${task?.showResponse && index < items?.executionPipeline?.length - 1 && [undefined, null, '', 'draft', 'in-progress', 'threadRunning'].includes(task?.status) ?
-                                        `<div class='continuebtn' id="continueBtn-${task?._id}">
+                                        `<div class='continuebtn' id="continueBtn-${task?._id}" data-continue-task-id="${task?._id}" data-continue-task-index="${index}" data-continue-req-id="${items?.reqId}">
                                             Continue Flow 
                                         </div>` : ''
                                         }

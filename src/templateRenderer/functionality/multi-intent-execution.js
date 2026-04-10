@@ -9,10 +9,74 @@ import { cancelOngoingCall } from "../utils/helper.js";
 import MultiIntentExecution from "../../multiIntentExecution/multiIntentExecution.js";
 import "./multi-intent-execution.css";
 
+/*
+ * Delegated handler for "Continue Flow" buttons.
+ *
+ * During streaming, the multi-intent template DOM is replaced on every chunk.
+ * Individual click listeners attached via multiIntentExecutionFunc are wiped and
+ * re-attached asynchronously (setTimeout+rAF), leaving a window where clicks are
+ * lost. A single delegated listener on the questions-container survives all DOM
+ * replacements and handles clicks reliably.
+ */
+let _continueFlowDelegateAttached = false;
+const INTERRUPTED_TASK_MESSAGE = "I see you interrupted the answer generation. Please feel free to provide more details or let me know how can I assist you further";
+const ensureContinueFlowDelegate = () => {
+    if (_continueFlowDelegateAttached) return;
+    const container = document.getElementById('questions-container');
+    if (!container) return;
+    _continueFlowDelegateAttached = true;
+
+    container.addEventListener('click', async (e) => {
+        const btn = e.target.closest('[data-continue-task-id]');
+        if (!btn) return;
+        e.stopPropagation();
+
+        const taskId = btn.getAttribute('data-continue-task-id');
+        const index = parseInt(btn.getAttribute('data-continue-task-index'), 10);
+        if (!taskId) return;
+
+        let state = store.getState().global;
+        const currentTaskQ = state?.questions?.[taskId];
+        if (!currentTaskQ) return;
+
+        const updated = cloneDeep(state.questions);
+        updated[taskId] = {
+            ...updated[taskId],
+            status: "terminated",
+            loading: false,
+            answer: INTERRUPTED_TASK_MESSAGE,
+            streamingStatus: "aborted",
+            showResponse: true,
+        };
+        store.dispatch(updateChatData(updated));
+        store.dispatch(setCurrentQuestion(null));
+
+        // Kora-React parity: cancel the task-scoped request id.
+        // cancelAdvancedSearch() URL-encodes this id before calling the API.
+        const reqIdForCancel = currentTaskQ?.isTask ? (currentTaskQ?.reqId || currentTaskQ?.cId || taskId) : taskId;
+        try {
+            await store.dispatch(cancelAdvancedSearch({
+                userId: state?.profile?.data?.id,
+                reqId: reqIdForCancel,
+                payload: { boardId: state?.activeBoardId }
+            }));
+        } catch (_) {
+            // Proceed to next task even if cancel API fails
+        } finally {
+            try {
+                const stepIndex = currentTaskQ?.stepIndex ?? index;
+                MultiIntentExecution().runNextTask(stepIndex, 'completed', updated[taskId]);
+            } catch (_) {}
+        }
+    });
+};
+
 const multiIntentExecutionFunc = (item) => {
 
     let state = store.getState().global;
     const { fetchHistoricalTask } = MultiIntentExecution();
+
+    ensureContinueFlowDelegate();
 
     // Auto-scroll helper: scroll only when a new task starts.
     let _lastAutoScrolledTaskId = null;
@@ -899,43 +963,11 @@ const multiIntentExecutionFunc = (item) => {
         }
      });
 
+     // NOTE: "Continue Flow" buttons are handled via event delegation (ensureContinueFlowDelegate)
+     // so they don't need per-element listeners that break during streaming DOM replacement.
+
      item?.executionPipeline?.forEach((task, index) => {
         const addNewTaskBtn = document.getElementById(`addNewTaskBtn-${item?.reqId}-${index}`);
-        const continueBtn = document.getElementById(`continueBtn-${task?._id}`);
-        if(continueBtn && !continueBtn.eventListenerAdded){
-            continueBtn.addEventListener("click", async () => {
-                state = store.getState().global;
-                const currentTaskQ = state?.questions?.[task?._id];
-                if (!currentTaskQ) {
-                    cancelTask(task);
-                    return;
-                }
-                const updated = cloneDeep(state.questions);
-                updated[task._id] = {
-                    ...updated[task._id],
-                    status: "terminated",
-                    loading: false,
-                };
-                store.dispatch(updateChatData(updated));
-                store.dispatch(setCurrentQuestion(null));
-                const reqIdForCancel = currentTaskQ?.isTask ? currentTaskQ?.reqId : task?._id;
-                try {
-                    await store.dispatch(cancelAdvancedSearch({
-                        userId: state?.profile?.data?.id,
-                        reqId: reqIdForCancel,
-                        payload: { boardId: state?.activeBoardId }
-                    }));
-                } catch (e) {
-                    // Proceed to next task even if cancel API fails
-                } finally {
-                    try {
-                        const stepIndex = currentTaskQ?.stepIndex ?? index;
-                        MultiIntentExecution().runNextTask(stepIndex, 'completed', updated[task._id]);
-                    } catch (e) {}
-                }
-            });
-            continueBtn.eventListenerAdded = true;
-        }
 
         if(addNewTaskBtn && !addNewTaskBtn.eventListenerAdded){
             addNewTaskBtn.addEventListener("click", () => {
@@ -1010,6 +1042,21 @@ const multiIntentExecutionFunc = (item) => {
             deleteNewTask(task?._id);
            });
            cancelBtn.eventListenerAdded = true;
+         }
+
+         // Delete icon in the edit/add form header:
+         // - addTask  → only remove the form from local state (it was never saved to server)
+         // - modify   → remove the form locally AND call the delete API (Kora-React parity)
+         const deleteNewTaskBtn = document.getElementById(`deleteNewTaskBtn-${task?._id}`);
+         if (deleteNewTaskBtn && !deleteNewTaskBtn.eventListenerAdded) {
+           deleteNewTaskBtn.addEventListener("click", (e) => {
+             e?.stopPropagation?.();
+             deleteNewTask(task?._id);
+             if (task?.type === 'modify') {
+               deleteExistingTask(index, task);
+             }
+           });
+           deleteNewTaskBtn.eventListenerAdded = true;
          }
 
          const doneBtn = document.getElementById(`doneBtn-${task?._id}`);

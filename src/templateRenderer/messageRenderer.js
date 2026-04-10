@@ -158,7 +158,11 @@ export function renderTemplateContent(
 		return `<div class="message-bubble answer"> 
 					<div class="answerCntr">${htmlTemplate}</div>
 				</div>`;
-	} else if (data?.status === "terminated") {
+	} else if (
+		data?.status === "terminated" &&
+		!data?.isTask &&
+		!(data?.templateType === "multi_intent_execution" && data?.executionPipeline?.length > 0)
+	) {
 		return htmlTemplate += `<div class="message-bubble answer"> 
 					I see you interrupted the answer generation. Please feel free to provide more details or let me know how can I assist you further
 				</div>`;
@@ -235,10 +239,10 @@ export function renderTemplateContent(
 			break;
 
 		case "multi_intent_execution":
-			// Kora-React parity: show terminated message when pipeline is empty
-			if (data?.executionPipeline?.length === 0 && data?.status !== 'terminated') {
-				htmlTemplate += multiIntentExecution.render(data);
-			} else if (data?.status === 'terminated' || data?.executionPipeline?.length === 0) {
+			// Continue Flow terminates only the current task, not the whole agentic flow.
+			// Even if the parent message status transiently becomes "terminated", keep
+			// rendering the pipeline while it still has steps so the next task remains visible.
+			if (data?.executionPipeline?.length === 0) {
 				htmlTemplate += `<div class="threadName">I see you interrupted the answer generation. Please feel free to provide more details or let me know how can I assist you further</div>`;
 			} else {
 				htmlTemplate += multiIntentExecution.render(data);

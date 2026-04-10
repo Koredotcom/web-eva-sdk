@@ -110,9 +110,8 @@ const MultiIntentExecution = (props) => {
             })
         );
 
-        const params = {
+      const params = {
             cId: _item?.id,
-            reqId: _item?.id,
             type: _item?.type,
             stepId: task?._id,
             task,

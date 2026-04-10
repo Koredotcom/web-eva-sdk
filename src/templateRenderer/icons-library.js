@@ -524,6 +524,25 @@ export function WarningStrokeCircle({ className = '', size = config.size, color 
   `
 }
 
+/**
+ * Radial-spoke spinner — matches Kora-React's iconLoader.svg used inside .spinLoader
+ * (animated by the `.spinLoader { animation: spin 2s linear infinite }` CSS rule)
+ */
+export function IconLoader({ className = '', size = 16, color = '#2970FF' }) {
+  return `
+    <svg class="wa-IconLoader ${className}" width="${size}" height="${size}" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <g clip-path="url(#clip0_iconLoader)">
+        <path d="M8.00065 1.3335V4.00016M8.00065 12.0002V14.6668M3.28732 3.28683L5.17398 5.1735M10.8273 10.8268L12.714 12.7135M1.33398 8.00016H4.00065M12.0007 8.00016H14.6673M3.28732 12.7135L5.17398 10.8268M10.8273 5.1735L12.714 3.28683" stroke="${color}" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+      </g>
+      <defs>
+        <clipPath id="clip0_iconLoader">
+          <rect width="16" height="16" fill="white"/>
+        </clipPath>
+      </defs>
+    </svg>
+  `;
+}
+
 export function LoadingSpinner({ className = '', size = config.size, color = config.color }) {
   return `
     <svg width="${size}" height="${size}" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" class="wa-LoadingSpinner ${className}">
