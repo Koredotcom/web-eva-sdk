@@ -63,10 +63,7 @@ const ChatInterface = (props) => {
       if (value) {
         const { allAgents, selectedContext, commonAgents, userSelectedLLMModel} = state
         let params = { reqId: generateShortUUID() }
-        let payload = { question: value }
-        if(userSelectedLLMModel) {
-          payload.llmIntegrationId = userSelectedLLMModel
-        }
+        let payload = { question: value }        
         if(state.activeBoardId) {
           payload.boardId = state.activeBoardId
         }
@@ -98,6 +95,11 @@ const ChatInterface = (props) => {
             /*writing especially for botAgent, will remove this once search session api gives the context data, when we click on askFollowup after bot completion */
             if(selectedContext?.data?.sessionId){
               payload.context.sessionId = selectedContext?.data?.sessionId
+            }
+            if(selectedContext?.data?.sources?.[0]?.docId === 'llm' || selectedContext?.data?.sources?.[0]?.source === 'llm') {
+              if(userSelectedLLMModel) {
+                payload.context.sources[0].llmIntegrationId = userSelectedLLMModel
+              }
             }
           } else {
             // when setted context is an attachment
@@ -393,7 +395,12 @@ const ChatInterface = (props) => {
             }
             
           }
-          question.answer = question?.answer?.concat(detail?.data?.chunk)
+          try{
+            question.answer = question?.answer?.concat(detail?.data?.chunk)
+          }catch(error){
+            console.error("error in concatenating the answer", error, `details are ${reqId} questions are ${questions}`)
+          }
+          
         }
 
         question.templateType = detail?.data?.templateType || "search_answer"
@@ -409,11 +416,12 @@ const ChatInterface = (props) => {
 
       if (detail?.data?.status === 'completed' || detail?.data?.status === 'aborted') {
         question.streamingStatus = detail?.data?.status // 'completed' or 'aborted'
-        question.apiSuccess = true
+        // question.apiSuccess = true // apiSuccess is set to true when the advanceSearchApi is completed, so removing this from here
         question.status = detail?.data?.status
 
         const questions = cloneDeep(state.questions)
         questions[reqId] = question
+        console.log(`apiStatus of the question ${reqId} is ${question?.apiSuccess}`)
         store.dispatch(updateChatData(questions))
 
         resIndexRef = 0

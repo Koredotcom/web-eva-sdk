@@ -1,5 +1,5 @@
 import { abortAdvanceSearch } from "../redux/actions/global.action"
-import { setActiveBoardId, setGptUploadedFiles, updateChatData, setSelectedContext, setCurrentQuestion, setErrorState, setQuickActions } from "../redux/globalSlice"
+import { setActiveBoardId, setGptUploadedFiles, updateChatData, setSelectedContext, setCurrentQuestion, setErrorState, setQuickActions, setAdvanceSearchRes } from "../redux/globalSlice"
 import store from "../redux/store"
 
 const NewChat = () => {
@@ -12,6 +12,7 @@ const NewChat = () => {
     store.dispatch(setCurrentQuestion({}))
     store.dispatch(setErrorState([]))
     store.dispatch(setQuickActions([]));
+    store.dispatch(setAdvanceSearchRes({}))
 
 }
 
