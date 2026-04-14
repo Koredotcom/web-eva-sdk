@@ -58,7 +58,7 @@ export const initializeSDK = async (config) => {
   //enablement of debugging i.e console.log statements
   store.dispatch(setEnabledDebugging(config.enableDebugging))
 
-  if(config.enableContextByFollowupContext){
+  if(config.hasOwnProperty('enableContextByFollowupContext')){
     store.dispatch(setEnableContextByFollowupContext(config.enableContextByFollowupContext))
   }
 
