@@ -81,6 +81,11 @@ const globalSlice = createSlice({
       updateChatData: (state, action) => {
         state.questions = action.payload;
       },
+      updateQuestionData: (state, action) => {
+        const { key, question } = action.payload || {};
+        if (!key) return;
+        state.questions[key] = question;
+      },
       setActiveBoardId: (state, action) => {
         state.activeBoardId = action.payload;
       },
@@ -271,6 +276,7 @@ const globalSlice = createSlice({
 // Export actions
 export const { 
   updateChatData,
+  updateQuestionData,
   setActiveBoardId,
   setCurrentQuestion,
   setRecentFiles,

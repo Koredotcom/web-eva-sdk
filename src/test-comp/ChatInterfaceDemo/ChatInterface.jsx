@@ -110,8 +110,10 @@ const ChatInterfaceDemo = () => {
       const el = TemplateRenderer.generateHTMLTemplate(item, {
         loadingText: "Analyzing",
       });
-      const cls = `chat-message-container${extraClasses ? ' ' + extraClasses : ''}`;
-      return `<div class="${cls}">${el.innerHTML}</div>`;
+      if (extraClasses) {
+        extraClasses.split(' ').filter(Boolean).forEach(c => el.classList.add(c));
+      }
+      return el.outerHTML;
     }).join('');
 
     container.innerHTML = html;

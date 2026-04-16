@@ -2,6 +2,8 @@ import { cloneDeep } from "lodash";
 import moment from "moment";
 import ChatInterface from "../../chat/ChatInterface";
 import store from "../../redux/store";
+import { updateChatData, setCurrentQuestion } from "../../redux/globalSlice";
+import { cancelAdvancedSearch } from "../../redux/actions/global.action";
 
 function validateInput(templateType, data) {
 	if (!templateType || typeof templateType !== "string") {
@@ -642,17 +644,30 @@ export const SHOELACE_ATTRS = [
 
 export const cancelOngoingCall = (currentTaskId) => {
 	let state = store?.getState()?.global;
-	let { questions} = state;
-	let updatedQuestions = cloneDeep(questions)
-	updatedQuestions[currentTaskId].status = "terminated"
-	updatedQuestions[currentTaskId].loading = false	
-	/* for cancel we should send either messageId / requId, but for multiIntent execution we are constructing question in questions array with stepId, hence pulling the messageId from that stepId and making the cancel call*/
-	if (updatedQuestions[currentTaskId]?.hasOwnProperty("isTask")) {		
-		ChatInterface().cancelMessageReqAction(updatedQuestions[currentTaskId]?.reqId)
-	} else {
-		// dispatch(stopResponse({ id: currentQuestion }, { boardId: selectedThreadId }, value))
-	}
-
+	let { questions } = state;
+	let updatedQuestions = cloneDeep(questions);
+	if (!updatedQuestions[currentTaskId]) return;
+	const interruptedTaskMessage = "I see you interrupted the answer generation. Please feel free to provide more details or let me know how can I assist you further";
+	updatedQuestions[currentTaskId].status = "terminated";
+	updatedQuestions[currentTaskId].loading = false;
+	updatedQuestions[currentTaskId].answer = interruptedTaskMessage;
+	updatedQuestions[currentTaskId].templateType = "search_answer";
+	updatedQuestions[currentTaskId].streamingStatus = "aborted";
+	updatedQuestions[currentTaskId].showResponse = true;
+	delete updatedQuestions[currentTaskId].viewType;
+	delete updatedQuestions[currentTaskId].botConversation;
+	delete updatedQuestions[currentTaskId].reqFlow;
+	delete updatedQuestions[currentTaskId].thoughts;
+	store.dispatch(updateChatData(updatedQuestions));
+	store.dispatch(setCurrentQuestion(null));
+	const reqIdForCancel = updatedQuestions[currentTaskId]?.isTask
+		? (updatedQuestions[currentTaskId]?.reqId || updatedQuestions[currentTaskId]?.cId || currentTaskId)
+		: currentTaskId;
+	store.dispatch(cancelAdvancedSearch({
+		userId: state?.profile?.data?.id,
+		reqId: reqIdForCancel,
+		payload: { boardId: state?.activeBoardId }
+	}));
 }
 
 // return {

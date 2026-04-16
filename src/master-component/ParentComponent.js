@@ -17,13 +17,63 @@ let prevQuestionCount = 0
 let overlayObserver = null
 let resizeListenerAttached = false
 let scheduledArrowUpdate = null
+let scheduledQuestionsRender = null
+let prevRenderableQuestions = []
+
+const getQuestionRenderKey = (item, index) => {
+    return (
+        (item?.messageId ? `m:${item.messageId}` : null) ||
+        (item?.reqId ? `r:${item.reqId}` : null) ||
+        (item?.cId ? `c:${item.cId}` : null) ||
+        (item?.id ? `i:${item.id}` : `idx:${index}`)
+    )
+}
+
+const getRenderableQuestions = (questionsMap) => {
+    const questionList = Object.values(questionsMap || {});
+    const seen = new Set();
+    const deduped = [];
+
+    for (let i = 0; i < questionList.length; i++) {
+        const item = questionList[i];
+        const key = getQuestionRenderKey(item, i);
+        if (seen.has(key)) continue;
+        seen.add(key);
+        deduped.push(item);
+    }
+
+    return deduped.filter(item => !item?.isTask);
+}
+
+const renderQuestionElement = (item) => {
+    return TemplateRenderer.generateHTMLTemplate(item, {
+        loadingText: "Analyzing",
+    });
+}
+
+const renderAllQuestions = (questionsContainer, renderableQuestions) => {
+    let questionsHTML = '';
+    questionsHTML = renderableQuestions.map((item) => {
+        const el = renderQuestionElement(item);
+        return el.outerHTML;
+    }).join('');
+    questionsContainer.innerHTML = questionsHTML
+}
+
+const scheduleQuestionsOnlyRender = () => {
+    if (scheduledQuestionsRender != null) return
+    scheduledQuestionsRender = requestAnimationFrame(() => {
+        scheduledQuestionsRender = null
+        renderQuestionsOnly()
+    })
+}
 
 const unsubscribe = ChatInterface().subscribe((questionsData, searchResponse, moreAvailable, errorStates, quickActions) => {
     questions = questionsData
     console.log(questions, searchResponse, moreAvailable, errorStates, quickActions)
         
     // Only re-render the questions container, not the entire component
-    renderQuestionsOnly()
+    scheduleQuestionsOnlyRender()
 })
 
 
@@ -183,6 +233,9 @@ const renderQuestionsOnly = () => {
     const questionsContainer = document.getElementById('questions-container')
     if (!questionsContainer) return
 
+    const chatbotPanel = questionsContainer.closest('.eva-sdk-chatbot-panel');
+    if (chatbotPanel && !chatbotPanel.classList.contains('eva-sdk-chatbot-panel--open')) return
+
     // When a TomSelect input has focus (user is typing/selecting recipients),
     // skip the re-render entirely. store.subscribe fires on EVERY Redux dispatch
     // — including getSuggestedContactListNew pending/fulfilled which don't change
@@ -229,6 +282,7 @@ const renderQuestionsOnly = () => {
         cleanupAllAuthChallenges();
         questionsContainer.innerHTML = '';
         prevQuestionCount = 0;
+        prevRenderableQuestions = [];
         setTimeout(() => updateScrollArrowVisibility(), 150)
         return;
     }
@@ -242,33 +296,26 @@ const renderQuestionsOnly = () => {
     //
     // Keep the FIRST occurrence so that items stay in their original chronological position
     // (e.g., agent_welcome_template stays at the top, not shifted below a later integration action).
-    const questionList = Object.values(questions);
-    const seen = new Set();
-    const deduped = [];
-    for (let i = 0; i < questionList.length; i++) {
-        const item = questionList[i];
-        const key =
-            (item?.messageId ? `m:${item.messageId}` : null) ||
-            (item?.reqId ? `r:${item.reqId}` : null) ||
-            (item?.cId ? `c:${item.cId}` : null) ||
-            (item?.id ? `i:${item.id}` : `idx:${i}`);
-        if (seen.has(key)) continue;
-        seen.add(key);
-        deduped.push(item);
-    }
-
-    let questionsHTML = '';
-    questionsHTML = deduped.map((item) => {
-        if (item?.isTask) return '';
-
-        const el = TemplateRenderer.generateHTMLTemplate(item, {
-            loadingText: "Analyzing",
+    const renderableQuestions = getRenderableQuestions(questions);
+    const canPatchIncrementally =
+        prevRenderableQuestions.length === renderableQuestions.length &&
+        questionsContainer.children.length === renderableQuestions.length &&
+        renderableQuestions.every((item, index) => {
+            return getQuestionRenderKey(item, index) === getQuestionRenderKey(prevRenderableQuestions[index], index);
         });
 
-        return el.outerHTML;
-    }).join('');
-
-    questionsContainer.innerHTML = questionsHTML
+    if (canPatchIncrementally) {
+        renderableQuestions.forEach((item, index) => {
+            if (item === prevRenderableQuestions[index]) return;
+            const existingNode = questionsContainer.children[index];
+            const nextNode = renderQuestionElement(item);
+            if (existingNode && nextNode) {
+                questionsContainer.replaceChild(nextNode, existingNode);
+            }
+        });
+    } else {
+        renderAllQuestions(questionsContainer, renderableQuestions);
+    }
 
     const messageContainers = questionsContainer.querySelectorAll('.message-container')
     const currentQuestionCount = messageContainers.length
@@ -283,6 +330,7 @@ const renderQuestionsOnly = () => {
         questionsContainer.scrollTop = prevScrollTop
     }
     prevQuestionCount = currentQuestionCount
+    prevRenderableQuestions = renderableQuestions.slice()
 
     setTimeout(() => updateScrollArrowVisibility(), 150)
 }

@@ -6447,6 +6447,9 @@ sl-dialog.gpt-form-dialog {
                             align-items: center;
                             gap: 0.25rem;
                             margin-right: 0.5rem;
+                            .wa-AgenticSearchIcon{
+                                fill: none;
+                            }
 
                             &:empty {
                                 display: none;
@@ -7157,6 +7160,91 @@ sl-dialog.gpt-form-dialog {
                         display: flex;
                         align-items: center;
                         gap: 0.5rem;
+                        .wa-AgenticSearchIcon {
+                            fill: none;
+                        }
+                    }
+
+                    .addAgentAndPowerToolsWrapper {
+                        display: flex;
+                        align-items: center;
+                        gap: 0.375rem;
+                        flex-wrap: nowrap;
+                        flex: 1;
+
+                        .separator {
+                            color: $wa-gray-400;
+                            font-size: 0.875rem;
+                            font-style: normal;
+                            font-weight: 400;
+                            line-height: 1.25rem;
+                        }
+
+                        .powerToolsButtons {
+                            display: flex;
+                            align-items: center;
+                            gap: 0.25rem;
+
+                            .powerToolButton {
+                                display: flex;
+                                padding: 0.25rem 0.75rem;
+                                justify-content: center;
+                                align-items: center;
+                                gap: 0.375rem;
+                                border-radius: 0.5rem;
+                                border: 1px solid $wa-gray-200;
+                                background: $wa-base-white;
+                                cursor: pointer;
+                                transition: all 0.2s ease;
+                                height: 1.875rem;
+                                white-space: nowrap;
+
+                                &:hover {
+                                    background: $wa-gray-50;
+                                }
+
+                                &.selected {
+                                    background-color: $wa-primary-50;
+                                    border-color: $wa-primary-600;
+
+                                    .powerToolName {
+                                        color: $wa-primary-700;
+                                    }
+                                }
+
+                                .powerToolIcon {
+                                    width: 1rem;
+                                    height: 1rem;
+                                    flex-shrink: 0;
+
+                                    img, svg {
+                                        width: 1rem !important;
+                                        height: 1rem !important;
+                                        flex-shrink: 0;
+                                        display: flex;
+                                        align-items: center;
+                                        object-fit: contain;
+                                    }
+                                }
+
+                                .powerToolName {
+                                    @include typography-regular(0.75rem, 500, normal);
+                                    color: $wa-gray-950;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                &.showFullborders {
+                    border-radius: 0;
+
+                    input {
+                        border-radius: 0 !important;
+                    }
+
+                    .agentBlock {
+                        border-radius: 0;
                     }
                 }
             }
@@ -7202,6 +7290,17 @@ sl-dialog.gpt-form-dialog {
                             visibility: visible;
                             opacity: 1;
                         }
+
+                        .utterance.tooltipForEllipsis {
+                            cursor: pointer;
+                        }
+                    }
+
+                    .utterance.tooltipForEllipsis {
+                        overflow: hidden;
+                        text-overflow: ellipsis;
+                        white-space: nowrap;
+                        cursor: pointer;
                     }
                 }
             }

@@ -5,6 +5,7 @@ import { updateChatData } from "../../redux/globalSlice";
 import { sendEmail, smartComposeEmail } from "../../redux/actions/global.action";
 import { Gmail, Outlookimg, Teamsimg, Slackimg } from "../icons-library";
 import FileUploader from "../../utils/FileUploader";
+import MultiIntentExecution from "../../multiIntentExecution/multiIntentExecution";
 
 
 
@@ -264,13 +265,53 @@ const sendEmailFunctionality = (data) => {
 
         let response = await store.dispatch(sendEmail({params, payload}));
         
-        // Only update global store after successful response
-        let updatedQuestions = cloneDeep(state?.questions);
-        updatedQuestions[data?.reqId] = response?.payload;
-        store.dispatch(updateChatData(updatedQuestions));
-        
-        // Update local reference with successful response
-        localCurrentData = response?.payload;
+        if (response?.payload) {
+            // In multi-intent execution, the email task lives under the step key (`cId` / `id`),
+            // not the parent question `reqId`. Updating the parent question causes the task
+            // to fall back to the default template on re-render.
+            let updatedQuestions = cloneDeep(store.getState()?.global?.questions);
+            const directStoreKey = data?.cId || data?.id || data?.reqId;
+            const storeKey = updatedQuestions?.[directStoreKey]
+                ? directStoreKey
+                : Object.keys(updatedQuestions || {}).find(
+                    (key) =>
+                        key === data?.cId ||
+                        key === data?.id ||
+                        key === data?.reqId ||
+                        updatedQuestions[key]?.cId === data?.cId ||
+                        updatedQuestions[key]?.id === data?.id ||
+                        updatedQuestions[key]?.reqId === data?.reqId
+                );
+
+            const previousQuestion = storeKey ? updatedQuestions?.[storeKey] : null;
+            const completedQuestion = {
+                ...(previousQuestion || {}),
+                ...response?.payload,
+                status: 'completed',
+                externalIntegrationAction: true,
+                responseFetched: true,
+                showResponse: true,
+            };
+
+            if (storeKey) {
+                updatedQuestions[storeKey] = completedQuestion;
+                store.dispatch(updateChatData(updatedQuestions));
+            }
+            
+            // Update local reference with successful response
+            localCurrentData = completedQuestion;
+
+            // Multi-intent parity: once the email send succeeds, continue to the next task.
+            if (completedQuestion?.isTask) {
+                setTimeout(() => {
+                    MultiIntentExecution().runNextTask(
+                        completedQuestion?.stepIndex,
+                        completedQuestion?.status,
+                        completedQuestion
+                    );
+                }, 0);
+            }
+        }
     }
 
     let toSection = document.getElementById(`email-to-${data?.reqId}`);

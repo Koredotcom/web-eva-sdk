@@ -1,6 +1,6 @@
 import { abortAdvanceSearch, advanceSearch, cancelAdvancedSearch, resolveAgentAction, stopResponseGeneration } from "../redux/actions/global.action";
 import { setChatInterfaceOptions, setCurrentQuestion, setCustomData, setEnableContextByFollowupContext, setEnabledCustomTemplates, setErrorState, setAnsFromChipElements, setChatInterfaceElements, setAutonomousAsyncPending } from "../redux/globalSlice"
-import { updateChatData } from "../redux/globalSlice";
+import { updateChatData, updateQuestionData } from "../redux/globalSlice";
 import store from "../redux/store";
 import { v4 as uuid } from 'uuid';
 import { constructQuestionInitial, constructQuestionPostCall } from "./chat-utils";
@@ -425,8 +425,7 @@ const ChatInterface = (props) => {
     const contentStreaming = (detail) => {
       let reqId;
       const {currentQuestion, questions, chatInterfaceOptions} = store.getState().global;
-      let _questions = cloneDeep(questions);
-      if(Object.keys(_questions).length === 0){
+      if(Object.keys(questions || {}).length === 0){
         return;
       }
       // if contentStreaming set to false by client than it will not stream the content
@@ -436,7 +435,7 @@ const ChatInterface = (props) => {
 
       /*when resuming the conversation from history, the history data is structured using uuid, so using redId, we can extract the question to be resumed, so need to target the id, present in question with the help of reqId */
       /*function to check the questions are from history */
-      const isHistoryAccessed = checkHistoryAccessed(_questions)
+      const isHistoryAccessed = checkHistoryAccessed(questions)
       /*In case of multi intent execution, we need to get the id as we are putting that task as key in questions,
       so to get that firstly, we will check whether the currentQuestion is a task by checking the isTask flag
       if it is a task, then we will get the id from the currentQuestion
@@ -450,23 +449,63 @@ const ChatInterface = (props) => {
       }
       if(isHistoryAccessed){
         /*function to fetch the questio id based on the  requestId*/
-        reqId = Object.entries(_questions).find(([key, value]) => value?.reqId === detail?.data?.reqId)?.[0]
+        reqId = Object.entries(questions).find(([key, value]) => value?.reqId === detail?.data?.reqId)?.[0]
       }
-      let question = cloneDeep(_questions[reqId])
+      let question = cloneDeep(questions?.[reqId])
+
+      /*
+       * Kora-React parity: if the question was not found (or we landed on the parent multi_intent_execution
+       * question instead of the task), fall back to searching all questions for a task whose reqId matches
+       * the streaming event's reqId. Task questions are keyed by task._id but carry reqId = parent.id,
+       * so a direct lookup via detail?.data?.reqId returns the parent, not the task.
+       */
+      if (!question || (question?.templateType === 'multi_intent_execution' && !question?.isTask)) {
+        const taskEntry = Object.entries(questions).find(([, ques]) =>
+          ques?.reqId === detail?.data?.reqId && ques?.isTask
+        );
+        if (taskEntry) {
+          reqId = taskEntry[0];
+          question = cloneDeep(taskEntry[1]);
+          if (question) question.showResponseFlow = true;
+        }
+      }
 
       if (!question && detail?.data?.hasOwnProperty('parentMessageId')) {
         const parentMsgId = detail?.data?.parentMessageId;
-        const match = Object.entries(_questions).find(([, q]) => q?._id === parentMsgId || q?.messageId === parentMsgId);
+        const match = Object.entries(questions).find(([, q]) => q?._id === parentMsgId || q?.messageId === parentMsgId);
         if (match) {
           reqId = match[0];
           question = cloneDeep(match[1]);
         }
       }
 
+      if (!reqId || !question) return;
+
+      const commitQuestionUpdate = () => {
+        store.dispatch(updateQuestionData({ key: reqId, question }));
+        /*
+         * ParentComponent uses object-identity (`item === prevItem`) to skip re-rendering
+         * questions that haven't changed. When streaming updates a TASK question via
+         * updateQuestionData, only questions[task._id] gets a new reference; the parent
+         * multi_intent_execution question keeps its old reference and is skipped, so the
+         * streaming answer never renders until constructQuestionPostCall does a full updateChatData.
+         *
+         * Fix (Kora-React parity): touch the parent question with a shallow copy so its
+         * reference changes, forcing ParentComponent to re-render the multi-intent template
+         * on every streaming chunk.
+         */
+        if (question?.isTask && question?.parentMsgId) {
+          const currentQuestions = store.getState().global.questions;
+          const parentQ = currentQuestions?.[question.parentMsgId];
+          if (parentQ) {
+            store.dispatch(updateQuestionData({ key: question.parentMsgId, question: { ...parentQ } }));
+          }
+        }
+      };
+
       if(question?.status === "error"){
         question.streamingStatus = "aborted"
-        _questions[reqId] = question
-        store.dispatch(updateChatData(_questions))
+        commitQuestionUpdate()
         return;
       }
 
@@ -521,8 +560,10 @@ const ChatInterface = (props) => {
                         "thoughts": question.botConversation[detail?.data?.outputMessageId]?.thoughts || [],
                     }
               }
-              _questions[reqId] = question
-              store.dispatch(updateChatData(_questions))
+              if (question.loading) {
+                delete question.loading;
+              }
+              commitQuestionUpdate()
               return;               
             }
             
@@ -537,17 +578,15 @@ const ChatInterface = (props) => {
         if (question?.loading) {
           delete question?.loading
         }
-        
-        _questions[reqId] = question
-        store.dispatch(updateChatData(_questions))
+
+        commitQuestionUpdate()
       }
 
       if (detail?.data?.status === 'completed' || detail?.data?.status === 'aborted') {
         question.streamingStatus = detail?.data?.status // 'completed' or 'aborted'
         question.apiSuccess = true
         question.status = detail?.data?.status
-        _questions[reqId] = question
-        store.dispatch(updateChatData(_questions))
+        commitQuestionUpdate()
 
         resIndexRef = 0
 
@@ -582,6 +621,17 @@ const ChatInterface = (props) => {
         reqId = cQFromStore?.cId
       }
       let currentQuestion = _questions[reqId]
+      // Kora-React parity: fallback to searching task questions by reqId if the direct lookup
+      // landed on the parent multi_intent_execution question instead of the task question.
+      if (!currentQuestion || (currentQuestion?.templateType === 'multi_intent_execution' && !currentQuestion?.isTask)) {
+        const taskEntry = Object.entries(_questions).find(([, ques]) =>
+          ques?.reqId === detail?.data?.reqId && ques?.isTask
+        );
+        if (taskEntry) {
+          reqId = taskEntry[0];
+          currentQuestion = _questions[reqId];
+        }
+      }
       // aAAgent parity: if key isn't direct (history/retry), resolve by reqId/message/parent id.
       if (!currentQuestion) {
         const match = findQuestionEntry(_questions, {
@@ -609,6 +659,9 @@ const ChatInterface = (props) => {
           return;
         }
         currentQuestion = { ...currentQuestion, ...detail?.data?.answerMeta, agentType };
+        if (currentQuestion.loading) {
+          delete currentQuestion.loading;
+        }
         _questions[reqId] = currentQuestion;
         store.dispatch(updateChatData(_questions));
         return;

@@ -42,7 +42,6 @@ export const constructQuestionInitial = (args) => {
             parentMsgId: args?.parentMsgId,
 			cId: args?.stepId,
 			reqId: args?.reqId,
-			showResponse: true,
 		}
 
 		questions[args?.stepId] = obj;
@@ -133,11 +132,7 @@ export const constructQuestionPostCall = async (data, qId, isBot = false) => {
     const originalQuestion = question?.question;
     delete question?.loading;
 
-    if(data?.payload?.agentId){
-        const agentDetails = await store.dispatch(resolveAgentAction({ payload: [data?.payload?.agentId] }));
-        // console.log('agentDetails', agentDetails);
-        question.agentMetaDetails = agentDetails?.payload?.[0];
-    }
+    const pendingAgentId = data?.payload?.agentId;
     
     // Preserve context data in question object (including originalContext for renderReferenceToResponseContext)
     // Matching Kora-React: use originalContext first, fallback to context
@@ -243,8 +238,8 @@ export const constructQuestionPostCall = async (data, qId, isBot = false) => {
     //     question = {...question, ...obj}
     // }
 
-    if((data?.res?.templateType === "action_send_slack_message" || data?.res?.templateType === "action_send_teams_message" || data?.res?.templateType === "action_send_msteams_message") && data?.res?.status === "draft") {    
-        question = {...question, ...{externalIntegrationAction : true, skills: `${data?.res?.templateType === "action_send_teams_message" || data?.res?.templateType === "action_send_msteams_message" ? "msteams" : "slack"}`}}
+    if((data?.res?.templateType === "action_send_email" || data?.res?.templateType === "action_send_slack_message" || data?.res?.templateType === "action_send_teams_message" || data?.res?.templateType === "action_send_msteams_message") && data?.res?.status === "draft") {    
+        question = {...question, ...{externalIntegrationAction : true, skills: `${data?.res?.templateType === "action_send_email" ? (data?.res?.provider || 'gmail') : (data?.res?.templateType === "action_send_teams_message" || data?.res?.templateType === "action_send_msteams_message" ? "msteams" : "slack")}`}}
     }
 
     // if(data?.res?.templateType === 'resolve_ambiguity' || data?.res?.templateType === 'intent_ambiguity'){
@@ -279,9 +274,13 @@ export const constructQuestionPostCall = async (data, qId, isBot = false) => {
 	} else if (data?.meta?.arg?.multiIntentExecution || question?.isMultiIntentExecution) {
 		const stepIndex = question?.stepIndex;
 		question = { ...question, ...data?.payload, showResponse: true};
-		questions[question?.parentMsgId].executingActionId = question?.stepId
-		if(stepIndex === 0) {
-		    questions[question?.parentMsgId].status = 'in-progress'
+		const parentQuestion = question?.parentMsgId ? questions?.[question?.parentMsgId] : null;
+		if (parentQuestion) {
+		    parentQuestion.executingActionId = question?.stepId;
+		    if(stepIndex === 0) {
+		        parentQuestion.status = 'in-progress';
+		    }
+		    questions[question?.parentMsgId] = parentQuestion;
 		}
 		if(question?.isTask) {
 				const stepIndex = question?.stepIndex;
@@ -299,16 +298,12 @@ export const constructQuestionPostCall = async (data, qId, isBot = false) => {
     //         }, 1000);
     // }}
     else if(data?.payload?.history?.status === msgStatus.TERMINATED){
-        // For multi-intent execution "Continue Flow", we silently cancel a task to proceed.
-        // Do not replace the UI with interruption text in that case.
-        if (question?.isTask && question?._continueFlow) {
-            // Keep existing status/answer; just stop loading and clear the flag.
+        // If the task was already terminated by continue flow, don't override its state.
+        if (question?.isTask && question?.status === 'terminated') {
             question = {
                 ...question,
                 loading: false,
-                _continueFlow: false,
             };
-            // No runNextTask here because Continue Flow already triggers the next task.
         }
         else {
         if(data?.payload?.history?.templateType === chatTemplateTypes.GPT_FORM_TEMPLATE){
@@ -441,7 +436,7 @@ export const constructQuestionPostCall = async (data, qId, isBot = false) => {
         const _selectedContext = store.getState().global.selectedContext;
         let context = {
             context: data?.payload?.followUpContext,
-            sources: isEmpty(data?.payload?.sources) ? ((isEmpty(_selectedContext?.data?.sources) ? [question?.agentMetaDetails] : _selectedContext?.data?.sources)) : data?.payload?.sources,
+            sources: isEmpty(data?.payload?.sources) ? (_selectedContext?.data?.sources || data?.payload?.context?.sources || []) : data?.payload?.sources,
             viewType: data?.payload?.viewType,
             type: "agent",
             'isAgent': true,
@@ -453,25 +448,17 @@ export const constructQuestionPostCall = async (data, qId, isBot = false) => {
     }
     store.dispatch(updateChatData(questions))
 
-    // if(data?.payload?.context?.sessionId){
-    //     let _selectedContext = cloneDeep(store.getState().global.selectedContext);
-    //     console.log('selected context', _selectedContext);
-    //     if(!isEmpty(_selectedContext)){
-    //         _selectedContext.data.sessionId = data?.payload?.context?.sessionId;
-    //         store.dispatch(setSelectedContext({data: _selectedContext.data}))
-    //     }
-    // }
-
-    // if(question?.isTask) {
-    //     setTimeout(() => {
-    //         const stepIndex = question?.stepIndex;
-    //         props.MultiIntentExecutionRef.current.runNextTask(stepIndex, data?.res?.status)
-    //     }, 1000);
-    //     setTimeout(() => {
-    //         let getEl = document.querySelector('.taskItem.loading')
-    //         getEl?.scrollIntoView({ block: "nearest", behavior: 'smooth' });
-    //     }, 1500);
-    // }
+    if (pendingAgentId) {
+        store.dispatch(resolveAgentAction({ payload: [pendingAgentId] })).then((agentDetails) => {
+            const agentMeta = agentDetails?.payload?.[0];
+            if (!agentMeta) return;
+            const freshQuestions = cloneDeep(store.getState().global.questions);
+            if (freshQuestions?.[qId]) {
+                freshQuestions[qId].agentMetaDetails = agentMeta;
+                store.dispatch(updateChatData(freshQuestions));
+            }
+        }).catch(() => {});
+    }
 }
 
 const removeOutputMessageId = (question, apiResponse) => {

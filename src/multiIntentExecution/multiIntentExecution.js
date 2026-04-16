@@ -1,7 +1,7 @@
 import { cloneDeep, isEmpty } from "lodash";
 import store from "../redux/store";
 import InitiateChatConversationAction from "../chat/InitiateChatConversationAction";
-import { updateChatData } from "../redux/globalSlice";
+import { updateChatData, setSelectedContext } from "../redux/globalSlice";
 import { executionPipelineActions, getSearchHistory } from "../redux/actions/global.action";
 import { cancelOngoingCall } from "../templateRenderer/utils/helper";
 
@@ -80,7 +80,10 @@ const MultiIntentExecution = (props) => {
             _item?.executionPipeline?.[index] ??
             globalState.questions?.[newItem?.parentMsgId]?.executionPipeline?.[index];
 
-        if (!sourceTask) return;
+        if (!sourceTask) {
+            setTimeout(() => store.dispatch(setSelectedContext(null)), 2000);
+            return;
+        }
         const task = {
             ...sourceTask,
             stepIndex: index
@@ -110,7 +113,7 @@ const MultiIntentExecution = (props) => {
             })
         );
 
-        const params = {
+      const params = {
             cId: _item?.id,
             type: _item?.type,
             stepId: task?._id,
@@ -120,15 +123,23 @@ const MultiIntentExecution = (props) => {
             isTask: true
         };
 
+        const selectedAgentId = task?.intents?.[0]?.agentId;
+        const selectedIntentId = task?.intents?.[0]?.id;
+
+        // mcpAgent parity: intentId must NOT be sent for mcpAgent (matches Kora-React MultiIntentExecution.jsx)
+        const allAgents = state?.allAgents?.data?.agents || [];
+        const selectedAgentType = allAgents.find(a => a?.id === selectedAgentId)?.type;
+        const context = {
+            agentId: selectedAgentId,
+            stepId: task?._id,
+            ...(selectedAgentType !== 'mcpAgent' ? { intentId: selectedIntentId } : {})
+        };
+
         const payload = {
             question: task?.utterance,
             boardId: activeBoardId,
             parentId: _item?.messageId,
-            context: {
-            intentId: task?.intents?.[0]?.id,
-            agentId: task?.intents?.[0]?.agentId,
-            stepId: task?._id
-            }
+            context
         };
 
         InitiateChatConversationAction({
@@ -358,7 +369,7 @@ const MultiIntentExecution = (props) => {
                 let executionPipeLineIds = item?.executionPipeline?.map(pipelineItem => pipelineItem?._id);
 
                 response.payload.history.map(historyTask => {
-                    if (historyTask?.templateType === "action_send_msteams_message" || historyTask?.templateType === "action_send_slack_message") {
+                    if (historyTask?.templateType === "action_send_email" || historyTask?.templateType === "action_send_msteams_message" || historyTask?.templateType === "action_send_slack_message") {
                         historyTask.externalIntegrationAction = true;
                     }
 
