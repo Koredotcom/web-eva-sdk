@@ -1,7 +1,7 @@
 import { cloneDeep, isEmpty } from "lodash";
 import store from "../redux/store";
 import InitiateChatConversationAction from "../chat/InitiateChatConversationAction";
-import { updateChatData } from "../redux/globalSlice";
+import { updateChatData, setSelectedContext } from "../redux/globalSlice";
 import { executionPipelineActions, getSearchHistory } from "../redux/actions/global.action";
 import { cancelOngoingCall } from "../templateRenderer/utils/helper";
 
@@ -80,7 +80,10 @@ const MultiIntentExecution = (props) => {
             _item?.executionPipeline?.[index] ??
             globalState.questions?.[newItem?.parentMsgId]?.executionPipeline?.[index];
 
-        if (!sourceTask) return;
+        if (!sourceTask) {
+            setTimeout(() => store.dispatch(setSelectedContext(null)), 2000);
+            return;
+        }
         const task = {
             ...sourceTask,
             stepIndex: index

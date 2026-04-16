@@ -799,8 +799,13 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 		const hasSourcesChip = sourcesChipHtml.trim().length > 0;
 		const hasRelatedSearchResults = item?.templateType === "search_results";
 
+		// When a single source comes from a known agent, agentMetaDetailsRenderer already
+		// shows "Answer from: [icon] AgentName". Rendering the sources chip too creates
+		// visual duplication (same icon + name twice). Skip the chip in that case.
+		const skipSourcesChip = hasSourcesChip && sources.length === 1 && !!item?.agentId && !hasRelatedSearchResults;
+
 		// Add sources chip and Related Search Results button container
-		if (hasSourcesChip || hasRelatedSearchResults) {
+		if ((hasSourcesChip && !skipSourcesChip) || hasRelatedSearchResults) {
 			body += `<div class="ansFromChip widthChip" id="ansFromChip-${item?.id}">`;
 			body += `<div class="sourceGroup-item">`;
 

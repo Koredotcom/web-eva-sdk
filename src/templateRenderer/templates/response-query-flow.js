@@ -29,12 +29,15 @@ function render(data) {
         ResponseQueryFlowFunctionality({ data, uniqueId });
     }, 100); // Reduced timeout for better responsiveness
 
+    const answerReady = data?.status === 'completed' || data?.status === 'terminated'
+        || data?.apiSuccess || data?.historicalData || data?.streamingStatus === 'aborted';
+
     return `
             <div class='query-response-flow' id='query-response-flow-${uniqueId}'${(hasThoughts && !hasBotConversation) ? ` data-thought-time="${totalThoughtTime}"` : ''}>
                 <div class='query-response-flow-header-container'>
-                    <div class="query-response-flow-header ans-generating">                    
+                    <div class="query-response-flow-header ${answerReady ? '' : 'ans-generating'}">                    
                         <div class="query-response-flow-header-text">${collapsedHeaderText}</div>
-                        <span class="query-response-flow-header-icon ${data?.status === 'completed' || data?.status === 'terminated' ? '' : 'hidden'}">${cheveronRightIcon({ size: 16, color: "#667085" })}</span>                
+                        <span class="query-response-flow-header-icon ${answerReady ? '' : 'hidden'}">${cheveronRightIcon({ size: 16, color: "#667085" })}</span>                
                     </div>                    
                 </div>
                 <div class="display-query-response-flow" style="display: none;">${renderReqFlow(data, !hasBotConversation)}</div>

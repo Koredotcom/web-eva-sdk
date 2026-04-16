@@ -68,7 +68,7 @@ function render(data) {
         }
 
         const isLastTask = index === items?.executionPipeline?.length - 1;
-        const showCheveron = task?.status === "completed" || task?.status === "discard" || task?.status === "terminated";
+        const showCheveron = task?.status === "completed" || task?.status === "discard" || task?.status === "terminated" || task?.showResponse || task?.apiSuccess;
         const taskItemClasses = [
             'taskItem',
             (task?.loading || task?.showResponse || task?.showResponseFlow) ? 'loadingSkeleton' : '',
@@ -95,7 +95,7 @@ function render(data) {
                                 ${DragHandleIcon({ size: 14, color: "#9CA3AF" })}
                             </div>` : ''}
                             <div class="${taskItemClasses}" id="taskItem-${task?._id}">
-                                <div class="topCard" ${((task?.status === "completed" || task?.status === "terminated") && items?.historicalData) ? `id="historyBtn-${task?._id}"` : ''}>
+                                <div class="topCard" ${showCheveron ? `id="historyBtn-${task?._id}" data-toggle-task-id="${task?._id}" data-toggle-req-id="${items?.reqId}"` : ''}>
                                     <div class="leftBlock">
                                 ${task?.loading ? `<div class="statusIcon">
                                     <span class="spinLoader">${IconLoader({ size: 16 })}</span>
@@ -122,7 +122,7 @@ function render(data) {
                                         </div>
                                     </div>
                                     ${showCheveron ? `
-                                        <div class="rightBlock showCheveronBlock" id="cheveronBtn-${task?._id}">
+                                        <div class="rightBlock showCheveronBlock" id="cheveronBtn-${task?._id}" data-toggle-task-id="${task?._id}" data-toggle-req-id="${items?.reqId}">
                                             <div class="cheveronDown${task?.showResponse ? ' rotate' : ''}">
                                                 ${CheveronDownIcon({ size: 16, color: "#667085" })}
                                             </div>
@@ -217,8 +217,8 @@ const addNewTaskRenderer = (task, index, items, powerTools = []) => {
                   <div class="powerToolsButtons">
                     ${powerTools.map(pt => `
                       <span class="powerToolButton" id="powerToolBtn-${task?._id}-${pt?.id}" data-power-tool-id="${pt?.id}" data-task-id="${task?._id}" title="${pt?.name || pt?.id}">
-                        <span class="powerToolIcon"><img src="${pt?.icon || ''}" alt="${pt?.name || ''}" onerror="this.style.display='none'" style="width:16px;height:16px;" /></span>
-                        <span class="powerToolName">${pt?.name || pt?.id}</span>
+                        <div class="powerToolIcon"><img src="${pt?.icon || ''}" alt="${pt?.name || ''}" onerror="this.style.display='none'" style="width: 16px; height: 16px;" /></div>
+                        <div class="powerToolName">${pt?.name || pt?.id}</div>
                       </span>
                     `).join('')}
                   </div>

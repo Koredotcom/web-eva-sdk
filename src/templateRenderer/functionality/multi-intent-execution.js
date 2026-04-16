@@ -2,7 +2,7 @@ import { cloneDeep, isEmpty, isUndefined } from "lodash";
 import store from "../../redux/store";
 import InitiateChatConversationAction from "../../chat/InitiateChatConversationAction";
 import ChatInterface from "../../chat/ChatInterface.js";
-import { updateChatData, setCurrentQuestion } from "../../redux/globalSlice";
+import { updateChatData, updateQuestionData, setCurrentQuestion } from "../../redux/globalSlice";
 import { executionPipelineActions, cancelAdvancedSearch } from "../../redux/actions/global.action";
 import { createCloseIcon, tickMarkIcon } from "../icons-library.js";
 import { cancelOngoingCall } from "../utils/helper.js";
@@ -76,12 +76,90 @@ const ensureContinueFlowDelegate = () => {
     });
 };
 
+/*
+ * Delegated handler for expand/collapse (chevron + history toggle) buttons.
+ *
+ * Same rationale as Continue Flow delegation: during streaming the DOM is
+ * replaced on every chunk and per-element listeners are lost between
+ * replacement and the debounced multiIntentExecutionFunc re-attachment.
+ * This single delegated listener on questions-container survives all DOM
+ * replacements and handles toggle clicks reliably.
+ *
+ * IMPORTANT: Uses 'mousedown' instead of 'click'. During streaming the parent
+ * multi-intent DOM node is replaced on every chunk via replaceChild. If the
+ * mousedown target is removed before mouseup, the browser never fires 'click'.
+ * mousedown fires immediately on press, before any DOM replacement can interfere.
+ */
+let _toggleDelegateAttached = false;
+let _lastToggleTs = 0;
+const TOGGLE_DEBOUNCE_MS = 300;
+const toggleTaskResponse = async (taskId, reqId) => {
+    if (!taskId) return;
+
+    const currentState = store.getState().global;
+    const currentTask = currentState?.questions?.[taskId];
+
+    if (currentTask) {
+        const nextShowResponse = !(currentTask?.showResponse || currentTask?.showResponseFlow);
+        store.dispatch(updateQuestionData({
+            key: taskId,
+            question: {
+                ...currentTask,
+                showResponse: nextShowResponse,
+                showResponseFlow: false,
+            }
+        }));
+
+        if (reqId) {
+            const parentQuestion = store.getState().global?.questions?.[reqId];
+            if (parentQuestion) {
+                store.dispatch(updateQuestionData({
+                    key: reqId,
+                    question: { ...parentQuestion }
+                }));
+            }
+        }
+        return;
+    }
+
+    const parentQuestion = currentState?.questions?.[reqId];
+    const taskFromPipeline = parentQuestion?.executionPipeline?.find(t => t?._id === taskId);
+    if (parentQuestion && taskFromPipeline) {
+        const { fetchHistoricalTask } = MultiIntentExecution();
+        await fetchHistoricalTask(parentQuestion, taskFromPipeline);
+    }
+};
+
+const ensureToggleDelegate = () => {
+    if (_toggleDelegateAttached) return;
+    const container = document.getElementById('questions-container');
+    if (!container) return;
+    _toggleDelegateAttached = true;
+
+    container.addEventListener('mousedown', async (e) => {
+        if (e.button !== 0) return;
+        const toggleEl = e.target.closest('[data-toggle-task-id]');
+        if (!toggleEl) return;
+
+        const taskId = toggleEl.getAttribute('data-toggle-task-id');
+        const reqId = toggleEl.getAttribute('data-toggle-req-id');
+        if (!taskId) return;
+
+        if (Date.now() - _lastToggleTs < TOGGLE_DEBOUNCE_MS) return;
+        _lastToggleTs = Date.now();
+
+        e.stopPropagation();
+
+        await toggleTaskResponse(taskId, reqId);
+    });
+};
+
 const multiIntentExecutionFunc = (item) => {
 
     let state = store.getState().global;
-    const { fetchHistoricalTask } = MultiIntentExecution();
 
     ensureContinueFlowDelegate();
+    ensureToggleDelegate();
 
     // Auto-scroll helper: scroll only when a new task starts.
     let _lastAutoScrolledTaskId = null;
@@ -955,14 +1033,9 @@ const multiIntentExecutionFunc = (item) => {
         if(cheveronBtn && !cheveronBtn.eventListenerAdded){
             cheveronBtn.addEventListener("click", async (e) => {
                 e?.stopPropagation?.();
-                state = store.getState().global;
-                let _qs = cloneDeep(state?.questions);
-                if(_qs?.hasOwnProperty(task?._id) && _qs[task?._id]?.hasOwnProperty('showResponse')){
-                    _qs[task?._id].showResponse = !_qs[task?._id].showResponse;
-                    store.dispatch(updateChatData(_qs));
-                }else{
-                    await fetchHistoricalTask(item, task);
-                }
+                if (Date.now() - _lastToggleTs < TOGGLE_DEBOUNCE_MS) return;
+                _lastToggleTs = Date.now();
+                await toggleTaskResponse(task?._id, item?.reqId);
             });
             cheveronBtn.eventListenerAdded = true;
         }
@@ -1025,17 +1098,11 @@ const multiIntentExecutionFunc = (item) => {
 
         const historyBtn = document.getElementById(`historyBtn-${task?._id}`);
         if(historyBtn && !historyBtn.eventListenerAdded){
-            historyBtn.addEventListener("click", async () => {
-                state = store.getState().global;
-                let _questions = cloneDeep(state?.questions);
-                if(_questions?.hasOwnProperty(task?._id) && _questions[task?._id]?.hasOwnProperty('showResponse')){                    
-                    /*update the task in the store after the toggle*/
-                    _questions[task?._id].showResponse = !_questions[task?._id].showResponse;
-                    store.dispatch(updateChatData(_questions));
-                }else{
-                    /*fetch the historical data*/
-                    await fetchHistoricalTask(item, task);
-                }                
+            historyBtn.addEventListener("click", async (e) => {
+                e?.stopPropagation?.();
+                if (Date.now() - _lastToggleTs < TOGGLE_DEBOUNCE_MS) return;
+                _lastToggleTs = Date.now();
+                await toggleTaskResponse(task?._id, item?.reqId);
             });
             historyBtn.eventListenerAdded = true;
         }
