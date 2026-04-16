@@ -191,7 +191,9 @@ const globalSlice = createSlice({
         }
 
       }
-      console.log("state", "action", state, action)
+      if (state.enableDebugging) {
+        console.log("advanceSearch fulfilled, action type:", action.type);
+      }
     });
     handleAsyncActions(builder, fetchHistory, 'historyRes', (state, action) => {
       if (action?.meta?.arg?.onload) {
