@@ -142,6 +142,9 @@ const globalSlice = createSlice({
     },
     setUserSelectedLLMModel: (state, action) => {
       state.userSelectedLLMModel = action.payload
+    },
+    setAdvanceSearchRes: (state, action) => {
+      state.advanceSearchRes = action.payload
     }
   },
   extraReducers: (builder) => {
@@ -268,7 +271,8 @@ export const {
   setAnnouncements,
   setAutoRemoveWebSearchFromContext,
   setSchedulers,
-  setUserSelectedLLMModel
+  setUserSelectedLLMModel,
+  setAdvanceSearchRes
 } = globalSlice.actions;
 
 export default globalSlice;
