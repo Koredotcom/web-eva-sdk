@@ -1,10 +1,16 @@
 // Styles (keep ordering: vendor CSS first, then SDK overrides)
 import 'choices.js/public/assets/styles/choices.css';
+import '@shoelace-style/shoelace/dist/themes/light.css';
+import 'tom-select/dist/css/tom-select.css';
 import './styles/input-text.css';
 import './styles/buttons.css';
 import './styles/dropdown.css';
 import './styles/sdk.scss';
 import './styles/tom-select.css';
+import '@shoelace-style/shoelace';
+import { setBasePath } from '@shoelace-style/shoelace/dist/utilities/base-path.js';
+import TomSelect from 'tom-select';
+import './plugins/tom-autocomplete.js';
 
 if (typeof document !== "undefined" && typeof window !== "undefined") {
   if (!window.__EVA_SDK_ASSET_BASE__) {
@@ -17,6 +23,8 @@ if (typeof document !== "undefined" && typeof window !== "undefined") {
 
   if (window.__EVA_SDK_ASSET_BASE__) {
     const assetBase = window.__EVA_SDK_ASSET_BASE__;
+    setBasePath(`${assetBase}shoelace/`);
+    window.TomSelect = TomSelect;
     document.documentElement.style.setProperty(
       "--eva-sdk-asset-base",
       assetBase

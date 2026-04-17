@@ -97,13 +97,30 @@ const createConfig = (input, dir, name, isMainBuild = false) => {
     ...(isMainBuild ? [
       copy({
         targets: [
-          { src: 'public/*', dest: 'dist' }
+          { src: 'public/*', dest: 'dist' },
+          { src: 'node_modules/@shoelace-style/shoelace/dist/assets/**/*', dest: 'dist/shoelace/assets' }
         ]
       })
     ] : []),
     terser()
     ]
   };
+};
+
+const loaderConfig = {
+  input: 'src/loader.js',
+  output: {
+    file: 'dist/eva-web-sdk-loader.js',
+    format: 'iife',
+    name: 'EvaSDKLoader',
+  },
+  plugins: [
+    replace({
+      'process.env.NODE_ENV': JSON.stringify('production'),
+      preventAssignment: true,
+    }),
+    terser(),
+  ],
 };
 
 export default [
@@ -115,5 +132,6 @@ export default [
   createConfig('src/chat/index.js', 'chat', 'Chat'),
   createConfig('src/agents/index.js', 'agents', 'Agents'),
   createConfig('src/files/index.js', 'files', 'Files'),
-  createConfig('src/Announcements/index.js', 'Announcements', 'Announcements')
+  createConfig('src/Announcements/index.js', 'Announcements', 'Announcements'),
+  loaderConfig,
 ];
