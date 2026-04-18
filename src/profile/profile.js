@@ -4,6 +4,7 @@ import {
     editAboutMe as editAboutMeThunk,
     fetchMemoryInstructions,
     createMemoryInstruction,
+    updateMemoryInstruction,
 } from "../redux/actions/global.action";
 
 export const getAboutMe = async () => {
@@ -119,6 +120,40 @@ export const createInstruction = async ({ instruction, scope, agentId=null } = {
             error && typeof error === "object" && !Array.isArray(error)
                 ? error
                 : { message: String(error ?? "Unable to create instruction") };
+        return { status: "failed", error: err, data: null };
+    }
+};
+
+export const updateSpecificInstruction = async ({ instructionId, instruction } = {}) => {
+    const state = store.getState();
+    const userId = state.global?.profile?.data?.id;
+
+    if (!userId) {
+        return { status: "failed", error: { message: "validated at sdk function level and identified the User ID not available" }, data: null };
+    }
+
+    if (!instructionId) {
+        return { status: "failed", error: { message: "validated at sdk functionlevel and identified the instructionId is required and not provided" }, data: null };
+    }
+
+    if (!instruction?.trim()) {
+        return { status: "failed", error: { message: "validated at sdk function level and identified the Instruction provided is empty or whitespace only" }, data: null };
+    }
+
+    if (instruction.length > 2000) {
+        return { status: "failed", error: { message: "validated at sdk function level and identified the Instruction provided must not exceed 2000 characters" }, data: null };
+    }
+
+    const payload = { instruction };
+
+    try {
+        const raw = await store.dispatch(updateMemoryInstruction({ userId, instructionId, payload })).unwrap();
+        return { status: "success", data: raw };
+    } catch (error) {
+        const err =
+            error && typeof error === "object" && !Array.isArray(error)
+                ? error
+                : { message: String(error ?? "Unable to update instruction") };
         return { status: "failed", error: err, data: null };
     }
 };
