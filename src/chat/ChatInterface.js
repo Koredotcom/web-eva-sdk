@@ -85,10 +85,11 @@ const ChatInterface = (props) => {
           let isAgent = isAgentSetAsSource ? "agent" : null
           if(isAgent) {
             // when setted context is an agent
+            const _source = cloneDeep(selectedContext?.data?.context || selectedContext?.data?.sources?.[0]) || {}
             payload.context = {
               agentType: isAgentSetAsSource?.type,
               title: isAgentSetAsSource?.name,
-              "sources": [selectedContext?.data?.context || selectedContext?.data?.sources?.[0]]}
+              "sources": [_source]}
             if(selectedContext?.data?.messageId) {
               payload.contextParams = {messageId: selectedContext?.data?.messageId}
             }
