@@ -7,7 +7,13 @@ The `profile` module of the EVA Web SDK provides functions to manage user memory
 ### Importing
 
 ```javascript
-import { getAboutMe, updateAboutMe, getInstructions, createInstruction } from "eva-web-sdk";
+import {
+    getAboutMe,
+    updateAboutMe,
+    getInstructions,
+    createInstruction,
+    updateSpecificInstruction,
+} from "eva-web-sdk";
 ```
 
 ### TypeScript Definition (for client definition files)
@@ -84,6 +90,15 @@ declare module "eva-web-sdk" {
             lMod: string;
             agentId?: string;
         } | null;
+    }>;
+
+    export function updateSpecificInstruction(params: {
+        instructionId: string;
+        instruction: string;
+    }): Promise<{
+        status: "success" | "failed";
+        error?: { message: string };
+        data: any;
     }>;
 }
 ```
@@ -402,6 +417,76 @@ if (result.status === "success") {
 
 ---
 
+## `updateSpecificInstruction(params)`
+
+Updates an existing memory instruction by ID. Use this after you have an instruction record (for example from `getInstructions`, or the `instructionId` returned by `createInstruction`). The SDK sends `PUT` to `1.1/users/{userId}/memory/instructions/{instructionId}` with body `{ instruction }`.
+
+### Signature
+
+```javascript
+const result = await updateSpecificInstruction({ instructionId, instruction });
+```
+
+### Parameters
+
+| Parameter       | Type   | Required | Description                                      |
+| --------------- | ------ | -------- | ------------------------------------------------ |
+| instructionId   | string | Yes      | The ID of the instruction to update (Mongo-style id from the API). |
+| instruction     | string | Yes      | The new instruction text. Must be non-empty (whitespace-only is rejected). Max 2000 characters. |
+
+### SDK validation errors
+
+The SDK validates inputs before calling the API. On failure, `result.error.message` is one of the following strings:
+
+| Condition | `error.message` |
+| --------- | --------------- |
+| No user ID in the SDK store | `validated at sdk function level and identified the User ID not available` |
+| Missing `instructionId` | `validated at sdk functionlevel and identified the instructionId is required and not provided` |
+| Empty or whitespace-only `instruction` | `validated at sdk function level and identified the Instruction provided is empty or whitespace only` |
+| `instruction` longer than 2000 characters | `validated at sdk function level and identified the Instruction provided must not exceed 2000 characters` |
+
+Network or API failures after validation return `error` from the server or a generic fallback: `Unable to update instruction`.
+
+### Return Value
+
+```javascript
+// On success
+{
+    status: "success",
+    data: { /* server response body */ }
+}
+
+// On failure
+{ status: "failed", error: { message: "..." }, data: null }
+```
+
+### Example
+
+```javascript
+import { getInstructions, updateSpecificInstruction } from "eva-web-sdk";
+
+const list = await getInstructions({ scope: "global" });
+if (list.status === "success" && list.data?.instructions?.length) {
+    const id = list.data.instructions[0].instructionId;
+    const result = await updateSpecificInstruction({
+        instructionId: id,
+        instruction: "Always use British spelling.",
+    });
+    if (result.status === "success") {
+        console.log("Updated");
+    } else {
+        console.error(result.error.message);
+    }
+}
+```
+
+### Typical flow with `createInstruction`
+
+1. Call `getInstructions`. If `instructions` is empty, use `createInstruction` to create the first global (or agent-scoped) instruction.
+2. For every later edit, call `updateSpecificInstruction` with the same `instructionId` returned from the list or from create.
+
+---
+
 ## Error Handling
 
 All functions return a consistent response shape. You never need to wrap calls in try/catch — errors are returned in the response object:
@@ -418,14 +503,19 @@ if (result.status === "failed") {
 
 ### Common Error Messages
 
+Shared across **`getAboutMe`**, **`updateAboutMe`**, **`getInstructions`**, and **`createInstruction`** (and the same conditions for those functions):
 
 | Error                                       | When                                             |
 | ------------------------------------------- | ------------------------------------------------ |
 | User ID not available                       | SDK is not initialized or user is not logged in. |
-| Instruction is required                     | Empty or missing instruction string.             |
-| Instruction must not exceed 2000 characters | Instruction text is too long.                    |
-| Scope must be 'global' or 'agent'           | Invalid scope value provided.                    |
-| agentId is required when scope is 'agent'   | Scope is agent but no agentId was passed.        |
+| Instruction is required                     | Empty, missing, or whitespace-only instruction (`updateAboutMe`, `createInstruction`). |
+| Instruction must not exceed 2000 characters | Instruction text is too long (`createInstruction`). |
+| Scope must be 'global' or 'agent'           | Invalid scope value (`getInstructions`, `createInstruction`). |
+| agentId is required when scope is 'agent'   | Scope is agent but no agentId (`createInstruction`). |
+
+**`updateSpecificInstruction`** uses the longer SDK validation messages in the **SDK validation errors** table above instead of the short strings in the shared table.
+
+Other failure strings from thunks include: `Unable to fetch about me`, `Unable to update about me`, `Unable to fetch instructions`, `Unable to create instruction`, `Unable to update instruction`.
 
 
 ---
@@ -436,4 +526,5 @@ if (result.status === "failed") {
 - The SDK handles authentication (Bearer token) and request headers automatically via the shared axios instance.
 - All date fields in responses (`cOn`, `lMod`) are ISO 8601 strings.
 - Agent-scoped instructions include `agentId` and `agentName` in the response. Global instructions do not.
+- Use `createInstruction` to create a new instruction; use `updateSpecificInstruction` to change the text of an existing one identified by `instructionId`.
 

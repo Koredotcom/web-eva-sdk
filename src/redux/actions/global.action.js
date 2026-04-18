@@ -83,6 +83,19 @@ export const createMemoryInstruction = createAsyncThunk(
     }
 );
 
+export const updateMemoryInstruction = createAsyncThunk(
+    'global/updateMemoryInstruction',
+    async ({ userId, instructionId, payload }, { rejectWithValue }) => {
+        try {
+            const response = await axiosInstance.put(`1.1/users/${userId}/memory/instructions/${instructionId}`, payload);
+            return response.data;
+        } catch (error) {
+            handleErrorState(error, "UpdateInstruction");
+            return rejectWithValue(error.response?.data);
+        }
+    }
+);
+
 export const fetchSchedulers = createAsyncThunk(
     'global/fetchSchedulers',
     async (arg, { rejectWithValue }) => {

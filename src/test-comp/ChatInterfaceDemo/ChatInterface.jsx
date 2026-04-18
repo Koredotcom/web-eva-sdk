@@ -13,6 +13,7 @@ import MultiIntentExecutionDemo from "./MultiIntentExecutionDemo";
 import History from "../history";
 import { SchedulersView } from "../../schedulers";
 import { ExecuteFormThroughURL } from "../../chat/gptTemplate/submitGPTForm";
+import Profile from "./profile";
 
 
 
@@ -40,6 +41,7 @@ const ChatInterfaceDemo = () => {
   const [quickActions, setQuickActions] = useState(null);
   const [input, setInput] = useState("");
   const [showSchedulers, setShowSchedulers] = useState(false);
+  const [showProfile, setShowProfile] = useState(false);
 
   const chatInterface = useRef();
   const announcementInterface = useRef();
@@ -108,12 +110,18 @@ const ChatInterfaceDemo = () => {
           <div>---------------------------------------------------------------</div>
           <div className="sidebar-nav-item" onClick={() => setShowSchedulers(true)} role="button" tabIndex={0}>Schedulers</div>
           <div>---------------------------------------------------------------</div>
+          <div className="sidebar-nav-item" onClick={() => setShowProfile(true)} role="button" tabIndex={0}>Profile</div>
+          <div>---------------------------------------------------------------</div>
           {/* <Announcements /> */}
           {/* <History /> */}
         </div>
       </div>
       <div className="chatInterfaceSec">
-        {showSchedulers ? (
+        {showProfile ? (
+          <div className="chatSec schedulers-full-width">
+            <Profile onClose={() => setShowProfile(false)} />
+          </div>
+        ) : showSchedulers ? (
           <div className="chatSec schedulers-full-width">
             <button type="button" className="back-from-schedulers" onClick={() => setShowSchedulers(false)}>← Back to Chat</button>
             <SchedulersView />
