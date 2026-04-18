@@ -5,7 +5,7 @@ const logger = storeAPI => next => action => {
     }
     const result = next(action);
     if (enableDebugging) {
-        console.log('Next state keys:', Object.keys(storeAPI.getState()?.global || {}));
+        console.log('Next state:', storeAPI.getState()?.global || {});
     }
     return result;
 };
