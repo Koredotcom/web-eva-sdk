@@ -16,7 +16,7 @@ const Agents = () => {
     useEffect(() => {
         fetchRecentAgentsData()
         fetchEnabledAgentsData()
-        fetchAllAgentsData()
+    fetchAllAgentsData()
         fetchCommonAgentsData()
         fetchPinnedAgentsData()
     }, [])
@@ -84,9 +84,32 @@ const Agents = () => {
             <h1>Common Agents</h1>
             <ul>
                 {commonAgents?.length > 0 && commonAgents?.map((agent, index) => {
+                    const llmModels = agent?.id === 'llm' ? (agent?.runtime?.config?.models || []) : []
                     return (
-                        <div key={index}>
-                            <li key={agent.id} onClick={() => ChatInterface().setAgentContext(agent)}>{agent.name}</li>
+                        <div key={index} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <li key={agent.id} onClick={() => 
+                                ChatInterface().setAgentContext(agent)
+                                }>{agent.name}</li>
+
+                            {agent?.id === 'llm' && llmModels.length > 0 && (
+                                <select
+                                    defaultValue=""
+                                    onChange={(e) => {
+                                        const selectedId = e.target.value
+                                        if (!selectedId) return
+                                        ChatInterface().setAgentContext(agent)
+                                        ChatInterface().storeUserSelectedLLMModel(selectedId)
+                                    }}
+                                >
+                                    <option value="" disabled>Select a model</option>
+                                    {llmModels.map((m, i) => (
+                                        <option key={m?.model?.id || i} value={m?.model?.id}>
+                                            {m?.name || m?.model?.name}
+                                        </option>
+                                    ))}
+                                </select>
+                            )}
+
                             {pinnedAgentsList?.includes(agent.id) ? <button onClick={() => bookmarkAgentHandler(agent.id, {pinned: false})}>Unbookmark</button> : <button onClick={() => bookmarkAgentHandler(agent.id, {pinned: true})}>Bookmark</button>}
                         </div>
                         
