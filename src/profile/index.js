@@ -1,1 +1,1 @@
-export { getAboutMe, updateAboutMe, getInstructions, createInstruction } from './profile.js';
+export { getAboutMe, updateAboutMe, getInstructions, createInstruction, updateSpecificInstruction } from './profile.js';
