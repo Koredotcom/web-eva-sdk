@@ -60,6 +60,7 @@ export * from './Feedback'
 export * from "./templateRenderer";
 export * from "./Announcements";
 export * from "./chatbot";
+export * from "./authorization";
 export { RenderComposeBar } from './composebar';
 export { renderRecentAgents, hideRecentAgentsDiv, unHideRecentAgentsDiv, RecentAgentsFunc } from './LandingPageRecentAgents';
 
