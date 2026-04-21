@@ -1,7 +1,7 @@
 import babel from '@rollup/plugin-babel';
 import resolve from '@rollup/plugin-node-resolve';
 import commonjs from '@rollup/plugin-commonjs';
-import { terser } from 'rollup-plugin-terser';
+import terser from '@rollup/plugin-terser';
 import replace from '@rollup/plugin-replace';
 import json from '@rollup/plugin-json';
 // import nodePolyfills from 'rollup-plugin-polyfill-node';
@@ -133,5 +133,6 @@ export default [
   createConfig('src/agents/index.js', 'agents', 'Agents'),
   createConfig('src/files/index.js', 'files', 'Files'),
   createConfig('src/Announcements/index.js', 'Announcements', 'Announcements'),
+  createConfig('src/Authorization/index.js', 'Authorization', 'Authorization'),
   loaderConfig,
 ];

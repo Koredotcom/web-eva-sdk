@@ -15,7 +15,7 @@ import { isUserNearBottom } from "../../utils/helpers";
 import { RightArrow } from "../../templateRenderer/icons-library";
 import Announcements from "../announcements";
 import { cleanupAllAuthChallenges } from "../../templateRenderer/functionality/agent-auth-challenge";
-import { authorizeApp } from "../../authorization";
+import { authorizeApp } from "../../Authorization";
 import { initializeSDK } from "../../config";
 const {renderRecentAgents, unHideRecentAgentsDiv} = RecentAgentsFunc();
 
