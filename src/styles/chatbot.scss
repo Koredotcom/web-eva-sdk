@@ -62,7 +62,7 @@
   pointer-events: none;
   transition: opacity 0.2s ease, transform 0.2s ease;
   border: 1px solid #eeeeee;
-  font-family: Inter;
+  font-family: var(--sdk-font-family);
 
   @media (max-height: 555px) {
     height: 78dvh;
@@ -256,7 +256,7 @@
             flex-grow: 1;
             min-width: 0;
             @include ellipsisText;
-            font-family: Inter;
+            font-family: var(--sdk-font-family);
             font-size: .875rem;
             font-style: normal;
             font-weight: 500;
@@ -313,7 +313,7 @@
           }
   
           .source-label {
-            font-family: Inter;
+            font-family: var(--sdk-font-family);
             font-size: 0.875rem;
             font-weight: 500;
             color: #141414;
@@ -427,7 +427,7 @@
                         align-items: center;
                     }
                     .sourceTitle {
-                        font-family: Inter;
+                        font-family: var(--sdk-font-family);
                         font-size: 0.875rem;
                         font-style: normal;
                         font-weight: 400;
@@ -499,7 +499,7 @@
                         }
                     }
                     .sourceChipItemText {
-                        font-family: Inter;
+                        font-family: var(--sdk-font-family);
                         font-size: 0.875rem;
                         font-style: normal;
                         font-weight: 400;
@@ -565,7 +565,7 @@
                         }
                     }
                     .sourceTitle {
-                        font-family: Inter;
+                        font-family: var(--sdk-font-family);
                         font-size: 0.875rem;
                         font-style: normal;
                         font-weight: 400;
@@ -609,7 +609,7 @@
                 }
         
                 .chip-text {
-                    font-family: Inter;
+                    font-family: var(--sdk-font-family);
                     font-size: 0.875rem;
                     font-style: normal;
                     font-weight: 400;
@@ -632,7 +632,7 @@
                 flex-shrink: 0;
             }
             .normal-text {
-                font-family: Inter;
+                font-family: var(--sdk-font-family);
                 font-size: 0.875rem;
                 font-style: normal;
                 font-weight: 400;
@@ -643,7 +643,7 @@
                 flex-shrink: 0;
             }
             .bold-text {
-                font-family: Inter;
+                font-family: var(--sdk-font-family);
                 font-size: 0.75rem;
                 font-style: normal;
                 font-weight: 600;
@@ -1231,7 +1231,7 @@
           gap: 4px;
 
           .history-item-group-title {
-            font-family: Inter;
+            font-family: var(--sdk-font-family);
             font-size: 12px;
             font-style: normal;
             font-weight: 400;
@@ -1259,7 +1259,7 @@
               height: 36px;
               cursor: pointer;
               transition: background-color .3s ease;
-              font-family: Inter;
+              font-family: var(--sdk-font-family);
               font-size: 14px;
               font-style: normal;
               font-weight: 400;
@@ -1311,7 +1311,7 @@
               .eva-sdk-history-item-title-input {
                 min-width: 0;
                 flex: 1;
-                font-family: Inter;
+                font-family: var(--sdk-font-family);
                 font-size: 14px;
                 font-weight: 400;
                 line-height: 20px;
@@ -1401,7 +1401,7 @@
           animation: eva-sdk-chatbot-history-spin 0.7s linear infinite;
         }
         .eva-sdk-chatbot-history-loader-text {
-          font-family: Inter, sans-serif;
+          font-family: var(--sdk-font-family);
         }
       }
     }
@@ -1420,7 +1420,7 @@
   display: inline-flex;
 
   .menu-item__label {
-    font-family: Inter;
+    font-family: var(--sdk-font-family);
     font-size: .75rem;
     font-style: normal;
     font-weight: 500;
@@ -1430,7 +1430,7 @@
   }
 }
 .menu-item .menu-item__label {
-  font-family: Inter;
+  font-family: var(--sdk-font-family);
   font-size: .75rem;
   font-style: normal;
   font-weight: 500;
@@ -1459,7 +1459,7 @@
   gap: 0.25rem;
 }
 .eva-sdk-history-item-dropdown sl-menu-item {
-  font-family: Inter;
+  font-family: var(--sdk-font-family);
   font-size: 0.75rem;
   cursor: pointer;
   color: #424242;
@@ -1476,7 +1476,7 @@
 .eva-sdk-history-item-dropdown sl-menu-item::part(base) {
   color: #424242;
   padding: 0;
-  font-family: Inter;
+  font-family: var(--sdk-font-family);
   font-size: 0.75rem;
   cursor: pointer;
   font-weight: 500;

@@ -76,13 +76,13 @@
   }
 
   button {
-    font-family: inherit;
+    font-family: var(--sdk-font-family);
   }
 
   input,
   textarea,
   select {
-    font-family: inherit;
+    font-family: var(--sdk-font-family);
   }
 }
 
@@ -136,24 +136,24 @@
   font-display: swap;
 }
 
-html,
-body {
-  padding: 0 !important;
-  margin: 0 !important;
-  font-family: "Inter" !important;
+.eva-sdk-chatbot-button, .eva-sdk-chatbot-panel, .app-container {
+  *,
+  :after,
+  :before {
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+  }
+  font-family: var(--sdk-font-family);
+  color: var(--sdk-text-color);
   font-size: 16px;
-  height: 100%;
   //overflow: hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  overscroll-behavior-x: contain;
   text-size-adjust: 100%;
   -ms-text-size-adjust: 100%;
   -webkit-text-size-adjust: 100%;
-  line-height: 1.5 !important;
+  line-height: 1.5;
   font-optical-sizing: auto;
-  min-width: 56.25rem;
-  @include scrollbar;
 
   @media (min-width: 1020px) {
     font-size: 12px;
@@ -190,11 +190,4 @@ body {
   @media (min-width: 7680px) {
     font-size: 22px;
   }
-}
-
-*,
-:after,
-:before {
-  box-sizing: border-box;
-  -webkit-tap-highlight-color: transparent;
 }

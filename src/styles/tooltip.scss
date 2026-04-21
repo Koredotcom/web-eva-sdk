@@ -3,7 +3,7 @@ sl-tooltip::part(body) {
     font-size: 0.75rem !important;
     border-radius: 8px;
     padding: 4px 6px;
-    font-family: 'Inter';
+    font-family: var(--sdk-font-family);
     font-weight: 400;
 }
 

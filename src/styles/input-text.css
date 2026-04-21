@@ -10,7 +10,7 @@ sl-input::part(form-control) {
 }
 
 sl-input::part(form-control-label) {
-    font-family: Inter;
+    font-family: var(--sdk-font-family);
     font-size: .875rem;
     font-style: normal;
     font-weight: 400;
@@ -28,7 +28,7 @@ sl-input::part(base) {
     background: #FFF;
     box-shadow: 0rem .0625rem .125rem 0rem rgba(16, 24, 40, .05);
     padding: .625rem .875rem;
-    font-family: Inter;
+    font-family: var(--sdk-font-family);
     font-size: .875rem;
     font-style: normal;
     font-weight: 400;
@@ -71,7 +71,7 @@ sl-textarea::part(form-control) {
 }
 
 sl-textarea::part(form-control-label) {
-    font-family: Inter;
+    font-family: var(--sdk-font-family);
     font-size: .875rem;
     font-style: normal;
     font-weight: 400;
@@ -89,7 +89,7 @@ sl-textarea::part(base) {
     background: #FFF;
     box-shadow: 0rem .0625rem .125rem 0rem rgba(16, 24, 40, .05);
     padding: .625rem .875rem;
-    font-family: Inter;
+    font-family: var(--sdk-font-family);
     font-size: .875rem;
     font-style: normal;
     font-weight: 400;
