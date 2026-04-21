@@ -102,7 +102,7 @@ export const authorizeApp = async ({ jwt, emailId, client_id=null } = {}) => {
         }
     }
 
-    const url = `${SSO_LOGIN_BASE_URL}/${encodeURIComponent(clientId)}/sso/login/`;
+    const url = `${SSO_LOGIN_BASE_URL}/${encodeURIComponent(clientId)}/sso/login`;
     const ssoPayload = { id_token: jwt, emailId };
 
     try {

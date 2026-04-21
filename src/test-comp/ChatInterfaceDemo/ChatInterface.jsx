@@ -16,6 +16,7 @@ import { RightArrow } from "../../templateRenderer/icons-library";
 import Announcements from "../announcements";
 import { cleanupAllAuthChallenges } from "../../templateRenderer/functionality/agent-auth-challenge";
 import { authorizeApp } from "../../authorization";
+import { initializeSDK } from "../../config";
 const {renderRecentAgents, unHideRecentAgentsDiv} = RecentAgentsFunc();
 
 
@@ -425,8 +426,15 @@ const ChatInterfaceContent = () => {
 const ChatInterfaceDemo = () => {
   const [authResult, setAuthResult] = useState(null);
 
-  const handleAuthorized = useCallback(({ data, clientId, jwt, emailId }) => {
-    // Persist the auth context onto window.sdkConfig because the rest of the SDK reads from it
+  const handleAuthorized = useCallback(async ({ data, clientId, jwt, emailId }) => {
+    const accessToken = data?.authorization?.accessToken;
+    const userId = data?.userInfo?.id;
+
+    if (!accessToken || !userId) {
+      console.error("[ChatInterfaceDemo] Missing accessToken or userId in SSO response", data);
+      return;
+    }
+
     if (typeof window !== "undefined") {
       const existing = window.sdkConfig || {};
       window.sdkConfig = {
@@ -434,12 +442,31 @@ const ChatInterfaceDemo = () => {
         clientId,
         emailId,
         idToken: jwt,
-        // Best-effort: copy whatever the SSO response surfaces
-        userId: data?.userId || data?.user?.id || existing.userId,
-        accessToken:
-          data?.accessToken || data?.token || data?.authToken || existing.accessToken,
+        userId,
+        accessToken,
       };
     }
+
+    await initializeSDK({
+      accessToken,
+      userId,
+      api_url: "https://work-qa.kore.ai/api/",
+      presence_url: "https://work-qa.kore.ai/",
+      initializeBotSDK: {
+        name: "ProcureBot",
+        streamId: "st-b6012ef2-810d-5240-b33e-5404d68b680e",
+        webhook: {
+          clientId: "cs-79a89a6f-b0ab-5e2f-b912-8dd1e2f95da0",
+          clientSecret: "VJNwkfbPcMZl4bOa1Qn3XtYRz6rqigwtTgOlaYX25Xs=",
+        },
+      },
+      enableDebugging: false,
+      appMetaData: {
+        appName: "AI4Work",
+        appIcon: "https://ai4web.com/wp-content/uploads/2023/01/cropped-cropped-ai4web-logo-1-180x180.png",
+      },
+    });
+
     setAuthResult({ data, clientId });
   }, []);
 

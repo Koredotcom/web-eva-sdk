@@ -1,4 +1,4 @@
-import { use, useEffect, useRef, useState } from "react"
+import React, { use, useEffect, useRef, useState } from "react"
 import deleteChatThread from "../history/deleteHistoryData"
 import updateHistoryData from "../history/updateHistoryData"
 import { HistoryData, HistoryInterface, LoadMoreHistoryData } from "../history"
