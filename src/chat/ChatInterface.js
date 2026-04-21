@@ -99,7 +99,10 @@ const ChatInterface = (props) => {
             }
             if(selectedContext?.data?.sources?.[0]?.docId === 'llm' || selectedContext?.data?.sources?.[0]?.source === 'llm') {
               if(userSelectedLLMModel) {
-                payload.context.sources[0].llmIntegrationId = userSelectedLLMModel
+                payload.context.sources[0] = {
+                  ...payload.context.sources[0],
+                  llmIntegrationId: userSelectedLLMModel
+                }
               }
             }
           } else {
