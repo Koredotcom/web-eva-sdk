@@ -2,6 +2,7 @@ import _, { cloneDeep } from "lodash";
 import { bookMarkChatThread, deleteHistory, getBookMarkedChatThreads, updateHistory } from "../redux/actions/global.action";
 import { setAllHistory, setBookMarkedChatThreads } from "../redux/globalSlice";
 import store from "../redux/store";
+import LoadMoreHistoryData from "./LoadMoreHistoryData";
 
 let bookMarkedThreadsOffset = 1;
 
@@ -133,6 +134,11 @@ const HistoryInterface = (props) => {
         store.dispatch(setAllHistory(_history))
     }
 
+    const historyPagination = async (arg) => {
+        /*invoke loadMoreHistoryData with the given arguments*/
+        await LoadMoreHistoryData(arg)
+    }
+
     return {
         subscribe,
         deleteHistoryBoard,
@@ -140,7 +146,8 @@ const HistoryInterface = (props) => {
         fetchBookMarkedChatThread,
         loadMoreBookMarkedChatThreads,
         bookMarkChatThreadItem,
-        updateHistoryBoardNameonSocketEvent
+        updateHistoryBoardNameonSocketEvent,
+        historyPagination
     }
 }
 

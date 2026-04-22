@@ -1,6 +1,6 @@
 import { initializeSDK } from "../config";
 
-const DEFAULT_BASE_URL = "https://work-qa.kore.ai/";
+const DEFAULT_BASE_URL = "https://work.kore.ai/";
 
 /**
  * Decode the payload of a JWT (id_token) without verifying its signature.
@@ -59,7 +59,6 @@ const fetchJson = async (url, options) => {
  * boot the SDK by calling `initializeSDK` with the returned credentials.
  *
  * @param {Object}  params
- * @param {string}  params.emailId       Required. The user's email.
  * @param {string}  params.id_token      Required. The id_token (JWT) issued for this user/app.
  * @param {string} [params.client_id]    Optional. If omitted, decoded from the JWT payload (`appId`).
  * @param {string} [params.api_url]      Optional. Defaults to `${BASE_URL}api/1.1/sdk/${CLIENT_ID}`.
@@ -67,18 +66,12 @@ const fetchJson = async (url, options) => {
  * @returns {Promise<{ status: "success" | "failed", data?: any, error?: { message: string, status?: number, data?: any }, clientId?: string }>}
  */
 export const authenticateApp = async ({
-  emailId,
   id_token,
   client_id = null,
+  base_url = null,
   api_url = null,
   presence_url = null,
 } = {}) => {
-  if (!emailId || typeof emailId !== "string") {
-    return {
-      status: "failed",
-      error: { message: "emailId is required" },
-    };
-  }
 
   if (!id_token || typeof id_token !== "string") {
     return {
@@ -102,7 +95,7 @@ export const authenticateApp = async ({
     }
   }
 
-  const BASE_URL = DEFAULT_BASE_URL;
+  const BASE_URL = base_url || DEFAULT_BASE_URL;
   // The SDK's data-API thunks (e.g. `1.1/ka/users/.../sdk/config`) prepend their
   // own `1.1/...` path, so the baseURL passed to axios must end at `/api/` — NOT
   // at `/api/1.1/sdk/{clientId}/` (which is only the SSO login endpoint shape).
@@ -117,7 +110,7 @@ export const authenticateApp = async ({
     loginResponse = await fetchJson(AI4W_LOGIN_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ emailId, id_token }),
+      body: JSON.stringify({ id_token }),
     });
   } catch (err) {
     return {
