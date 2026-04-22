@@ -59,7 +59,6 @@ const fetchJson = async (url, options) => {
  * boot the SDK by calling `initializeSDK` with the returned credentials.
  *
  * @param {Object}  params
- * @param {string}  params.emailId       Required. The user's email.
  * @param {string}  params.id_token      Required. The id_token (JWT) issued for this user/app.
  * @param {string} [params.client_id]    Optional. If omitted, decoded from the JWT payload (`appId`).
  * @param {string} [params.api_url]      Optional. Defaults to `${BASE_URL}api/1.1/sdk/${CLIENT_ID}`.
@@ -67,18 +66,11 @@ const fetchJson = async (url, options) => {
  * @returns {Promise<{ status: "success" | "failed", data?: any, error?: { message: string, status?: number, data?: any }, clientId?: string }>}
  */
 export const authenticateApp = async ({
-  emailId,
   id_token,
   client_id = null,
   api_url = null,
   presence_url = null,
 } = {}) => {
-  if (!emailId || typeof emailId !== "string") {
-    return {
-      status: "failed",
-      error: { message: "emailId is required" },
-    };
-  }
 
   if (!id_token || typeof id_token !== "string") {
     return {
@@ -117,7 +109,7 @@ export const authenticateApp = async ({
     loginResponse = await fetchJson(AI4W_LOGIN_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ emailId, id_token }),
+      body: JSON.stringify({ id_token }),
     });
   } catch (err) {
     return {
