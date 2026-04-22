@@ -1,6 +1,6 @@
 {
   "name": "eva-web-sdk-data-version",
-  "version": "1.1.97",
+  "version": "1.1.98",
   "description": "",
   "main": "dist/index.cjs.js",
   "style": "dist/sdk-styles.css",
@@ -80,6 +80,10 @@
     "./schedulers": {
       "import": "./dist/schedulers/index.esm.js",
       "require": "./dist/schedulers/index.cjs.js"
+    },
+    "./Authorization": {
+      "import": "./dist/Authorization/index.esm.js",
+      "require": "./dist/Authorization/index.cjs.js"
     }
   },
   "devDependencies": {
