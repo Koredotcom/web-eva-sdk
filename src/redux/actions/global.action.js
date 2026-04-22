@@ -9,7 +9,7 @@ export const fetchConfigData = createAsyncThunk(
     'global/fetchConfigData',
     async (userId, { rejectWithValue }) => {
         try {
-            const response = await axiosInstance.get(`1.1/ka/users/${userId}/sdk/config`);
+            const response = await axiosInstance.get(`/ka/users/${userId}/sdk/config`);
             return response.data;
         } catch (error) {
             handleErrorState(error, "Config");
@@ -22,7 +22,7 @@ export const fetchProfileData = createAsyncThunk(
     'global/fetchProfileData',
     async (userId, { rejectWithValue }) => {
         try {
-            const response = await axiosInstance.get(`1.1/ka/users/${userId}/profile`);
+            const response = await axiosInstance.get(`ka/users/${userId}/profile`);
             return response.data;
         } catch (error) {
             handleErrorState(error, "Profile");
@@ -35,7 +35,7 @@ export const fetchAboutMe = createAsyncThunk(
     'global/fetchAboutMe',
     async (userId, { rejectWithValue }) => {
         try {
-            const response = await axiosInstance.get(`1.1/users/${userId}/memory/aboutme`);
+            const response = await axiosInstance.get(`users/${userId}/memory/aboutme`);
             return response.data;
         } catch (error) {
             handleErrorState(error, "AboutMe");
@@ -48,7 +48,7 @@ export const editAboutMe = createAsyncThunk(
     'global/editAboutMe',
     async ({ userId, instruction }, { rejectWithValue }) => {
         try {
-            const response = await axiosInstance.post(`1.1/users/${userId}/memory/aboutme/edits`, { instruction });
+            const response = await axiosInstance.post(`users/${userId}/memory/aboutme/edits`, { instruction });
             return response.data;
         } catch (error) {
             handleErrorState(error, "EditAboutMe");
@@ -61,7 +61,7 @@ export const fetchMemoryInstructions = createAsyncThunk(
     'global/fetchMemoryInstructions',
     async ({ userId, params }, { rejectWithValue }) => {
         try {
-            const response = await axiosInstance.get(`1.1/users/${userId}/memory/instructions`, { params });
+            const response = await axiosInstance.get(`/users/${userId}/memory/instructions`, { params });
             return response.data;
         } catch (error) {
             handleErrorState(error, "GetInstructions");
@@ -74,7 +74,7 @@ export const createMemoryInstruction = createAsyncThunk(
     'global/createMemoryInstruction',
     async ({ userId, payload }, { rejectWithValue }) => {
         try {
-            const response = await axiosInstance.post(`1.1/users/${userId}/memory/instructions`, payload);
+            const response = await axiosInstance.post(`/users/${userId}/memory/instructions`, payload);
             return response.data;
         } catch (error) {
             handleErrorState(error, "CreateInstruction");
@@ -87,7 +87,7 @@ export const updateMemoryInstruction = createAsyncThunk(
     'global/updateMemoryInstruction',
     async ({ userId, instructionId, payload }, { rejectWithValue }) => {
         try {
-            const response = await axiosInstance.put(`1.1/users/${userId}/memory/instructions/${instructionId}`, payload);
+            const response = await axiosInstance.put(`/users/${userId}/memory/instructions/${instructionId}`, payload);
             return response.data;
         } catch (error) {
             handleErrorState(error, "UpdateInstruction");
@@ -100,7 +100,7 @@ export const fetchSchedulers = createAsyncThunk(
     'global/fetchSchedulers',
     async (arg, { rejectWithValue }) => {
         try {
-            const response = await axiosInstance.get(`1.1/users/${arg.userId}/schedulers`, arg?.params);
+            const response = await axiosInstance.get(`/users/${arg.userId}/schedulers`, arg?.params);
             return response.data;
         } catch (error) {
             handleErrorState(error, "Schedulers");
@@ -114,7 +114,7 @@ export const deleteScheduler = createAsyncThunk(
     async (arg, { rejectWithValue }) => {
         try {
             const { userId, schedulerId } = arg;
-            const response = await axiosInstance.delete(`1.1/users/${userId}/schedulers/${schedulerId}`);
+            const response = await axiosInstance.delete(`/users/${userId}/schedulers/${schedulerId}`);
             return { schedulerId, data: response.data };
         } catch (error) {
             handleErrorState(error, "Delete Scheduler");
@@ -130,8 +130,8 @@ export const createOrUpdateScheduler = createAsyncThunk(
             const { userId, schedulerId, payload } = arg;
             const isUpdate = !!schedulerId;
             const url = isUpdate
-                ? `1.1/users/${userId}/schedulers/${schedulerId}`
-                : `1.1/users/${userId}/schedulers`;
+                ? `/users/${userId}/schedulers/${schedulerId}`
+                : `/users/${userId}/schedulers`;
 
             const response = isUpdate
                 ? await axiosInstance.patch(url, payload)
@@ -149,7 +149,7 @@ export const fetchAgents = createAsyncThunk(
     'global/fetchAgents',
     async (arg, { rejectWithValue, dispatch }) => {
         try {
-            const response = await axiosInstance.get(`1.1/users/${arg.userId}/agents`, arg?.params);
+            const response = await axiosInstance.get(`/users/${arg.userId}/agents`, arg?.params);
             const agentsData = response.data;
 
             //After getting the agents data, we need to get the user details for the createdBy of the agents
@@ -210,7 +210,7 @@ export const advanceSearch = createAsyncThunk(
         controller = new AbortController();
         const traceId = uuidv4();
         try {            
-            const response = await axiosInstance.post(`1.1/kora/users/${arg.userId}/advancedsearch`, arg.payload, {
+            const response = await axiosInstance.post(`/kora/users/${arg.userId}/advancedsearch`, arg.payload, {
                 params: arg?.params,
                 signal: controller.signal,
                 headers: {
@@ -237,7 +237,7 @@ export const cancelAdvancedSearch = createAsyncThunk(
             let reqdQuestionId = encodeURIComponent(arg.reqId)
 
             const response = await axiosInstance({
-                url: `1.1/kora/users/${arg.userId}/advancedsearch/cancelrequest/${reqdQuestionId}`, 
+                url: `/kora/users/${arg.userId}/advancedsearch/cancelrequest/${reqdQuestionId}`, 
                 method: 'POST',
                 data: arg.payload
             });
@@ -258,7 +258,7 @@ export const fetchHistory = createAsyncThunk(
     async ({params}, { rejectWithValue }) => {
         try {
             const response = await axiosInstance({
-                url: `1.1/kora/boards?type=history`,
+                url: `/kora/boards?type=history`,
                 method: 'GET',
                 params
             });
@@ -275,7 +275,7 @@ export const fetchRecentFiles = createAsyncThunk(
     async ({userId, params}, { rejectWithValue }) => {
         try {
             const response = await axiosInstance({
-                url: `1.1/ka/users/${userId}/files?fileContext=runtime`,
+                url: `/ka/users/${userId}/files?fileContext=runtime`,
                 method: 'GET',
                 params
             });
@@ -292,7 +292,7 @@ export const getRecentFileDownloadUrl = createAsyncThunk(
     async ({userId, params}, { rejectWithValue }) => {
         try {
             const response = await axiosInstance({
-                url: `1.1/kora/boards/${userId}/sources/${params?.source}/${params?.docId}/signedMediaUrl`,
+                url: `/kora/boards/${userId}/sources/${params?.source}/${params?.docId}/signedMediaUrl`,
                 method: 'GET',
             });
             return response.data;
@@ -308,7 +308,7 @@ export const deleteHistory = createAsyncThunk(
     async (params, { rejectWithValue }) => {
         try {
             const response = await axiosInstance({
-                url: `1.1/ka/boards/${params?.boardId}`, 
+                url: `/ka/boards/${params?.boardId}`, 
                 method: 'DELETE'
             });
             return response.data;
@@ -323,7 +323,7 @@ export const updateHistory = createAsyncThunk(
     'global/updateHistory',
     async (arg,{ rejectWithValue }) => {
         try {
-            const response = await axiosInstance.put(`1.1/ka/boards/${arg?.params?.boardId}`,arg?.payload);
+            const response = await axiosInstance.put(`/ka/boards/${arg?.params?.boardId}`,arg?.payload);
             return response.data;
         } catch (error) {
             handleErrorState(error, "Update History");
@@ -337,7 +337,7 @@ export const getSearchHistory = createAsyncThunk(
     async ({boardId, params},{ rejectWithValue }) => {
         try {
             const response = await axiosInstance({
-                url: `1.1/kora/boards/${boardId}/searchhistory`,
+                url: `/kora/boards/${boardId}/searchhistory`,
                 method: 'GET',
                 params
             });
@@ -392,7 +392,7 @@ export const presenceStart = createAsyncThunk(
     'global/presenceStart',
     async (arg, thunkAPI) => {
         try {
-            const response = await axiosInstance.post(`1.1/presence/start`);
+            const response = await axiosInstance.post(`/presence/start`);
             return response.data;
         } catch (error) {
             return thunkAPI.rejectWithValue({
@@ -411,10 +411,10 @@ export const getNotification = createAsyncThunk(
         try {
             let response;
             if(arg?.loadMore){
-                response = await axiosInstance.get(`1.1/ka/users/${arg?.userId}/notifications?offSet=${arg?.offset}&limit=${arg?.limit}`);
+                response = await axiosInstance.get(`/ka/users/${arg?.userId}/notifications?offSet=${arg?.offset}&limit=${arg?.limit}`);
             }
             else{
-                response = await axiosInstance.get(`1.1/ka/users/${arg?.userId}/notifications`);
+                response = await axiosInstance.get(`/ka/users/${arg?.userId}/notifications`);
             }
             return response.data;
         } catch (error) {
@@ -429,7 +429,7 @@ export const readNotification = createAsyncThunk(
     'global/readNotification',
     async (arg, { rejectWithValue }) => {
         try {
-            const response = await axiosInstance.put(`1.1/ka/users/${arg?.userId}/notifications`, arg?.payload);
+            const response = await axiosInstance.put(`/ka/users/${arg?.userId}/notifications`, arg?.payload);
             return response.data;
         } catch (error) {
             handleErrorState(error, "Mark All As Read");
@@ -442,7 +442,7 @@ export const bookMarkChatThread = createAsyncThunk(
     'global/bookMarkChatThread',
     async (arg, { rejectWithValue }) => {
         try {
-            const response = await axiosInstance.put(`1.1/ka/boards/${arg?.params?.boardId}/star`, arg?.payload);
+            const response = await axiosInstance.put(`/ka/boards/${arg?.params?.boardId}/star`, arg?.payload);
             return response.data;
         } catch (error) {
             handleErrorState(error, "Book Mark Chat Thread");
@@ -455,7 +455,7 @@ export const getBookMarkedChatThreads = createAsyncThunk(
     'global/getBookMarkedChatThreads',
     async (arg, { rejectWithValue }) => {
         try {
-            let url = `1.1/ka/boards?type=history&star=true`
+            let url = `/ka/boards?type=history&star=true`
             if(arg?.limit) {
                 url += `&limit=${arg?.limit}`
             }
@@ -475,7 +475,7 @@ export const getSpecificSkills = createAsyncThunk(
     'global/getSpecificSkills',
     async (arg, { rejectWithValue }) => {
         try {
-            const response = await axiosInstance.get(`/1.1/ka/users/${arg?.userId}/connectors/${arg?.connectorId}`);
+            const response = await axiosInstance.get(`ka/users/${arg?.userId}/connectors/${arg?.connectorId}`);
             return response.data;
         } catch (error) {
             handleErrorState(error, "Get Specific Skills");
@@ -541,7 +541,7 @@ export const getSuggestedContactListNew = createAsyncThunk(
     'global/getSuggestedContactListNew',
     async (arg, { rejectWithValue }) => {
         try{
-            const response = await axiosInstance.post(`/1.1/ka/users/${arg?.params?.userId}/connectors/${arg?.params?.source}/actions/send_email/resolveFields`, arg?.payload);
+            const response = await axiosInstance.post(`ka/users/${arg?.params?.userId}/connectors/${arg?.params?.source}/actions/send_email/resolveFields`, arg?.payload);
             return response.data;
         } catch (error) {
             handleErrorState(error, "Get Suggested Contact List New");
@@ -554,7 +554,7 @@ export const smartComposeEmail = createAsyncThunk(
     'global/smartComposeEmail',
     async (arg, { rejectWithValue }) => {
         try {
-            const response = await axiosInstance.post(`/1.1/ka/users/${arg?.params?.userId}/nlp/generations/text`, arg?.payload);
+            const response = await axiosInstance.post(`ka/users/${arg?.params?.userId}/nlp/generations/text`, arg?.payload);
             return response.data;
         } catch (error) {
             handleErrorState(error, "Smart Compose Email");
@@ -567,7 +567,7 @@ export const sendEmail = createAsyncThunk(
     'global/sendEmail',
     async (arg, { rejectWithValue }) => {
         try {
-            const response = await axiosInstance.post(`/1.1/ka/users/${arg?.params?.userId}/connectors/${arg?.params?.provider || "gmail"}/actions/send_email`, arg?.payload);
+            const response = await axiosInstance.post(`ka/users/${arg?.params?.userId}/connectors/${arg?.params?.provider || "gmail"}/actions/send_email`, arg?.payload);
             return response.data;
         } catch (error) {
             handleErrorState(error, "Send Email");
@@ -595,7 +595,7 @@ export const getAllAnnouncements = createAsyncThunk(
     'global/getAllAnnouncements',
     async (arg, { rejectWithValue }) => {        
         try {
-            const response = await axiosInstance.get(`/1.1/users/${arg?.params?.userId}/announcements`);
+            const response = await axiosInstance.get(`users/${arg?.params?.userId}/announcements`);
             return response.data;
         } catch (error) {
             handleErrorState(error, "Unable to get Announcements");
@@ -608,7 +608,7 @@ export const getUserDetails = createAsyncThunk(
     'global/getUserDetails',
     async (arg, { rejectWithValue }) => {
         try {
-            const response = await axiosInstance.post(`/1.1/_resolve/user`, arg?.payload);
+            const response = await axiosInstance.post(`_resolve/user`, arg?.payload);
             return response.data;
         } catch (error) {
             handleErrorState(error, "Get User Details");
@@ -622,7 +622,7 @@ export const getChannelRecepients = createAsyncThunk(
     'global/getChannelRecepients',
     async (arg, { rejectWithValue }) => {
         try {
-            const response = await axiosInstance.post(`/1.1/ka/users/${arg?.userId}/connectors/${arg?.source}/actions/send_message/resolveFields`, arg?.payload);
+            const response = await axiosInstance.post(`ka/users/${arg?.userId}/connectors/${arg?.source}/actions/send_message/resolveFields`, arg?.payload);
             return response.data;
         } catch (error) {
             handleErrorState(error, "Get Channel Recepients");
@@ -635,7 +635,7 @@ export const updateAgentAction = createAsyncThunk(
     'global/updateAgentAction',
     async (arg, { rejectWithValue }) => {
         try {
-            const response = await axiosInstance.patch(`/1.1/users/${arg?.userId}/agents/${arg?.agentId}`, arg?.payload);
+            const response = await axiosInstance.patch(`users/${arg?.userId}/agents/${arg?.agentId}`, arg?.payload);
             return response.data;
         } catch (error) {
             handleErrorState(error, "Update Agent");
@@ -649,7 +649,7 @@ export const getSignedMediaURL = createAsyncThunk(
     async (arg, { rejectWithValue }) => {
         try {
             const { userId, msgId, fileId } = arg;
-            const response = await axiosInstance.get(`/1.1/users/${userId}/${msgId}/${fileId}/signedMediaURL`);
+            const response = await axiosInstance.get(`users/${userId}/${msgId}/${fileId}/signedMediaURL`);
             return response.data;
         } catch (error) {
             handleErrorState(error, "Signed Media URL");
@@ -662,7 +662,7 @@ export const deleteAnnouncementAction = createAsyncThunk(
     'global/deleteAnnouncementAction',
     async (arg, { rejectWithValue }) => {
         try {
-            const response = await axiosInstance.delete(`/1.1/users/${arg?.userId}/announcements/${arg?.announcementId}`);
+            const response = await axiosInstance.delete(`users/${arg?.userId}/announcements/${arg?.announcementId}`);
             return response.data;
         } catch (error) {
             handleErrorState(error, "Delete Announcement");
