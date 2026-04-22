@@ -1,6 +1,6 @@
 import { initializeSDK } from "../config";
 
-const DEFAULT_BASE_URL = "https://work-qa.kore.ai/";
+const DEFAULT_BASE_URL = "https://work.kore.ai/";
 
 /**
  * Decode the payload of a JWT (id_token) without verifying its signature.
@@ -68,6 +68,7 @@ const fetchJson = async (url, options) => {
 export const authenticateApp = async ({
   id_token,
   client_id = null,
+  base_url = null,
   api_url = null,
   presence_url = null,
 } = {}) => {
@@ -94,7 +95,7 @@ export const authenticateApp = async ({
     }
   }
 
-  const BASE_URL = DEFAULT_BASE_URL;
+  const BASE_URL = base_url || DEFAULT_BASE_URL;
   // The SDK's data-API thunks (e.g. `1.1/ka/users/.../sdk/config`) prepend their
   // own `1.1/...` path, so the baseURL passed to axios must end at `/api/` — NOT
   // at `/api/1.1/sdk/{clientId}/` (which is only the SSO login endpoint shape).
