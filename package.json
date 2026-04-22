@@ -80,6 +80,10 @@
     "./schedulers": {
       "import": "./dist/schedulers/index.esm.js",
       "require": "./dist/schedulers/index.cjs.js"
+    },
+    "./Authorization": {
+      "import": "./dist/Authorization/index.esm.js",
+      "require": "./dist/Authorization/index.cjs.js"
     }
   },
   "devDependencies": {
