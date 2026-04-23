@@ -2,7 +2,7 @@
 @use "./variables_new.scss" as *;
 
 @mixin typography-regular($fontSize: 1rem, $fontWeight: 400, $lineHeight: 1.1875rem) {
-	font-family: Inter;
+	font-family: var(--sdk-font-family);
 	font-size: $fontSize;
 	font-style: normal;
 	font-weight: $fontWeight;

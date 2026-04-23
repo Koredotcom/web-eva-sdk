@@ -10,7 +10,7 @@ import { EllipsisHorizontal, createDeleteIcon, EditIcon } from "../templateRende
 const HISTORY_COMPOSEBAR_ACTIVE_CLASS = "eva-composebar-area--history-selected";
 
 const addHistorySelectedClassToComposebar = (listContainer) => {
-  const root = listContainer?.closest?.("#eva-sdk-chatbot-panel") || document;
+  const root = listContainer?.closest?.("#aiforwork-chatbot-widget") || document;
   const composebarArea = root?.querySelector?.(".eva-composebar-area");
   composebarArea?.classList?.add(HISTORY_COMPOSEBAR_ACTIVE_CLASS);
 };

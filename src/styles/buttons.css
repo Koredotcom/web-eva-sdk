@@ -1,7 +1,7 @@
 sl-button.secondary-button::part(base) {
     height: 28px;
     padding: 0 0.875rem;
-    font-family: Inter;
+    font-family: var(--sdk-font-family);
     font-size: .875rem;
     font-style: normal;
     font-weight: 500;
@@ -26,7 +26,7 @@ sl-button.secondary-button::part(base):hover {
 sl-button.primary-button-black::part(base) {
    height: 28px;
     padding: 0 0.875rem;
-    font-family: Inter;
+    font-family: var(--sdk-font-family);
     font-size: .875rem;
     font-style: normal;
     font-weight: 500;
