@@ -1,6 +1,6 @@
 {
   "name": "eva-web-sdk",
-  "version": "1.1.97",
+  "version": "1.2.1",
   "description": "",
   "main": "dist/index.cjs.js",
   "style": "dist/sdk-styles.css",
@@ -23,7 +23,7 @@
     "@reduxjs/toolkit": "^2.2.6",
     "@rollup/plugin-alias": "^5.1.0",
     "@rollup/plugin-replace": "^5.0.7",
-    "@shoelace-style/shoelace": "^2.0.0",
+    "@shoelace-style/shoelace": "2.0.0",
     "axios": "^1.7.2",
     "choices.js": "^11.0.2",
     "codemirror": "^6.0.2",
@@ -94,6 +94,10 @@
       "import": "./dist/Announcements/index.esm.js",
       "require": "./dist/Announcements/index.cjs.js"
     },
+    "./Authorization": {
+      "import": "./dist/Authorization/index.esm.js",
+      "require": "./dist/Authorization/index.cjs.js"
+    },
     "./styles": "./dist/sdk-styles.css"
   },
   "devDependencies": {
@@ -105,6 +109,7 @@
     "@rollup/plugin-commonjs": "^25.0.8",
     "@rollup/plugin-json": "^6.1.0",
     "@rollup/plugin-node-resolve": "^15.2.3",
+    "@rollup/plugin-terser": "^1.0.0",
     "@vitejs/plugin-react": "^4.3.1",
     "postcss-import": "^16.1.1",
     "rollup": "^2.79.1",
@@ -113,7 +118,6 @@
     "rollup-plugin-node-globals": "^1.4.0",
     "rollup-plugin-polyfill-node": "^0.13.0",
     "rollup-plugin-postcss": "^4.0.2",
-    "rollup-plugin-terser": "^7.0.2",
     "sass-embedded": "^1.83.0",
     "vite": "^5.3.4"
   }
