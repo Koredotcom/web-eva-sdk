@@ -1,13 +1,6 @@
 @use "./variables_new.scss" as *;
 @use "./mixins_new.scss" as *;
 
-html,
-body {
-    padding: 0;
-    margin: 0;
-    //overflow: hidden;
-}
-
 .chatInterfaceDemo {
     display: flex;
     height: 100vh;
@@ -64,7 +57,7 @@ body {
                     height: 2.25rem;
                     cursor: pointer;
                     transition: background-color .3s ease;
-                    font-family: Inter;
+                    font-family: var(--sdk-font-family);
                     font-size: .875rem;
                     font-style: normal;
                     font-weight: 400;
@@ -96,7 +89,7 @@ body {
                 align-items: center;
                 color: #fff;
                 padding: 0.25rem 0.5rem;
-                font-family: Inter;
+                font-family: var(--sdk-font-family);
                 font-size: .75rem;
                 font-style: normal;
                 font-weight: 500;
@@ -115,7 +108,7 @@ body {
             padding-right: 1rem;
 
             .sidebar-title {
-                font-family: Inter;
+                font-family: var(--sdk-font-family);
                 font-size: 1.25rem;
                 font-style: normal;
                 font-weight: 600;
@@ -165,7 +158,7 @@ body {
 }
 
 .message-bubble {
-    font-family: Inter;
+    font-family: var(--sdk-font-family);
     font-size: 0.875rem;
     font-style: normal;
     font-weight: 400;
@@ -184,7 +177,7 @@ body {
     }
 
     .message-text {
-        font-family: Inter;
+        font-family: var(--sdk-font-family);
         font-size: 0.875rem;
         font-style: normal;
         font-weight: 400;
@@ -323,7 +316,7 @@ body {
                 gap: .75rem;
 
                 .message-renderer {
-                    font-family: Inter;
+                    font-family: var(--sdk-font-family);
                     font-size: 0.875rem;
                     font-style: normal;
                     font-weight: 400;
@@ -337,7 +330,7 @@ body {
                     }
 
                     p {
-                        font-family: Inter;
+                        font-family: var(--sdk-font-family);
                         font-size: 0.875rem;
                         font-style: normal;
                         font-weight: 400;
@@ -412,7 +405,7 @@ body {
                         text-overflow: ellipsis;
                         white-space: nowrap;
                         color: #141414;
-                        font-family: Inter;
+                        font-family: var(--sdk-font-family);
                         font-size: 1rem;
                         font-style: normal;
                         font-weight: 500;
@@ -484,7 +477,7 @@ body {
                 line-height: 1.4;
                 box-shadow: 0rem 0.0625rem 0.125rem 0rem rgba(16, 24, 40, 0.05);
                 color: #424242;
-                font-family: Inter;
+                font-family: var(--sdk-font-family);
                 font-size: 0.875rem;
                 font-style: normal;
                 font-weight: 500;
@@ -516,7 +509,7 @@ body {
 
             .es-body-preview {
                 color: #141414;
-                font-family: Inter;
+                font-family: var(--sdk-font-family);
                 font-size: 0.875rem;
                 font-style: normal;
                 font-weight: 400;
@@ -608,7 +601,7 @@ body {
             .es-exp-row {
                 padding: .625rem 1rem;
                 border-bottom: .0625rem solid #f3f4f6;
-                font-family: Inter;
+                font-family: var(--sdk-font-family);
                 font-size: .875rem;
                 font-style: normal;
                 font-weight: 500;
@@ -1320,7 +1313,7 @@ body {
         display: flex;
         align-items: center;
         gap: .5rem;
-        font-family: Inter;
+        font-family: var(--sdk-font-family);
         font-size: 0.875rem;
         font-style: normal;
         font-weight: 400;
@@ -1403,7 +1396,7 @@ body {
                 }
 
                 .krSpecName {
-                    font-family: Inter;
+                    font-family: var(--sdk-font-family);
                     font-size: .875rem;
                     font-style: normal;
                     font-weight: 500;
@@ -1820,7 +1813,7 @@ body {
                         }
 
                         .menu-item-label {
-                            font-family: Inter;
+                            font-family: var(--sdk-font-family);
                             font-size: 0.875rem;
                             font-style: normal;
                             font-weight: 500;
@@ -2088,7 +2081,7 @@ body {
                 box-shadow: 0rem 0.0625rem 0.125rem 0rem rgba(16, 24, 40, 0.05);
                 padding: 0.625rem 0.875rem;
                 min-height: 5.875rem;
-                font-family: Inter;
+                font-family: var(--sdk-font-family);
                 font-size: 0.875rem;
                 font-style: normal;
                 font-weight: 400;
@@ -2346,7 +2339,7 @@ body {
                             .grpName {
                                 .nameTitle {
                                     color: #344054;
-                                    font-family: Inter;
+                                    font-family: var(--sdk-font-family);
                                     font-size: .875rem;
                                     font-style: normal;
                                     font-weight: 500;
@@ -2365,7 +2358,7 @@ body {
                                         cursor: pointer;
                                         border-radius: 1rem;
                                         background: #F2F4F7;
-                                        font-family: Inter;
+                                        font-family: var(--sdk-font-family);
                                         font-size: .75rem;
                                         font-style: normal;
                                         font-weight: 500;
@@ -2420,7 +2413,7 @@ body {
                                         white-space: nowrap;
                                         overflow: hidden;
                                         text-overflow: ellipsis;
-                                        font-family: Inter;
+                                        font-family: var(--sdk-font-family);
                                         font-size: 0.75rem;
                                         font-style: normal;
                                         font-weight: 600;
@@ -2430,7 +2423,7 @@ body {
                                     }
 
                                     .fileSize {
-                                        font-family: Inter;
+                                        font-family: var(--sdk-font-family);
                                         font-size: 0.625rem;
                                         font-style: normal;
                                         font-weight: 400;
@@ -2489,7 +2482,7 @@ body {
                             .grpName {
                                 .nameTitle {
                                     color: #344054;
-                                    font-family: Inter;
+                                    font-family: var(--sdk-font-family);
                                     font-size: .875rem;
                                     font-style: normal;
                                     font-weight: 500;
@@ -2508,7 +2501,7 @@ body {
                                         cursor: pointer;
                                         border-radius: 1rem;
                                         background: #F2F4F7;
-                                        font-family: Inter;
+                                        font-family: var(--sdk-font-family);
                                         font-size: .75rem;
                                         font-style: normal;
                                         font-weight: 500;
@@ -2563,7 +2556,7 @@ body {
                                         white-space: nowrap;
                                         overflow: hidden;
                                         text-overflow: ellipsis;
-                                        font-family: Inter;
+                                        font-family: var(--sdk-font-family);
                                         font-size: 0.75rem;
                                         font-style: normal;
                                         font-weight: 600;
@@ -2573,7 +2566,7 @@ body {
                                     }
 
                                     .fileSize {
-                                        font-family: Inter;
+                                        font-family: var(--sdk-font-family);
                                         font-size: 0.625rem;
                                         font-style: normal;
                                         font-weight: 400;
@@ -2632,7 +2625,7 @@ body {
                             .grpName {
                                 .nameTitle {
                                     color: #344054;
-                                    font-family: Inter;
+                                    font-family: var(--sdk-font-family);
                                     font-size: .875rem;
                                     font-style: normal;
                                     font-weight: 500;
@@ -2651,7 +2644,7 @@ body {
                                         cursor: pointer;
                                         border-radius: 1rem;
                                         background: #F2F4F7;
-                                        font-family: Inter;
+                                        font-family: var(--sdk-font-family);
                                         font-size: .75rem;
                                         font-style: normal;
                                         font-weight: 500;
@@ -2706,7 +2699,7 @@ body {
                                         white-space: nowrap;
                                         overflow: hidden;
                                         text-overflow: ellipsis;
-                                        font-family: Inter;
+                                        font-family: var(--sdk-font-family);
                                         font-size: 0.75rem;
                                         font-style: normal;
                                         font-weight: 600;
@@ -2716,7 +2709,7 @@ body {
                                     }
 
                                     .fileSize {
-                                        font-family: Inter;
+                                        font-family: var(--sdk-font-family);
                                         font-size: 0.625rem;
                                         font-style: normal;
                                         font-weight: 400;
@@ -2794,7 +2787,7 @@ body {
                                         align-items: center;
                                         gap: .5rem;
                                         justify-content: center;
-                                        font-family: Inter;
+                                        font-family: var(--sdk-font-family);
                                         font-size: .875rem;
                                         font-style: normal;
                                         font-weight: 400;
@@ -2804,7 +2797,7 @@ body {
 
                                         .browseText {
                                             display: inline-flex;
-                                            font-family: Inter;
+                                            font-family: var(--sdk-font-family);
                                             font-size: .875rem;
                                             font-style: normal;
                                             font-weight: 600;
@@ -2861,7 +2854,7 @@ body {
                                         white-space: nowrap;
                                         overflow: hidden;
                                         text-overflow: ellipsis;
-                                        font-family: Inter;
+                                        font-family: var(--sdk-font-family);
                                         font-size: 0.75rem;
                                         font-style: normal;
                                         font-weight: 600;
@@ -2871,7 +2864,7 @@ body {
                                     }
 
                                     .fileSize {
-                                        font-family: Inter;
+                                        font-family: var(--sdk-font-family);
                                         font-size: 0.625rem;
                                         font-style: normal;
                                         font-weight: 400;
@@ -3390,7 +3383,7 @@ body {
                     }
 
                     &::part(display-input) {
-                        font-family: Inter;
+                        font-family: var(--sdk-font-family);
                         font-size: 0.875rem;
                         font-style: normal;
                         font-weight: 500;
@@ -3442,7 +3435,7 @@ body {
                         }
 
                         &::part(label) {
-                            font-family: Inter;
+                            font-family: var(--sdk-font-family);
                             font-size: .875rem;
                             font-style: normal;
                             font-weight: 500;
@@ -3480,7 +3473,7 @@ body {
                 position: relative;
 
                 .collapsed-recipient {
-                    font-family: Inter;
+                    font-family: var(--sdk-font-family);
                     font-size: .875rem;
                     font-style: normal;
                     font-weight: 500;
@@ -3512,7 +3505,7 @@ body {
                 }
 
                 .collapsed-placeholder {
-                    font-family: Inter;
+                    font-family: var(--sdk-font-family);
                     font-size: .875rem;
                     font-weight: 400;
                     color: #a3a3a3;
@@ -3639,13 +3632,13 @@ body {
                         &::part(base) {
                             padding-left: 0;
                             color: #141414;
-                            font-family: Inter;
+                            font-family: var(--sdk-font-family);
                             font-weight: 500;
                         }
 
                         &::part(input) {
                             color: #141414;
-                            font-family: Inter;
+                            font-family: var(--sdk-font-family);
                             font-weight: 500;
                         }
                     }
@@ -3689,7 +3682,7 @@ body {
                 background: transparent;
                 border-radius: .25rem;
                 cursor: pointer;
-                font-family: Inter;
+                font-family: var(--sdk-font-family);
                 font-size: .8125rem;
                 color: #424242;
 
@@ -3714,7 +3707,7 @@ body {
             .fmt-select {
                 border: none;
                 background: transparent;
-                font-family: Inter;
+                font-family: var(--sdk-font-family);
                 font-size: .75rem;
                 color: #424242;
                 cursor: pointer;
@@ -3743,7 +3736,7 @@ body {
                 }
 
                 .fmt-color-icon {
-                    font-family: Inter;
+                    font-family: var(--sdk-font-family);
                     font-size: .8125rem;
                     font-weight: 700;
                     color: #424242;
@@ -3792,7 +3785,7 @@ body {
                 background: $wa-base-white;
                 border-radius: .75rem;
                 cursor: pointer;
-                font-family: Inter;
+                font-family: var(--sdk-font-family);
                 font-size: .875rem;
                 font-weight: 500;
                 color: #374151;
@@ -3858,7 +3851,7 @@ body {
 
                     .file-upload-text {
                         color: #344054;
-                        font-family: Inter;
+                        font-family: var(--sdk-font-family);
                         font-size: 0.875rem;
                         font-style: normal;
                         font-weight: 500;
@@ -3905,7 +3898,7 @@ body {
             display: flex;
             align-items: flex-start;
             gap: .5rem;
-            font-family: Inter;
+            font-family: var(--sdk-font-family);
             font-size: 0.875rem;
             font-style: normal;
             font-weight: 400;
@@ -3988,7 +3981,7 @@ body {
                     }
 
                     .krSpecName {
-                        font-family: Inter;
+                        font-family: var(--sdk-font-family);
                         font-size: .875rem;
                         font-style: normal;
                         font-weight: 500;
@@ -4101,7 +4094,7 @@ body {
                                 flex-grow: 1;
                                 min-width: 0;
                                 @include ellipsisText;
-                                font-family: Inter;
+                                font-family: var(--sdk-font-family);
                                 font-size: .875rem;
                                 font-style: normal;
                                 font-weight: 500;
@@ -4158,7 +4151,7 @@ body {
                             }
 
                             .source-label {
-                                font-family: Inter;
+                                font-family: var(--sdk-font-family);
                                 font-size: 0.875rem;
                                 font-weight: 500;
                                 color: #141414;
@@ -4490,7 +4483,7 @@ body {
                             }
 
                             .menu-item-label {
-                                font-family: Inter;
+                                font-family: var(--sdk-font-family);
                                 font-size: 0.875rem;
                                 font-style: normal;
                                 font-weight: 500;
@@ -4794,7 +4787,7 @@ body {
     }
 
     .bot-agent-name {
-        font-family: Inter;
+        font-family: var(--sdk-font-family);
         font-size: 0.875rem;
         font-style: normal;
         font-weight: 500;
@@ -4804,7 +4797,7 @@ body {
     }
 
     .agent-name {
-        font-family: Inter;
+        font-family: var(--sdk-font-family);
         font-size: 0.75rem;
         font-style: normal;
         font-weight: 400;
@@ -4851,7 +4844,7 @@ body {
             }
 
             .bot-agent-name {
-                font-family: Inter;
+                font-family: var(--sdk-font-family);
                 font-size: 0.875rem;
                 font-style: normal;
                 font-weight: 500;
@@ -4866,7 +4859,7 @@ body {
         display: flex;
         align-items: flex-start;
         gap: .5rem;
-        font-family: Inter;
+        font-family: var(--sdk-font-family);
         font-size: 0.875rem;
         font-style: normal;
         font-weight: 500;
@@ -4932,7 +4925,7 @@ body {
             }
 
             td {
-                font-family: Inter;
+                font-family: var(--sdk-font-family);
                 font-size: 0.875rem;
                 font-style: normal;
                 font-weight: 400;
@@ -4942,7 +4935,7 @@ body {
             }
 
             th {
-                font-family: Inter;
+                font-family: var(--sdk-font-family);
                 font-size: 0.875rem;
                 font-style: normal;
                 font-weight: 700;
@@ -4984,7 +4977,7 @@ body {
                 }
 
                 td {
-                    font-family: Inter;
+                    font-family: var(--sdk-font-family);
                     font-size: 0.875rem;
                     font-style: normal;
                     font-weight: 400;
@@ -4994,7 +4987,7 @@ body {
                 }
 
                 th {
-                    font-family: Inter;
+                    font-family: var(--sdk-font-family);
                     font-size: 0.875rem;
                     font-style: normal;
                     font-weight: 700;
@@ -5050,7 +5043,7 @@ body {
         padding-top: 0.25rem;
         .title {
             width: 100%;
-            font-family: Inter;
+            font-family: var(--sdk-font-family);
             font-size: 0.875rem;
             font-style: normal;
             font-weight: 500;
@@ -5204,7 +5197,7 @@ body {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    font-family: Inter;
+    font-family: var(--sdk-font-family);
     font-size: 0.875rem;
     font-style: normal;
     font-weight: 400;
@@ -5222,7 +5215,7 @@ body {
         display: flex;
         align-items: center;
         gap: 0.5rem;
-        font-family: Inter;
+        font-family: var(--sdk-font-family);
         font-size: 0.75rem;
         font-style: normal;
         font-weight: 500;
@@ -5241,7 +5234,7 @@ body {
 
         &.ans-generating {
             background: linear-gradient(90deg, #3f3f46 0%, #6f6f76 25%, #d1d1d6 50%, #6f6f76 75%, #3f3f46 100%);
-            font-family: Inter;
+            font-family: var(--sdk-font-family);
             font-size: 0.75rem;
             font-style: normal;
             font-weight: 500;
@@ -5392,7 +5385,7 @@ body {
             }
 
             .query-response-flow-item-content {
-                font-family: Inter;
+                font-family: var(--sdk-font-family);
                 font-size: 0.75rem;
                 font-style: normal;
                 font-weight: 400;
@@ -5451,7 +5444,7 @@ body {
     }
 
     .copy-message-text {
-        font-family: Inter;
+        font-family: var(--sdk-font-family);
         font-size: .875rem;
         font-style: normal;
         font-weight: 500;
@@ -5595,7 +5588,7 @@ body {
                     gap: 0.25rem;
                     border: none;
                     color: #424242;
-                    font-family: Inter;
+                    font-family: var(--sdk-font-family);
                     font-size: 0.875rem;
                     font-style: normal;
                     font-weight: 500;
@@ -5608,7 +5601,7 @@ body {
 
                     .textsuggest {
                         color: #424242;
-                        font-family: Inter;
+                        font-family: var(--sdk-font-family);
                         font-size: 0.875rem;
                         font-style: normal;
                         font-weight: 500;
@@ -5653,7 +5646,7 @@ body {
                     cursor: default;
                     max-height: 3.75rem;
                     overflow-y: auto;
-                    font-family: Inter;
+                    font-family: var(--sdk-font-family);
                     font-size: 0.875rem;
                     font-style: normal;
                     font-weight: 400;
@@ -5680,7 +5673,7 @@ body {
 
                 .disagreeheadertext {
                     color: #737373;
-                    font-family: Inter;
+                    font-family: var(--sdk-font-family);
                     font-size: 0.75rem;
                     font-style: normal;
                     font-weight: 600;
@@ -5714,7 +5707,7 @@ body {
 
                 .recievedfeedbacktext {
                     color: #424242;
-                    font-family: Inter;
+                    font-family: var(--sdk-font-family);
                     font-size: 0.875rem;
                     font-style: normal;
                     font-weight: 500;
@@ -5743,7 +5736,7 @@ body {
     &.btn-sm {
         height: 2.25rem;
         padding: 0 0.875rem;
-        font-family: Inter;
+        font-family: var(--sdk-font-family);
         font-size: 0.875rem;
         font-style: normal;
         font-weight: 500;
@@ -5808,7 +5801,7 @@ body {
         gap: 0.25rem;
 
         .choosedtext {
-            font-family: Inter;
+            font-family: var(--sdk-font-family);
             font-size: 1rem;
             font-style: normal;
             font-weight: 600;
@@ -5824,7 +5817,7 @@ body {
                 gap: 1.5rem;
 
                 .authenticateverify {
-                    font-family: Inter;
+                    font-family: var(--sdk-font-family);
                     font-size: 0.875rem;
                     font-style: normal;
                     font-weight: 400;
@@ -5847,7 +5840,7 @@ body {
                     }
 
                     .addConnectionText {
-                        font-family: Inter;
+                        font-family: var(--sdk-font-family);
                         font-size: 0.875rem;
                         font-style: normal;
                         font-weight: 500;
@@ -5919,7 +5912,7 @@ body {
     }
 
     .copy-message-text {
-        font-family: "Inter";
+        font-family: var(--sdk-font-family);
         font-style: normal;
         font-weight: 400;
         font-size: .875rem;
@@ -5931,7 +5924,7 @@ body {
         gap: 0.125rem;
 
         .copy-message-text-type {
-            font-family: "Inter";
+            font-family: var(--sdk-font-family);
             font-style: normal;
             font-weight: 500;
             font-size: .875rem;
@@ -5940,7 +5933,7 @@ body {
         }
 
         .copy-message-text-description {
-            font-family: "Inter";
+            font-family: var(--sdk-font-family);
             font-style: normal;
             font-weight: 400;
             font-size: .875rem;
@@ -5984,7 +5977,7 @@ sl-dialog.gpt-form-dialog {
             display: flex;
             align-items: center;
             gap: 0.5rem;
-            font-family: Inter;
+            font-family: var(--sdk-font-family);
             font-size: 0.875rem;
             font-style: normal;
             font-weight: 500;
@@ -6032,7 +6025,7 @@ sl-dialog.gpt-form-dialog {
                 padding: 0;
 
                 .responseHeader {
-                    font-family: Inter;
+                    font-family: var(--sdk-font-family);
                     font-size: 1rem;
                     font-style: normal;
                     font-weight: 600;
@@ -6054,7 +6047,7 @@ sl-dialog.gpt-form-dialog {
                 }
 
                 .grpName {
-                    font-family: Inter;
+                    font-family: var(--sdk-font-family);
                     font-size: 0.875rem;
                     font-style: normal;
                     font-weight: 500;
@@ -6078,7 +6071,7 @@ sl-dialog.gpt-form-dialog {
                         padding: 0.625rem 0.875rem;
                         resize: none;
                         overflow-y: auto;
-                        font-family: Inter;
+                        font-family: var(--sdk-font-family);
                         font-size: 0.875rem;
                         font-style: normal;
                         font-weight: 400;
@@ -6103,7 +6096,7 @@ sl-dialog.gpt-form-dialog {
                         padding: 0.625rem 0.875rem;
                         height: 5.875rem;
                         overflow-y: auto;
-                        font-family: Inter;
+                        font-family: var(--sdk-font-family);
                         font-size: 0.875rem;
                         font-style: normal;
                         font-weight: 400;
@@ -6156,7 +6149,7 @@ sl-dialog.gpt-form-dialog {
 
             /* Shadow/xs */
             box-shadow: 0rem 0.0625rem 0.125rem 0rem rgba(16, 24, 40, 0.05);
-            font-family: Inter;
+            font-family: var(--sdk-font-family);
             font-size: 0.875rem;
             font-style: normal;
             font-weight: 500;
@@ -6884,7 +6877,7 @@ sl-dialog.gpt-form-dialog {
         background: #101828;
         border: .0625rem solid #475467;
         box-shadow: 0rem .0625rem .125rem rgba(16, 24, 40, .05);
-        font-family: Inter;
+        font-family: var(--sdk-font-family);
         font-size: 1rem;
         font-style: normal;
         font-weight: 500;
@@ -6950,7 +6943,7 @@ sl-dialog.gpt-form-dialog {
         border-radius: 0.75rem;
         height: 2.25rem;
         padding: 0 0.875rem;
-        font-family: Inter;
+        font-family: var(--sdk-font-family);
 
         &.btn-lg {
             &.editFlowBtn {
@@ -9676,6 +9669,33 @@ sl-drawer.sources-sidebar-drawer {
         height: 2.25rem;
         flex-shrink: 0;
 
+        .file-icon {
+            width: 1.25rem;
+            height: 1.25rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            img {
+                max-width: 100%;
+                max-height: 100%;
+                object-fit: contain;
+            }
+        }
+
+        .file-title {
+            flex-grow: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            color: #344054;
+            font-family: var(--sdk-font-family);
+            font-size: .8125rem;
+            font-weight: 400;
+            line-height: 1.25rem;
+            letter-spacing: 0em;
+        }
+
         .file-type-badge {
             display: flex;
             align-items: center;
@@ -9685,7 +9705,7 @@ sl-drawer.sources-sidebar-drawer {
             padding: 0 .25rem;
             border-radius: .25rem;
             color: #fff;
-            font-family: Inter;
+            font-family: var(--sdk-font-family);
             font-size: .5rem;
             font-weight: 700;
             letter-spacing: .02em;
@@ -9702,7 +9722,7 @@ sl-drawer.sources-sidebar-drawer {
 
             .file-title {
                 color: #344054;
-                font-family: Inter;
+                font-family: var(--sdk-font-family);
                 font-size: .8125rem;
                 font-weight: 500;
                 line-height: 1.25rem;
@@ -9710,7 +9730,7 @@ sl-drawer.sources-sidebar-drawer {
 
             .file-size {
                 color: #737373;
-                font-family: Inter;
+                font-family: var(--sdk-font-family);
                 font-size: .8125rem;
                 font-weight: 400;
             }
@@ -9819,7 +9839,7 @@ sl-dropdown.setContextDropdown {
 }
 
 .normal-link {
-    font-family: Inter;
+    font-family: var(--sdk-font-family);
     font-weight: 500;
     font-size: 0.875rem;
     line-height: 1.25rem;
@@ -9849,7 +9869,7 @@ sl-dropdown.setContextDropdown {
 
     &.email {
         background: none;
-        font-family: Inter;
+        font-family: var(--sdk-font-family);
         font-weight: 500;
         font-size: 0.875rem;
         line-height: 1.25rem;
@@ -10227,7 +10247,7 @@ sl-dropdown.setContextDropdown {
             justify-content: center;
             height: 2.25rem;
             padding: 0 0.875rem;
-            font-family: Inter;
+            font-family: var(--sdk-font-family);
             font-size: 0.875rem;
             font-style: normal;
             font-weight: 500;
@@ -10262,7 +10282,7 @@ sl-dropdown.setContextDropdown {
             justify-content: center;
             height: 2.25rem;
             padding: 0 0.875rem;
-            font-family: Inter;
+            font-family: var(--sdk-font-family);
             font-size: 0.875rem;
             font-style: normal;
             font-weight: 500;

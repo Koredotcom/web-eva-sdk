@@ -6,7 +6,7 @@ sl-select::part(combobox) {
 }
 
 sl-select::part(display-input) {
-    font-family: Inter;
+    font-family: var(--sdk-font-family);
     font-size: .875rem;
     font-style: normal;
     font-weight: 400;
@@ -54,7 +54,7 @@ sl-option[aria-selected="true"]::part(base) {
 }
 
 sl-option::part(label) {
-    font-family: Inter;
+    font-family: var(--sdk-font-family);
     font-size: 0.875rem;
     font-style: normal;
     font-weight: 500;

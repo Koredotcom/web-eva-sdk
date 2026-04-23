@@ -210,19 +210,19 @@ const ensureSourcesDrawerPlacementWatcher = () => {
 const createButton = (label) => {
   const button = document.createElement("button");
   button.type = "button";
-  button.id = "eva-sdk-chatbot-button";
-  button.className = "eva-sdk-chatbot-button";
+  button.id = "aiforwork-chatbot-trigger";
+  button.className = "aiforwork-chatbot-trigger";
   button.setAttribute("aria-label", label);
   button.innerHTML =
-    '<span class="eva-sdk-chatbot-button-icon" aria-hidden="true"><img src="https://staticqa2-workassist.kore.ai/KoraQA/images/eva-black-svg.svg" width="16" height="16" /></span>' +
-    `<span class="eva-sdk-chatbot-button-text">${label}</span>`;
+    '<span class="aiforwork-chatbot-trigger-icon" aria-hidden="true"><img src="https://staticqa2-workassist.kore.ai/KoraQA/images/eva-black-svg.svg" width="16" height="16" /></span>' +
+    `<span class="aiforwork-chatbot-trigger-text">${label}</span>`;
   return button;
 };
 
 const createPanel = (titleText) => {
   const panel = document.createElement("div");
-  panel.id = "eva-sdk-chatbot-panel";
-  panel.className = "eva-sdk-chatbot-panel";
+  panel.id = "aiforwork-chatbot-widget";
+  panel.className = "aiforwork-chatbot-widget";
   panel.setAttribute("role", "dialog");
   panel.setAttribute("aria-hidden", "true");
 
@@ -402,7 +402,7 @@ const ensureElements = (config = {}) => {
     historyContent,
   } = panelElements;
 
-  button.setAttribute("aria-controls", "eva-sdk-chatbot-panel");
+  button.setAttribute("aria-controls", "aiforwork-chatbot-widget");
   button.setAttribute("aria-expanded", "false");
 
   document.body.appendChild(button);
@@ -520,10 +520,10 @@ const syncPanelState = () => {
     return;
   }
 
-  panel.classList.toggle("eva-sdk-chatbot-panel--open", state.isOpen);
+  panel.classList.toggle("aiforwork-chatbot-widget--open", state.isOpen);
   panel.setAttribute("aria-hidden", state.isOpen ? "false" : "true");
   button.setAttribute("aria-expanded", state.isOpen ? "true" : "false");
-  button.classList.toggle("eva-sdk-chatbot-button--hidden", state.isOpen);
+  button.classList.toggle("aiforwork-chatbot-trigger--hidden", state.isOpen);
 };
 
 const syncHistoryState = () => {
