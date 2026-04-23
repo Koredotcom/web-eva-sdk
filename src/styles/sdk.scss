@@ -136,7 +136,7 @@
   font-display: swap;
 }
 
-.eva-sdk-chatbot-button, .eva-sdk-chatbot-panel, .app-container {
+.aiforwork-chatbot-trigger, .aiforwork-chatbot-widget, .aiforwork-app-container {
   *,
   :after,
   :before {
@@ -190,4 +190,11 @@
   @media (min-width: 7680px) {
     font-size: 22px;
   }
+}
+
+html.sl-scroll-lock,
+body.sl-scroll-lock,
+.sl-scroll-lock {
+  overflow: visible !important;
+  padding-right: initial !important;
 }

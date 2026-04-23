@@ -57,8 +57,8 @@ const ChatInterface = (props) => {
       if (typeof document === "undefined") return null;
       return (
         // Chatbot UI (panel-scoped)
-        document.querySelector(".eva-sdk-chatbot-panel .questions-container") ||
-        document.querySelector(".eva-sdk-chatbot-panel #questions-container") ||
+        document.querySelector(".aiforwork-chatbot-widget .questions-container") ||
+        document.querySelector(".aiforwork-chatbot-widget #questions-container") ||
         // Demo/full chat UI
         document.querySelector(".chatSec") ||
         document.getElementById("chatSec") ||
