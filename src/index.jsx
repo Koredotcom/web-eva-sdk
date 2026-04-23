@@ -60,11 +60,8 @@ export * from './Feedback'
 export * from "./templateRenderer";
 export * from "./Announcements";
 export * from "./chatbot";
-export * from "./Authorization";
-import { authorizeApp } from "./Authorization";
 export { RenderComposeBar } from './composebar';
 export { renderRecentAgents, hideRecentAgentsDiv, unHideRecentAgentsDiv, RecentAgentsFunc } from './LandingPageRecentAgents';
-export { renderParentComponent } from './master-component/ParentComponent';
 
 // Redux store exports
 export { default as store } from './redux/store';
@@ -93,8 +90,5 @@ if (typeof window !== 'undefined') {
       startNewChat: () => startNewChat(),
     },
     chatBot,
-    authorization: {
-      authorizeApp,
-    },
   };
 }

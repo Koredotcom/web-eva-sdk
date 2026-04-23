@@ -15,8 +15,6 @@ import { isUserNearBottom } from "../../utils/helpers";
 import { RightArrow } from "../../templateRenderer/icons-library";
 import Announcements from "../announcements";
 import { cleanupAllAuthChallenges } from "../../templateRenderer/functionality/agent-auth-challenge";
-import { authorizeApp } from "../../Authorization";
-import { initializeSDK } from "../../config";
 const {renderRecentAgents, unHideRecentAgentsDiv} = RecentAgentsFunc();
 
 
@@ -68,131 +66,7 @@ const shouldSkipRender = (container) => {
   return false;
 };
 
-const readAuthFromUrl = () => {
-  if (typeof window === "undefined") return {};
-  const params = new URLSearchParams(window.location.search);
-  return {
-    jwt: params.get("jwt") || params.get("id_token") || "",
-    emailId: params.get("emailId") || params.get("email") || "",
-    clientId: params.get("clientId") || params.get("client_id") || "",
-  };
-};
-
-const AuthGate = ({ onAuthorized }) => {
-  const initial = readAuthFromUrl();
-  const [jwt, setJwt] = useState(initial.jwt);
-  const [emailId, setEmailId] = useState(initial.emailId);
-  const [clientId, setClientId] = useState(initial.clientId);
-  const [status, setStatus] = useState("idle"); // idle | loading | failed
-  const [error, setError] = useState("");
-  const attemptedRef = useRef(false);
-
-  const runAuth = useCallback(async (jwtVal, emailVal, clientIdVal) => {
-    setStatus("loading");
-    setError("");
-
-    const res = await authorizeApp({
-      jwt: jwtVal,
-      emailId: emailVal,
-      client_id: clientIdVal || undefined,
-    });
-
-    if (res?.status === "success") {
-      onAuthorized({ data: res.data, clientId: res.clientId, jwt: jwtVal, emailId: emailVal });
-    } else {
-      setStatus("failed");
-      setError(res?.error?.message || "Authorization failed");
-    }
-  }, [onAuthorized]);
-
-  useEffect(() => {
-    if (attemptedRef.current) return;
-    if (initial.jwt && initial.emailId) {
-      attemptedRef.current = true;
-      runAuth(initial.jwt, initial.emailId, initial.clientId);
-    }
-  }, [initial.jwt, initial.emailId, initial.clientId, runAuth]);
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (!jwt.trim() || !emailId.trim()) {
-      setError("jwt and emailId are required");
-      return;
-    }
-    runAuth(jwt.trim(), emailId.trim(), clientId.trim());
-  };
-
-  const formStyles = {
-    wrapper: { maxWidth: 480, margin: "60px auto", padding: 24, border: "1px solid #e0e0e0", borderRadius: 8, fontFamily: "system-ui, sans-serif", background: "#fff" },
-    title: { margin: "0 0 16px" },
-    field: { display: "block", marginBottom: 12 },
-    label: { display: "block", fontSize: 13, marginBottom: 4, color: "#444" },
-    input: { width: "100%", padding: 8, border: "1px solid #ccc", borderRadius: 4, fontFamily: "inherit", fontSize: 14, boxSizing: "border-box" },
-    textarea: { width: "100%", minHeight: 80, padding: 8, border: "1px solid #ccc", borderRadius: 4, fontFamily: "monospace", fontSize: 12, boxSizing: "border-box", resize: "vertical" },
-    btn: { padding: "8px 16px", background: "#2f6feb", color: "#fff", border: "none", borderRadius: 4, cursor: "pointer", fontSize: 14 },
-    btnDisabled: { opacity: 0.6, cursor: "wait" },
-    err: { color: "#c0392b", marginTop: 8, fontSize: 13 },
-    info: { color: "#666", marginTop: 8, fontSize: 12 },
-  };
-
-  if (status === "loading") {
-    return (
-      <div style={formStyles.wrapper}>
-        <h2 style={formStyles.title}>Authorizing…</h2>
-        <div style={formStyles.info}>Calling SSO login.</div>
-      </div>
-    );
-  }
-
-  return (
-    <div style={formStyles.wrapper}>
-      <h2 style={formStyles.title}>Sign in to ChatInterface</h2>
-      <form onSubmit={handleSubmit}>
-        <label style={formStyles.field}>
-          <span style={formStyles.label}>JWT (id_token)</span>
-          <textarea
-            style={formStyles.textarea}
-            value={jwt}
-            onChange={(e) => setJwt(e.target.value)}
-            placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6Ik..."
-          />
-        </label>
-        <label style={formStyles.field}>
-          <span style={formStyles.label}>Email ID</span>
-          <input
-            type="email"
-            style={formStyles.input}
-            value={emailId}
-            onChange={(e) => setEmailId(e.target.value)}
-            placeholder="user@example.com"
-          />
-        </label>
-        <label style={formStyles.field}>
-          <span style={formStyles.label}>Client ID (optional — derived from JWT.appId if blank)</span>
-          <input
-            style={formStyles.input}
-            value={clientId}
-            onChange={(e) => setClientId(e.target.value)}
-            placeholder="cs-xxxxxxxx"
-          />
-        </label>
-        <button
-          type="submit"
-          style={status === "loading" ? { ...formStyles.btn, ...formStyles.btnDisabled } : formStyles.btn}
-          disabled={status === "loading"}
-        >
-          Authorize
-        </button>
-        {error && <div style={formStyles.err}>{error}</div>}
-        <div style={formStyles.info}>
-          Tip: prefill with URL params <code>?jwt=…&amp;emailId=…&amp;clientId=…</code>
-        </div>
-      </form>
-    </div>
-  );
-};
-
-const ChatInterfaceContent = () => {
+const ChatInterfaceDemo = () => {
   const [quickActions, setQuickActions] = useState(null);
   const [input, setInput] = useState("");
   const [announcements, setAnnouncements] = useState(null);
@@ -421,60 +295,6 @@ const ChatInterfaceContent = () => {
       </div>
     </div>
   );
-};
-
-const ChatInterfaceDemo = () => {
-  const [authResult, setAuthResult] = useState(null);
-
-  const handleAuthorized = useCallback(async ({ data, clientId, jwt, emailId }) => {
-    const accessToken = data?.authorization?.accessToken;
-    const userId = data?.userInfo?.id;
-
-    if (!accessToken || !userId) {
-      console.error("[ChatInterfaceDemo] Missing accessToken or userId in SSO response", data);
-      return;
-    }
-
-    if (typeof window !== "undefined") {
-      const existing = window.sdkConfig || {};
-      window.sdkConfig = {
-        ...existing,
-        clientId,
-        emailId,
-        idToken: jwt,
-        userId,
-        accessToken,
-      };
-    }
-
-    await initializeSDK({
-      accessToken,
-      userId,
-      api_url: "https://work-qa.kore.ai/api/",
-      presence_url: "https://work-qa.kore.ai/",
-      initializeBotSDK: {
-        name: "ProcureBot",
-        streamId: "st-b6012ef2-810d-5240-b33e-5404d68b680e",
-        webhook: {
-          clientId: "cs-79a89a6f-b0ab-5e2f-b912-8dd1e2f95da0",
-          clientSecret: "VJNwkfbPcMZl4bOa1Qn3XtYRz6rqigwtTgOlaYX25Xs=",
-        },
-      },
-      enableDebugging: false,
-      appMetaData: {
-        appName: "AI4Work",
-        appIcon: "https://ai4web.com/wp-content/uploads/2023/01/cropped-cropped-ai4web-logo-1-180x180.png",
-      },
-    });
-
-    setAuthResult({ data, clientId });
-  }, []);
-
-  if (!authResult) {
-    return <AuthGate onAuthorized={handleAuthorized} />;
-  }
-
-  return <ChatInterfaceContent />;
 };
 
 export default ChatInterfaceDemo;
