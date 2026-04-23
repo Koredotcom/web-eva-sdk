@@ -12,18 +12,18 @@ import { renderParentComponent } from './master-component/ParentComponent';
 const App = () => {
 
   useEffect(() => {
-    // fetchHistoryWidgetData()
-    // fetchPossiblitiesWidgetData()
+    fetchHistoryWidgetData()
+    fetchPossiblitiesWidgetData()
     // renderParentComponent('master-component')
-    // if (typeof window !== 'undefined' && window.EvaSDK?.chatBot?.init) {
-    //   EvaSDK.chatBot.init({
-    //     // accessToken: "43NPDeg9AImcrzoVnJsyX8l-6zK0rMSxL22m7vx7MU-gDC3_ppFgbGYRMD6TpTOb",
-    //     // api_url: "https://eva-qa.kore.ai/api/",
-    //     // userId: "u-38c92791-2849-51d6-9453-1fe1fc6b90ef",
-    //     title: "AI4W ChatInterface"
-    //   });
-    //   EvaSDK.chatInterface.configure({ disableAppAvatar: true });
-    // }
+    if (typeof window !== 'undefined' && window.EvaSDK?.chatBot?.init) {
+      EvaSDK.chatBot.init({
+        // accessToken: "43NPDeg9AImcrzoVnJsyX8l-6zK0rMSxL22m7vx7MU-gDC3_ppFgbGYRMD6TpTOb",
+        // api_url: "https://eva-qa.kore.ai/api/",
+        // userId: "u-38c92791-2849-51d6-9453-1fe1fc6b90ef",
+        title: "AI4W ChatInterface"
+      });
+      EvaSDK.chatInterface.configure({ disableAppAvatar: true });
+    }
   }, [])
 
   const fetchHistoryWidgetData = async () => {
@@ -36,9 +36,9 @@ const App = () => {
   
   
   return (
-    <div className='aiforwork-app-container'>
+    <div className='app-container'>
       {/* <div id='master-component' className='master-component'></div>  */}
-      <ChatInterfaceDemo />
+      {/* <ChatInterfaceDemo /> */}
       {/* <ChatTestComp/> */}
       {/* <TestComp /> */}
       {/* <Agents /> */}
