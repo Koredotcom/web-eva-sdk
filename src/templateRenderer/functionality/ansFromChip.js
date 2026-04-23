@@ -4,7 +4,7 @@ import store from "../../redux/store";
 import { sessionItemHandler } from "../../Attachments/createContext";
 import { getRelevantQuestions } from "../../redux/actions/global.action";
 import { highlightQuotedText } from "../utils/helper";
-import { InitiateChatConversationAction, toast } from "../../chat";
+import { InitiateChatConversationAction} from "../../chat";
 import { submitUserFeedback } from "../../Feedback";
 import customMarkdownRenderer from "../utils/customMarkdownRenderer";
 import chatInterface from "../../chat/ChatInterface";

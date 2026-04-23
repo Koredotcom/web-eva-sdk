@@ -86,34 +86,15 @@ const ChatInterfaceDemo = () => {
 
     return () => {
       unsubscribe();
-      // Cleanup ComposeBar
-      if (composeBarRef.current) {
-        composeBarRef.current.destroy();
-      }
+      
     };
   }, []);
 
   // Separate useEffect for ComposeBar initialization
-  useEffect(() => {
-          // Initialize ComposeBar by passing the div id
-      RenderComposeBar('eva-composebar');
-      renderRecentAgents('recent-agents-container');
-  }, []);
+  
 
   // Simple one-time check on mount to show scroll button if needed
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      const el = scrollContainerRef.current;
-      const scrollBottom = el.scrollHeight - el.scrollTop - el.clientHeight;      
-      if (el && scrollBottom > 0) {
-        setShowScrollToBottom(true);
-      }else{
-        setShowScrollToBottom(false);
-      }
-    }, 100);
-
-    return () => clearTimeout(timer);
-  }, [messages]); 
+  
 
 
   const fetchAnnouncementData = async () => {
@@ -122,7 +103,7 @@ const ChatInterfaceDemo = () => {
   }
 
   const handleScroll = () => {
-    const el = scrollContainerRef.current;    
+    // const el = scrollContainerRef.current;    
     if (!el) return;
 
     const nearBottom = isUserNearBottom(el, 50);

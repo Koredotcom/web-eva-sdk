@@ -342,11 +342,9 @@ const MultiResponse = () => {
                     required: !!field?.value?.required
                 };
 
-                // if (reqdValue) {
-                //     acc[field.key].value = reqdValue;
-                // }
+                if (reqdValue) {
                     acc[field.key].value = reqdValue;
-                }else{
+                } else {
                     acc[field.key].value = '';
                 }
 

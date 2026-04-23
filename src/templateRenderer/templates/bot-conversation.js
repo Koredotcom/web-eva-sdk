@@ -408,4 +408,4 @@ export function render(
 	}
 	return html;
 }
-export default { render , setupTemplates, setupThoughtsToggle };
+export default { render , setupTemplates};

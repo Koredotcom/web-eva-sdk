@@ -133,7 +133,6 @@ const multiIntentExecutionFunc = (item) => {
         }
 
         const historyBtn = document.getElementById(`historyBtn-${task?._id}`);
-        let _questions = cloneDeep(state?.questions);
         if(historyBtn && !historyBtn.eventListenerAdded){
             historyBtn.addEventListener("click", async () => {
                 if(_questions?.hasOwnProperty(task?._id) && _questions[task?._id]?.hasOwnProperty('showResponse')){                    
