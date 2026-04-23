@@ -14,8 +14,11 @@ export * from './Attachments';
 export * from './Feedback'
 export * from "./templateRenderer";
 export * from "./Announcements";
-export { RenderComposeBar } from './composebar';
-export { renderRecentAgents, hideRecentAgentsDiv, unHideRecentAgentsDiv, RecentAgentsFunc } from './LandingPageRecentAgents';
+export * from "./schedulers";
+export * from "./profile";
+export * from "./sdkAgents";
+export * from "./Authorization";
+
 
 // Redux store exports
 export { default as store } from './redux/store';

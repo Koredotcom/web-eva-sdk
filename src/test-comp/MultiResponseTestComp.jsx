@@ -3,15 +3,48 @@ import { GptFileUpload } from "../chat";
 import DeleteGPTResponse from "../chat/gptTemplate/deleteGPTResponse";
 import UpdateGPTPromptValue from "../chat/gptTemplate/updateGPTPromptValue";
 import AddAdditionalGPTResponse from "../chat/gptTemplate/addAdditionalGPTResponse";
-import SubmitGPTForm from "../chat/gptTemplate/submitGPTForm";
+import { SubmitGPTForm } from "../chat/gptTemplate/submitGPTForm";
 import RemoveUploadedGPTFile from "../chat/gptTemplate/removeUploadedGPTFile";
 import store from "../redux/store";
 import { use } from "marked";
-import { set } from "lodash";
+import { cloneDeep, set } from "lodash";
 
 const MultiResponseTestComp = ({ item }) => {        
-    let forms = item?.gpt_forms;
+    let _forms = cloneDeep(item?.gpt_forms);
     const [files, setFiles] = useState({})
+    const [forms, setForms] = useState(_forms);
+    const [selectedPrompt, setSelectedPrompt] = useState(null);
+
+    useEffect(() => {
+        if (store.getState().global?.enableDebugging) {
+            console.log("_forms", _forms);
+        }
+        const _prompts = _forms?.fieldValues?.find(field => field?.key === "prompts");
+        /*check whether prompts is having nested key or not */
+        if(_prompts?.value?.nested){
+            setSelectedPrompt(_prompts?.choices?.[0]);
+        }
+        if (store.getState().global?.enableDebugging) {
+            console.log("selectedPrompt", selectedPrompt);
+        }
+    }, []);
+
+    /** Read the selected option from a dropdown in the DOM using id dropdownValue-${key}-${messageId}-${subIndex} */
+    const getDropdownSelectedValue = (subItem, subIndex) => {
+        const id = `dropdownValue-${subItem?.key}-${item?.messageId}-${subIndex}`;
+        const selectEl = document.getElementById(id);
+        if (!selectEl) return null;
+        return selectEl.value; // value of the selected <option> (e.g. choice.label)
+    };
+
+    /** Same as above but returns the selected option element (for .textContent, .value, etc.) */
+    const getDropdownSelectedOption = (subItem, subIndex) => {
+        const id = `dropdownValue-${subItem?.key}-${item?.messageId}-${subIndex}`;
+        const selectEl = document.getElementById(id);
+        if (!selectEl || selectEl.selectedIndex < 0) return null;
+        return selectEl.options[selectEl.selectedIndex];
+    };
+
     return (
         <>
             <div>
@@ -19,16 +52,16 @@ const MultiResponseTestComp = ({ item }) => {
                     return (
                         <>
                             <div className='contextFiledHeader'>Context</div>
-                            {(contextField?.value?.type === "longText" || contextField?.value?.type === "richText") && (
+                            {((contextField?.value?.type === "longText" || contextField?.value?.type === "richText") && (!selectedPrompt || (selectedPrompt?.variables?.includes(contextField?.key)))) && (
                                 <>
                                     <div contentEditable="true" placeholder={contextField?.placeholder} value={contextField?.value} id={`inputValue-${contextField?.key}-${item?.messageId}`}></div>
                                 </>
                             )}
-                            {(contextField?.value?.type === "simpleText") && (
+                            {((contextField?.value?.type === "simpleText") && (!selectedPrompt || (selectedPrompt?.variables?.includes(contextField?.key)))) && (
                                 <div contentEditable="true" placeholder={contextField?.value?.placeholder} value={contextField?.value} id={`inputValue-${contextField?.key}-${item?.messageId}`}></div>
                             )}
 
-                            {(contextField?.value?.type === "file" || contextField?.value?.canUploadFile) && (
+                            {((contextField?.value?.type === "file" || contextField?.value?.canUploadFile) && (!selectedPrompt || (selectedPrompt?.variables?.includes(contextField?.key)))) && (
                                 <>
                                     <input type="file" id={`fileUpload-${contextField?.key}-${item?.messageId}`} multiple onChange={
                                         async (e) => {
@@ -36,7 +69,9 @@ const MultiResponseTestComp = ({ item }) => {
                                                 const res = await GptFileUpload(e, `${contextField?.key}-${item?.messageId}`)
                                                 setFiles(res)
                                             }    catch(err){
-                                                console.log("error", err)
+                                                if (store.getState().global?.enableDebugging) {
+                                                    console.log("error", err)
+                                                }
                                             }                                 
                                         
                                     }
@@ -68,7 +103,7 @@ const MultiResponseTestComp = ({ item }) => {
                             {fieldValue?.map((subItem, anotherIndex) => {
                                 return (
                                     <>
-                                        {(subItem?.value?.type === "dropdown" && subItem?.value?.multi) && (
+                                        {((subItem?.value?.type === "dropdown" && subItem?.value?.multi) && (!selectedPrompt || (selectedPrompt?.variables?.includes(subItem?.key)))) && (
                                             <>
                                                 <div>{subItem?.label}</div>
                                                 <select id={`dropdownValue-${subItem?.key}-${item?.messageId}-${subIndex}`} multiple>
@@ -78,7 +113,7 @@ const MultiResponseTestComp = ({ item }) => {
                                                 </select>
                                             </>
                                         )}
-                                        {(subItem?.value?.type === "dropdown" && !subItem?.value?.multi) && (
+                                        {((subItem?.value?.type === "dropdown" && !subItem?.value?.multi && subItem?.key !== "prompts") && (!selectedPrompt || (selectedPrompt?.variables?.includes(subItem?.key)))) && (
                                             <>
                                                 <div>{subItem?.label}</div>
                                                 <select id={`dropdownValue-${subItem?.key}-${item?.messageId}-${subIndex}`} >
@@ -88,25 +123,25 @@ const MultiResponseTestComp = ({ item }) => {
                                                 </select>
                                             </>
                                         )}
-                                        {(subItem?.value?.type === "simpleText") && (
+                                        {(subItem?.value?.type === "simpleText" && (!selectedPrompt || (selectedPrompt?.variables?.includes(subItem?.key)))) && (
                                             <>
                                                 <div>{subItem?.label}</div>
                                                 <div key={subIndex} value={subItem?.value} contentEditable="true" id={`inputValue-${subItem?.key}-${item?.messageId}-${subIndex}`} />
                                             </>
                                         )}
-                                        {(subItem?.value?.type === "number") && (
+                                        {(subItem?.value?.type === "number" && (!selectedPrompt || (selectedPrompt?.variables?.includes(subItem?.key)))) && (
                                             <>
                                                 <div>{subItem?.label}</div>
                                                 <input type="number" id={`inputValue-${subItem?.key}-${item?.messageId}-${subIndex}`} />
                                             </>
                                         )}
-                                        {(subItem?.value?.type === "longText") && (
+                                        {(subItem?.value?.type === "longText" && (!selectedPrompt || (selectedPrompt?.variables?.includes(subItem?.key)))) && (
                                             <>
                                                 <div>{subItem?.label}</div>
                                                 <div key={subIndex} value={subItem?.value} contentEditable="true" id={`inputValue-${subItem?.key}-${item?.messageId}-${subIndex}`} />
                                             </>
                                         )}
-                                        {(subItem?.value?.canUploadFile || subItem?.value?.type === 'file') && (
+                                        {((subItem?.value?.canUploadFile || subItem?.value?.type === 'file') && (!selectedPrompt || (selectedPrompt?.variables?.includes(subItem?.key)))) && (
                                             <>  
                                                 <input type="file" id={`fileUpload-${subItem?.key}-${item?.messageId}-${subIndex}`} multiple onChange={
                                                     async(e) => {
@@ -114,7 +149,9 @@ const MultiResponseTestComp = ({ item }) => {
                                                           const res =  await GptFileUpload(e, `${subItem?.key}-${item?.messageId}-${subIndex}`)
                                                           setFiles(res)
                                                         }catch(err){
-                                                            console.log("error", err)
+                                                            if (store.getState().global?.enableDebugging) {
+                                                                console.log("error", err)
+                                                            }
                                                         }
                                                     }}/>
                                                 {files?.[`${subItem?.key}-${item?.messageId}-${subIndex}`]?.map((file, fileIndex) =>{
@@ -134,10 +171,30 @@ const MultiResponseTestComp = ({ item }) => {
                                             </>
                                         )}
                                         {subItem?.value?.nested?.key === "prompt" && (
-                                            <>  
-                                                <div>{subItem?.value?.nested?.label}</div>
-                                                <div id={`inputValue-${subItem?.key}-${item?.messageId}-${subIndex}`} contentEditable={subItem?.value?.nested?.readOnly ? false : true}>{subItem?.value?.nested?.value}</div>
-                                            </>
+                                            // <>  
+                                            //     <div>{subItem?.value?.nested?.label}</div>
+                                            //     <div id={`inputValue-${subItem?.key}-${item?.messageId}-${subIndex}`} contentEditable={subItem?.value?.nested?.readOnly ? false : true}>{subItem?.value?.nested?.value}</div>
+                                            // </>
+                                            <select
+                                                id={`dropdownValue-${subItem?.key}-${item?.messageId}-${subIndex}`}
+                                                value={selectedPrompt ? String(selectedPrompt?.label ?? "") : ""}
+                                                onChange={(e) => {
+                                                    const selectedLabel = e.target.value;
+                                                    const selectedChoice = subItem?.value?.choices?.find(
+                                                        (c) =>  c?.label === selectedLabel
+                                                    );
+                                                    if (selectedChoice) {
+                                                        setSelectedPrompt(selectedChoice);
+                                                    }
+                                                }}
+                                            >
+                                                {subItem?.value?.choices?.map((choice, choiceIndex) => (
+                                                    <option key={choice?.id ?? choiceIndex} value={String(choice?.label ?? "")}>
+                                                        {choice?.label}
+                                                    </option>
+                                                ))}
+
+                                            </select>
                                         )}
                                     </>
                                 )

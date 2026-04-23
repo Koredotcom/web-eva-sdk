@@ -79,9 +79,9 @@ const FileUpload = (props) => {
                     //Checking whether all files have completed token generation to make the searchSession Call
                     if (completedFiles === allFiles.length) {
                         let selectedSources = state?.selectedContext?.data?.sources
-                        if (allSources?.length !== selectedSources?.length) {
+                        if ((allSources?.length !== selectedSources?.length) && selectedSources?.length > 0) {
                             //Checking and uploading the selected sources as context
-                            allSources = allSources.filter(source =>
+                            allSources = allSources?.filter(source =>
                                 selectedSources.some(selected => selected.uID === source.uID)
                             );
                         }
@@ -133,7 +133,6 @@ const FileUpload = (props) => {
         const uploadConfig = {
             file: file.file,
             userInfoId: userId,
-            // fileContext: 'knowledge',
             fileContext: 'runtime',
             userAccessToken: userAccessToken,
             mediaName: obj.mediaName,
@@ -208,6 +207,7 @@ const FileUpload = (props) => {
         // console.log(msg, data, allFilesCount)
         let _selectedContext = {};
         _selectedContext.data = {};
+        if(state.selectedContext?.data?.sources) {
         let remainingFiles = state.selectedContext.data.sources.filter(file => file.uID !== data.uniqueID)
         let errorFiles = [...(state.selectedContext.data.error || [])];
         let fileWithError = {
@@ -220,6 +220,9 @@ const FileUpload = (props) => {
         _selectedContext.data.sessionId = state.selectedContext?.data?.sessionId
         _selectedContext.data.quickactions = state.selectedContext?.data?.quickactions  
         _selectedContext.data.error = errorFiles
+    }else{
+        _selectedContext.data.sources = [{...data, error: msg}]
+    }
         store.dispatch(setSelectedContext(_selectedContext))
         // Returning as an object with success as false for the client to know that the request could not be completed
         return;

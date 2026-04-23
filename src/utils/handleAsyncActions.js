@@ -13,7 +13,12 @@ export const handleAsyncActions = (builder, asyncThunk, stateKey, callback) => {
             }
         })
         .addCase(asyncThunk.rejected, (state, action) => {
-            state[stateKey].status = 'failed';
-            state[stateKey].error = action.payload;
+            // Check if the request was cancelled
+            if (action.payload?.cancelled) {
+                state[stateKey].status = 'cancelled';                
+            } else {
+                state[stateKey].status = 'failed';
+                state[stateKey].error = action.payload;
+            }
         });
 };

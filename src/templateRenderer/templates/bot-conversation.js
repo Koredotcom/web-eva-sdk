@@ -1,11 +1,11 @@
 // import BotConversation from "../chat/botAgent/getBotConversation.js"
-import { isEmpty } from "lodash";
+import { isEmpty, cloneDeep } from "lodash";
 import BotConversation from "../../chat/botAgent/getBotConversation";
 import TemplateComponents from "./index";
 import { encodeHtml } from "../../utils/helpers";
 import customMarkdownRenderer from "../utils/customMarkdownRenderer";
-import { MessageRenderer } from "../../plugins/Markdown/message-renderer";
-import { cheveronRightIcon, MaximizeIcon, MinimizeIcon } from "../icons-library";
+import store from "../../redux/store";
+import { updateChatData } from "../../redux/globalSlice";
 
 function escapeHTML(str) {
 	if (!str) return "";
@@ -262,104 +262,19 @@ export function setupTemplates(botConversation) {
 	}
 }
 
-const renderThoughts = (conversation, props) => {
-	const uniqueId = `thought-wrapper-${conversation?.messageId}`;
-	const isCollapsed = conversation?.question?.length > 0 || props?.status === "completed";
-	return `
-		<div class='thought-wrapper ${isCollapsed ? 'collapsed' : 'expanded'}' id='${uniqueId}' data-toggle-thoughts>
-			<span class='thoughts-header' id='thoughts-header-${conversation?.messageId}'>Thought ${isCollapsed ? `for ${conversation?.thoughts?.[conversation?.thoughts?.length - 1]?.thoughtTime} secs` : ''}</span>
-			<span class='spanIcon'>${cheveronRightIcon({ size: 8, color: "#70707B" })}</span>
-			<div class="expand-thoughts-container">
-				${expandThoughts(conversation)}
-			</div>
-		</div>
-	`;	
-}
-
-const expandThoughts = (conversation) => {
-	let html = `
-        <div class='query-response-flow-items'>
-            ${conversation?.thoughts?.map((thought, index) => {
-		return `
-		<div class='thoughtsContent' key=${index} style="animation-delay: ${ index * 0.2 } s">
-			<div class='thoughts-content-wrapper'> 
-				<div class='border-line'></div>
-				<div class='thought-text'>${thought?.content}</div>				
-			</div>                                        
-		</div>  
-		${!conversation?.hasOwnProperty('question') ? (index === conversation?.thoughts?.length - 1 ? `<div class='thought-loader-wrapper'>
-			<div class='thought-loader'>
-				<div class="dot-flashing"></div>
-			</div>
-		</div>`:''):''}                  
-                `;
-	}).join('')}
-        </div>
-    `;
-	return html;
-}
-
-const setupThoughtsToggle = (messageId, thoughtTime,  retryCount = 0 ) => {	
-	const maxRetries = 10;
-	const retryDelay = 500;	
-	const thoughtWrapper = document.getElementById(`thought-wrapper-${messageId}`);
-	
-	if (!thoughtWrapper) {
-		if (retryCount < maxRetries) {
-			setTimeout(() => setupThoughtsToggle(messageId, thoughtTime, retryCount + 1), retryDelay);
-			return;
-		}
-		return;
+function setupToggleListener(props) {
+	const toggleBtn = document.getElementById(`bot-toggle-${props?.messageId}`);
+	if (toggleBtn && !toggleBtn.eventListenerAdded) {
+		toggleBtn.addEventListener("click", () => {
+			const questions = cloneDeep(store.getState().global?.questions);
+			const key = props?.isTask ? props?.stepId : (props?.reqId || props?._id);
+			if (key && questions[key]) {
+				questions[key].isExpanded = !questions[key].isExpanded;
+				store.dispatch(updateChatData(questions));
+			}
+		});
+		toggleBtn.eventListenerAdded = true;
 	}
-
-	const toggleThoughts = (event, thoughtTime) => {
-		event.preventDefault();
-		event.stopPropagation();		
-		const isCurrentlyCollapsed = thoughtWrapper.classList.contains('collapsed');
-		const iconSpan = thoughtWrapper.querySelector('.spanIcon');
-		const thoughtsHeader = document.getElementById(`thoughts-header-${messageId}`);
-		if (isCurrentlyCollapsed) {
-			try{
-				thoughtWrapper.classList.remove('collapsed');
-				thoughtWrapper.classList.add('expanded');			
-				
-				
-				// Ensure icon rotation for expanded state (chevron down)
-				if (iconSpan) {
-					iconSpan.style.transform = 'rotate(90deg)';
-					iconSpan.style.transition = 'transform 0.3s ease';
-				}
-				thoughtsHeader.textContent = `Thoughts`;
-			}
-			catch(error){
-				console.log('error', error);
-			}
-
-		} else {
-			thoughtWrapper.classList.remove('expanded');
-			thoughtWrapper.classList.add('collapsed');
-			/* update the thoughts header text */
-			
-			thoughtsHeader.textContent = `Thoughts for ${thoughtTime} secs`;
-			
-			// Ensure icon rotation for collapsed state (chevron right)
-			if (iconSpan) {
-				iconSpan.style.transform = 'rotate(0deg)';
-				iconSpan.style.transition = 'transform 0.3s ease';
-			}
-		}
-	};
-
-	// Remove any existing listener first to prevent multiple listeners
-	if (thoughtWrapper._toggleHandler) {
-		thoughtWrapper.removeEventListener('click', thoughtWrapper._toggleHandler);
-	}
-	
-	// Create and store the handler function
-	thoughtWrapper._toggleHandler = (event) => toggleThoughts(event, thoughtTime);
-	
-	// Add click event listener with thoughtTime passed correctly
-	thoughtWrapper.addEventListener('click', thoughtWrapper._toggleHandler);
 }
 
 function renderBotConversation(
@@ -370,24 +285,24 @@ function renderBotConversation(
 ) {
 	const botConversation = props?.botConversation;
 
-	if (!Object.values(botConversation || {})?.length) {
+	if (!Object.values(botConversation || {})?.length && props?.status === 'in-progress') {
 		return "";
 	}
 
 	let conversationsHTML = "";
+	const hasThreads = Object.values(botConversation || {})?.length > 0;
 
-	// if(props?.status === 'completed' && props?.viewType === 'threadView') {
-	// 	conversationsHTML = customMarkdownRenderer(`
-	// 		<div class="botTemplate-${props?.messageId}">
-	// 			${props?.answer}
-	// 		</div>
-	// 	`);
-	// }else{
-		
-
-	// }
-
-	conversationsHTML = Object.values(botConversation)
+	if(props?.status === 'completed' && props?.viewType === 'threadView' && !props?.isExpanded) {
+		conversationsHTML = customMarkdownRenderer(`
+			<div class="botTemplate-${props?.messageId}">
+				${props?.answer}
+			</div>
+		`);
+		if (hasThreads) {
+			conversationsHTML += `<button class="bot-toggle-btn" id="bot-toggle-${props?.messageId}">Expand</button>`;
+		}
+	}else{
+		conversationsHTML = Object.values(botConversation || {})
 		.map((conversation) =>
 			createConversationHTML(
 				conversation,
@@ -398,9 +313,11 @@ function renderBotConversation(
 			)
 		)
 		.join("");
-	// Find conversation with thoughts
-	const conversationWithThoughts = Object.values(botConversation || {}).find(conv => conv?.thoughts?.length > 0);
-	
+
+		if (props?.status === 'completed' && props?.viewType === 'threadView' && props?.isExpanded) {
+			conversationsHTML += `<button class="bot-toggle-btn" id="bot-toggle-${props?.messageId}">Collapse</button>`;
+		}
+	}
 	return `
 		${renderConversationAgentIcon(props)}		
         <div class="bot-conversation-wrapper ${props?.status === 'completed' ? 'completed' : ''}" data-message-id="${props?.messageId} id="bot-conversation-wrapper">
@@ -463,9 +380,7 @@ export function render(
 	timer = setTimeout(() => {
 		setupEventListeners(props?.botConversation, props);
 		setupTemplates(props?.botConversation);
-		
-		// Try again in case some elements were added later
-		setupAllThoughtToggles();
+		setupToggleListener(props);
 	}, 1000);
 	
 	// Also use MutationObserver to catch dynamically added elements

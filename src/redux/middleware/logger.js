@@ -1,7 +1,12 @@
 const logger = storeAPI => next => action => {
-    console.log('Dispatching action:', action);
+    const enableDebugging = storeAPI.getState()?.global?.enableDebugging;
+    if (enableDebugging) {
+        console.log('Dispatching action:', action.type);
+    }
     const result = next(action);
-    console.log('Next state:', storeAPI.getState());
+    if (enableDebugging) {
+        console.log('Next state:', storeAPI.getState()?.global || {});
+    }
     return result;
 };
 

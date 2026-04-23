@@ -27,10 +27,9 @@ const App = () => {
   
   
   return (
-    <div className='app-container'>
-      {/* <div id='master-component' className='master-component'></div>  */}
+    <div>
       <ChatInterfaceDemo />
-      {/* <ChatTestComp/> */}
+      {/* <ChatTestComp /> */}
       {/* <TestComp /> */}
       {/* <Agents /> */}
       {/* <File /> */}

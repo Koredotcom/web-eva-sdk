@@ -15,7 +15,7 @@ const Announcements = () => {
 
         // Subscribe to updates
         const unsubscribe = announcementsRef.current.subscribe((result) => {
-            setAnnouncements(result?.data?.announcements || []);
+            setAnnouncements(result?.data || []);
         });
 
         return () => {

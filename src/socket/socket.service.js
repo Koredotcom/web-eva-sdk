@@ -4,13 +4,40 @@ import BotConversation from "../chat/botAgent/getBotConversation";
 import Notification from "../notifications/notification";
 import { presenceStart } from "../redux/actions/global.action";
 import store from "../redux/store";
-import { HistoryInterface } from "../history";
+import { AnnouncementsInterface } from "../Announcements";
 
 class WebSocketClient {
     constructor() {
         this.socket = null;
         this.url = null;
         this.options = null;
+    }
+
+    stopReconnectionOnUnauthorized() {
+        if (!this.socket) {
+            return;
+        }
+        const manager = this.socket.io;
+        if (manager) {
+            manager.reconnection(false);
+            manager.disconnect();
+        }
+        this.socket = null;
+    }
+
+    async refreshPresenceTokenOrStop() {
+        const action = await store.dispatch(presenceStart());
+        if (action?.meta?.requestStatus === "rejected") {
+            if (action?.payload?.status === 401) {
+                console.warn("[socket] presenceStart unauthorized, stopping reconnects");
+                this.stopReconnectionOnUnauthorized();
+            }
+            return false;
+        }
+        if (this.options.query) {
+            this.options.query.sToken = store.getState().global?.presenceStart?.data?.sToken;
+        }
+        return true;
     }
 
     initialize({ url, options }) {
@@ -22,16 +49,9 @@ class WebSocketClient {
         this.options = {
             transports: ["websocket"],
             reconnection: true,
-            reconnectionAttempts: 1000,
+            reconnectionAttempts: Infinity,
             reconnectionDelay: 1000,
-            auth: (cb) => {
-                // This function is called on every connection attempt (including reconnects)
-                cb({
-                    ...(options?.query || {}),
-                    sToken: store.getState().global?.presenceStart?.data?.sToken,
-                    rnd: new Date().getTime(),
-                });
-            },
+            reconnectionDelayMax: 30000,
             ...options,
         };
     }
@@ -54,12 +74,12 @@ class WebSocketClient {
             });
             
             this.socket.on("disconnect", async (reason) => {
-                await store.dispatch(presenceStart())
+                await this.refreshPresenceTokenOrStop();
                 console.warn(`Socket disconnected: ${reason}`);
             });
 
             this.socket.on("connect_error", async (error) => {
-                await store.dispatch(presenceStart())
+                await this.refreshPresenceTokenOrStop();
                 console.error(`Socket connection Error: ${error.message}`);
             });
 
@@ -73,7 +93,7 @@ class WebSocketClient {
             });
 
             this.socket.on('live', (msg) => {
-                if(msg?.entity === "answerContext") {
+                if(msg?.entity === "answersuggestion" || msg?.entity === "thoughts") {
                     /*In answer suggestion, will receive thoughts of agents, need to append to the question*/                    
                         ChatInterface().agentThoughts(msg)                                        
                 }
@@ -87,8 +107,8 @@ class WebSocketClient {
                     /*update the name in the history board */
                     HistoryInterface().updateHistoryBoardNameonSocketEvent(msg?.data)
                 }
-                if (msg?.entity === 'reqFlow') {
-                    ChatInterface().responseFlowGeneration(msg)
+                if(msg?.entity === "announcements"){
+                    AnnouncementsInterface().setNewAnnouncements(msg)
                 }
             });
             this.socket.on("notification", (msg) => {

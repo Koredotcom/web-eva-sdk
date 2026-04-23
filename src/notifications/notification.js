@@ -29,8 +29,8 @@ const Notification = () => {
 
     const notifyLatestNotification = async (notification) => {
         if(notification?.nStats?.bell === 0) return;
-        /*we should not honor the alerts that are coming for badge count, to do so added the below condition */
-        if(notification?.channels?.includes("bell")) return;
+        if(!notification?.channels?.includes("bell")) return;
+        
         //Method to notify the latest notification
         let _notificationState = cloneDeep(state?.notifications);
         _notificationState.bell = { 'bell': notification?.nStats?.bell };
@@ -66,34 +66,32 @@ const Notification = () => {
         //Method to mark all the notifications that are displayedas read        
         let userId = state?.profile?.data?.id
         let payload;
-        //If alert is there, sending the id of alert to the backend, once we get the response, will send the latest notification id to the backend
-        //Also need to check with the backed team, if we send the latest alert id, will it work or not
         if (state?.notifications?.alert?.length > 0) {
             payload = {
                 "readTill": state?.notifications?.alert?.[0]?.cd?.nId
             }
-            const alertNotificationRes = await store.dispatch(readNotification({ userId, payload }))
+            const alertNotificationRes = await store.dispatch(readNotification({ userId, payload }))  
             console.log("alertNotificationRes", alertNotificationRes)
         }
 
         payload = {
             "readTill": state?.notifications?.notifications?.[0]?._id
-        }
-        /*get the total notifications to update the isRead state of the notifications*/
-        const res = await store.dispatch(readNotification({ userId, payload }))
-        /*in case alert is there, when clicked on mark all as read, need to mark read for that alert as well */
-        if (res?.payload?.SUCCESS) {
+        }     
+        /*get the total notifications to update the isRead state of the notifications*/                  
+        const res = await store.dispatch(readNotification({ userId, payload }))    
+        /*in case alert is there, when clicked on mark all as read, need to mark read for that alert as well */                    
+        if(res?.payload?.SUCCESS){
             let wholeNotifications = [];
             let _notificationState = cloneDeep(state?.notifications);
             wholeNotifications = _notificationState?.notifications
-            if (_notificationState?.alert?.length > 0) {
+            if(_notificationState?.alert?.length > 0){                
                 wholeNotifications = [..._notificationState?.alert, ..._notificationState?.notifications]
                 delete _notificationState?.alert;
             }
-            else {
+            else{
                 wholeNotifications = _notificationState?.notifications
             }
-
+            
             _notificationState.notifications = wholeNotifications?.map(notification => {
                 notification.isRead = true;
                 return notification;

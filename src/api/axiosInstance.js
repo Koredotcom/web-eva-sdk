@@ -1,4 +1,5 @@
 import axios from 'axios';
+import packageJson from '../../package.json';
 
 const axiosInstance = axios.create({
   // baseURL: 'https://eva-dev.kore.ai/api/1.1/',
@@ -6,6 +7,16 @@ const axiosInstance = axios.create({
     'Content-Type': 'application/json',
   },
 });
+
+const isMobile = () => /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+const _analyticsData =
+  `channel=${isMobile() ? 'mobile' : 'web'};version=` +
+  packageJson.version +
+  ';tz=' +
+  (Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC') +
+  ';'
+
 
 axiosInstance.interceptors.request.use(
   config => {
@@ -16,14 +27,19 @@ axiosInstance.interceptors.request.use(
       if (window.sdkConfig.accessToken) {
         config.headers['Authorization'] = 'bearer ' + window.sdkConfig.accessToken;
       }
+      config.headers['X-KORA-Client'] = _analyticsData;
     } else {
       console.error("SDK error: Please initialize the SDK before using its components.");
-    } 
+    }
     return config;
   },
   error => {
     return Promise.reject(error);
   }
 );
+
+const isIntercepted = (config = {}) => {
+  return !(config.hasOwnProperty('intercepted') && !config.intercepted);
+};
 
 export default axiosInstance;

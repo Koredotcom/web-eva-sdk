@@ -1,9 +1,11 @@
-import { cloneDeep, isEmpty } from "lodash";
+import { cloneDeep, isEmpty, orderBy, keyBy } from "lodash";
+import BotConversation from "../chat/botAgent/getBotConversation";
 import store from "../redux/store";
 import InitiateChatConversationAction from "../chat/InitiateChatConversationAction";
 import { updateChatData } from "../redux/globalSlice";
 import { executionPipelineActions, getSearchHistory } from "../redux/actions/global.action";
 import { cancelOngoingCall } from "../templateRenderer/utils/helper";
+import { getAgentTypeByAgentId } from "../utils/helpers";
 
 const MultiIntentExecution = (props) => {
     let state = store.getState().global;
@@ -32,83 +34,65 @@ const MultiIntentExecution = (props) => {
         return item?.reqId || item?.id;
     };
 
-   const runTask = (item, index = 0, q) => {
-        const globalState = store.getState().global;
-        const { activeBoardId } = globalState;
-
-        const newItem = cloneDeep(item);
-
-        if (q) {
-            const updatedQuestion = cloneDeep(globalState.questions);
-            item = Object.values(updatedQuestion).find(
-            qId => updatedQuestion[qId?.parentMsgId]?.executingActionId === q?.id
-            );
-
-            if (!item) {
-            item =
-                updatedQuestion[newItem?.parentMsgId] ||
-                updatedQuestion[q?.parentMsgId] ||
-                updatedQuestion[globalState?.questions[q?.id]?.parentMsgId];
+    const runTask = (item, index = 0, q) => {
+        state = store.getState().global;
+        const {activeBoardId} = state;  
+        if(!!q){
+            let updatedQuestion = cloneDeep(state.questions);
+            item = Object.values(updatedQuestion).find(qId => (updatedQuestion[qId?.parentMsgId]?.executingActionId ===  q?.id))
+            item = updatedQuestion[item?.parentMsgId] || updatedQuestion[q?.parentMsgId] || updatedQuestion[state?.questions[q?.id]?.parentMsgId]
+          }
+        let _item = cloneDeep(item);
+        let task = _item?.executionPipeline?.[index];
+        /*TODO:- the status of the item should not be changed to completed, till all the tasks of execution pipeline are completed,
+        May be in chat-utils.js, need to check where the status is changed to completed
+        */
+        if(index > 0){
+            if(_item?.executionPipeline[index - 1]){
+                _item.executionPipeline[index - 1].status = 'completed';
             }
+        }        
+        const isMultiIntentExecutionCompleted = _item?.executionPipeline?.every(task => task?.status === 'completed');
+        if(isMultiIntentExecutionCompleted){
+            _item.status = 'completed';
+        }
+        store.dispatch(updateChatData({
+          ...state.questions,
+          [item?.reqId]: {
+            ..._item,
+            status: _item?.status || q?.status || "in-progress"
+          }
+        }))        
+        if(isMultiIntentExecutionCompleted || !task){
+            return;
         }
 
-        const _item = cloneDeep(item);
-
-        const sourceTask =
-            _item?.executionPipeline?.[index] ??
-            globalState.questions?.[newItem?.parentMsgId]?.executionPipeline?.[index];
-
-        if (!sourceTask) return;
-        const task = {
-            ...sourceTask,
-            stepIndex: index
-        };
-
-        store.dispatch(
-            updateChatData({
-            ...globalState.questions,
-            [item?.reqId]: {
-                ...item,
-                status: q?.status || "in-progress"
-            }
-            })
-        );
-
-        const params = {
-            cId: _item?.id,
-            type: _item?.type,
-            stepId: task?._id,
-            task,
-            currentRunningQuestion: _item,
-            parentMsgId: _item?.reqId,
-            isTask: true
-        };
+        task = {...task, stepIndex: index};
+        
+      const params = { cId: _item?.id, type: _item?.type, stepId: task?._id, task, currentRunningQuestion: _item, parentMsgId: _item?.reqId, isTask: true}
 
         const payload = {
-            question: task?.utterance,
-            boardId: activeBoardId,
-            parentId: _item?.messageId,
-            context: {
-            intentId: task?.intents?.[0]?.id,
-            agentId: task?.intents?.[0]?.agentId,
-            stepId: task?._id
+            "question": task?.utterance,
+            "boardId": activeBoardId,
+            "parentId": _item?.messageId,
+            "context": {
+              "intentId": task?.intents?.[0]?.id,
+              "agentId": task?.intents?.[0]?.agentId,
+              "stepId": task?._id
             }
-        };
+          }
 
-        InitiateChatConversationAction({
-            params,
-            payload,
-            multiIntentExecution: true
-        });
-};
+        InitiateChatConversationAction({params, payload, multiIntentExecution: true })
+    }
 
-    const runNextTask = (index, status, question, item = question) => {
+    const runNextTask = (index, status, question, item) => {
         const nextTaskIndex = index + 1;
         
         if([undefined, null, '', 'draft', 'in-progress', 'threadRunning'].includes(status)){
             return;
         }
         else {
+            
             runTask(item, nextTaskIndex, question)
         }
     }
@@ -313,15 +297,31 @@ const MultiIntentExecution = (props) => {
             store.dispatch(updateChatData(mockQuestions))
         }
         else {
-            const params = { pId: item?.messageId, msgId: task?.msgId || task?.messageId, showdata: true }
-            const response = await store.dispatch(getSearchHistory({ boardId: activeBoardId, params }))
-
+            let params = { pId: item?.messageId, msgId: task?.msgId || task?.messageId, showdata: true }            
+            const response = await store.dispatch(getSearchHistory({ boardId: activeBoardId, params }))            
             if (response?.payload?.history) {
                 let executionPipeLineIds = item?.executionPipeline?.map(pipelineItem => pipelineItem?._id);
 
-                response.payload.history.map(historyTask => {
+                for (const historyTask of response.payload.history) {
                     if (historyTask?.templateType === "action_send_msteams_message") {
                         historyTask.externalIntegrationAction = true;
+                    }
+                    let botConversation = undefined;
+                    if (historyTask?.viewType === "threadView") {
+                        const botParams = { limit: 20, showdata: true, pId: historyTask?.messageId };
+                        const botChatData = await store.dispatch(getSearchHistory({ boardId: activeBoardId, params: botParams }));
+                        if (botChatData?.payload?.history?.length) {
+                            const orderedBotChatData = orderBy(botChatData.payload.history, 'msgNo', 'asc');
+                            orderedBotChatData.forEach(detail => {
+                                if (detail?.templateType === "bot_template" && state?.enableKoreBotSDK) {
+                                    detail.template_html = BotConversation().generateHTMLforBotTemplate(detail);
+                                }
+                            });
+                            botConversation = keyBy(orderedBotChatData, 'messageId');
+                        } else {
+                            botConversation = {};
+                        }
+                        historyTask.botConversation = botConversation;
                     }
 
                     if (executionPipeLineIds?.includes(historyTask?.stepId)) {
@@ -340,7 +340,7 @@ const MultiIntentExecution = (props) => {
                             responseFetched: true,
                         };
                     }
-                });
+                }
 
                 store.dispatch(updateChatData(mockQuestions));
             }
@@ -366,3 +366,4 @@ export default MultiIntentExecution;
 export { 
     MultiIntentExecution
 };
+

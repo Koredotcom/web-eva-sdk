@@ -1,5 +1,5 @@
-import { abortAdvanceSearch, advanceSearch, cancelAdvancedSearch, resolveAgentAction, stopResponseGeneration } from "../redux/actions/global.action";
-import { setChatInterfaceOptions, setCurrentQuestion, setCustomData, setEnableContextByFollowupContext, setEnabledCustomTemplates, setErrorState, setAnsFromChipElements, setChatInterfaceElements } from "../redux/globalSlice"
+import { advanceSearch, cancelAdvancedSearch, stopResponseGeneration, getSignedMediaURL } from "../redux/actions/global.action";
+import { setChatInterfaceOptions, setCurrentQuestion, setCustomData, setEnableContextByFollowupContext, setEnabledCustomTemplates, setErrorState, setUserSelectedLLMModel } from "../redux/globalSlice"
 import { updateChatData } from "../redux/globalSlice";
 import store from "../redux/store";
 import { v4 as uuid } from 'uuid';
@@ -69,35 +69,49 @@ const ChatInterface = (props) => {
         hideRecentAgentsDiv('recent-agents-container');
       const state = store.getState()?.global
       if (value) {
-        const { allAgents, selectedContext, commonAgents} = state
+        const { allAgents, selectedContext, commonAgents, userSelectedLLMModel} = state
         let params = { reqId: generateShortUUID() }
-        let payload = { question: value }
+        let payload = { question: value }        
         if(state.activeBoardId) {
           payload.boardId = state.activeBoardId
         }
         if(!isEmpty(state.customData)){
           
-          payload.customData = state.customData          
+          payload.customData = state.customData
+          if(state?.enableDebugging){
+            console.log("custom data in chat interface", state.customData)
+            console.log("custom  data payload in chat interface", payload.customData)
+          }
         }
         const qId = constructQuestionInitial({ ...params, ...payload })
 
         if(!isEmpty(selectedContext?.data)) {
           let _agents = cloneDeep(allAgents?.data?.agents)
-          _agents = [..._agents, ...commonAgents]?.filter(ag => !ag.disabled)          
+          let _commonAgents = cloneDeep(commonAgents) || []
+          _agents = [..._agents, ..._commonAgents?.filter(agent => !agent.disabled)]
           let isAgentSetAsSource = _agents.find(ag => ag.id === selectedContext?.data?.sources?.[0]?.source)
           let isAgent = isAgentSetAsSource ? "agent" : null
           if(isAgent) {
             // when setted context is an agent
+            const _source = cloneDeep(selectedContext?.data?.context || selectedContext?.data?.sources?.[0]) || {}
             payload.context = {
               agentType: isAgentSetAsSource?.type,
               title: isAgentSetAsSource?.name,
-              "sources": [selectedContext?.data?.context || selectedContext?.data?.sources?.[0]]}
+              "sources": [_source]}
             if(selectedContext?.data?.messageId) {
               payload.contextParams = {messageId: selectedContext?.data?.messageId}
             }
             /*writing especially for botAgent, will remove this once search session api gives the context data, when we click on askFollowup after bot completion */
             if(selectedContext?.data?.sessionId){
               payload.context.sessionId = selectedContext?.data?.sessionId
+            }
+            if(selectedContext?.data?.sources?.[0]?.docId === 'llm' || selectedContext?.data?.sources?.[0]?.source === 'llm') {
+              if(userSelectedLLMModel) {
+                payload.context.sources[0] = {
+                  ...payload.context.sources[0],
+                  llmIntegrationId: userSelectedLLMModel
+                }
+              }
             }
           } else {
             // when setted context is an attachment
@@ -106,16 +120,13 @@ const ChatInterface = (props) => {
             }
           }
         }
-        const scrollableElement = document.querySelector('.chatSec');
-        if (scrollableElement) {
-          requestAnimationFrame(() => {
-            //scrollableElement.scrollTop = scrollableElement.scrollHeight;
-            scrollableElement.scrollTo({ top: scrollableElement.scrollHeight, behavior: 'smooth' });
-          });
+        if(state?.enableDebugging){
+          console.log("payload in chat interface", payload)
         }
-        console.log("payload in chat interface", payload)
         const Res = await store.dispatch(advanceSearch({ params, payload, userId: state.profile.data.id }))
-        console.log("payload in chat interface", payload)
+        if(state?.enableDebugging){
+          console.log("payload in chat interface", payload)
+        }
         constructQuestionPostCall(Res, qId)
         resIndexRef = 0
       }
@@ -166,6 +177,17 @@ const ChatInterface = (props) => {
       if(arg?.createIssue){
         if(arg?.from === "gptAgent"){
           params.agentType = "gptAgent"
+          if(payload?.messageId){
+            params.reqId = getCidByMessageId(state.questions, payload?.messageId)
+            replaceExistingQsn = true
+          }            
+          if(arg?.isTask){
+            params.parentMsgId = arg?.parentMsgId
+          }
+        }
+
+        if(arg?.from === 'mcpAgent'){
+          params.agentType = "mcpAgent"
           params.reqId = getCidByMessageId(state.questions, payload?.messageId)
           replaceExistingQsn = true
           if(arg?.isTask){
@@ -176,10 +198,14 @@ const ChatInterface = (props) => {
             
 
       if(!isEmpty(state.customData)){
-        console.log("custom data in chat interface line no 156", state.customData)
-        console.log("custom data payload in chat interface line no 157", payload.customData)
+        if(state?.enableDebugging){
+          console.log("custom data in chat interface line no 156", state.customData)
+          console.log("custom data payload in chat interface line no 157", payload.customData)
+        }
         payload.customData = state.customData
-        console.log("custom data payload in chat interface line no 157", payload.customData)
+        if(state?.enableDebugging){
+          console.log("custom data payload in chat interface line no 157", payload.customData)
+        }
       }
 
 		let qId = null;
@@ -240,11 +266,18 @@ const ChatInterface = (props) => {
        delete payload.context;
     }
 
-    console.log("custom data payload in chat interface line no 206", payload.customData)
+    if(arg?.from === 'mcpAgent'){
+      delete payload.context
+    }
+    if(state?.enableDebugging){
+      console.log("custom data payload in chat interface line no 206", payload.customData)
+    }
 
 		const Res = await store.dispatch(advanceSearch({ params, payload, userId: state?.profile?.data?.id, multiIntentExecution: arg?.multiIntentExecution }))
 
-    console.log("payload in chat interface line no 210", payload)
+    if(state?.enableDebugging){
+      console.log("payload in chat interface line no 210", payload)
+    }
 		/*
 	  below condition triggers when templatetype is gpt_form_template and user doesnt have any input fields to enter, so application needs to make advancesearch api call with {} formData, as per EVA
 	  */
@@ -301,10 +334,10 @@ const ChatInterface = (props) => {
     }
 
     const getCustomData = () => {
-      console.log("custom data in chat interface line 267", state.customData)
       if(state?.enableDebugging){
+        console.log("custom data in chat interface line 267", state.customData)
         console.log("custom data in chat interface line 268", state.customData)
-      }      
+      }
       return state.customData;
     }
 
@@ -355,7 +388,10 @@ const ChatInterface = (props) => {
       if(chatInterfaceOptions?.contentStreaming === false) return;
 
       // questionsRef.current - because questions state updates not coming in eventBuzz
-
+      const questions = cloneDeep(state.questions);
+      if(Object.keys(questions).length === 0) {
+        return;
+      }
       /*when resuming the conversation from history, the history data is structured using uuid, so using redId, we can extract the question to be resumed, so need to target the id, present in question with the help of reqId */
       /*function to check the questions are from history */
       const isHistoryAccessed = checkHistoryAccessed(_questions)
@@ -374,13 +410,18 @@ const ChatInterface = (props) => {
         /*function to fetch the questio id based on the  requestId*/
         reqId = Object.entries(_questions).find(([key, value]) => value?.reqId === detail?.data?.reqId)?.[0]
       }
-      let question = cloneDeep(_questions[reqId])
+      let question = cloneDeep(questions[reqId])
+      if(!question){
+        /*check whether the question is a task, by looping over existing questions and checking the reqId*/
+        question = Object.values(questions)?.find(ques => ques.reqId === detail?.data?.reqId)
+        /*as we dont find any question for the reqId, checking for a match in agentic flow executionPipleline */
+        if(question){
+          /*as we have found a match in agentic flow, so its messageId is the one we should target as questions object for agenticFlow is architected using messageId */
+          reqId = question?.id || question?._id
+        }
+      }
 
-      /*if api returns a non 200 response, an error, straming should be stopped */
-      if(question?.status === "error"){
-        question.streamingStatus = "aborted"
-        _questions[reqId] = question
-        store.dispatch(updateChatData(_questions))
+      if(question?.status === "terminated"){        
         return;
       }
 
@@ -440,9 +481,13 @@ const ChatInterface = (props) => {
               return;               
             }
             
-          }else{
+          }
+          try{
             question.answer = question?.answer?.concat(detail?.data?.chunk)
-          }          
+          }catch(error){
+            console.error("error in concatenating the answer", error, `details are ${reqId} questions are ${questions}`)
+          }
+          
         }
 
         question.templateType = detail?.data?.templateType || "search_answer"
@@ -458,9 +503,13 @@ const ChatInterface = (props) => {
 
       if (detail?.data?.status === 'completed' || detail?.data?.status === 'aborted') {
         question.streamingStatus = detail?.data?.status // 'completed' or 'aborted'
-        
-        _questions[reqId] = question
-        store.dispatch(updateChatData(_questions))
+        // question.apiSuccess = true // apiSuccess is set to true when the advanceSearchApi is completed, so removing this from here
+        question.status = detail?.data?.status
+
+        const questions = cloneDeep(state.questions)
+        questions[reqId] = question
+        console.log(`apiStatus of the question ${reqId} is ${question?.apiSuccess}`)
+        store.dispatch(updateChatData(questions))
 
         resIndexRef = 0
 
@@ -478,13 +527,7 @@ const ChatInterface = (props) => {
       let _questions = cloneDeep(state.questions)
       const cQFromStore = state.currentQuestion /*this helps to understand whether the current question is a part of agentic flow using isTask flag */
       let reqId = detail?.data?.reqId
-      /*if the user terminates the questions, thoughts stearming should be stopped and update the questions */
-      if(_questions[reqId]?.status === "completed"){
-        let currentBotConversation = _questions[reqId]?.botConversation
-        if(currentBotConversation){
-          currentBotConversation[detail?.data?.answerMeta?.outputMessageId].status = "completed"
-        }        
-        store.dispatch(updateChatData(_questions))
+      if(isEmpty(_questions[reqId])){
         return;
       }
       /*when resuming the conversation from history, the history data is structured using uuid, so using redId, we can extract the question to be resumed, so need to target the id, present in question with the help of reqId */
@@ -495,32 +538,36 @@ const ChatInterface = (props) => {
         reqId = cQFromStore?.cId
       }
       let currentQuestion = _questions[reqId]
-      if(detail?.entity !== "answerContext"){      
-      if(detail?.data?.answerMeta?.hasOwnProperty('messageId')) {
-        currentQuestion = {...currentQuestion, ...detail?.data?.answerMeta}      
-        currentQuestion.botConversation = {}  
+      if(state?.enableDebugging){
+        console.log("currentQuestion in agent thoughts function before thoughts", currentQuestion)
       }
-      /*we have to create botConversation with the outputMessageId add thoughts to it, once the advanceSearchApi is completed, need to replace that outputMessageId with the response of advSearch API */
-      if(detail?.data?.answerMeta?.hasOwnProperty('outputMessageId')){
-        if(!currentQuestion?.botConversation) {
-              currentQuestion.botConversation = {}
+      if(currentQuestion.viewType === 'threadView'){
+        if(detail?.data?.answerMeta?.hasOwnProperty('messageId')) {
+          currentQuestion = {...currentQuestion, ...detail?.data?.answerMeta}      
+          currentQuestion.botConversation = {}  
         }
-        currentQuestion.botConversation[detail?.data?.answerMeta?.outputMessageId] = {
-            "suggestion":detail?.data?.suggestion,
-            "thoughts":detail?.data?.answerMeta?.thoughts,
-            "status": "in-progress",
-            "templateType": detail?.data?.templateType || "search_answer",
-        }
-      } 
-    } else {
-      currentQuestion.agentIcon = detail?.data?.answerMeta?.agentIcon
-      currentQuestion.agentName = detail?.data?.answerMeta?.agentName
-      currentQuestion.viewType  = detail?.data?.answerMeta?.viewType
-    }
-      
+        /*we have to create botConversation with the outputMessageId add thoughts to it, once the advanceSearchApi is completed, need to replace that outputMessageId with the response of advSearch API */
+        if(detail?.data?.answerMeta?.hasOwnProperty('outputMessageId')){
+          if(!currentQuestion?.botConversation) {
+                currentQuestion.botConversation = {}
+          }
+          currentQuestion.botConversation[detail?.data?.answerMeta?.outputMessageId] = {
+              "suggestion":detail?.data?.suggestion,
+              "thoughts":detail?.data?.answerMeta?.thoughts,
+              "templateType": detail?.data?.templateType || "search_answer",
+          }
+        }  
+      }else{
+        currentQuestion = {...currentQuestion, ...detail?.data?.answerMeta}      
+      }
+      if(state?.enableDebugging){
+        console.log("currentQuestion in agent thoughts function after thoughts", currentQuestion)
+      }
       _questions[reqId] = currentQuestion      
-      store.dispatch(updateChatData(_questions))      
-      console.log("agentThoughts", detail)
+      store.dispatch(updateChatData(_questions))
+      if(state?.enableDebugging){
+        console.log("agentThoughts", detail)
+      }
     }
 
     const options = (_options) => {
@@ -531,6 +578,10 @@ const ChatInterface = (props) => {
     const clearErrorState = () => {
       // The current function can be used to clear all the error states that are stored whenever an API call fails.
       store.dispatch(setErrorState([]))
+    }
+
+    const storeUserSelectedLLMModel = (model) => {
+      store.dispatch(setUserSelectedLLMModel(model))
     }
 
     /**
@@ -568,13 +619,18 @@ const ChatInterface = (props) => {
       }
     }
 
-    const configureAnsFromChipElements = (payload) => {
-      store.dispatch(setAnsFromChipElements(payload))
-    }
-
-    const configureChatInterfaceElements = (payload) => {
-      store.dispatch(setChatInterfaceElements(payload))
-    }
+    const fetchSignedMediaURL = async ({ msgId, fileId }) => {
+      const userId = store.getState().global?.profile?.data?.id;
+      if (!userId || !msgId || !fileId) {
+        return { error: true, message: "Missing required params: userId, msgId, or fileId" };
+      }
+      try {
+        const result = await store.dispatch(getSignedMediaURL({ userId, msgId, fileId })).unwrap();
+        return result;
+      } catch(error) {
+        return { error: true, message: error?.errors?.[0]?.msg || "Unable to fetch signed media URL" };
+      }
+    };
 
     const setAgentContext = (agent) => {
       const agentDetails = {
@@ -633,10 +689,8 @@ const ChatInterface = (props) => {
         sendMessage,
         setAgentContext,
         stopBotAnswer,
-        configureAnsFromChipElements,
-        responseFlowGeneration,
-        configureChatInterfaceElements,
-        resolveAgent
+        fetchSignedMediaURL,
+        storeUserSelectedLLMModel
     }
 }
 

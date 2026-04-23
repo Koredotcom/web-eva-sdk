@@ -569,7 +569,11 @@ const initializeQuillForContainer = (container, field, item, promptDropdownWords
 export function render(item) {
 	// const { formData } = item;
 
-	const formData = item?.gpt_forms;	
+	// Use stored gpt_forms data if available (e.g., when additional responses were added),
+	// otherwise build initial form data from the item's content.
+	const formData = !isEmpty(item?.gpt_forms?.fieldValues)
+		? item.gpt_forms
+		: MultiResponse().getInitialFormData(item);
 	let contextField = null;
 	let fieldValues = [];
 	if (!isEmpty(formData?.contextFields)) {

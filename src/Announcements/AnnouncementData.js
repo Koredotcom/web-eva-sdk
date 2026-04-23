@@ -6,7 +6,7 @@ const AnnouncementData = async () => {
         // Get userId from profile in store
         const state = store.getState();
         const userId = state.global.profile?.data?.id;
-
+        
         if (!userId) {
             throw new Error('User ID not found in profile. Make sure SDK is properly initialized.');
         }

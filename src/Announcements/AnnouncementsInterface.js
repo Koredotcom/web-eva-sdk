@@ -8,8 +8,8 @@ const AnnouncementsInterface = (props) => {
     // Subscribe to store updates for announcements
     const subscribe = (cb) => {
         let callback = cb;
-
-
+        
+        
 
         const unsubscribe = store.subscribe(() => {
             state = store.getState().global;
@@ -40,39 +40,38 @@ const AnnouncementsInterface = (props) => {
         };
     };
 
-    const setNewAnnouncements = (data) => {
-        const currentAnnouncements = store.getState().global.announcements?.data;
+    const setNewAnnouncements = (data)=>{
+		const currentAnnouncements = store.getState().global.announcements?.data;
         const alreadyAddedAnnouncement = currentAnnouncements.filter(el => data?.data?.announcements?.some(d => d?.announcementId === el.announcementId));
-        if (data?.action === 'add') {
-            if (alreadyAddedAnnouncement?.length === 0) {
-                const newAnnouncement = data?.data?.announcements
-                const allNewAnnouncements = [...currentAnnouncements, ...newAnnouncement]
-                store.dispatch(setAnnouncements({ data: allNewAnnouncements, status: 'success', error: null }))
-            }
-            else {
-                const newAnnouncements = currentAnnouncements?.map(el => {
-                    const found = data?.data?.announcements?.find(d => d?.announcementId === el.announcementId);
-                    return found ? { ...el, ...found } : el;
-                });
-                store.dispatch(setAnnouncements({ data: newAnnouncements, status: 'success', error: null }))
-            }
-        }
-        else {
-            if (alreadyAddedAnnouncement?.length >= 1) {
-                const newAnnouncements = currentAnnouncements?.filter(el => !data?.data?.announcements?.some(d => d?.announcementId === el?.announcementId))
-                store.dispatch(setAnnouncements({ data: newAnnouncements, status: 'success', error: null }))
-            }
-        }
-
+		if(data?.action === 'add'){
+			if(alreadyAddedAnnouncement?.length === 0){
+				const newAnnouncement = data?.data?.announcements
+				const allNewAnnouncements = [...currentAnnouncements , ...newAnnouncement]
+				store.dispatch(setAnnouncements({data : allNewAnnouncements, status : 'success', error : null}))
+			}
+			else {
+				const newAnnouncements = currentAnnouncements?.map(el => {
+					const found = data?.data?.announcements?.find(d => d?.announcementId === el.announcementId);
+					return found ? {...el, ...found} : el;
+				});
+				store.dispatch(setAnnouncements({data : newAnnouncements, status : 'success', error : null}))
+			}
+		}
+		else{
+			if(alreadyAddedAnnouncement?.length >= 1){
+				const newAnnouncements = currentAnnouncements?.filter(el => !data?.data?.announcements?.some(d => d?.announcementId === el?.announcementId))
+				store.dispatch(setAnnouncements({data : newAnnouncements, status : 'success', error : null}))
+			}
+		}
+	
     }
 
     const deleteAnnouncement = async (announcementId) => {
-        const currentAnnouncements = store.getState().global.announcements?.data?.announcements;
+        const currentAnnouncements = store.getState().global.announcements?.data;
         const response = await store.dispatch(deleteAnnouncementAction({ userId: store?.getState()?.global?.profile?.data?.id, announcementId: announcementId }))
-        const deletedAnnouncementId = response?.payload?.id || response?.payload?.announcementId || response?.meta?.arg?.announcementId;
-        if(response?.payload?.status === 200 && deletedAnnouncementId === announcementId) {
+        if(response?.meta?.arg?.announcementId === announcementId) {
             const newAnnouncements = currentAnnouncements?.filter(el => el?.announcementId !== announcementId)
-            store.dispatch(setAnnouncements({ data: {'announcements': newAnnouncements}, status: 'success', error: null }))
+            store.dispatch(setAnnouncements({ data: newAnnouncements, status: 'success', error: null }))
         }
     }
 

@@ -22,7 +22,9 @@ const BotAgentTestComponent = (props) => {
         }
     }, [botConversation])
 
-    console.log("bot conversation: ", botConversation)
+    if (store.getState().global?.enableDebugging) {
+        console.log("bot conversation: ", botConversation)
+    }
     const changeInput = (event) => {
         setInput(event?.target?.value)
     }

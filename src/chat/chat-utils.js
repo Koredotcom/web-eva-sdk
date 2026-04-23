@@ -112,6 +112,10 @@ export const constructQuestionPostCall = (data, qId) => {
     const questions = cloneDeep(state.questions)
     const activeBoardId = state.activeBoardId
 
+    if(data?.payload?.cancelled || Object.keys(questions).length === 0) {
+        return;
+    }
+
     // let followupFromSuggestionModal = data?.params?.suggestionContext;
     let question = questions?.[qId]
     delete question?.loading;
@@ -364,8 +368,15 @@ export const constructQuestionPostCall = (data, qId) => {
             error: question?.status !== 'terminated' // Terminated status is when user interrupted the answer generation. Error is when there is a server driven error.
           };
           
-    }else{  
-        questions[qId] = {...question, apiSuccess: true};
+    }else if(question?.isTask && question?.status !== 'completed'){
+        /*check if the question is botAgent task */
+        if(question?.viewType === 'threadView' && !isEmpty(question?.botConversation)){
+            question.botConversation[data?.payload?.messageId] = data?.payload;
+        }else{
+            questions[qId] = {...question, apiSuccess: data?.payload?.status === 'completed'};
+        }
+    }else{
+        questions[qId] = {...question, apiSuccess: data?.payload?.status === 'completed'};
     }
 
     // updateState({
