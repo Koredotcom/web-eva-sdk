@@ -8,3 +8,5 @@ export {
     getRecentAgents,
     getPinnedAgents,
 } from './sdkAgents.js';
+
+export { default as sdkAgents } from './sdkAgents.js';
