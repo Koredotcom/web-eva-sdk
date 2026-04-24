@@ -22,35 +22,39 @@ const globals_var = {
   // 'socket.io-client': 'io',
 };
 
-const createConfig = (input, dir, name, isMainBuild = false) => {
-  const output = [
-    {
-      dir: `dist/${dir}`,
-      format: 'cjs',
-      entryFileNames: '[name].cjs.js',
-      exports: 'auto',
-    },
-    {
-      dir: `dist/${dir}`,
-      format: 'esm',
-      entryFileNames: '[name].esm.js',
-    }
-  ];
-
-  if (isMainBuild) {
-    output.push({
-      file: 'dist/eva-web-sdk.umd.js',
-      format: 'umd',
-      name: 'EvaSDK',
-      globals: globals_var,
-      exports: 'named',
-    });
-  }
+const createConfig = (input, dir, name, isMainBuild = false, { umdOnly = false, bundleReact = false } = {}) => {
+  const output = umdOnly
+    ? [
+        {
+          file: 'dist/eva-web-sdk.umd.js',
+          format: 'umd',
+          name: 'EvaSDK',
+          // React is bundled in the UMD build, so no React/ReactDOM globals needed.
+          exports: 'named',
+          inlineDynamicImports: true,
+        },
+      ]
+    : [
+        {
+          dir: `dist/${dir}`,
+          format: 'cjs',
+          entryFileNames: '[name].cjs.js',
+          exports: 'auto',
+        },
+        {
+          dir: `dist/${dir}`,
+          format: 'esm',
+          entryFileNames: '[name].esm.js',
+        },
+      ];
 
   return {
     input,
     output,
-    external: Object.keys(globals_var),
+    // For the standalone UMD build we bundle React/ReactDOM in (so script-tag
+    // consumers don't need window.React / window.ReactDOM). For ESM/CJS we keep
+    // them external so bundler-based consumers reuse their own React copy.
+    external: bundleReact ? [] : Object.keys(globals_var),
     // external: [
     //   ...Object.keys(globals_var),
     //   'window',
@@ -124,7 +128,10 @@ const loaderConfig = {
 };
 
 export default [
-  createConfig('src/index.jsx', '.', 'EvaUIReact', true), // Main build - copy static assets (includes unified CSS)
+  // ESM/CJS for npm consumers (React stays external; host provides it)
+  createConfig('src/index.jsx', '.', 'EvaUIReact', true),
+  // Standalone UMD for <script> embedding (React/ReactDOM bundled in)
+  createConfig('src/index.jsx', '.', 'EvaUIReact', false, { umdOnly: true, bundleReact: true }),
   createConfig('src/components/index.js', 'components', 'Components'),
   createConfig('src/composebar/index.js', 'composebar', 'ComposeBar'),
   createConfig('src/history/index.js', 'history', 'History'),
