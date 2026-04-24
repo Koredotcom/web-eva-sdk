@@ -1,5 +1,5 @@
 import { advanceSearch, cancelAdvancedSearch, stopResponseGeneration, getSignedMediaURL } from "../redux/actions/global.action";
-import { setChatInterfaceOptions, setCurrentQuestion, setCustomData, setEnableContextByFollowupContext, setEnabledCustomTemplates, setErrorState, setUserSelectedLLMModel } from "../redux/globalSlice"
+import { setChatInterfaceOptions, setChatInterfaceElements, setCurrentQuestion, setCustomData, setEnableContextByFollowupContext, setEnabledCustomTemplates, setErrorState, setUserSelectedLLMModel } from "../redux/globalSlice"
 import { updateChatData } from "../redux/globalSlice";
 import store from "../redux/store";
 import { v4 as uuid } from 'uuid';
@@ -7,10 +7,11 @@ import { constructQuestionInitial, constructQuestionPostCall } from "./chat-util
 import { checkHistoryAccessed, generateShortUUID, getCidByMessageId, getCidByReqId } from "../utils/helpers";
 import { cloneDeep, isEmpty } from "lodash";
 import BotConversation from "./botAgent/getBotConversation";
+import NewChat from "./NewChat";
 import { current } from "@reduxjs/toolkit";
 import { sessionItemHandler } from "../Attachments/createContext";
 import RecentAgentsFunc from "../LandingPageRecentAgents/RecentAgents";
-const {hideRecentAgentsDiv} = RecentAgentsFunc();
+const { hideRecentAgentsDiv, unHideRecentAgentsDiv } = RecentAgentsFunc();
 
 const ChatInterface = (props) => {
     let state = store.getState().global, input = '', resIndexRef = 0;
@@ -574,6 +575,15 @@ const ChatInterface = (props) => {
       store.dispatch(setChatInterfaceOptions({...chatOptions, ..._options}))
     }
 
+    const configureChatInterfaceElements = (payload) => {
+      store.dispatch(setChatInterfaceElements(payload));
+    };
+
+    const startNewChat = () => {
+      unHideRecentAgentsDiv("recent-agents-container");
+      NewChat();
+    };
+
     const clearErrorState = () => {
       // The current function can be used to clear all the error states that are stored whenever an API call fails.
       store.dispatch(setErrorState([]))
@@ -683,13 +693,15 @@ const ChatInterface = (props) => {
         contentStreaming,
         agentThoughts,
         options,
+        configureChatInterfaceElements,
         enableContextByFollowupContext,
         clearErrorState,
         sendMessage,
         setAgentContext,
         stopBotAnswer,
         fetchSignedMediaURL,
-        storeUserSelectedLLMModel
+        storeUserSelectedLLMModel,
+        startNewChat,
     }
 }
 

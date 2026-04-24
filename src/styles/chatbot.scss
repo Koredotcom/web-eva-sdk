@@ -1,0 +1,1542 @@
+﻿@use "./mixins_new.scss" as *;
+
+/* Floating chatbot UI only */
+.aiforwork-chatbot-trigger {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 9999;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  border-radius: 999px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  background: #fdfeff;
+  color: #000;
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 10px 24px rgb(185 185 185 / 28%);
+}
+
+.aiforwork-chatbot-trigger:hover {
+  background: #f5f5f5;
+}
+
+.aiforwork-chatbot-trigger:focus-visible {
+  outline: 3px solid rgb(185 185 185 / 40%);
+  outline-offset: 2px;
+}
+
+.aiforwork-chatbot-trigger.aiforwork-chatbot-trigger--hidden {
+  //display: none !important;
+  background: #f5f5f5;
+  &:hover {
+    background: #fff;
+  }
+}
+
+.aiforwork-chatbot-trigger-icon {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.85);
+  display: inline-block;
+}
+
+.aiforwork-chatbot-widget {
+  position: fixed;
+  right: 24px;
+  bottom: 90px;
+  z-index: 9998;
+  width: 600px;
+  height: 560px;
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.16);
+  display: flex;
+  flex-direction: column;
+  opacity: 0;
+  transform: translateY(12px);
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  border: 1px solid #eeeeee;
+  font-family: var(--sdk-font-family);
+
+  @media (max-height: 555px) {
+    height: 78dvh;
+  }
+
+  .message-bubble.question {
+    .message-text {
+      background: #F2F4F7;
+    }
+  }
+
+  .Answerschip {
+    &.msutteranceChip {
+      padding: 1.5rem 1rem;
+      border-radius: 1rem;
+      border: 1px solid #EAECF0;
+      background: #F9FAFB;
+      backdrop-filter: blur(16px);
+      width: 100%;
+      margin-bottom: 0;
+
+      .mulanschip {
+        width: 100%;
+        gap: 0.5rem;
+        .chipone {
+          align-items: center;
+          justify-content: flex-start;
+          &:last-child {
+            .newtext {
+              .newtext-line {
+                display: none;
+              }
+            }
+            .tickmarkicon {
+              top: -1px;
+            }
+          }
+          .leftBlock {
+            display: flex;
+            align-items: center;
+          }
+          .tickmarkicon {
+            flex-shrink: 0;
+            display: flex;
+            top: -2px;
+          }
+          .newtext {
+            flex-grow: 1;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            .newtext-label {
+              @include typography-regular(0.875rem, 400, 1.25rem);
+              color: var(--Gray-900, #101828);
+              max-width: 100%;
+              //@include ellipsisText;
+            }
+            .newtext-line {
+              width: 100%;
+              border-bottom: 0.0625rem solid #EAECF0;
+              flex-shrink: 0;
+            }
+          }
+        }
+      }
+
+      .ansdocwrap {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+
+        .chipheadericon {
+          display: flex;
+        }
+
+        .chipheadertype {
+          @include typography-regular(0.875rem, 500, 1.25rem);
+          color: var(--Gray-900, #101828);
+          max-width: 100%;
+        }
+      }
+    }
+  }
+
+  .bot-conversation-content>div:last-child {
+    min-height: auto;
+  }
+
+  .composebar-bot-input-wrapper {
+    &:not(.details-hidden) {
+      &:after {
+        height: 8rem;
+      }
+    }
+  }
+
+  .bot-conversation-content-wrapper {
+    .questcopy {
+      display: none !important;
+    }
+  }
+
+  .agentsTabWrapper {
+    .eva-common-agents-dialog {
+      .agents-action-item {
+        .modeCardContent {
+          .modeCardText {
+            @include ellipsisText;
+          }
+        }
+      }
+    }
+  }
+  sl-dialog.eva-agents-dialog {
+    .composebarFilter {
+      .agentsTabWrapper {
+        .agentsHeader {
+          .agentSearch {
+            .agentSearchBar {
+              max-height: 40px;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  .agent-selection-popup {
+    .popup-container {
+      .agentsTabWrapper {
+        height: auto;
+      }
+    }
+  }
+
+  .setContextDropdown {
+      &::part(panel) {
+        padding: .5rem;
+        max-height: 16.25rem;
+        //width: 15.625rem;
+        border-radius: .75rem;
+        background: #fff;
+        border: .0625rem solid #e5e5e5;
+        box-shadow: 0px 24px 48px -12px rgba(16, 24, 40, .1803921569);
+      }
+  
+      &.active {
+        background: #f5f5f5;
+  
+        &::slot(trigger) {
+          .setContextButton {
+            background: #f5f5f5;
+          }
+        }
+      }
+  
+      sl-menu {
+        border: none;
+        box-shadow: none;
+        background: transparent;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+  
+        sl-menu-item {
+          &::part(base) {
+            padding: 6px 8px;
+            border-radius: 6px;
+            width: 11.875rem;
+          }
+  
+          // sl-menu-item is a shadow DOM component; internal `.menu-item__*` classes can't be styled from outside.
+          // Hide built-in check + chevron via exposed parts.
+          &::part(checked-icon),
+          &::part(submenu-icon) {
+            display: none !important;
+            width: 0 !important;
+            height: 0 !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            overflow: hidden !important;
+          }
+  
+          &::part(prefix) {
+            flex-shrink: 0;
+          }
+  
+          &::part(label) {
+            flex-grow: 1;
+            min-width: 0;
+            @include ellipsisText;
+            font-family: var(--sdk-font-family);
+            font-size: .875rem;
+            font-style: normal;
+            font-weight: 500;
+            line-height: 1.25rem;
+            letter-spacing: 0em;
+            color: #141414;
+          }
+  
+          &::part(suffix) {
+            display: none;
+          }
+  
+          &.selected {
+            //background-color: #f0fff4 !important;
+  
+            &::part(suffix) {
+              display: flex;
+            }
+          }
+  
+          .source-icon-wrapper {
+            margin-right: 8px;
+            display: flex;
+            align-items: center;
+  
+            .srcimg {
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              width: 1.25rem;
+              height: 1.25rem;
+              position: relative;
+  
+              img {
+                width: 1.125rem;
+                height: 1.125rem;
+  
+                &.backgroundIcon {
+                  width: 1.125rem;
+                  height: 1.125rem;
+                }
+  
+                &.subIcon {
+                  position: absolute;
+                  bottom: -2px;
+                  right: -2px;
+                  width: 10px;
+                  height: 10px;
+                  background: white;
+                  border-radius: 2px;
+                }
+              }
+            }
+          }
+  
+          .source-label {
+            font-family: var(--sdk-font-family);
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #141414;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 15rem;
+          }
+  
+          .tick-wrapper {
+            display: flex;
+            align-items: center;
+            margin-left: auto;
+            padding-left: 8px;
+          }
+        }
+      }
+    }
+
+  .attachment-preview-container {
+    width: 100%;
+  }
+
+  .landing-page-content {
+    .landing-page-content-container {
+      .compose-bar-container, .recent-agents-parent-container {
+        width: 95%;
+      }
+    }
+  }
+
+  .parent-home-container {
+    .landing-page-container.results-page-container {
+      .landing-page-content #questions-container {
+        overscroll-behavior: contain;
+        padding: 0 0.5rem 1rem 0.5rem;
+        .message-container {
+          width: 95%;
+        }
+      }
+      .ComposeBarContainer {
+        .eva-composebar-parent {
+          z-index: 1;
+          .eva-composebar-area {
+            &.eva-composebar-area--history-selected {
+              animation: none;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  .answerFromChipDiv {
+    .ansFromChip {
+      flex-wrap: wrap;
+    }
+    .chatFilterGroup {
+      .threadListGroup {
+        .threadListItem {
+          .rightCol {
+            .leftDetails {
+              .name {
+                font-size: 14px;
+              }
+            }
+            .rightDetails {
+              .setContextDr {
+                .subText {
+                  .dtText {
+                    font-size: 14px;
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    .ansFromChip {
+      .sourceGroup-item {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        width: 100%;
+        //max-width: 70%;
+        .sourcesChip {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            //width: 60%;
+            .sourceChipItem {
+                // max-width: calc(100% - 1rem);
+                .gpt-agents-source-chip {
+                    display: flex;
+                    align-items: center;
+                    justify-content: flex-start;
+                    gap: 0.25rem;
+                    padding: 0.375rem 0.75rem;
+                    border-radius: 6.25rem;
+                    background: #F5F5F5;
+                    cursor: pointer;
+                    &:hover {
+                        background: #E5E5E5;
+                    }
+                    &.no-content {
+                        pointer-events: none;
+                    }
+                    .icon-cls {
+                        display: flex;
+                        align-items: center;
+                    }
+                    .sourceTitle {
+                        font-family: var(--sdk-font-family);
+                        font-size: 0.875rem;
+                        font-style: normal;
+                        font-weight: 400;
+                        line-height: 1.25rem;
+                        letter-spacing: 0em;
+                        color: #0F0F0F;
+                        max-width: 11.375rem;
+                        text-overflow: ellipsis;
+                        overflow: hidden;
+                        white-space: nowrap;
+                    }
+                }
+                .sourceChipItemTextGroup {
+                    display: flex;
+                    align-items: center;
+                    gap: 0.5rem;
+                    padding: 0.375rem 0.75rem 0.375rem 0.5rem;
+                    border-radius: 6.25rem;
+                    background: #F5F5F5;
+                    cursor: pointer;
+                    .p-avatar {
+                        display: flex;
+                        align-items: center;
+                        img {
+                            width: 1rem;
+                            height: 1rem;
+                            border: .0625rem solid #e5e5e5;
+                            border-radius: 50%;
+                            background-color: #FFFFFF;
+                            overflow: hidden;
+                            &:nth-child(2) {
+                                margin-left: -0.5rem;
+                            }
+                            &:nth-child(3) {
+                                margin-left: -0.5rem;
+                            }
+                        }
+                        .sourceIcon {
+                            display: flex;
+                            align-items: center;
+                            flex-shrink: 0;
+                            width: 1rem;
+                            max-height: 1rem;
+                            object-fit: contain;
+                            max-width: 100%;
+                            border: .0625rem solid #e5e5e5;
+                            border-radius: 50%;
+                            background-color: #FFFFFF;
+                            overflow: hidden;
+                            &:nth-child(2) {
+                                margin-left: -0.5rem;
+                            }
+                            &:nth-child(3) {
+                                margin-left: -0.5rem;
+                            }
+                            .srcimg {
+                                width: 1rem;
+                                height: 1rem;
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                img {
+                                    width: 100%;
+                                    height: 100%;
+                                    object-fit: contain;
+                                    position: static;
+                                }
+                            }
+                        }
+                    }
+                    .sourceChipItemText {
+                        font-family: var(--sdk-font-family);
+                        font-size: 0.875rem;
+                        font-style: normal;
+                        font-weight: 400;
+                        line-height: 1.25rem;
+                        letter-spacing: 0em;
+                        color: #0F0F0F;
+                        max-width: 100%;
+                        text-overflow: ellipsis;
+                        overflow: hidden;
+                        white-space: nowrap;
+                    }
+                    &:hover {
+                        background: #E5E5E5;
+                    }
+                }
+
+                .sourceChipItemText {
+                    display: flex;
+                    align-items: center;
+                    gap: 0.5rem;
+                    cursor: pointer;
+                    &.buttonchip {
+                        padding: .375rem .75rem;
+                        border-radius: 6.25rem;
+                        background: #F5F5F5;
+                    }
+                    &:hover {
+                        background: #E5E5E5;
+                    }                            
+                    .avatar-sources-chip {
+                        width: 1rem;
+                        height: 1rem;
+                        border: .0625rem solid #e5e5e5;
+                        border-radius: 50%;
+                        background-color: #FFFFFF;
+                        overflow: hidden;
+                        &:nth-child(2) {
+                            margin-left: -0.5rem;
+                        }
+                        &:nth-child(3) {
+                            margin-left: -0.5rem;
+                        }
+                    }
+                    .sourceIcon {
+                        display: flex;
+                        align-items: center;
+                        flex-shrink: 0;
+
+                        .srcimg {
+                            width: 1rem;
+                            height: 1rem;
+                            position: relative;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+
+                            img {
+                                width: 100%;
+                                height: 100%;
+                                object-fit: contain;
+                                position: static;
+                            }
+                        }
+                    }
+                    .sourceTitle {
+                        font-family: var(--sdk-font-family);
+                        font-size: 0.875rem;
+                        font-style: normal;
+                        font-weight: 400;
+                        line-height: 1.25rem;
+                        letter-spacing: 0em;
+                        color: #0F0F0F;
+                        text-overflow: ellipsis;
+                        overflow: hidden;
+                        white-space: nowrap;
+                        max-width: 10rem;
+                    }
+                }
+            }
+        }
+        .search-results-ans-block {
+            .results-chip-block {
+                .chip-text {
+                    max-width: 100%;
+                }
+            }
+        }
+
+        .lineSeperator {
+            color: #E5E5E5;
+        }
+
+        .search-results-ans-block {
+            display: flex;
+            align-items: center;
+        
+            .results-chip-block {
+                padding: 0.375rem 0.75rem;
+                border-radius: 6.25rem;
+                display: inline-flex;
+                align-items: center;
+                gap: 0.5rem;
+                cursor: pointer;
+                background: #F5F5F5;
+                &:hover {
+                    background: #E5E5E5;
+                }
+        
+                .chip-text {
+                    font-family: var(--sdk-font-family);
+                    font-size: 0.875rem;
+                    font-style: normal;
+                    font-weight: 400;
+                    line-height: 1.25rem;
+                    letter-spacing: 0em;
+                    color: #0F0F0F;
+                    max-width: 100%;
+                    text-overflow: ellipsis;
+                    overflow: hidden;
+                    white-space: nowrap;
+                }
+                .icon-cls {
+                    display: flex;
+                    flex-shrink: 0;
+                }
+            }
+            .icon-block {
+                display: flex;
+                align-items: center;
+                flex-shrink: 0;
+            }
+            .normal-text {
+                font-family: var(--sdk-font-family);
+                font-size: 0.875rem;
+                font-style: normal;
+                font-weight: 400;
+                line-height: 1.25rem;
+                letter-spacing: 0em;
+                color: #0F0F0F;
+                margin-inline-end: 0.25rem;
+                flex-shrink: 0;
+            }
+            .bold-text {
+                font-family: var(--sdk-font-family);
+                font-size: 0.75rem;
+                font-style: normal;
+                font-weight: 600;
+                line-height: 1.125rem;
+                letter-spacing: 0em;
+                color: #141414;
+                margin-inline-end: 0.5rem;
+                max-width: calc(100% - 9.375rem);
+                min-width: 5rem;
+            }
+        }
+      }
+    }   
+  }
+  .message-bubble.answer .answerCntr .search-answer-container .message-renderer {
+    max-width: 100%;
+    min-width: 0;
+  }
+  .table-wrapper {
+    overflow-x: auto;
+    max-width: 100%;
+    width: 100%;
+    display: block;
+  }
+  .message-bubble.answer {
+    .answerCntr {
+      min-width: 0;
+      .search-answer-container {
+        min-width: 0;
+        word-break: break-word;
+      }
+    }
+  }
+  .recent-agents-container {
+    margin-top: 1.25rem;
+  }
+  .message-bubble.answer {
+    .answerCntr {
+      .answerCntr {
+        .threadName {
+          &.maxLength {
+            max-width: 100%;
+          }
+        }
+      }
+    }
+  }
+
+  sl-dialog {
+    &::part(panel) {
+      border-radius: 16px;
+      overflow: hidden;
+    }
+    &::part(overlay) {
+      border-radius: 16px;
+    }
+  }
+
+  /* Sources sidebar drawer as a bottom sheet (CSS-only) */
+  sl-drawer.sources-sidebar-drawer {
+    &::part(panel) {
+      height: 100%;
+    } 
+    &::part(base) {
+      border-radius: 16px;      
+    }
+    .right-panel-header {
+      .close-icon {
+        right: 1rem;
+        left: inherit;
+      }
+    }
+  }
+  .sources-sidebar-overlay {
+    border-radius: 16px;
+  }
+
+  .multiIntentExecution {
+    .tasksToRun {
+      .taskItems {
+        .addNewLineWrapper {
+          width: calc(100% - 1rem);
+        }
+      }
+    }
+  }
+  .ComposeBarContainer {
+    width: 95%;
+    &.new-layout {
+      width: 95%;
+    }
+    .eva-composebar-parent {
+      .eva-composebar-area {
+        .eva-input-container {
+          .eva-compose-textarea-actions {
+            .left-actions {
+              .agents-action-item {
+                img, .wa-ActionsFlashIcon  {
+                  width: 14px;
+                  height: 14px;
+                  object-fit: contain;
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  .agentsTabWrapper {
+    height: 100%;
+    .agentsModalHeader {
+      flex-shrink: 0;
+    }
+    .eva-common-agents-dialog {
+      flex-shrink: 0;
+      .agents-action-item {
+        width: auto;
+        flex: 1 1 0;
+        min-width: 0;
+        &:hover {
+          background: #fafafa;
+        }
+      }
+    }
+  }
+  .composebarFilter {
+    .agentsTabWrapper {
+      height: auto;      
+    }
+  }
+  
+  sl-dialog.eva-agents-dialog  {
+    .composebarFilter {
+      flex-grow: 1;
+      height: auto;
+      overflow: auto;
+    }
+    .eva-agents-container {
+      .eva-agents-list {
+        li:not(.eva-agent-item) {
+          text-align: center;
+        }
+      }
+    }
+  }
+  .recent-agents-empty, .recent-agents-loading {
+    max-width: 95%;
+  }
+  sl-dialog.eva-agents-dialog::part(panel) {
+    height: 90%;
+    max-height: 100%;
+  }
+  .questions-container {
+    scrollbar-gutter: stable;
+    overscroll-behavior: contain;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    overflow-x: hidden;
+    &.eva-sdk-questions-container--with-bot-input-wrapper {
+      .message-container {
+        padding-bottom: 2.25rem !important;
+      }
+    }
+
+    .message-container {
+      min-width: 0;
+      width: 100%;
+      max-width: 100%;
+    }
+  }
+  .landing-page-container.results-page-container {
+    .landing-page-content {
+      #questions-container {
+        .message-container {
+          padding-left: 1rem;
+        }
+      }
+    }
+  }
+}
+
+.aiforwork-chatbot-widget--open {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.eva-sdk-chatbot-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  background: #f8f9fb;
+  border-radius: 16px 16px 0 0;
+  height: 60px;
+  flex-shrink: 0;
+
+  .eva-sdk-chatbot-header-buttons {
+    display: flex;
+    align-items: center;
+    gap: 8px;    
+    
+    .sdk-chatbot-newchat {
+      font-size: 14px;
+      font-weight: 500;
+      color: #111827;
+      background: #fff;
+      border: 1px solid #d0d5dd;
+      border-radius: 8px;
+      padding: 8px 16px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      &:hover {
+        background: #f9fafb;
+        border-color: #d0d5dd;
+        color: #1d2939;
+        box-shadow: 0 .0625rem .125rem rgba(16, 24, 40, .05);
+      }
+      &:active {
+        background: #f2f4f7;  
+        border-color: #d0d5dd;  
+      }
+    }
+
+    .eva-sdk-chatbot-close {
+      border: 1px solid #d0d5dd;
+      background: #fff;
+      font-size: 20px;
+      line-height: 1;
+      cursor: pointer;
+      color: #111827;
+      transition: all 0.2s ease;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 100%;
+      &:hover {
+        color: #0f5bf0;
+      }
+    }
+  }
+}
+
+.eva-sdk-chatbot-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.eva-sdk-chatbot-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  overflow-x: hidden;
+}
+
+.eva-sdk-chatbot-content {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  position: relative;
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+.eva-sdk-chatbot-thread-skeleton {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: #fff;
+  font-size: 14px;
+  color: #70707B;
+  width: 100%;
+  height: 100%;
+
+  /* Shoelace skeleton uses shadow DOM; style via parts/custom properties */
+  sl-skeleton {
+    --color: #f2f2f2;
+  }
+  sl-skeleton::part(indicator) {
+    background: #f2f2f2;
+  }
+  &.eva-sdk-chatbot-thread-skeleton--visible {
+    display: flex;
+  }
+  .eva-sdk-chatbot-thread-skeleton-content {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    margin: 0 auto;
+
+    .top-component {
+      flex-grow: 1;
+      min-height: 0;
+      overscroll-behavior: contain;
+      overflow: auto;
+      padding: 0 0.5rem;
+      scrollbar-gutter: stable;
+
+      .questions-container {
+        display: flex;
+        align-items: flex-end;
+        justify-content: center;
+        width: 100%;
+        height: calc(100% - 1rem);
+      }
+
+      .message-container {
+        width: 95%;
+        max-width: 96%;
+        margin: 0 auto;
+        padding: 0 0 0 1.5rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+
+        .skeleton-group-wrapper {
+          display: flex;
+          flex-direction: column;
+          gap: 1.5rem;
+
+          .skeleton-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+
+            .skeleton-group-item {
+              display: flex;
+              align-items: center;
+              gap: 1rem;
+
+              sl-skeleton {
+                width: 1rem;
+                height: 1rem;
+                border-radius: 100%;
+                flex-shrink: 0;
+                &:first-child {
+                  flex-shrink: 0;
+                }
+                &:last-child {
+                  width: 60%;
+                  height: 1rem;
+                  border-radius: 100px;
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    .bottom-component {
+      flex-shrink: 0;
+      width: 95%;
+      max-width: 96%;
+      margin: 0 auto 1.5rem auto;
+
+      .ComposeBarContainer.new-layout {
+        width: 95%;
+        margin: 0 auto;
+
+        .eva-composebar-parent {
+          width: 100%;
+          position: relative;
+
+          .eva-composebar-area.eva-composebar-area--history-selected {
+            padding: 0;
+            display: grid;
+            border-radius: 2rem;
+            border: none;
+            background: linear-gradient(to bottom, rgba(241, 241, 241, 0.58) 0%, rgb(255, 255, 255) 100%);
+            box-shadow: 0 -0.3125rem 2.0625rem 0 rgba(0, 0, 0, 0.04), 0 0.625rem 1.5rem 0 rgba(0, 0, 0, 0.04);
+            backdrop-filter: blur(0.3125rem);
+
+            .eva-input-container {
+              background: linear-gradient(to bottom, rgba(241, 241, 241, 0.58) 0%, rgb(255, 255, 255) 100%);
+              border: 1.6px solid #fff;
+              border-radius: 2rem;
+              display: grid;
+              grid-template-columns: auto 1fr auto;
+              gap: 0;
+              align-items: center;
+              padding: 0;
+              position: relative;
+              z-index: 1;
+              transition-property: all;
+              transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+              transition-duration: 0.2s;
+              animation-duration: 0.2s;
+              box-shadow: 0rem 1.25rem 1.5rem -0.25rem rgba(16, 24, 40, 0.08), 0rem 0.5rem 0.5rem -0.25rem rgba(16, 24, 40, 0.03);
+
+              .left-actions {
+                width: auto;
+                order: 1;
+                padding: 0.75rem 0 0.75rem 0.75rem;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+
+                sl-skeleton {
+                  width: 2rem;
+                  height: 2rem;
+                  border-radius: 100%;
+                }
+              }
+              .right-actions {
+                order: 3;
+                padding: 0.75rem 0.75rem 0.75rem 0;
+                display: flex;
+                align-items: center;
+                justify-content: flex-end;
+                gap: 0.25rem;
+                sl-skeleton {
+                  width: 2rem;
+                  height: 2rem;
+                  border-radius: 100%;
+                }
+              }
+              .eva-compose-textarea-container {
+                order: 2;
+                min-height: 0;
+                width: 100%;
+                height: 100%;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 0.5rem;
+                padding: 0.75rem 0;
+                margin-left: 1rem;
+                sl-skeleton {
+                  width: 60%;
+                  height: 1rem;
+                  border-radius: 100px;
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+.eva-sdk-chatbot-container {
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+@media (max-width: 768px) {
+  .aiforwork-chatbot-trigger {
+    right: 16px;
+    bottom: 16px;
+  }
+
+  .aiforwork-chatbot-widget {
+    right: 16px;
+    left: 16px;
+    bottom: 80px;
+    width: auto;
+    height: min(70vh, 560px);
+  }
+}
+
+@media (max-width: 480px) {
+  .aiforwork-chatbot-widget {
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 100vh;
+    border-radius: 0;
+  }
+
+  .eva-sdk-chatbot-header {
+    border-radius: 0;
+  }  
+}
+
+
+/* Chat History sidebar */
+.eva-sdk-chatbot-history-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  background: rgba(15, 23, 42, 0.2);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+  overflow: hidden;
+  border-radius: 16px;
+
+  &.eva-sdk-chatbot-history-overlay--open {
+    z-index: 10;
+    opacity: 1;
+    pointer-events: auto;
+    overscroll-behavior: contain;
+  }
+  .eva-sdk-chatbot-history-sidebar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: min(50%, 92vw);
+    background: #ffffff;
+    box-shadow: 0 24px 60px rgba(15, 23, 42, 0.22);
+    transform: translateX(-100%);
+    transition: transform 0.2s ease;
+    display: flex;
+    flex-direction: column;
+  }
+  .eva-sdk-chatbot-history-sidebar--open {
+    transform: translateX(0);
+  }
+  .eva-sdk-chatbot-history-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+    background: #f8f9fb;
+    flex-shrink: 0;
+    height: 60px;
+  }
+  
+  .eva-sdk-chatbot-history-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #111827;
+  }
+  
+  .eva-sdk-chatbot-history-close {
+    border: 1px solid #d0d5dd;
+    background: #fff;
+    font-size: 20px;
+    line-height: 1;
+    cursor: pointer;
+    color: #111827;
+    transition: all 0.2s ease;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 100%;
+  
+    &:hover {
+      color: #0f5bf0;
+    }
+  }
+  .eva-sdk-chatbot-history-body {
+    padding: 12px 16px 12px 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    color: #344054;
+    font-size: 14px;
+    flex-grow: 1;
+    min-height: 0;
+    overscroll-behavior: contain;
+
+    .eva-sdk-chatbot-history-content {
+      /* No fixed height so content grows with list and body shows scrollbar when needed */
+
+      .eva-sdk-chatbot-history-list {
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+
+        .history-item-group {
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+
+          .history-item-group-title {
+            font-family: var(--sdk-font-family);
+            font-size: 12px;
+            font-style: normal;
+            font-weight: 400;
+            line-height: 18px;
+            letter-spacing: 0em;
+            color: #70707B;
+            padding-left: 16px;
+          }
+          .history-item-group-items {
+            margin: 0;
+            padding: 0 0 0 8px;
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+
+            .history-item-group-item {
+              list-style-type: none;
+              display: flex;
+              padding: 8px 12px 8px 16px;
+              align-items: center;
+              justify-content: space-between;
+              gap: 8px;
+              align-self: stretch;
+              border-radius: 12px;
+              height: 36px;
+              cursor: pointer;
+              transition: background-color .3s ease;
+              font-family: var(--sdk-font-family);
+              font-size: 14px;
+              font-style: normal;
+              font-weight: 400;
+              line-height: 20px;
+              letter-spacing: 0em;
+              position: relative;
+              white-space: nowrap;
+              overflow: hidden;
+              text-overflow: ellipsis;
+              max-width: 100%;
+              &:hover {
+                background: rgba(229, 229, 229, .25);
+              }
+              &.active {
+                background: rgba(229, 229, 229, .25);
+                .eva-sdk-history-item-menu-trigger {
+                  opacity: 1;
+                }
+              }
+              .history-item-group-item-row {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                min-width: 0;
+                flex: 1;
+              }
+              &.history-item-group-item--loading {
+                pointer-events: none;
+                .eva-sdk-history-item-menu-trigger {
+                  visibility: hidden;
+                }
+              }
+              .history-item-group-item-title {
+                min-width: 0;
+                flex: 1;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+              }
+              .eva-sdk-history-item-loading-spinner {
+                flex-shrink: 0;
+                width: 16px;
+                height: 16px;
+                border: 2px solid rgba(15, 91, 240, 0.2);
+                border-top-color: #0f5bf0;
+                border-radius: 50%;
+                animation: eva-sdk-chatbot-history-spin 0.7s linear infinite;
+              }
+              .eva-sdk-history-item-title-input {
+                min-width: 0;
+                flex: 1;
+                font-family: var(--sdk-font-family);
+                font-size: 14px;
+                font-weight: 400;
+                line-height: 20px;
+                color: #141414;
+                border: 1px solid #d6d6d6;
+                border-radius: 8px;
+                padding: 4px 8px;
+                background: #fff;
+                outline: none;
+                &:focus-visible {
+                  border: 0.0625rem solid var(--Gray-iron-200, #E4E4E7) !important;
+                  box-shadow: 0px 0px 0px 2px #F2F4F7 !important;
+                }
+              }
+              .eva-sdk-history-item-menu-trigger {
+                flex-shrink: 0;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                width: 20px;
+                height: 20px;
+                padding: 0;
+                border: none;
+                border-radius: 100px;
+                background: transparent;
+                cursor: pointer;
+                opacity: 0;
+                transition: opacity 0.2s ease, background-color 0.2s ease;
+                .eva-sdk-history-item-menu-icon {
+                  display: block;
+                  pointer-events: none;
+                  padding: 2px 0 2px 2px;
+                }
+                &:hover {
+                  background: #fff;
+                }
+                &:focus-visible {
+                  outline: 1px solid rgba(0, 0, 0, 1);
+                  outline-offset: 1px;
+                }
+                &[aria-expanded="true"] {
+                  background: #fff;
+                }
+              }
+              &:hover .eva-sdk-history-item-menu-trigger {
+                opacity: 1;
+              }
+            }
+          }
+        }
+        .history-loadmore {
+          padding: 8px 16px;
+          .loadmore-btn {
+            width: 100%;
+            padding: 8px 12px;
+            font-size: 14px;
+            color: #0f5bf0;
+            background: transparent;
+            border: 1px solid rgba(15, 91, 240, 0.4);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            &:hover {
+              background: rgba(15, 91, 240, 0.08);
+            }
+          }
+        }
+      }
+
+      .eva-sdk-chatbot-history-loader {
+        display: none;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 16px;
+        font-size: 14px;
+        color: #70707B;
+        &.eva-sdk-chatbot-history-loader--visible {
+          display: flex;
+        }
+        .eva-sdk-chatbot-history-loader-spinner {
+          width: 20px;
+          height: 20px;
+          border: 2px solid rgba(15, 91, 240, 0.2);
+          border-top-color: #0f5bf0;
+          border-radius: 50%;
+          animation: eva-sdk-chatbot-history-spin 0.7s linear infinite;
+        }
+        .eva-sdk-chatbot-history-loader-text {
+          font-family: var(--sdk-font-family);
+        }
+      }
+    }
+  }
+}
+
+@keyframes eva-sdk-chatbot-history-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* History item dropdown menu - hoist so panel is not clipped by sidebar overflow */
+.eva-sdk-history-item-dropdown {
+  flex-shrink: 0;
+  display: inline-flex;
+
+  .menu-item__label {
+    font-family: var(--sdk-font-family);
+    font-size: .75rem;
+    font-style: normal;
+    font-weight: 500;
+    line-height: 1.125rem;
+    letter-spacing: 0em;
+    color: #424242;
+  }
+}
+.menu-item .menu-item__label {
+  font-family: var(--sdk-font-family);
+  font-size: .75rem;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 1.125rem;
+  letter-spacing: 0em;
+  color: #424242;
+}
+.eva-sdk-history-item-dropdown::part(panel) {
+  z-index: 10000;
+  min-width: 7.5rem;
+  background: #fff;
+  overflow: visible;
+  border: .0625rem solid #e5e5e5;
+  border-radius: 1rem;
+  padding: .5rem;
+  box-shadow: 0rem .75rem 1rem -0.25rem rgba(16, 24, 40, .0784313725);
+}
+.eva-sdk-history-item-dropdown sl-menu.eva-sdk-history-item-menu {
+  border: none;
+  background: #fff;
+  padding: 0 0;
+  display: block;
+  min-width: 7.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+.eva-sdk-history-item-dropdown sl-menu-item {
+  font-family: var(--sdk-font-family);
+  font-size: 0.75rem;
+  cursor: pointer;
+  color: #424242;
+  padding: .25rem .5rem;
+  border-radius: .75rem;
+  display: block;
+  white-space: nowrap;
+  
+}
+.eva-sdk-history-item-dropdown sl-menu-item:hover {
+  background: #f3f4f6;
+}
+/* Ensure Shoelace menu items are visible (they use shadow DOM parts) */
+.eva-sdk-history-item-dropdown sl-menu-item::part(base) {
+  color: #424242;
+  padding: 0;
+  font-family: var(--sdk-font-family);
+  font-size: 0.75rem;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+/* Hide Shoelace built-in checked icon + submenu chevron */
+.eva-sdk-history-item-dropdown sl-menu-item::part(checked-icon) {
+  display: none;
+}
+.eva-sdk-history-item-dropdown sl-menu-item::part(submenu-icon) {
+  display: none;
+}
+/* Extra safety: if a chevron is rendered as suffix in some variants */
+.eva-sdk-history-item-dropdown sl-menu-item::part(suffix) {
+  display: none;
+}
+
+
+
+/* Destructive action styling */
+.eva-sdk-history-item-dropdown sl-menu-item.eva-sdk-history-menu-item--delete:hover {
+  background: #fef3f2;
+}
+.eva-sdk-history-item-dropdown sl-menu-item.eva-sdk-history-menu-item--delete::part(base) {
+  color: #f04438;
+  background: transparent;
+}
+
+.eva-sdk-history-item-dropdown .eva-sdk-history-menu-item-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  margin-right: 8px;
+}
+
+.eva-sdk-history-item-dropdown .eva-sdk-history-menu-item-icon svg {
+  display: inline-flex;
+  align-items: center;
+  width: 14px;
+  height: 14px;
+}
+body {
+  &.eva-sdk--macos {
+    .aiforwork-chatbot-widget {
+      .questions-container {
+        padding-right: 1.125rem;
+      }
+      .parent-home-container {
+        .landing-page-container {
+          &.results-page-container {
+            .landing-page-content {
+              #questions-container {
+                padding-right: 1.125rem;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

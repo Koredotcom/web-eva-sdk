@@ -1,4 +1,4 @@
-import { searchIcon, attachmentIcon, ActionsFlashIcon, arrowCirlceUpIcon, Teamsimg, Slackimg, MinimizeIcon, RadioButtonChecked, createCloseIcon, PlusIcon, CheveronDownIcon, tickMarkIcon, getFileTypeIconHtml } from "../icons-library";
+﻿import { attachmentIcon, ActionsFlashIcon, Slackimg, Teamsimg, MinimizeIcon, RadioButtonChecked, createCloseIcon, PlusIcon, CheveronDownIcon, tickMarkIcon, getFileTypeIconHtml } from "../icons-library";
 import "./../styles/template.scss";
 import FileUploader from "../../utils/FileUploader";
 import { getFileExtension, getUID, generateComponentId, resolveSdkAssetPath } from "../../utils/helpers";
@@ -15,34 +15,34 @@ const RefreshIconSvg = (size = 12, color = '#667085') => `<svg width="${size}" h
 export function render(data) {
 
     if (data?.status === 'completed') {
-        return renderTeamsMessageSummary(data);
+        return renderSlackMessageSummary(data);
     }
 
     const colorCombo = ["#9F1AB1", "#6927DA", "#A15C07", "#027A48"];
     const backgroundCombo = ["#FBE8FF", "#ECE9FE", "#FEF7C3", "#D1FADF"];
-    let teamsList = data?.templateInfo?.connections;
+    let slackList = data?.templateInfo?.connections;
     let defaultConnectionId = data?.templateInfo?.defaultConnections;
-    let selectedConn = teamsList?.find(conn => conn?.id === defaultConnectionId) || teamsList?.[0];
+    let selectedConn = slackList?.find(conn => conn?.id === defaultConnectionId) || slackList?.[0];
 
     let html = `
-        <div class="teams-message-template">
-            <div class='teams-message-container'>
-                <div class="teams-header-block">
-                    <div class="recipientslack-btn-cntr" id="teams-conn-cntr-${data?.reqId}">
-                        <div class="contentslack" id="teams-conn-trigger-${data?.reqId}">
-                            <div class="connection-provider-icon teams-provider-icon">
-                                ${Teamsimg({ size: 16 })}
+        <div class="slack-message-template">
+            <div class='slack-message-container'>
+                <div class="slack-header-block">
+                    <div class="recipientslack-btn-cntr" id="slack-conn-cntr-${data?.reqId}">
+                        <div class="contentslack" id="slack-conn-trigger-${data?.reqId}">
+                            <div class="connection-provider-icon slack-provider-icon">
+                                ${Slackimg({ size: 16 })}
                             </div>
                             <div class="text-icon-group">
-                                <div class="orgname" id="teams-conn-label-${data?.reqId}">${selectedConn?.label || selectedConn?.name || 'Select connection'}</div>
+                                <div class="orgname" id="slack-conn-label-${data?.reqId}">${selectedConn?.label || selectedConn?.name || 'Select connection'}</div>
                                 <div class="chevrondown">${CheveronDownIcon({ size: 10, color: '#D0D5DD' })}</div>
                             </div>
                         </div>
-                        <div class="accountadd" id="teams-accountadd-${data?.reqId}" style="display:none;">
-                            <div class="existingaccounts" id="teams-existing-accounts-${data?.reqId}">
-                                ${teamsList?.map((conn, i) => `
+                        <div class="accountadd" id="slack-accountadd-${data?.reqId}" style="display:none;">
+                            <div class="existingaccounts" id="slack-existing-accounts-${data?.reqId}">
+                                ${slackList?.map((conn, i) => `
                                     <div class="peopleinformation" data-conn-id="${conn?.id}" data-conn-label="${conn?.label || conn?.name || ''}" data-conn-email="${conn?.emailId || ''}">
-                                        <div class="personicon teams-personicon" style="color:${colorCombo[i % 4]};background-color:${backgroundCombo[i % 4]}">${(conn?.label || conn?.name || '?').charAt(0)}</div>
+                                        <div class="personicon" style="color:${colorCombo[i % 4]};background-color:${backgroundCombo[i % 4]}">${(conn?.label || conn?.name || '?').charAt(0)}</div>
                                         <div class="accountperson">
                                             <div class="personname">${conn?.label || conn?.name || ''}</div>
                                             <div class="personemail">${conn?.emailId || ''}</div>
@@ -52,7 +52,7 @@ export function render(data) {
                                 `).join('') || ''}
                             </div>
                             <div class="moreaccounts">
-                                <div class="accountaddition" id="teams-add-account-${data?.reqId}">
+                                <div class="accountaddition" id="slack-add-account-${data?.reqId}">
                                     <div class="plusicon">${PlusIcon({ size: 14, color: '#155EEF' })}</div>
                                     <div class="newaccount">Add account</div>
                                 </div>
@@ -61,41 +61,41 @@ export function render(data) {
                     </div>
                 </div>
                 
-                <div class="teams-recipients-section">
-                    <div class="teams-recipients-label">Channel or People</div>
-                    <div class="teams-search-field">
-                        <div class="teams-search-input-wrapper" id="teams-search-input-wrapper-${data?.reqId}">
-                            <div class="teams-selected-recipients" id="teams-selected-recipients-${data?.reqId}"></div>
+                <div class="slack-recipients-section">
+                    <div class="slack-recipients-label">Channel or People</div>
+                    <div class="slack-search-field">
+                        <div class="slack-search-input-wrapper" id="slack-search-input-wrapper-${data?.reqId}">
+                            <div class="slack-selected-recipients" id="slack-selected-recipients-${data?.reqId}"></div>
                             <input
                                 type="text"
-                                class="teams-search-input"
+                                class="slack-search-input"
                                 placeholder="Search user or user groups"
-                                id="teams-search-${data?.reqId}"
+                                id="slack-search-${data?.reqId}"
                             />
                         </div>
                     </div>
                 </div>
-                <div class="teams-message-section">
-                    <div class="teams-message-label">Message</div>
-                    <div class="teams-message-body">
+                <div class="slack-message-section">
+                    <div class="slack-message-label">Message</div>
+                    <div class="slack-message-body">
                         <div
-                            class="teams-message-editor"
-                            id="teams-message-body-${data?.reqId}"
+                            class="slack-message-editor"
+                            id="slack-message-body-${data?.reqId}"
                             contenteditable="true"
                             placeholder="Type your message here..."
                         >${data?.content?.message || ''}</div>
                     </div>
                 </div>
 
-                <div class="kiaas-attachment-list" id="teams-attachments-preview-${data?.reqId}"></div>
+                <div class="kiaas-attachment-list" id="slack-attachments-preview-${data?.reqId}"></div>
 
                 <div class="slackfooter-wrapper">
-                    <div class="teams-message-footer">
-                        <div class="teams-footer-left">
-                            <label for="teams-attachments-${data?.reqId}" class="teams-attachment-btn">
+                    <div class="slack-message-footer">
+                        <div class="slack-footer-left">
+                            <label for="slack-attachments-${data?.reqId}" class="slack-attachment-btn">
                                 <input
                                     type="file"
-                                    id="teams-attachments-${data?.reqId}"
+                                    id="slack-attachments-${data?.reqId}"
                                     multiple
                                     style="display: none;"
                                 />
@@ -105,7 +105,7 @@ export function render(data) {
                                 <span class="attachment-text">Attach</span>
                             </label>
                             
-                            <button class="teams-smart-compose-btn" id="teams-smart-compose-${data?.reqId}">
+                            <button class="slack-smart-compose-btn" id="slack-smart-compose-${data?.reqId}">
                                 <span class="smart-compose-icon">
                                     ${ActionsFlashIcon({ size: 16, color: "#667085" })}
                                 </span>
@@ -113,8 +113,8 @@ export function render(data) {
                             </button>
                         </div>
                         
-                        <div class="teams-footer-right">
-                            <sl-button class="primary-button-black teams-send-btn" id="teams-send-${data?.reqId}" variant="primary" disabled>                            
+                        <div class="slack-footer-right">
+                            <sl-button class="primary-button-black slack-send-btn" id="slack-send-${data?.reqId}" variant="primary" disabled>                            
                                 Send
                             </sl-button>
                         </div>
@@ -125,28 +125,20 @@ export function render(data) {
     `;
 
     setTimeout(() => {
-        initializeTeamsMessageFunctionality(data);
+        initializeSlackMessageFunctionality(data);
     }, 0);
 
     return html;
 }
 
-const decodeHtmlEntities = (text) => {
-    if (typeof document === 'undefined') return text;
-    const txt = document.createElement('textarea');
-    txt.innerHTML = text;
-    return txt.value;
-};
-
-const renderTeamsSuccessSmallCard = (channels, text, tenantName, attachments) => {
-    const decoded = decodeHtmlEntities(text || '');
-    const truncated = decoded.length > 108 ? decoded.slice(0, 98) + "<span class='seemorehtml'>...see more</span>" : decoded;
+const renderSlackSuccessSmallCard = (channels, text, tenantName, attachments) => {
+    const truncated = text?.length > 108 ? text.slice(0, 98) + "<span class='seemorehtml'>...see more</span>" : (text || '');
     const chip0 = channels?.[0];
     const chip1 = channels?.[1];
 
     const profilePicHtml = (chip) => {
         if (!chip) return '';
-        if (chip.meta?.type === 'channel') return `<div class="profilepic groupIcon">${(chip.label || '').charAt(0).toUpperCase()}</div>`;
+        if (chip.meta?.type === 'public') return `<div class="profilepic">#</div>`;
         if (chip.meta?.type === 'people') {
             return chip.meta?.icon
                 ? `<div class="profilepic"><img src="${chip.meta.icon}" /></div>`
@@ -156,15 +148,15 @@ const renderTeamsSuccessSmallCard = (channels, text, tenantName, attachments) =>
     };
 
     return `
-        <div class="emailSmallCard msTeamsSmallCard teams-success-card" data-expanded="false">
-            <div class="headingtitle slacktitle" style="background:#474876;">
-                <div class="gmailwrap">${Teamsimg({ size: 20 })}</div>
-                <div class="titlechip slacktitlechip">${tenantName || 'Teams'}</div>
+        <div class="emailSmallCard slack-success-card" data-expanded="false">
+            <div class="headingtitle slacktitle">
+                <div class="gmailwrap">${Slackimg({ size: 20 })}</div>
+                <div class="titlechip slacktitlechip">${tenantName || 'Slack'}</div>
             </div>
             <div class="bodychordwrap">
                 <div class="bodyanswer">
                     ${chip0 ? `
-                        <div class="chordname slackchord" style="border-color:#bfdbfe;background:#eff6ff;">
+                        <div class="chordname slackchord">
                             <div class="personname">
                                 ${profilePicHtml(chip0)}
                                 <span>${chip0.label || ''}</span>
@@ -172,7 +164,7 @@ const renderTeamsSuccessSmallCard = (channels, text, tenantName, attachments) =>
                         </div>
                     ` : ''}
                     ${chip1 ? `
-                        <div class="chordname slackchord" style="border-color:#bfdbfe;background:#eff6ff;">
+                        <div class="chordname slackchord">
                             <div class="personname">
                                 ${profilePicHtml(chip1)}
                                 <span>${chip1.label || ''}</span>
@@ -203,13 +195,12 @@ const renderTeamsSuccessSmallCard = (channels, text, tenantName, attachments) =>
     `;
 };
 
-const renderTeamsSuccessExpandedCard = (channels, text, tenantName, attachments) => {
-    const decoded = decodeHtmlEntities(text || '');
-    const paragraphs = decoded.split('\n').filter(p => p.trim() !== '');
+const renderSlackSuccessExpandedCard = (channels, text, tenantName, attachments) => {
+    const paragraphs = (text || '').split('\n').filter(p => p.trim() !== '');
 
     const chipHtml = (channel) => {
         let picHtml = '';
-        if (channel.meta?.type === 'channel') picHtml = `<div class="profilepic groupIcon">${(channel.label || '').charAt(0).toUpperCase()}</div>`;
+        if (channel.meta?.type === 'public') picHtml = `<div class="profilepic">#</div>`;
         else if (channel.meta?.type === 'people') {
             picHtml = channel.meta?.icon
                 ? `<div class="profilepic"><img src="${channel.meta.icon}" /></div>`
@@ -217,17 +208,17 @@ const renderTeamsSuccessExpandedCard = (channels, text, tenantName, attachments)
         } else {
             picHtml = `<div class="profilepic groupIcon">${(channel.label || '').charAt(0).toUpperCase()}</div>`;
         }
-        return `<div class="chiphandle" style="border-color:#bfdbfe;background:#eff6ff;">${picHtml}<span>${channel.label || ''}</span></div>`;
+        return `<div class="chiphandle">${picHtml}<span>${channel.label || ''}</span></div>`;
     };
 
     return `
-        <div class="emailExpandedcard slackExpanedcard msTeamsExpandedCard teams-success-card" data-expanded="true">
-            <div class="emailExpandHeader" style="background:#474876;">
-                <div class="expandChip" style="background:#474876;">
-                    <div class="exIcon">${Teamsimg({ size: 20 })}</div>
-                    <div class="exId" style="color:#fff;">${tenantName || 'Teams'}</div>
+        <div class="emailExpandedcard slackExpanedcard slack-success-card" data-expanded="true">
+            <div class="emailExpandHeader">
+                <div class="expandChip">
+                    <div class="exIcon">${Slackimg({ size: 20 })}</div>
+                    <div class="exId">${tenantName || 'Slack'}</div>
                 </div>
-                <div class="collapseChip teams-collapse-btn">${MinimizeIcon({ size: 14, color: '#fff' })}</div>
+                <div class="collapseChip slack-collapse-btn">${MinimizeIcon({ size: 14, color: '#667085' })}</div>
             </div>
             <div class="emailUserList slackuserlist">
                 <div class="listItems slacklistitems">
@@ -256,57 +247,59 @@ const renderTeamsSuccessExpandedCard = (channels, text, tenantName, attachments)
     `;
 };
 
-const attachTeamsExpandCollapseListeners = (wrapper, channels, text, tenantName, attachments) => {
-    const smallCard = wrapper.querySelector('.emailSmallCard.teams-success-card');
+const attachExpandCollapseListeners = (wrapper, channels, text, tenantName, attachments) => {
+    const smallCard = wrapper.querySelector('.emailSmallCard.slack-success-card');
     if (smallCard) {
         smallCard.addEventListener('click', () => {
-            wrapper.innerHTML = renderTeamsSuccessExpandedCard(channels, text, tenantName, attachments);
-            const collapseBtn = wrapper.querySelector('.teams-collapse-btn');
+            wrapper.innerHTML = renderSlackSuccessExpandedCard(channels, text, tenantName, attachments);
+            const collapseBtn = wrapper.querySelector('.slack-collapse-btn');
             if (collapseBtn) {
                 collapseBtn.addEventListener('click', (e) => {
                     e.stopPropagation();
-                    wrapper.innerHTML = renderTeamsSuccessSmallCard(channels, text, tenantName, attachments);
-                    attachTeamsExpandCollapseListeners(wrapper, channels, text, tenantName, attachments);
+                    wrapper.innerHTML = renderSlackSuccessSmallCard(channels, text, tenantName, attachments);
+                    attachExpandCollapseListeners(wrapper, channels, text, tenantName, attachments);
                 });
             }
         });
     }
 };
 
-const renderTeamsMessageSummary = (data) => {
-    const channels = data?.content?.conversations || data?.content?.channels || [];
-    const tenantName = data?.content?.tenantName || data?.content?.workSpace;
-    const text = data?.content?.message?.msg || data?.content?.message?.text || '';
+const renderSlackMessageSummary = (data) => {
+    const channels = data?.content?.channels || [];
+    const tenantName = data?.content?.workSpace || data?.content?.tenantName;
+    const text = data?.content?.message?.text || data?.content?.message?.msg || '';
     const attachments = data?.content?.message?.attachments || [];
-    const wrapperId = `teams-success-${data?.reqId || Date.now()}`;
+    const wrapperId = `slack-success-${data?.reqId || Date.now()}`;
 
+    // Bind after DOM insertion
     setTimeout(() => {
         const wrapper = document.getElementById(wrapperId);
         if (wrapper && !wrapper._successInit) {
             wrapper._successInit = true;
-            attachTeamsExpandCollapseListeners(wrapper, channels, text, tenantName, attachments);
+            attachExpandCollapseListeners(wrapper, channels, text, tenantName, attachments);
         }
     }, 0);
 
-    return `<div class="teams-success-wrapper" id="${wrapperId}">${renderTeamsSuccessSmallCard(channels, text, tenantName, attachments)}</div>`;
+    return `<div class="slack-success-wrapper" id="${wrapperId}">${renderSlackSuccessSmallCard(channels, text, tenantName, attachments)}</div>`;
 };
 
-const initializeTeamsMessageFunctionality = (data) => {
+const initializeSlackMessageFunctionality = (data) => {
     const reqId = data?.reqId;
 
     // Guard: prevent duplicate initialization when template re-renders.
-    const templateEl = document.getElementById(`teams-message-body-${reqId}`)?.closest('.teams-message-template');
+    // Without this, multiple sets of event listeners are added, causing multiple API calls.
+    const templateEl = document.getElementById(`slack-message-body-${reqId}`)?.closest('.slack-message-template');
     if (!templateEl || templateEl._functionalityInitialized) return;
     templateEl._functionalityInitialized = true;
 
     const userId = window.sdkConfig.userId;
-    const source = data?.provider || 'msteams';
-    const messageBody = document.getElementById(`teams-message-body-${reqId}`);
+    const source = data?.provider || 'slack';
+    const messageBody = document.getElementById(`slack-message-body-${reqId}`);
     const messageBodyWrapper = messageBody?.parentElement;
-    const sendButton = document.getElementById(`teams-send-${reqId}`);
-    const smartComposeBtn = document.getElementById(`teams-smart-compose-${reqId}`);
-    const attachmentInput = document.getElementById(`teams-attachments-${reqId}`);
-    const attachmentsPreview = document.getElementById(`teams-attachments-preview-${reqId}`);
+    const sendButton = document.getElementById(`slack-send-${reqId}`);
+    const smartComposeBtn = document.getElementById(`slack-smart-compose-${reqId}`);
+    const attachmentInput = document.getElementById(`slack-attachments-${reqId}`);
+    const attachmentsPreview = document.getElementById(`slack-attachments-preview-${reqId}`);
 
     const acColorCombo = ["#9F1AB1", "#6927DA", "#A15C07", "#027A48"];
     const acBackgroundCombo = ["#FBE8FF", "#ECE9FE", "#FEF7C3", "#D1FADF"];
@@ -317,17 +310,19 @@ const initializeTeamsMessageFunctionality = (data) => {
     let attachedFiles = [];
     let isAccountDropdownOpen = false;
 
-    const connTrigger = document.getElementById(`teams-conn-trigger-${reqId}`);
-    const connLabel = document.getElementById(`teams-conn-label-${reqId}`);
-    const accountAddDropdown = document.getElementById(`teams-accountadd-${reqId}`);
-    const existingAccountsContainer = document.getElementById(`teams-existing-accounts-${reqId}`);
-    const addAccountBtn = document.getElementById(`teams-add-account-${reqId}`);
+    const connTrigger = document.getElementById(`slack-conn-trigger-${reqId}`);
+    const connLabel = document.getElementById(`slack-conn-label-${reqId}`);
+    const accountAddDropdown = document.getElementById(`slack-accountadd-${reqId}`);
+    const existingAccountsContainer = document.getElementById(`slack-existing-accounts-${reqId}`);
+    const addAccountBtn = document.getElementById(`slack-add-account-${reqId}`);
 
     let recipientSearchManager = initializeRecipientSearch({
         reqId,
         connectionId: selectedConnectionId,
         userId,
         source,
+        provider: 'slack',
+        prefix: 'slack',
         onRecipientsChange: (recipients) => {
             validateForm();
         }
@@ -349,7 +344,7 @@ const initializeTeamsMessageFunctionality = (data) => {
         if (!existingAccountsContainer) return;
         existingAccountsContainer.innerHTML = connections.map((conn, i) => `
             <div class="peopleinformation" data-conn-id="${conn?.id}" data-conn-label="${conn?.label || conn?.name || ''}" data-conn-email="${conn?.emailId || ''}">
-                <div class="personicon teams-personicon" style="color:${acColorCombo[i % 4]};background-color:${acBackgroundCombo[i % 4]}">${(conn?.label || conn?.name || '?').charAt(0)}</div>
+                <div class="personicon" style="color:${acColorCombo[i % 4]};background-color:${acBackgroundCombo[i % 4]}">${(conn?.label || conn?.name || '?').charAt(0)}</div>
                 <div class="accountperson">
                     <div class="personname">${conn?.label || conn?.name || ''}</div>
                     <div class="personemail">${conn?.emailId || ''}</div>
@@ -375,6 +370,8 @@ const initializeTeamsMessageFunctionality = (data) => {
             connectionId: selectedConnectionId,
             userId,
             source,
+            provider: 'slack',
+            prefix: 'slack',
             onRecipientsChange: (recipients) => {
                 validateForm();
             }
@@ -403,7 +400,7 @@ const initializeTeamsMessageFunctionality = (data) => {
                 new SSOMethods().connect(source, null, config);
             }
         } catch (err) {
-            console.error('[TeamsTemplate] Add account error:', err);
+            console.error('[SlackTemplate] Add account error:', err);
         }
     };
 
@@ -419,7 +416,7 @@ const initializeTeamsMessageFunctionality = (data) => {
                 selectConnection(lastConn.id);
             }
         } catch (err) {
-            console.error('[TeamsTemplate] Refresh connections error:', err);
+            console.error('[SlackTemplate] Refresh connections error:', err);
         }
     };
 
@@ -431,7 +428,7 @@ const initializeTeamsMessageFunctionality = (data) => {
     }
 
     document.addEventListener('click', (e) => {
-        const cntr = document.getElementById(`teams-conn-cntr-${reqId}`);
+        const cntr = document.getElementById(`slack-conn-cntr-${reqId}`);
         if (cntr && !cntr.contains(e.target) && isAccountDropdownOpen) {
             toggleAccountDropdown(true);
         }
@@ -467,7 +464,6 @@ const initializeTeamsMessageFunctionality = (data) => {
             return;
         }
 
-        const userId = window.sdkConfig.userId;
         const userAccessToken = window.sdkConfig.accessToken;
         const cancelSource = axios.CancelToken.source();
         const mediaName = getUID(6);
@@ -475,7 +471,6 @@ const initializeTeamsMessageFunctionality = (data) => {
         const uploadConfig = {
             file: file,
             userInfoId: userId,
-            // fileContext: 'knowledge',
             fileContext: 'runtime',
             userAccessToken: userAccessToken,
             mediaName: mediaName,
@@ -741,7 +736,7 @@ const initializeTeamsMessageFunctionality = (data) => {
     };
 
     const renderSmartComposePanel = () => {
-        const footerEl = messageBody?.closest('.teams-message-container')?.querySelector('.slackfooter-wrapper');
+        const footerEl = messageBody?.closest('.slack-message-container')?.querySelector('.slackfooter-wrapper');
         if (!footerEl) return;
 
         if (!isSmartCompose) {
@@ -864,22 +859,24 @@ const initializeTeamsMessageFunctionality = (data) => {
                 };
             });
 
-            const conversationPayload = selectedRecipients.map(r => ({
+            const channelPayload = selectedRecipients.map(r => ({
                 id: r.id,
                 label: r.label || r.name,
                 meta: r.meta || {}
             }));
 
             const payload = {
+                question: data?.question,
                 nodeType: "actions",
+                appId: "slack",
                 eventId: "send_message",
                 connectionId: selectedConnectionId,
                 boardId: data?.boardId,
                 params: {
-                    conversations: conversationPayload,
+                    channels: channelPayload,
+                    text: message,
                     attachments: attachmentIds,
                     components: componentPayload,
-                    message: message,
                 },
                 contextParams: {
                     messageId: data?.messageId,
@@ -892,7 +889,7 @@ const initializeTeamsMessageFunctionality = (data) => {
 
             store.dispatch(sendIntegrationMessage({
                 userId,
-                source: source || 'msteams',
+                source: 'slack',
                 payload
             })).then(response => {
                 templateEl.removeAttribute('data-sending');
@@ -903,7 +900,7 @@ const initializeTeamsMessageFunctionality = (data) => {
                         meta: r.meta || {}
                     }));
                     const text = messageBody?.innerText || messageBody?.textContent || '';
-                    const tenantName = data?.content?.tenantName || data?.content?.workSpace || selectedConnectionLabel || 'Teams';
+                    const tenantName = data?.content?.workSpace || data?.content?.tenantName || selectedConnectionLabel || 'Slack';
                     const attachments = uploadedAttachments.map(f => ({
                         originalFilename: f.name || f.title,
                         name: f.name || f.title,
@@ -917,10 +914,10 @@ const initializeTeamsMessageFunctionality = (data) => {
                     const templateRoot = templateEl;
                     if (templateRoot) {
                         const successWrapper = document.createElement('div');
-                        successWrapper.className = 'teams-success-wrapper';
-                        successWrapper.innerHTML = renderTeamsSuccessSmallCard(channels, text, tenantName, attachments);
+                        successWrapper.className = 'slack-success-wrapper';
+                        successWrapper.innerHTML = renderSlackSuccessSmallCard(channels, text, tenantName, attachments);
                         templateRoot.replaceWith(successWrapper);
-                        attachTeamsExpandCollapseListeners(successWrapper, channels, text, tenantName, attachments);
+                        attachExpandCollapseListeners(successWrapper, channels, text, tenantName, attachments);
                     }
                 } else {
                     sendButton.disabled = false;
@@ -952,4 +949,3 @@ const initializeTeamsMessageFunctionality = (data) => {
 };
 
 export default { render };
-

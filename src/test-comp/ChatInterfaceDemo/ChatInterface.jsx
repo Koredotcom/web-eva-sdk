@@ -1,64 +1,57 @@
 import React, { useEffect, useRef, useState } from "react";
-import { TemplateRenderer } from "../../templateRenderer";
 import { BotConversation, ChatInterface } from "../../chat";
 import store from "../../redux/store";
 
-import "./ChatInterface.scss"
+import '../../styles/chat-interface.scss'
 
 import Announcements from "../announcements";
 import Composebar from "./Composebar";
 import { AnnouncementsInterface } from "../../Announcements";
 import Agents from "../agents";
-import MultiIntentExecutionDemo from "./MultiIntentExecutionDemo";
 import History from "../history";
 import { SchedulersView } from "../../schedulers";
 import { ExecuteFormThroughURL } from "../../chat/gptTemplate/submitGPTForm";
 import Profile from "./profile";
+import { useChatMessageRenderer } from "./renderer";
+import NewChat from "../../chat/NewChat";
+import RecentAgentsFunc from "../../LandingPageRecentAgents/RecentAgents";
 
+const { unHideRecentAgentsDiv } = RecentAgentsFunc();
 
-
-// function ShoelaceWrapper({ html }) {
-//   const ref = useRef(null);
-
-//   useEffect(() => {
-//     if (!ref.current || !html) return;
-
-//     ref.current.innerHTML = '';
-
-//     const fragment = html instanceof Node ? html : document.createRange().createContextualFragment(html);
-//     ref.current.appendChild(fragment);
-
-//     // Ensure Shoelace components are defined before any upgrade
-//     TemplateRenderer.upgradeCustomElements(ref.current);
-
-//   }, [html]);
-
-//   return <div ref={ref} />;
-// }
 
 const ChatInterfaceDemo = () => {
-  const [messages, setMessages] = useState(null);
   const [quickActions, setQuickActions] = useState(null);
   const [input, setInput] = useState("");
+  const [messages, setMessages] = useState(null);
   const [showSchedulers, setShowSchedulers] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
 
   const chatInterface = useRef();
   const announcementInterface = useRef();
+  const messagesContainerRef = useRef(null);
+  const scrollContainerRef = useRef(null);
+
+  const { onSubscribe } = useChatMessageRenderer({
+    containerRef: messagesContainerRef,
+    scrollContainerRef,
+    loadingText: "Analyzing",
+  });
 
   useEffect(() => {
     chatInterface.current = ChatInterface();
     chatInterface.current.options({ contentStreaming: true });
-    let botInstance = BotConversation()
-        botInstance.initializeBotSDK({
-            "name": "ProcureBot",
-            "streamId": "st-b6012ef2-810d-5240-b33e-5404d68b680e",
-            "webhook": {
-                "clientId": "cs-79a89a6f-b0ab-5e2f-b912-8dd1e2f95da0",
-                "clientSecret": "VJNwkfbPcMZl4bOa1Qn3XtYRz6rqigwtTgOlaYX25Xs="
-            }
-        })
-    botInstance.enableEVABotSdk(true)
+
+    let botInstance = BotConversation();
+    botInstance.initializeBotSDK({
+      "name": "ProcureBot",
+      "streamId": "st-b6012ef2-810d-5240-b33e-5404d68b680e",
+      "webhook": {
+        "clientId": "cs-79a89a6f-b0ab-5e2f-b912-8dd1e2f95da0",
+        "clientSecret": "VJNwkfbPcMZl4bOa1Qn3XtYRz6rqigwtTgOlaYX25Xs="
+      }
+    });
+    botInstance.enableEVABotSdk(true);
+
     announcementInterface.current = AnnouncementsInterface();
     announcementInterface.current.subscribe((announcements) => {
       if (store.getState().global?.enableDebugging) {
@@ -66,9 +59,8 @@ const ChatInterfaceDemo = () => {
       }
     });
 
-    // Subscribe to updates
     const unsubscribe = chatInterface.current.subscribe(
-      (question, searchResponse, moreAvailable, errorStates, quickActions) => {
+      (question, searchResponse, moreAvailable, errorStates, qa) => {
         if (store.getState().global?.enableDebugging) {
           console.log(
             "Received data from chat API:",
@@ -76,60 +68,19 @@ const ChatInterfaceDemo = () => {
             searchResponse,
             moreAvailable,
             errorStates,
-            quickActions
+            qa
           );
         }
         setMessages(question);
-        setQuickActions(quickActions);        
+        setQuickActions(qa);
+        onSubscribe(question, searchResponse, moreAvailable, errorStates, qa);
       }
     );
 
     return () => {
       unsubscribe();
-      
     };
-  }, []);
-
-  // Separate useEffect for ComposeBar initialization
-  
-
-  // Simple one-time check on mount to show scroll button if needed
-  
-
-
-  const fetchAnnouncementData = async () => {
-      const res = await AnnouncementData()      
-      setAnnouncements(res?.data)      
-  }
-
-  const handleScroll = () => {
-    // const el = scrollContainerRef.current;    
-    if (!el) return;
-
-    const nearBottom = isUserNearBottom(el, 50);
-    preventScrollRef.current = !nearBottom;
-    getBottomHeight.current = nearBottom;
-
-    // Hide scroll to bottom button when user manually scrolls to the very bottom
-    const isAtVeryBottom = isUserNearBottom(el, 10); // Very small threshold for exact bottom detection
-    if (isAtVeryBottom && showScrollToBottom) {
-      setShowScrollToBottom(false);
-      setWasScrollToBottomClicked(false); // Reset the clicked flag when manually scrolled to bottom
-    }
-
-    // Show scroll to bottom button when user scrolls up and content is hidden below
-    const isContentHiddenBelow = !isUserNearBottom(el, 100);
-    const hasContentToScroll = el.scrollHeight > el.clientHeight; // Check if there's scrollable content
-
-    // Reset the clicked flag when user scrolls up significantly from bottom
-    if (isContentHiddenBelow && wasScrollToBottomClicked) {
-      setWasScrollToBottomClicked(false);
-    }
-
-    if (isContentHiddenBelow && hasContentToScroll && !showScrollToBottom) {
-      setShowScrollToBottom(true);
-    }
-  };
+  }, [onSubscribe]);
 
   return (
     <div className="chatInterfaceDemo">
@@ -139,14 +90,14 @@ const ChatInterfaceDemo = () => {
             <div className="sidebar-title">AI for Work</div>
             <div className="new-btn" title="New" onClick={() => {
               unHideRecentAgentsDiv('recent-agents-container');
-              NewChat()
+              NewChat();
               const botHeaderContainer = document.querySelector('.composebar-bot-input-wrapper');
-              if(botHeaderContainer){
+              if (botHeaderContainer) {
                 botHeaderContainer.style.display = 'none';
               }
             }}>+</div>
           </div>
-          
+
           {/* <Notifications /> */}
           <Agents />
           <div>---------------------------------------------------------------</div>
@@ -158,7 +109,7 @@ const ChatInterfaceDemo = () => {
           {/* <History /> */}
         </div>
       </div>
-      
+
       <div className="chatInterfaceSec">
         {showProfile ? (
           <div className="chatSec schedulers-full-width">
@@ -170,52 +121,25 @@ const ChatInterfaceDemo = () => {
             <SchedulersView />
           </div>
         ) : (
-        <>
-          <div className="chatSec">
-            {messages &&
-              Object.values(messages).map((item, index) => {
-                if (item?.isTask) return;
-
-                // Handle multi_intent_execution separately (pure React)
-                if (item?.templateType === "multi_intent_execution") {
-                  return <MultiIntentExecutionDemo key={item?.id} data={item} />;
-                }
-
-                // For all other templates, use the HTML template renderer
-                const assistantIconTemplate = () => {
-                  return <div className="logo-icon" key={index}><img src="/public/eva-black-svg.svg" alt="AiForWork" /></div>;
-                };
-
-                let html = TemplateRenderer.generateHTMLTemplate(item, {
-                  assistantIconTemplate,
-                  loadingText: "Analyzing",
-                });
-
-                return (
-                  <div
-                    key={item?.id}
-                    dangerouslySetInnerHTML={{
-                      __html: html.innerHTML,
-                    }}
-                  />
-                );
-              })}
-          </div>
-          <Composebar
-            quickActions={quickActions}
-            chatInterface={chatInterface}
-            input={input}
-            setInput={setInput}
-            messages={messages}
-          />
-          <a href="#" onClick={(e) => {
-            e.preventDefault();
-            const formData = { content: "cube root of 27", prompts:'699f29cd8e37c7ffb9bff9bf',  };
-            const question = "Find the cube root of 27.";
-            const agentId = "ag-b0b6c3b6-df0a-5316-8a9f-35bf43babd1e";
-            ExecuteFormThroughURL(formData, question, agentId);
-          }}>Review peggy's plan and risk information</a>
-        </>
+          <>
+            <div className="chatSec" ref={scrollContainerRef}>
+              <div className="chatSec-inner" ref={messagesContainerRef} />
+            </div>
+            <Composebar
+              quickActions={quickActions}
+              chatInterface={chatInterface}
+              input={input}
+              setInput={setInput}
+              messages={messages}
+            />
+            <a href="#" onClick={(e) => {
+              e.preventDefault();
+              const formData = { content: "cube root of 27", prompts: '699f29cd8e37c7ffb9bff9bf' };
+              const question = "Find the cube root of 27.";
+              const agentId = "ag-b0b6c3b6-df0a-5316-8a9f-35bf43babd1e";
+              ExecuteFormThroughURL(formData, question, agentId);
+            }}>Review peggy's plan and risk information</a>
+          </>
         )}
       </div>
     </div>

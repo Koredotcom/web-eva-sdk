@@ -1,36 +1,30 @@
-import React from 'react';
-import ReactDOM from 'react-dom/client';
+import React from "react";
+import ReactDOM from "react-dom/client";
 import App from "./App";
-import { initializeSDK} from './index'; // Adjust the import according to your SDK setup
-import { authenticateApp } from './authorization';
+import { authenticateApp } from "./index";
 
-
-
-const getAccessToken = 'bgKlPSpWIdHeyvFEeCTTDYFLgeBzFQaogc6sEVvLNt8HKvvbJG0dgbGt9H4lbT3s'; 
-// initializeSDK({
-//     accessToken: getAccessToken,
-//     api_url: 'https://eva-qa.kore.ai/api/1.1/',
-//     presence_url: 'https://eva-qa.kore.ai/',
-//     userId: "u-c9d2b051-ca8c-53cf-a808-a1becbc4d981",
-//     initializeBotSDK:{
-//         "name": "ProcureBot",
-//         "streamId": "st-b6012ef2-810d-5240-b33e-5404d68b680e",
-//         "webhook": {            
-//             "clientId": "cs-79a89a6f-b0ab-5e2f-b912-8dd1e2f95da0",
-//             "clientSecret": "VJNwkfbPcMZl4bOa1Qn3XtYRz6rqigwtTgOlaYX25Xs="
-//         },
-//     },
-//     enableDebugging: true,
-//     autoRemoveWebSearchFromContext: false // this flag helps to set the context after advancedSearch
-// });
-
+/**
+ * Dev entry: SSO then mount the bottom-right floating chat (CDN pattern).
+ * Pass `skipInitializeSDK: true` so `initializeSDK` runs once inside `chatBot.init`
+ * with `containerId: eva-sdk-chatbot-container`.
+ */
 authenticateApp({
-  id_token: "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJzYWkudmFuZ2F2ZXRpQGtvcmUuY29tIiwiZmlyc3ROYW1lIjoic2FpIiwibGFzdE5hbWUiOiJzYW50aG9zaCIsImFwcElkIjoiY3MtNGE2MjZhYmEtMWU3ZS01NzQ2LTg0ZjMtYWVjZThkNzFkYTc5IiwiaWF0IjoxNzc2NzU1NTMwMjQ4LCJleHAiOjE3NzY3NTU2NTY5MTl9.PnFek9nZPwA2_SEyRqNE1YsLkKyhw8weD3QG2ihPsU0",
+  id_token:
+    "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJzYWkudmFuZ2F2ZXRpQGtvcmUuY29tIiwiZmlyc3ROYW1lIjoic2FpIiwibGFzdE5hbWUiOiJzYW50aG9zaCIsImFwcElkIjoiY3MtNGE2MjZhYmEtMWU3ZS01NzQ2LTg0ZjMtYWVjZThkNzFkYTc5IiwiaWF0IjoxNzc2NzU1NTMwMjQ4LCJleHAiOjE3NzY3NTU2NTY5MTl9.PnFek9nZPwA2_SEyRqNE1YsLkKyhw8weD3QG2ihPsU0",
+  skipInitializeSDK: true,
 }).then((res) => {
-  console.log(res);
+  if (res.status === "success" && typeof window !== "undefined" && window.EvaSDK?.chatBot) {
+    window.EvaSDK.chatBot.init({
+      accessToken: res.accessToken,
+      userId: res.userId,
+      api_url: res.api_url,
+      presence_url: res.presence_url,
+      enableDebugging: true,
+      autoRemoveWebSearchFromContext: false,
+    });
+  } else {
+    console.error("Eva auth or chatbot unavailable", res);
+  }
 });
 
-
-
-ReactDOM.createRoot(document.getElementById('root')).render(<App />)
-
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);

@@ -12,7 +12,8 @@ import * as multiResponses from "./templates/multi-responses-template";
 import * as holdConversation from "./templates/hold-conversation-template";
 import * as errorMessage from "./templates/error-message-template";
 import * as genericErrorTemplate from "./templates/generic-error-template";
-import * as formTemplate from "./templates/mcp-template";
+import * as actionSendSlackMessage from "./templates/action-send-slack-message";
+import * as agentAuthChallenge from "./templates/agent-auth-challenge";
 import * as feedbackTemplate from "./templates/feedback-template";
 import { encodeHtml, SHOELACE_ATTRS, SHOELACE_TAGS } from "./utils/helper";
 import { convertTemplateToHtml } from "../utils/helpers";
@@ -185,10 +186,6 @@ export function renderTemplateContent(
 			case "action_send_slack_message":
 				htmlTemplate = actionSendSlackMessage.render(data);
 				break;
-			
-			case "form_template":
-				htmlTemplate = formTemplate.render(data);
-				break;
 
 			case "connection_provider":
 			case "admin_config_action":
@@ -229,6 +226,10 @@ export function renderTemplateContent(
 				break;
 			case "error_template":
 				htmlTemplate += errorMessage.render(data, assistantIconTemplate);
+				break;
+
+			case "agent_auth_challenge":
+				htmlTemplate += agentAuthChallenge.render(data);
 				break;
 
 			default:

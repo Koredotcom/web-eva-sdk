@@ -1,13 +1,31 @@
-import customMarkdownRenderer from "../utils/customMarkdownRenderer";
+import { MessageRenderer } from "../../plugins/Markdown/message-renderer";
 import { encodeHtml } from "../utils/helper";
+import { renderThoughts, setupThoughtsToggle } from "./bot-conversation";
 
 function render(data) {
-    const showSources = data.hasData && data?.data?.length > 0;
-    const drawerId = `sources-drawer-${data.id}`;
+    let thoughtsHTML = "";
+
+    // Only render standalone thoughts when there is NO reqFlow.
+    // When reqFlow exists (first agent-triggering question), thoughts are rendered
+    // inside the response-query-flow expanded section (matching Kora-React's QueryResponseFlow).
+    if (data?.thoughts?.length > 0 && !data?.reqFlow?.length) {
+        const thoughtData = {
+            messageId: data.messageId || data.id,
+            thoughts: data.thoughts,
+            question: data.answer,
+        };
+        thoughtsHTML = renderThoughts(thoughtData, data);
+
+        const thoughtTime = data.thoughts[data.thoughts.length - 1]?.thoughtTime;
+        setTimeout(() => {
+            setupThoughtsToggle(data.messageId || data.id, thoughtTime);
+        }, 500);
+    }
 
     let html = `
         <div class="search-answer-container">
-            ${customMarkdownRenderer(data.answer)}
+            ${thoughtsHTML}
+            ${renderAnswer(data)}
         </div>
     `;
 
@@ -17,11 +35,11 @@ function render(data) {
 
 
 function renderAnswer(data) {
-	if (!data.answer) return "";
+    if (!data.answer) return "";
 
     let html = `
-        <div id="answer-${data?.messageId}" class="threadName maxLength">
-            ${customMarkdownRenderer(data.answer)}
+        <div id="answer-${data.messageId || data.id}" class="threadName maxLength">
+            ${MessageRenderer(data.answer)}
         </div>
     `;
     return html;
@@ -30,14 +48,14 @@ function renderAnswer(data) {
 
 
 function renderSourcesForDrawer(data) {
-	if (!data?.data?.length) return "";
+    if (!data?.data?.length) return "";
 
-	return `
+    return `
         <div style="padding: 20px;">
             <div class="sources-list">
                 ${data.data
-					.map(
-						(source, index) => `
+            .map(
+                (source, index) => `
                     <div class="source-item" style="
                         margin-bottom: 20px; 
                         padding-bottom: 20px; 
@@ -90,8 +108,8 @@ function renderSourcesForDrawer(data) {
                         ` : ''}
                     </div>
                 `
-					)
-					.join("")}
+            )
+            .join("")}
             </div>
         </div>
     `;
@@ -100,19 +118,19 @@ function renderSourcesForDrawer(data) {
 // Helper function to format email date
 function formatEmailDate(timestamp) {
     if (!timestamp) return 'Unknown date';
-    
+
     try {
         const date = new Date(typeof timestamp === 'string' ? timestamp : timestamp);
-        const options = { 
-            weekday: 'short', 
-            year: 'numeric', 
-            month: 'short', 
+        const options = {
+            weekday: 'short',
+            year: 'numeric',
+            month: 'short',
             day: 'numeric',
             hour: 'numeric',
             minute: '2-digit',
             hour12: true
         };
-        
+
         // Format: "Thu, Nov 27 2025, 3:24PM"
         const formatted = date.toLocaleString('en-US', options);
         return formatted.replace(',', '').replace(/(\d{1,2}:\d{2})\s*(AM|PM)/, '$1$2');

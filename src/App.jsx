@@ -1,12 +1,5 @@
 import React, { useEffect } from 'react';
 import { HistoryWidget, PossibilitiesWidget } from './widgets';
-import ChatTestComp from './test-comp/ChatTestComp';
-import File from './test-comp/File';
-import Agents from './test-comp/agents';
-import SelectedContext from './test-comp/selectedContext';
-import TestComp from "./test-comp/testComp";
-import ChatInterfaceDemo from './test-comp/ChatInterfaceDemo/ChatInterface';
-import { renderParentComponent } from './master-component/ParentComponent';
 
 
 const App = () => {
@@ -14,7 +7,6 @@ const App = () => {
   useEffect(() => {
     fetchHistoryWidgetData()
     fetchPossiblitiesWidgetData()
-    // renderParentComponent('master-component')
   }, [])
 
   const fetchHistoryWidgetData = async () => {
@@ -27,13 +19,10 @@ const App = () => {
   
   
   return (
-    <div>
-      <ChatInterfaceDemo />
-      {/* <ChatTestComp /> */}
-      {/* <TestComp /> */}
-      {/* <Agents /> */}
-      {/* <File /> */}
-      {/* <SelectedContext/> */}
+    <div className="eva-sdk-demo-app-root" style={{ minHeight: '100vh' }}>
+      <p style={{ padding: '1rem', fontFamily: 'var(--sdk-font-family, system-ui)' }}>
+        Floating chat opens from the bottom-right (see <code>EvaSDK.chatBot</code> in <code>main.jsx</code>).
+      </p>
     </div>
   )
 }

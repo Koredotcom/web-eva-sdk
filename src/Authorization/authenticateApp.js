@@ -1,6 +1,6 @@
 import { initializeSDK } from "../config";
 
-const DEFAULT_BASE_URL = "https://work.kore.ai/";
+const DEFAULT_BASE_URL = "https://work-qa.kore.ai/";
 
 /**
  * Decode the payload of a JWT (id_token) without verifying its signature.
@@ -63,7 +63,8 @@ const fetchJson = async (url, options) => {
  * @param {string} [params.client_id]    Optional. If omitted, decoded from the JWT payload (`appId`).
  * @param {string} [params.api_url]      Optional. Defaults to `${BASE_URL}api/1.1/sdk/${CLIENT_ID}`.
  * @param {string} [params.presence_url] Optional. Defaults to `${BASE_URL}`.
- * @returns {Promise<{ status: "success" | "failed", data?: any, error?: { message: string, status?: number, data?: any }, clientId?: string }>}
+ * @param {boolean} [params.skipInitializeSDK] When true, SSO runs but `initializeSDK` is not called. Use with `EvaSDK.chatBot.init` so the floating chat mounts first.
+ * @returns {Promise<{ status: "success" | "failed", data?: any, error?: { message: string, status?: number, data?: any }, clientId?: string, accessToken?: string, userId?: string, api_url?: string, presence_url?: string }>}
  */
 export const authenticateApp = async ({
   id_token,
@@ -71,6 +72,7 @@ export const authenticateApp = async ({
   base_url = null,
   api_url = null,
   presence_url = null,
+  skipInitializeSDK = false,
 } = {}) => {
 
   if (!id_token || typeof id_token !== "string") {
@@ -143,6 +145,18 @@ export const authenticateApp = async ({
         data: loginResponse,
       },
       clientId,
+    };
+  }
+
+  if (skipInitializeSDK) {
+    return {
+      status: "success",
+      data: loginResponse,
+      clientId,
+      accessToken,
+      userId,
+      api_url: resolvedApiUrl,
+      presence_url: resolvedPresenceUrl,
     };
   }
 
