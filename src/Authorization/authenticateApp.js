@@ -102,7 +102,7 @@ export const authenticateApp = async ({
   // own `1.1/...` path, so the baseURL passed to axios must end at `/api/` — NOT
   // at `/api/1.1/sdk/{clientId}/` (which is only the SSO login endpoint shape).
   // Using the SSO shape causes paths like `…/api/1.1/sdk/cs-xxx/1.1/ka/…` → 404.
-  const resolvedApiUrl = api_url || `${BASE_URL}api/1.1/sdk/${clientId}`;
+  const resolvedApiUrl = api_url || `${BASE_URL}api/1.1/sdk/${clientId}/`;
   const resolvedPresenceUrl = presence_url || `${BASE_URL}`;
 
   const AI4W_LOGIN_URL = `${BASE_URL}api/1.1/sdk/${clientId}/sso/login`;

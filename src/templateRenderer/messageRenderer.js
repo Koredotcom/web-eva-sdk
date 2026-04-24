@@ -140,7 +140,7 @@ export function renderTemplateContent(
 			htmlTemplate += TemplateComponents.renderAppAvatar(data?.context?.title, data?.context?.sources?.[0]?.icon || data?.sources?.[0]?.icon, data.timestamp);
 		}
 		else{
-			htmlTemplate += TemplateComponents.renderAppAvatar(state.appMetaData.appName, state.appMetaData.appIcon, data.timestamp);
+			htmlTemplate += TemplateComponents.renderAppAvatar(state.appMetaData?.appName, state.appMetaData?.appIcon, data.timestamp);
 		}
 	}
 	if (data.viewType === "threadView" || data.botConversation) {

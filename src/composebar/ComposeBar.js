@@ -408,7 +408,7 @@ class ComposeBar {
      * Update the bot header content dynamically
      */
     updateBotHeaderContent(contextChipData) {
-        console.log("contextChipData in updateBotHeaderContent", contextChipData);
+        // console.log("contextChipData in updateBotHeaderContent", contextChipData);
         const composeBarWrapperDiv = this.container.querySelector('.composebar-bot-input-wrapper');  
         if (!composeBarWrapperDiv) return;
         const botInputHeaderDiv = composeBarWrapperDiv.querySelector('.bot-input-header'); 
