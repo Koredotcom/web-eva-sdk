@@ -157,3 +157,21 @@ export const updateSpecificInstruction = async ({ instructionId, instruction } =
         return { status: "failed", error: err, data: null };
     }
 };
+
+/**
+ * Factory that returns an object exposing all profile-related getters and actions.
+ * Mirrors the shape of `ChatInterface()` / `sdkAgents()` so consumers can do:
+ *
+ *   const p = profile();
+ *   const me = await p.getAboutMe();
+ *   await p.updateAboutMe("I prefer concise answers");
+ */
+const profile = () => ({
+    getAboutMe,
+    updateAboutMe,
+    getInstructions,
+    createInstruction,
+    updateSpecificInstruction,
+});
+
+export default profile;
