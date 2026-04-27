@@ -50,13 +50,16 @@ export const initializeSDK = async (config) => {
   store.dispatch(fetchHistory({onload: true, params: {limit: initialHistoryLimit}}))
   store.dispatch(fetchRecentFiles({onload: true, userId: config.userId, params: {limit: 10}}))
   store.dispatch(getAllAnnouncements({params: {userId: config.userId}}))
-  store.dispatch(setAppMetaData(config.appMetaData))
   store.dispatch(setDisableHistorySectionInChatSection(config?.disableHistorySectionInChatSection || false))
   // once presenceStart call success than get the sToken which is required to connect socket
   await store.dispatch(presenceStart())
 
   //enablement of debugging i.e console.log statements
   store.dispatch(setEnabledDebugging(config.enableDebugging))
+
+  if(config.hasOwnProperty('appMetaData')){
+    store.dispatch(setAppMetaData(config.appMetaData))
+  }
 
   if(config.hasOwnProperty('enableContextByFollowupContext')){
     store.dispatch(setEnableContextByFollowupContext(config.enableContextByFollowupContext))
