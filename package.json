@@ -1,6 +1,6 @@
 {
   "name": "eva-web-sdk",
-  "version": "1.2.1",
+  "version": "1.3.1",
   "description": "",
   "main": "dist/index.cjs.js",
   "style": "dist/sdk-styles.css",
