@@ -1,23 +1,8 @@
 import BotConversation from "./chat/botAgent/getBotConversation";
 // import CustomTemplateComponentManager from "./chat/botAgent/customTemplatesFolder/CustomTemplateComponentManager";
 // import HoldConversationTemplateManager from "./chat/botAgent/customTemplatesFolder/HoldConversationTemplateManager";
-import {
-  fetchAgents,
-  fetchConfigData,
-  fetchProfileData,
-  fetchHistory,
-  fetchRecentFiles,
-  presenceStart,
-  getAllAnnouncements,
-} from "./redux/actions/global.action";
-import {
-  setAnnouncements,
-  setAutoRemoveWebSearchFromContext,
-  setEnabledDebugging,
-  setAppMetaData,
-  setDisableHistorySectionInChatSection,
-  setEnableContextByFollowupContext,
-} from "./redux/globalSlice";
+import { fetchAgents, fetchConfigData, fetchProfileData, fetchHistory, fetchRecentFiles, presenceStart, getAllAnnouncements } from "./redux/actions/global.action";
+import { setAnnouncements, setAutoRemoveWebSearchFromContext, setEnableContextByFollowupContext, setEnabledDebugging } from "./redux/globalSlice";
 import store from "./redux/store";
 import { WebSocketService } from "./socket/socket.service";
 import { initializeSDKRuntime } from "./sdkRuntime";
@@ -84,34 +69,22 @@ export const initializeSDK = async (config) => {
   );
   const announcementObj = {
     data: announcementData?.payload?.announcements,
-    status: "success",
-    error: null,
-  };
-  store.dispatch(setAnnouncements(announcementObj));
+    status: 'success',
+    error: null
+  }
+  store.dispatch(setAnnouncements(announcementObj))
+  
+  // once presenceStart call success than get the sToken which is required to connect socket
+  await store.dispatch(presenceStart())
 
-  store.dispatch(setAppMetaData(config.appMetaData));
-  store.dispatch(
-    setDisableHistorySectionInChatSection(
-      config?.disableHistorySectionInChatSection || false
-    )
-  );
+  //enablement of debugging i.e console.log statements
+  store.dispatch(setEnabledDebugging(config.enableDebugging))
 
-  await store.dispatch(presenceStart());
-
-  store.dispatch(setEnabledDebugging(config.enableDebugging));
-
-  if (Object.prototype.hasOwnProperty.call(config, "enableContextByFollowupContext")) {
-    store.dispatch(
-      setEnableContextByFollowupContext(config.enableContextByFollowupContext)
-    );
+  if(config?.enableContextByFollowupContext){
+    store.dispatch(setEnableContextByFollowupContext(true))
   }
 
-  if (config?.initializeBotSDK) {
-    const botInstance = BotConversation();
-    botInstance.initializeBotSDK(config.initializeBotSDK);
-    botInstance.enableEVABotSdk(true);
-  }
-
+  // Initialize and connect WebSocket
   WebSocketService.initialize({
     url: config.presence_url,
     options: {
