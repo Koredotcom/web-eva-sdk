@@ -9,6 +9,34 @@ import './styles/sdk.scss';
 import './styles/tom-select.css';
 import '@shoelace-style/shoelace';
 import { setBasePath } from '@shoelace-style/shoelace/dist/utilities/base-path.js';
+
+// Workaround for Shoelace 2.0.0 SlTextarea bug: when an `<sl-textarea>` is
+// removed from the DOM before its first Lit render completes (e.g., a parent
+// container's `innerHTML` is reassigned twice within the same frame), Shoelace's
+// `disconnectedCallback` calls `this.resizeObserver.unobserve(this.input)` while
+// `this.input` is still null, throwing:
+//Fix "Failed to execute 'unobserve' on 'ResizeObserver': parameter 1 is not of type 'Element'"
+
+(function patchResizeObserverGuard() {
+  if (typeof window === 'undefined' || typeof ResizeObserver === 'undefined') return;
+  if (window.__RESIZE_OBSERVER_GUARDED__) return;
+  window.__RESIZE_OBSERVER_GUARDED__ = true;
+
+  const proto = ResizeObserver.prototype;
+  const isElement = (v) => typeof Element !== 'undefined' && v instanceof Element;
+
+  const originalUnobserve = proto.unobserve;
+  proto.unobserve = function guardedUnobserve(target) {
+    if (!isElement(target)) return;
+    return originalUnobserve.call(this, target);
+  };
+
+  const originalObserve = proto.observe;
+  proto.observe = function guardedObserve(target, options) {
+    if (!isElement(target)) return;
+    return originalObserve.call(this, target, options);
+  };
+})();
 import TomSelect from 'tom-select';
 import './plugins/tom-autocomplete.js';
 
