@@ -71,6 +71,7 @@ export const authenticateApp = async ({
   base_url = null,
   api_url = null,
   presence_url = null,
+  sdkConfig = null,
 } = {}) => {
 
   if (!id_token || typeof id_token !== "string") {
@@ -152,6 +153,7 @@ export const authenticateApp = async ({
       userId,
       api_url: resolvedApiUrl,
       presence_url: resolvedPresenceUrl,
+      ...sdkConfig,
     });
   } catch (err) {
     return {
