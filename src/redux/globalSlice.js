@@ -51,8 +51,8 @@ const initialState = {
   botSDkInstance: null,
   enableKoreBotSDK: false, // use to enable the bot sdk custom templates
   enableContextByFollowupContext: true, // use to set the context by followup context,
-  errorState : [],
-  notifications : {},
+  errorState: [],
+  notifications: {},
   bookMarkedChatThreads: [],
   enableDebugging: false,
   quickActions: [],
