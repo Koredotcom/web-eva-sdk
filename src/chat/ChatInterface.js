@@ -110,6 +110,13 @@ const ChatInterface = (props) => {
             payload.context = {
               sessionId : selectedContext?.data?.sessionId
             }
+            if(selectedContext?.data?.followUpContext){
+              payload.context = {
+                ...payload.context,
+                'agentType': selectedContext?.data?.context?.agentType || 'aAAgent',
+                'source': selectedContext?.data?.context?.source,
+              }
+            }
           }
         }
         if(state?.enableDebugging){
