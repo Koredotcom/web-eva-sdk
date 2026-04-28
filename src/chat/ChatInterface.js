@@ -354,7 +354,7 @@ const ChatInterface = (props) => {
         }
       }
 
-      if(question?.status === "terminated"){        
+      if(['error', 'terminated', 'completed'].includes(question?.status)){        
         return;
       }
 
@@ -458,6 +458,9 @@ const ChatInterface = (props) => {
         reqId = Object.entries(_questions).find(([key, value]) => value?.reqId === detail?.data?.reqId)?.[0]
       }
       let currentQuestion = _questions[reqId]
+      if(['error', 'terminated', 'completed'].includes(currentQuestion?.status)){
+        return;
+      }
       if(state?.enableDebugging){
         console.log("currentQuestion in agent thoughts function before thoughts", currentQuestion)
       }
