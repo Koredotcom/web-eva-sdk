@@ -2,7 +2,7 @@ import { keyBy, orderBy } from "lodash"
 import { getSearchHistory } from "../redux/actions/global.action"
 import store from "../redux/store"
 import { v4 as uuid } from 'uuid';
-import { setActiveBoardId, updateChatData, setChatHistoryMoreAvailable, setCurrentQuestion } from "../redux/globalSlice";
+import { setActiveBoardId, updateChatData, setChatHistoryMoreAvailable, setCurrentQuestion, setSelectedContext } from "../redux/globalSlice";
 import constructGptForm from "./gptTemplate/gptTemplateBody";
 import gptFormFunctionality from "./gptTemplate/gptTemplateFunc";
 import MultiResponse from "./gptTemplate/MultiResponse";
@@ -153,6 +153,13 @@ const JoinChatThread = async (props) => {
         store.dispatch(setCurrentQuestion(currentQuestion))
         store.dispatch(setChatHistoryMoreAvailable(moreAvailable))
         store.dispatch(updateChatData(_questions))
+        /*fetch the latest question from the _questions and put it in the context */
+        const  {messageId, sources,...contextFromHistory} = Object.values(_questions)?.[0]?.context;        
+        /*need to remove messageId from the contextFromHistory */
+        if(contextFromHistory?.agentType === 'aAAgent'){
+            store.dispatch(setSelectedContext({data:{...contextFromHistory, followUpContext: true}}))   
+        }
+             
     }
     await afterApiCallSuccess()
     if(state?.enableDebugging){
