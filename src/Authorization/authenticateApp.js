@@ -148,7 +148,7 @@ export const authenticateApp = async ({
     };
   }
 
-  if (skipInitializeSDK) {
+  if (sdkConfig?.skipInitializeSDK) {
     return {
       status: "success",
       data: loginResponse,
