@@ -15,6 +15,57 @@ const { hideRecentAgentsDiv, unHideRecentAgentsDiv } = RecentAgentsFunc();
 
 const ChatInterface = (props) => {
     let state = store.getState().global, input = '', resIndexRef = 0;
+    let networkErrorAppliedToQId = null;
+
+    const handleOffline = () => {
+      const state = store.getState().global;
+      const currentQuestion = state.currentQuestion;
+      if (!currentQuestion?.reqId) return;
+
+      const questions = cloneDeep(state.questions);
+      const qId = currentQuestion?.isTask ? currentQuestion?.cId : currentQuestion?.reqId;
+      const question = questions[qId];
+
+      if (!question || ['completed', 'terminated', 'failed'].includes(question?.status)) return;
+
+      questions[qId] = {
+        ...question,
+        status: 'error',
+        error: true,
+        errorInfo: { message: 'Network connection lost. Waiting to reconnect...', code: 'ERR_NETWORK_LOST', isNetworkError: true },
+      };
+      networkErrorAppliedToQId = qId;
+      store.dispatch(updateChatData(questions));
+    };
+
+    const handleOnline = () => {
+      if (!networkErrorAppliedToQId) return;
+
+      const state = store.getState().global;
+      const questions = cloneDeep(state.questions);
+      const question = questions[networkErrorAppliedToQId];
+
+      if (!question) {
+        networkErrorAppliedToQId = null;
+        return;
+      }
+
+      const advSearchCompleted = question?.apiSuccess === true || question?.apiSuccess === false;
+      if (advSearchCompleted) {
+        networkErrorAppliedToQId = null;
+        return;
+      }
+
+      delete question.error;
+      delete question.errorInfo;
+      question.status = question?.streamingStatus || 'in-progress';
+      questions[networkErrorAppliedToQId] = question;
+      store.dispatch(updateChatData(questions));
+      networkErrorAppliedToQId = null;
+    };
+
+    window.addEventListener('offline', handleOffline);
+    window.addEventListener('online', handleOnline);
 
     // Subscribe to store updates
     const subscribe = (cb) => {
@@ -30,6 +81,8 @@ const ChatInterface = (props) => {
 
         // Return a function to unsubscribe
         return () => {
+            window.removeEventListener('offline', handleOffline);
+            window.removeEventListener('online', handleOnline);
             unsubscribe();
         };
     };
@@ -85,6 +138,19 @@ const ChatInterface = (props) => {
           }
         }
         const qId = constructQuestionInitial({ ...params, ...payload })
+
+        if (!navigator.onLine) {
+          const questions = cloneDeep(store.getState().global.questions);
+          questions[qId] = {
+            ...questions[qId],
+            loading: false,
+            status: 'failed',
+            error: true,
+            errorInfo: { message: 'You are offline. Please check your internet connection.', code: 'ERR_OFFLINE', isNetworkError: true },
+          };
+          store.dispatch(updateChatData(questions));
+          return;
+        }
 
         if(!isEmpty(selectedContext?.data)) {
           let _agents = cloneDeep(allAgents?.data?.agents)
@@ -222,6 +288,21 @@ const ChatInterface = (props) => {
 		}else{
 			qId = constructQuestionInitial({...params, ...payload, replaceExistingQsn})
 		}
+
+    if (!navigator.onLine) {
+      const questions = cloneDeep(store.getState().global.questions);
+      questions[qId] = {
+        ...questions[qId],
+        loading: false,
+        status: 'failed',
+        error: true,
+        errorInfo: { message: 'You are offline. Please check your internet connection.', code: 'ERR_OFFLINE', isNetworkError: true },
+      };
+      store.dispatch(updateChatData(questions));
+      if(arg?.callback) { arg.callback(); }
+      return;
+    }
+
     setTimeout(() => {
        const scrollableElement = document.querySelector('.chatSec');
        if (scrollableElement) {
@@ -428,7 +509,7 @@ const ChatInterface = (props) => {
         }
       }
 
-      if(['error', 'terminated', 'completed'].includes(question?.status)){        
+      if(['error', 'terminated', 'completed', 'failed'].includes(question?.status)){        
         return;
       }
 
@@ -545,7 +626,7 @@ const ChatInterface = (props) => {
         reqId = cQFromStore?.cId
       }
       let currentQuestion = _questions[reqId]
-      if(['error', 'terminated', 'completed'].includes(currentQuestion?.status)){
+      if(['error', 'terminated', 'completed', 'failed'].includes(currentQuestion?.status)){
         return;
       }
       if(state?.enableDebugging){
