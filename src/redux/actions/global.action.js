@@ -96,6 +96,26 @@ export const updateMemoryInstruction = createAsyncThunk(
     }
 );
 
+export const enableCDFeature = createAsyncThunk(
+    'global/enableCDFeature',
+    async ({ userId, featureKey, enabled }, { rejectWithValue }) => {
+        try {
+            const response = await axiosInstance.put(
+                `/ka/users/${userId}/featureOnboarding`,
+                {
+                    featureKey,
+                    version: 1,
+                    meta: { enabled }
+                }
+            );
+            return response.data;
+        } catch (error) {
+            handleErrorState(error, "Enable CD");
+            return rejectWithValue(error.response?.data);
+        }
+    }
+);
+
 export const fetchSchedulers = createAsyncThunk(
     'global/fetchSchedulers',
     async (arg, { rejectWithValue }) => {
