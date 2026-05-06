@@ -12,7 +12,8 @@ const getErrorPayload = (error) => {
     }
     const isNetworkOrCORS = error.code === 'ERR_NETWORK' || error.message === 'Network Error';
     const isTimeout = error.code === 'ECONNABORTED' || error.code === 'ERR_TIMED_OUT';
-    const isCORS = isNetworkOrCORS && navigator.onLine;
+    const isKnownOffline = typeof window !== 'undefined' && window.__evaSdkNetworkStatus === 'offline';
+    const isCORS = isNetworkOrCORS && !isKnownOffline;
     return {
         message: isCORS
             ? 'Request blocked by the server (CORS). Please contact support.'

@@ -16,8 +16,27 @@ const { hideRecentAgentsDiv, unHideRecentAgentsDiv } = RecentAgentsFunc();
 const ChatInterface = (props) => {
     let state = store.getState().global, input = '', resIndexRef = 0;
     let networkErrorAppliedToQId = null;
+    let isNetworkOffline = false;
+
+    const markQuestionAsOffline = (qId, callback) => {
+      const errorInfo = { message: 'You are offline. Please check your internet connection.', code: 'ERR_OFFLINE', isNetworkError: true };
+      const questions = cloneDeep(store.getState().global.questions);
+      questions[qId] = {
+        ...questions[qId],
+        loading: false,
+        status: 'failed',
+        error: errorInfo,
+        errorInfo,
+      };
+      store.dispatch(updateChatData(questions));
+      if(callback) { callback(); }
+    };
 
     const handleOffline = () => {
+      isNetworkOffline = true;
+      if (typeof window !== 'undefined') {
+        window.__evaSdkNetworkStatus = 'offline';
+      }
       const state = store.getState().global;
       const currentQuestion = state.currentQuestion;
       if (!currentQuestion?.reqId) return;
@@ -31,7 +50,7 @@ const ChatInterface = (props) => {
       questions[qId] = {
         ...question,
         status: 'error',
-        error: true,
+        error: { message: 'Network connection lost. Waiting to reconnect...', code: 'ERR_NETWORK_LOST', isNetworkError: true },
         errorInfo: { message: 'Network connection lost. Waiting to reconnect...', code: 'ERR_NETWORK_LOST', isNetworkError: true },
       };
       networkErrorAppliedToQId = qId;
@@ -39,6 +58,10 @@ const ChatInterface = (props) => {
     };
 
     const handleOnline = () => {
+      isNetworkOffline = false;
+      if (typeof window !== 'undefined') {
+        window.__evaSdkNetworkStatus = 'online';
+      }
       if (!networkErrorAppliedToQId) return;
 
       const state = store.getState().global;
@@ -64,8 +87,10 @@ const ChatInterface = (props) => {
       networkErrorAppliedToQId = null;
     };
 
-    window.addEventListener('offline', handleOffline);
-    window.addEventListener('online', handleOnline);
+    if (typeof window !== 'undefined') {
+      window.addEventListener('offline', handleOffline);
+      window.addEventListener('online', handleOnline);
+    }
 
     // Subscribe to store updates
     const subscribe = (cb) => {
@@ -81,8 +106,10 @@ const ChatInterface = (props) => {
 
         // Return a function to unsubscribe
         return () => {
+          if (typeof window !== 'undefined') {
             window.removeEventListener('offline', handleOffline);
             window.removeEventListener('online', handleOnline);
+          }
             unsubscribe();
         };
     };
@@ -139,16 +166,8 @@ const ChatInterface = (props) => {
         }
         const qId = constructQuestionInitial({ ...params, ...payload })
 
-        if (!navigator.onLine) {
-          const questions = cloneDeep(store.getState().global.questions);
-          questions[qId] = {
-            ...questions[qId],
-            loading: false,
-            status: 'failed',
-            error: true,
-            errorInfo: { message: 'You are offline. Please check your internet connection.', code: 'ERR_OFFLINE', isNetworkError: true },
-          };
-          store.dispatch(updateChatData(questions));
+        if (isNetworkOffline) {
+          markQuestionAsOffline(qId);
           return;
         }
 
@@ -161,14 +180,17 @@ const ChatInterface = (props) => {
           if(isAgent) {
             // when setted context is an agent
             const _source = cloneDeep(selectedContext?.data?.context || selectedContext?.data?.sources?.[0]) || {}
+            const isFollowUp = selectedContext?.data?.followUpContext;
             payload.context = {
-              agentType: isAgentSetAsSource?.type,
+              agentType: isFollowUp ? (selectedContext?.data?.context?.agentType || isAgentSetAsSource?.type) : isAgentSetAsSource?.type,
               title: isAgentSetAsSource?.name,
               "sources": [_source]}
+            if(isFollowUp && selectedContext?.data?.context?.source) {
+              payload.context.source = selectedContext?.data?.context?.source;
+            }
             if(selectedContext?.data?.messageId) {
               payload.contextParams = {messageId: selectedContext?.data?.messageId}
             }
-            /*writing especially for botAgent, will remove this once search session api gives the context data, when we click on askFollowup after bot completion */
             if(selectedContext?.data?.sessionId){
               payload.context.sessionId = selectedContext?.data?.sessionId
             }
@@ -289,17 +311,8 @@ const ChatInterface = (props) => {
 			qId = constructQuestionInitial({...params, ...payload, replaceExistingQsn})
 		}
 
-    if (!navigator.onLine) {
-      const questions = cloneDeep(store.getState().global.questions);
-      questions[qId] = {
-        ...questions[qId],
-        loading: false,
-        status: 'failed',
-        error: true,
-        errorInfo: { message: 'You are offline. Please check your internet connection.', code: 'ERR_OFFLINE', isNetworkError: true },
-      };
-      store.dispatch(updateChatData(questions));
-      if(arg?.callback) { arg.callback(); }
+    if (isNetworkOffline) {
+      markQuestionAsOffline(qId, arg?.callback);
       return;
     }
 
@@ -325,20 +338,23 @@ const ChatInterface = (props) => {
 				let isAgent = isAgentSetAsSource ? "agent" : null;
 				if (isAgent) {
 					// when setted context is an agent
+					const isFollowUp = selectedContext?.data?.followUpContext;
 					payload.context = {
-            agentType: isAgentSetAsSource?.type,
+            agentType: isFollowUp ? (selectedContext?.data?.context?.agentType || isAgentSetAsSource?.type) : isAgentSetAsSource?.type,
             title: isAgentSetAsSource?.name,
 						sources: [
 							selectedContext?.data?.context ||
 							selectedContext?.data?.sources?.[0],
 						],
 					};
+					if (isFollowUp && selectedContext?.data?.context?.source) {
+						payload.context.source = selectedContext?.data?.context?.source;
+					}
 					if (selectedContext?.data?.messageId) {
 						payload.contextParams = {
 							messageId: selectedContext?.data?.messageId,
 						};
 					}
-					/*writing especially for botAgent, will remove this once search session api gives the context data, when we click on askFollowup after bot completion */
 					if (selectedContext?.data?.sessionId) {
 						payload.context.sessionId =
 							selectedContext?.data?.sessionId;
