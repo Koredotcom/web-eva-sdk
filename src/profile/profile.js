@@ -5,7 +5,7 @@ import {
     fetchMemoryInstructions,
     createMemoryInstruction,
     updateMemoryInstruction,
-    enableCDFeature,
+    onboardingFeature,
 } from "../redux/actions/global.action";
 
 export const getAboutMe = async () => {
@@ -159,7 +159,7 @@ export const updateSpecificInstruction = async ({ instructionId, instruction } =
     }
 };
 
-export const enableCD = async ({ featureKey, enabled } = {}) => {
+export const updateFeatureOnboarding = async ({ featureKey, version = 1, enabled } = {}) => {
     const state = store.getState();
     const userId = state.global?.profile?.data?.id;
 
@@ -176,7 +176,7 @@ export const enableCD = async ({ featureKey, enabled } = {}) => {
     }
 
     try {
-        const raw = await store.dispatch(enableCDFeature({ userId, featureKey, enabled })).unwrap();
+        const raw = await store.dispatch(onboardingFeature({ userId, featureKey, enabled, version })).unwrap();
         return { status: "success", data: raw };
     } catch (error) {
         const err =
@@ -201,7 +201,7 @@ const profile = () => ({
     getInstructions,
     createInstruction,
     updateSpecificInstruction,
-    enableCD,
+    updateFeatureOnboarding,
 });
 
 export default profile;
