@@ -1,4 +1,4 @@
-import { advanceSearch, cancelAdvancedSearch, stopResponseGeneration, getSignedMediaURL } from "../redux/actions/global.action";
+import { advanceSearch, cancelAdvancedSearch, stopResponseGeneration, getSignedMediaURL , abortAdvanceSearch } from "../redux/actions/global.action";
 import { setChatInterfaceOptions, setChatInterfaceElements, setCurrentQuestion, setCustomData, setEnableContextByFollowupContext, setEnabledCustomTemplates, setErrorState, setUserSelectedLLMModel } from "../redux/globalSlice"
 import { updateChatData } from "../redux/globalSlice";
 import store from "../redux/store";
@@ -25,7 +25,7 @@ const ChatInterface = (props) => {
         ...questions[qId],
         loading: false,
         status: 'failed',
-        error: errorInfo,
+        error: true,
         errorInfo,
       };
       store.dispatch(updateChatData(questions));
