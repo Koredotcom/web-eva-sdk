@@ -96,21 +96,21 @@ export const updateMemoryInstruction = createAsyncThunk(
     }
 );
 
-export const enableCDFeature = createAsyncThunk(
-    'global/enableCDFeature',
-    async ({ userId, featureKey, enabled }, { rejectWithValue }) => {
+export const onboardingFeature = createAsyncThunk(
+    'global/onboardingFeature',
+    async ({ userId, featureKey, enabled, version }, { rejectWithValue }) => {
         try {
             const response = await axiosInstance.put(
                 `/ka/users/${userId}/featureOnboarding`,
                 {
                     featureKey,
-                    version: 1,
+                    version: version,
                     meta: { enabled }
                 }
             );
             return response.data;
         } catch (error) {
-            handleErrorState(error, "Enable CD");
+            handleErrorState(error, "Onboarding Feature");
             return rejectWithValue(error.response?.data);
         }
     }
@@ -403,6 +403,26 @@ export const submitFeedback = createAsyncThunk(
         } catch (error) {
             handleErrorState(error, "Feedback");
             return thunkAPI.rejectWithValue(error.response.data);
+        }
+    }
+);
+
+/**
+ * PUT `/kora/boards/{boardId}/messages/{messageId}/feedback` — same endpoint as Work app.
+ * Returns `response.data`. Optional `cId` (SDK-only) is used by globalSlice to merge into `questions`.
+ */
+export const Feedback_V2Thunk = createAsyncThunk(
+    'global/Feedback_V2',
+    async ({ boardId, messageId, body, cId }, thunkAPI) => {
+        try {
+            const response = await axiosInstance.put(
+                `/kora/boards/${boardId}/messages/${messageId}/feedback`,
+                body
+            );
+            return response.data;
+        } catch (error) {
+            handleErrorState(error, 'Feedback');
+            return thunkAPI.rejectWithValue(error.response?.data ?? error.message);
         }
     }
 );

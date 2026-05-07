@@ -33,6 +33,39 @@ html, body {
     flex-direction: column;
     gap: 28px;
 }
+
+.chat-demo-message-row {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.chat-demo-feedback {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding-left: 4px;
+}
+
+.chat-demo-feedback-btn {
+    cursor: pointer;
+    border: 1px solid #d1d1d6;
+    background: #fff;
+    border-radius: 6px;
+    padding: 4px 10px;
+    font-size: 1rem;
+    line-height: 1.2;
+
+    &:hover {
+        background: #f4f4f5;
+    }
+
+    &.is-active {
+        background: #eef4ff;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15);
+    }
+}
 .message-bubble.answer .answerCntr > div{
     display: flex;
     flex-direction: column;
