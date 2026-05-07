@@ -407,6 +407,26 @@ export const submitFeedback = createAsyncThunk(
     }
 );
 
+/**
+ * PUT `/kora/boards/{boardId}/messages/{messageId}/feedback` — same endpoint as Work app.
+ * Returns `response.data`. Optional `cId` (SDK-only) is used by globalSlice to merge into `questions`.
+ */
+export const Feedback_V2Thunk = createAsyncThunk(
+    'global/Feedback_V2',
+    async ({ boardId, messageId, body, cId }, thunkAPI) => {
+        try {
+            const response = await axiosInstance.put(
+                `/kora/boards/${boardId}/messages/${messageId}/feedback`,
+                body
+            );
+            return response.data;
+        } catch (error) {
+            handleErrorState(error, 'Feedback');
+            return thunkAPI.rejectWithValue(error.response?.data ?? error.message);
+        }
+    }
+);
+
 // gives sToken - which is required to connect with web socket
 export const presenceStart = createAsyncThunk(
     'global/presenceStart',

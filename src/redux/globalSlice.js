@@ -10,12 +10,46 @@ import {
   getRecentFileDownloadUrl,
   searchSession,
   submitFeedback,
+  Feedback_V2Thunk,
   presenceStart,
   getNotification,
   getAllAnnouncements
 } from './actions/global.action';
 import { handleAsyncActions } from '../utils/handleAsyncActions';
 import { cloneDeep, concat, orderBy, uniqBy } from 'lodash';
+
+/**
+ * Merge feedback API response fields into `state.questions` (by `cId` or all rows with `messageId`).
+ * The feedback API returns the full message document keyed by `_id` (no `messageId`); we normalize
+ * it back to `messageId` so chat-flow consumers (rendering, follow-up dispatches) keep working.
+ * @param {object} state - Immer draft global slice state
+ * @param {{ cId?: string, messageId?: string }} metaArg - from thunk `meta.arg`
+ * @param {object} [updates] - Response body to merge into the question(s)
+ */
+function mergeFeedbackResponseIntoQuestions(state, metaArg, updates) {
+  if (!updates || typeof updates !== 'object') return;
+  const { cId, messageId } = metaArg || {};
+  const questions = cloneDeep(state.questions);
+
+  const applyMerge = (existing) => {
+    const merged = { ...updates };
+    if (!merged.messageId) {
+      merged.messageId = existing?.messageId || updates?._id || merged?._id;
+    }
+    return merged;
+  };
+
+  if (cId && questions[cId]) {
+    questions[cId] = applyMerge(questions[cId]);
+  } else if (messageId) {
+    Object.keys(questions).forEach((key) => {
+      if (questions[key]?.messageId === messageId) {
+        questions[key] = applyMerge(questions[key]);
+      }
+    });
+  }
+  state.questions = questions;
+}
 
 const initialState = {
   profile: {},
@@ -44,6 +78,7 @@ const initialState = {
   enabledCustomTemplates: {},
   GptUploadedFiles: null,
   submitFeedback: {},
+  Feedback_V2: {},
   customData: {},
   presenceStart: {},
   chatInterfaceOptions: {},
@@ -54,7 +89,7 @@ const initialState = {
   errorState: [],
   notifications: {},
   bookMarkedChatThreads: [],
-  enableDebugging: false,
+  enableDebugging: true,
   quickActions: [],
   announcements: {},
   autoRemoveWebSearchFromContext: false,
@@ -234,10 +269,14 @@ const globalSlice = createSlice({
     handleAsyncActions(builder, searchSession, 'selectedContext')
     handleAsyncActions(builder, getRecentFileDownloadUrl, 'recentFileDownloadUrl');
     handleAsyncActions(builder, submitFeedback, 'submitFeedback', (state, action) => {
-      // feedback logic to update questions
-      let questions = cloneDeep(state.questions)
-      questions[[action.meta.arg.cId]] = { ...questions[[action.meta.arg.cId]], ...action.payload.data }
-      state.questions = questions
+      mergeFeedbackResponseIntoQuestions(
+        state,
+        action.meta.arg,
+        action.payload?.data,
+      );
+    });
+    handleAsyncActions(builder, Feedback_V2Thunk, 'Feedback_V2', (state, action) => {
+      mergeFeedbackResponseIntoQuestions(state, action.meta.arg, action.payload);
     });
     handleAsyncActions(builder, presenceStart, 'presenceStart');
     // handleAsyncActions(builder, getAllAnnouncements, 'announcements', (state, action) => {
