@@ -81,7 +81,7 @@ const ChatInterface = (props) => {
           payload.customData = state.customData
           if(state?.enableDebugging){
             console.log("custom data in chat interface", state.customData)
-            console.log("custom  data payload in chat interface", payload.customData)
+            console.log("selectedContext in chat interface", selectedContext)
           }
         }
         const qId = constructQuestionInitial({ ...params, ...payload })
@@ -123,7 +123,7 @@ const ChatInterface = (props) => {
               payload.context = {
                 ...payload.context,
                 'agentType': selectedContext?.data?.context?.agentType || 'aAAgent',
-                'source': selectedContext?.data?.context?.source,
+                'source': selectedContext?.data?.source || selectedContext?.data?.context?.source,
               }
             }
           }

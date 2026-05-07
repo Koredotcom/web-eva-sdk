@@ -78,8 +78,8 @@ export const initializeSDK = async (config) => {
   await store.dispatch(presenceStart())
 
   //enablement of debugging i.e console.log statements
-  if(config?.enableDebugging){
-    store.dispatch(setEnabledDebugging(config?.enableDebugging))
+  if(config?.hasOwnProperty('enableDebugging')){
+    store.dispatch(setEnabledDebugging(config.enableDebugging))
   }
 
   if(config?.enableContextByFollowupContext){

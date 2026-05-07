@@ -5,6 +5,7 @@ import {
     fetchMemoryInstructions,
     createMemoryInstruction,
     updateMemoryInstruction,
+    onboardingFeature,
 } from "../redux/actions/global.action";
 
 export const getAboutMe = async () => {
@@ -158,6 +159,34 @@ export const updateSpecificInstruction = async ({ instructionId, instruction } =
     }
 };
 
+export const updateFeatureOnboarding = async ({ featureKey, version = 1, enabled } = {}) => {
+    const state = store.getState();
+    const userId = state.global?.profile?.data?.id;
+
+    if (!userId) {
+        return { status: "failed", error: { message: "User ID not available" }, data: null };
+    }
+
+    if (!featureKey?.trim()) {
+        return { status: "failed", error: { message: "featureKey is required" }, data: null };
+    }
+
+    if (typeof enabled !== "boolean") {
+        return { status: "failed", error: { message: "enabled must be a boolean" }, data: null };
+    }
+
+    try {
+        const raw = await store.dispatch(onboardingFeature({ userId, featureKey, enabled, version })).unwrap();
+        return { status: "success", data: raw };
+    } catch (error) {
+        const err =
+            error && typeof error === "object" && !Array.isArray(error)
+                ? error
+                : { message: String(error ?? "Unable to update feature onboarding") };
+        return { status: "failed", error: err, data: null };
+    }
+};
+
 /**
  * Factory that returns an object exposing all profile-related getters and actions.
  * Mirrors the shape of `ChatInterface()` / `sdkAgents()` so consumers can do:
@@ -172,6 +201,7 @@ const profile = () => ({
     getInstructions,
     createInstruction,
     updateSpecificInstruction,
+    updateFeatureOnboarding,
 });
 
 export default profile;
