@@ -7,6 +7,7 @@ import { ChatInterface, InvokeAgent } from '../chat'
 import CommonAgents from '../agents/CommonAgents'
 import { agentEnablementUserLevel, bookmarkAgent } from '../agents/actionsOnAgents'
 import pinnedAgents from '../agents/pinnedAgents'
+import { getEnabledAgents, getRecentAgents } from '../sdkAgents/sdkAgents'
 
 const Agents = () => {
     const [agents, setAgents] = useState(null)
@@ -27,12 +28,13 @@ const Agents = () => {
     }
 
     const fetchRecentAgentsData = async () => {
-        const res = await recentAgents()
+        const res = getRecentAgents()
         // console.log(res)
-        setAgents(res)
+        // setAgents(res)
     }
     const fetchEnabledAgentsData = async () => {
-        const res = await EnabledAgents()
+        const res = getEnabledAgents()
+        setAgents(res)
         // console.log(res)
     }
     const fetchAllAgentsData = async () => {
