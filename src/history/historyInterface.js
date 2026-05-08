@@ -1,5 +1,5 @@
 import _, { cloneDeep } from "lodash";
-import { bookMarkChatThread, deleteHistory, getBookMarkedChatThreads, updateHistory } from "../redux/actions/global.action";
+import { bookMarkChatThread, deleteHistory, getBookMarkedChatThreads, searchHistoryBoards, updateHistory } from "../redux/actions/global.action";
 import { setAllHistory, setBookMarkedChatThreads } from "../redux/globalSlice";
 import store from "../redux/store";
 import LoadMoreHistoryData from "./LoadMoreHistoryData";
@@ -139,6 +139,36 @@ const HistoryInterface = (props) => {
         await LoadMoreHistoryData(arg)
     }
 
+    /**
+     * Free-text search over the current user's history boards.
+     * Returns `{ status, data, error }` so consumers don't have to dig into the raw thunk result.
+     *
+     * @param {object} arg
+     * @param {string} arg.search Search term (required).
+     * @param {number} [arg.limit=50]
+     * @param {number} [arg.messagesLimit=20]
+     * @param {boolean} [arg.includeMessages=true]
+     * @param {boolean} [arg.showdata=false]
+     */
+    const searchHistory = async (arg = {}) => {
+        const term = typeof arg?.search === 'string' ? arg.search.trim() : '';
+        if (!term) {
+            return { status: 'failed', error: { message: 'search term is required' }, data: null };
+        }
+        try {
+            const data = await store
+                .dispatch(searchHistoryBoards({ ...arg, search: term }))
+                .unwrap();
+            return { status: 'success', data, error: null };
+        } catch (error) {
+            const err =
+                error && typeof error === 'object' && !Array.isArray(error)
+                    ? error
+                    : { message: String(error ?? 'Unable to search history') };
+            return { status: 'failed', error: err, data: null };
+        }
+    }
+
     return {
         subscribe,
         deleteHistoryBoard,
@@ -147,7 +177,8 @@ const HistoryInterface = (props) => {
         loadMoreBookMarkedChatThreads,
         bookMarkChatThreadItem,
         updateHistoryBoardNameonSocketEvent,
-        historyPagination
+        historyPagination,
+        searchHistory,
     }
 }
 
