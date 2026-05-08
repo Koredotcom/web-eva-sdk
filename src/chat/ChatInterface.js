@@ -215,6 +215,12 @@ const ChatInterface = (props) => {
               }
             }
           }
+
+          if(selectedContext?.data?.sources?.[0]?.agentType === 'aAAgent'){
+            const {sessionId, source, agentType} = selectedContext?.data?.sources?.[0] || {};
+            payload.context = {sessionId, source, agentType}
+            delete payload?.contextParams;
+          }
         }
         if(state?.enableDebugging){
           console.log("payload in chat interface", payload)
@@ -364,6 +370,12 @@ const ChatInterface = (props) => {
 					payload.context = {
 						sessionId: selectedContext?.data?.sessionId,
 					};
+				}
+
+				if(selectedContext?.data?.sources?.[0]?.agentType === 'aAAgent'){
+					const {sessionId, source, agentType} = selectedContext?.data?.sources?.[0] || {};
+					payload.context = {sessionId, source, agentType}
+					delete payload?.contextParams;
 				}
 			}
 		}
@@ -786,6 +798,20 @@ const ChatInterface = (props) => {
       return userAccess;
     }
 
+    const asyncAutonomousBotMessage = (msg) => {
+      const followUpContext = msg?.message?.followUpContext;
+      if(followUpContext?.agentType !== 'aAAgent') return;
+
+      const reqId = msg?.message?.reqId || msg?.reqId;
+      const questions = cloneDeep(store.getState().global.questions);
+      let question = questions[reqId];
+      if(!question) return;
+
+      question = {...question, ...msg?.message};
+      questions[reqId] = question;
+      store.dispatch(updateChatData(questions));
+    }
+
 
     return {
         subscribe,
@@ -809,6 +835,8 @@ const ChatInterface = (props) => {
         fetchSignedMediaURL,
         storeUserSelectedLLMModel,
         startNewChat,
+        responseFlowGeneration,
+        asyncAutonomousBotMessage,
     }
 }
 

@@ -184,8 +184,10 @@ export const constructQuestionPostCall = (data, qId) => {
 				}
 			}
 		}
-        /*Clearing the selected context when search results are received */
-        if (state.autoRemoveWebSearchFromContext) {
+        /*Clearing the selected context when search results are received, but not for aAAgent */
+        const isAAAgentContext = state.selectedContext?.data?.sources?.[0]?.agentType === 'aAAgent' 
+            || data?.payload?.followUpContext?.agentType === 'aAAgent';
+        if (state.autoRemoveWebSearchFromContext && !isAAAgentContext) {
             store.dispatch(setSelectedContext(null))
         }
 	}
@@ -421,18 +423,53 @@ export const constructQuestionPostCall = (data, qId) => {
         } 
     }
     if (data?.payload?.followUpContext && state.enableContextByFollowupContext) {
-        // console.log("data?.payload?.followUpContext", { ...data?.payload?.followUpContext, messageId: data?.payload?.messageId })
-        let context = {
-            context: data?.payload?.followUpContext,
-            messageId: data?.payload?.messageId,
-            sources: data?.payload?.sources,
-            viewType: data?.payload?.viewType,
-            type: "agent",
-            'isAgent': true,
-            sessionId: data?.payload?.followUpContext?.sessionId,
-            followUpContext: true
+        const followUp = data?.payload?.followUpContext;
+        if(followUp?.agentType === 'aAAgent' || state.selectedContext?.data?.sources?.[0]?.agentType === 'aAAgent') {
+            const {sessionId, agentType, source} = followUp || state.selectedContext?.data?.sources?.[0] || {};
+            const existingSource = data?.payload?.context?.sources?.[0] || state.selectedContext?.data?.sources?.[0] || data?.payload?.sources?.[0] || {};
+            let context = {
+                context: { sessionId, source, agentType },
+                messageId: data?.payload?.messageId,
+                sources: [{...existingSource, sessionId, agentType, source, isAgent: true}],
+                viewType: data?.payload?.viewType,
+                type: "commonAgent",
+                'isAgent': true,
+                sessionId: sessionId,
+                followUpContext: true
+            }
+            store.dispatch(setSelectedContext({data: context}))
+        } else {
+            let context = {
+                context: data?.payload?.followUpContext,
+                messageId: data?.payload?.messageId,
+                sources: data?.payload?.sources?.map(s => ({...s, isAgent: true})) || [{isAgent: true}],
+                viewType: data?.payload?.viewType,
+                type: "agent",
+                'isAgent': true,
+                sessionId: data?.payload?.followUpContext?.sessionId,
+                followUpContext: true
+            }
+            store.dispatch(setSelectedContext({data: context}))
         }
-        store.dispatch(setSelectedContext({data: context}))
+    } else if(data?.payload?.followUpContext?.agentType === 'aAAgent') {
+        const existingContextData = state.selectedContext?.data;
+        const hasExistingContext = existingContextData && Object.keys(existingContextData).length > 0;
+        if(!hasExistingContext) {
+            const followUp = data?.payload?.followUpContext;
+            const {sessionId, agentType, source} = followUp;
+            const existingSource = data?.payload?.context?.sources?.[0] || data?.payload?.sources?.[0] || {};
+            let context = {
+                context: { sessionId, source, agentType },
+                messageId: data?.payload?.messageId,
+                sources: [{...existingSource, sessionId, agentType, source, isAgent: true}],
+                viewType: data?.payload?.viewType,
+                type: "commonAgent",
+                'isAgent': true,
+                sessionId: sessionId,
+                followUpContext: true
+            }
+            store.dispatch(setSelectedContext({data: context}))
+        }
     }
     store.dispatch(updateChatData(questions))
 

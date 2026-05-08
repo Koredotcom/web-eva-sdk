@@ -1,12 +1,13 @@
 {
   "name": "eva-web-sdk-data-version",
-  "version": "1.2.0",
+  "version": "1.2.3",
   "description": "",
   "main": "dist/index.cjs.js",
   "style": "dist/sdk-styles.css",
   "module": "dist/index.esm.js",
   "scripts": {
     "serve": "vite",
+    "prebuild": "node -e \"require('fs').rmSync('dist', { recursive: true, force: true })\"",
     "build": "rollup -c"
   },
   "dependencies": {
