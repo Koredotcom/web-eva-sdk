@@ -1,4 +1,4 @@
-import { advanceSearch, cancelAdvancedSearch, stopResponseGeneration, getSignedMediaURL } from "../redux/actions/global.action";
+import { advanceSearch, cancelAdvancedSearch, stopResponseGeneration, getSignedMediaURL, addFileToAutonomousAgentAction, removeFileFromAutonomousAgentAction } from "../redux/actions/global.action";
 import { setChatInterfaceOptions, setCurrentQuestion, setCustomData, setEnableContextByFollowupContext, setEnabledCustomTemplates, setErrorState, setUserSelectedLLMModel } from "../redux/globalSlice"
 import { updateChatData } from "../redux/globalSlice";
 import store from "../redux/store";
@@ -571,6 +571,43 @@ const ChatInterface = (props) => {
       })
     }
 
+    const addFileToAutonomousAgent = async ({ fileId, messageId }) => {
+      const boardId = store.getState().global?.activeBoardId;
+      if (!fileId) {
+        return { error: true, message: "Missing required params: fileId" };
+      }
+      if (!messageId) {
+        return { error: true, message: "Missing required params: messageId" };
+      }
+      try {
+        const result = await store
+          .dispatch(addFileToAutonomousAgentAction({ boardId, messageId, fileId }))
+          .unwrap();
+        return result;
+      } catch (error) {
+        return { error: true, message: error?.errors?.[0]?.msg || "Unable to add file to autonomous agent" };
+      }
+    }
+
+    const removeFileFromAutonomousAgent = async ({ fileIds, messageId }) => {
+      const boardId = store.getState().global?.activeBoardId;
+      const normalizedFileIds = Array.isArray(fileIds) ? fileIds : (fileIds ? [fileIds] : []);
+      if (normalizedFileIds.length === 0) {
+        return { error: true, message: "Missing required params: fileIds" };
+      }
+      if (!messageId) {
+        return { error: true, message: "Missing required params: messageId" };
+      }
+      try {
+        const result = await store
+          .dispatch(removeFileFromAutonomousAgentAction({ boardId, messageId, fileIds: normalizedFileIds }))
+          .unwrap();
+        return result;
+      } catch (error) {
+        return { error: true, message: error?.errors?.[0]?.msg || "Unable to remove file from autonomous agent" };
+      }
+    }
+
     return {
         subscribe,
         sendMessageAction,
@@ -590,6 +627,8 @@ const ChatInterface = (props) => {
         setAgentContext,
         stopBotAnswer,
         fetchSignedMediaURL,
+        addFileToAutonomousAgent,
+        removeFileFromAutonomousAgent,
         storeUserSelectedLLMModel
     }
 }

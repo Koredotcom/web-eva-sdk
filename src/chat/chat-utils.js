@@ -11,6 +11,8 @@ import MultiResponse from './gptTemplate/MultiResponse';
 import moment from "moment";
 import { fetchHistory } from "../redux/actions/global.action";
 import MultiIntentExecution from '../multiIntentExecution/multiIntentExecution';
+import ChatInterface from './ChatInterface';
+
 
 export const constructQuestionInitial = (args) => {
 	let uniqueMsgId = args?.reqId;
@@ -404,6 +406,12 @@ export const constructQuestionPostCall = (data, qId) => {
         }
         store.dispatch(setSelectedContext({data: context}))
     }
+
+    if(data?.payload?.agentContext?.sources?.length > 0){
+        /*need to call removeFileFromAutonomousAgent action to remove the files from the autonomous agent */
+        ChatInterface().removeFileFromAutonomousAgent({ fileIds: data?.payload?.agentContext?.sources?.map(source => source?.fileId)?.filter(Boolean), messageId: data?.payload?.messageId })
+    }
+    store.dispatch(setCurrentQuestion(questions[qId]))
     store.dispatch(updateChatData(questions))
 
     // if(question?.isTask) {
