@@ -177,7 +177,7 @@ function FileUploader({
         }
         
         if(_self.fileContext === "store"){
-            axios.post(this.baseUrl + "/ka/users/" + this.userInfoId + "/store/file", formData, {
+            axios.post(this.baseUrl + "ka/users/" + this.userInfoId + "/store/file", formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
                     'Authorization': "bearer " + this.accessToken
