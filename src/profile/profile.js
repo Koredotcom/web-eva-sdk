@@ -94,9 +94,6 @@ export const createInstruction = async ({ instruction, scope, agentId=null } = {
         return { status: "failed", error: { message: "Instruction is required" }, data: null };
     }
 
-    if (instruction.length > 2000) {
-        return { status: "failed", error: { message: "Instruction must not exceed 2000 characters" }, data: null };
-    }
 
     const resolvedScope = scope || "global";
 
@@ -140,10 +137,7 @@ export const updateSpecificInstruction = async ({ instructionId, instruction } =
     if (!instruction?.trim()) {
         return { status: "failed", error: { message: "validated at sdk function level and identified the Instruction provided is empty or whitespace only" }, data: null };
     }
-
-    if (instruction.length > 2000) {
-        return { status: "failed", error: { message: "validated at sdk function level and identified the Instruction provided must not exceed 2000 characters" }, data: null };
-    }
+    
 
     const payload = { instruction };
 
