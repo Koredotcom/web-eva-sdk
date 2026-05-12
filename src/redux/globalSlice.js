@@ -32,7 +32,7 @@ function mergeFeedbackResponseIntoQuestions(state, metaArg, updates) {
   const questions = cloneDeep(state.questions);
 
   const applyMerge = (existing) => {
-    const merged = { ...updates };
+    const merged = { ...updates, apiSuccess: true };
     if (!merged.messageId) {
       merged.messageId = existing?.messageId || updates?._id || merged?._id;
     }
