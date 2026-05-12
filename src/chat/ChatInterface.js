@@ -10,6 +10,55 @@ import BotConversation from "./botAgent/getBotConversation";
 import { current } from "@reduxjs/toolkit";
 import { sessionItemHandler } from "../Attachments/createContext";
 
+/** Normalize escaped newlines in stored markdown (same as Kora-React MenuOptions copyAnswer). */
+const normalizeCopyNewlines = (text) => {
+    if (text == null || text === "") return "";
+    const s = typeof text === "string" ? text : String(text);
+    return s.replace(/\\n/g, "\n");
+};
+
+/**
+ * Resolve chat content from the Redux store by `messageId` only.
+ * For `viewType === 'threadView'`, matches `messageId` against keys of `botConversation` first; otherwise matches `question.messageId`.
+ * @param {string} messageId
+ * @returns {{ parent: object, botMessage: object | null } | null}
+ */
+const resolveMessageForCopy = (messageId) => {
+    if (messageId == null || messageId === "") return null;
+    const questions = store.getState().global?.questions;
+    if (!questions || typeof questions !== "object") return null;
+
+    const id = messageId;
+
+    for (const key of Object.keys(questions)) {
+        const parent = questions[key];
+        if (parent?.viewType === "threadView" && parent?.botConversation && typeof parent.botConversation === "object") {
+            const turn = parent.botConversation[id];
+            if (turn) {
+                return { parent, botMessage: turn };
+            }
+        }
+    }
+
+    for (const key of Object.keys(questions)) {
+        const q = questions[key];
+        if (q?.messageId === id) {
+            return { parent: q, botMessage: null };
+        }
+    }
+
+    return null;
+};
+
+const buildMultiResponseAnswer = (parent) => {
+    const responses = parent?.responses;
+    if (!Array.isArray(responses) || responses.length === 0) return "";
+    return responses
+        .map((r) => (r?.answer != null && r?.answer !== "" ? String(r.answer) : ""))
+        .filter(Boolean)
+        .join("\n\n");
+};
+
 const ChatInterface = (props) => {
     let state = store.getState().global, input = '', resIndexRef = 0;
 
@@ -608,6 +657,55 @@ const ChatInterface = (props) => {
       }
     }
 
+    /**
+     * Returns the user question text for a turn (markdown / plain as stored). Reads from the Redux store.
+     * Pass the server `messageId`. For `threadView`, the id is resolved inside that question's `botConversation`.
+     * @param {string} messageId
+     * @returns {string} Question string, or empty string if not found.
+     */
+    const copyQuestion = (messageId) => {
+      const resolved = resolveMessageForCopy(messageId);
+      if (!resolved) return "";
+
+      const { parent, botMessage } = resolved;
+      if (botMessage) {
+        const raw =
+          botMessage.question ??
+          botMessage.content ??
+          botMessage.input ??
+          "";
+        return normalizeCopyNewlines(raw);
+      }
+      return normalizeCopyNewlines(parent?.question ?? "");
+    };
+
+    /**
+     * Returns the assistant answer markdown/text as stored (escaped `\\n` normalized like Kora-React copy).
+     * Reads from the Redux store. Pass the server `messageId`. For `threadView`, resolves via `botConversation`.
+     * For `multi_responses`, non-empty `responses[].answer` values are joined with blank lines.
+     * @param {string} messageId
+     * @returns {string} Answer string, or empty string if not found.
+     */
+    const copyAnswer = (messageId) => {
+      const resolved = resolveMessageForCopy(messageId);
+      if (!resolved) return "";
+
+      const { parent, botMessage } = resolved;
+      if (botMessage) {
+        const raw =
+          botMessage.answer ??
+          botMessage.content ??
+          "";
+        return normalizeCopyNewlines(raw);
+      }
+
+      let raw = parent?.answer;
+      if (raw == null || raw === "") {
+        raw = buildMultiResponseAnswer(parent);
+      }
+      return normalizeCopyNewlines(raw ?? "");
+    };
+
     return {
         subscribe,
         sendMessageAction,
@@ -629,7 +727,9 @@ const ChatInterface = (props) => {
         fetchSignedMediaURL,
         addFileToAutonomousAgent,
         removeFileFromAutonomousAgent,
-        storeUserSelectedLLMModel
+        storeUserSelectedLLMModel,
+        copyQuestion,
+        copyAnswer
     }
 }
 
