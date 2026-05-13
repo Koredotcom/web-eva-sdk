@@ -603,6 +603,14 @@ const ChatInterface = (props) => {
           }catch(error){
             console.error("error in concatenating the answer", error, `details are ${reqId} questions are ${questions}`)
           }
+
+          try {
+            if (detail?.data?.chunkMeta) {
+              question.chunkMeta = { ...(question?.chunkMeta || {}), ...detail.data.chunkMeta }
+            }
+          } catch (error) {
+            console.error("error in updating chunkMeta", error, `details are ${reqId} questions are ${questions}`)
+          }
           
         }
 
