@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { TemplateRenderer } from "../../templateRenderer";
 import { BotConversation, ChatInterface, NewChat } from "../../chat";
 import store from "../../redux/store";
-import { feedback_V2, feedbackDislikeCategories } from "../../Feedback";
+import { submitUserFeedback, feedbackDislikeCategories } from "../../Feedback";
 
 import "./ChatInterface.scss"
 
@@ -15,6 +15,7 @@ import History from "../history";
 import { SchedulersView } from "../../schedulers";
 import { ExecuteFormThroughURL } from "../../chat/gptTemplate/submitGPTForm";
 import Profile from "./profile";
+import Notifications from "../Notifications";
 
 
 
@@ -47,7 +48,7 @@ const ChatInterfaceDemo = () => {
     const cId = item?.cId;
     if (!boardId || !messageId) {
       if (state?.enableDebugging) {
-        console.warn("feedback_V2 skipped: missing boardId or messageId", {
+        console.warn("submitUserFeedback skipped: missing boardId or messageId", {
           boardId,
           messageId,
         });
@@ -60,36 +61,26 @@ const ChatInterfaceDemo = () => {
     const isUndo =
       (feedbackType === "like" && currentFeedback === "like") ||
       (feedbackType === "dislike" && currentFeedback === "dislike");
+
+    let payload;
+    if (isUndo) {
+      payload = { action: "undo" };
+    } else if (feedbackType === "like") {
+      payload = { feedback: "like", comment: "" };
+    } else {
+      payload = { feedback: "dislike", category: ["demo"], comment: "" };
+    }
+
     try {
-      if (isUndo) {
-        await feedback_V2({
-          boardId,
-          messageId,
-          cId,
-          action: "undo",
-        });
-      } else if (feedbackType === "like") {
-        await feedback_V2({
-          boardId,
-          messageId,
-          cId,
-          feedback: "like",
-          category: [],
-          comment: "",
-        });
-      } else {
-        await feedback_V2({
-          boardId,
-          messageId,
-          cId,
-          feedback: "dislike",
-          category: ["demo"],
-          comment: "",
-        });
-      }
+      await submitUserFeedback({
+        type: feedbackType,
+        cId,
+        messageId,
+        payload,
+      });
     } catch (err) {
       if (store.getState().global?.enableDebugging) {
-        console.error("feedback_V2 failed", err);
+        console.error("submitUserFeedback failed", err);
       }
     }
   };
@@ -161,7 +152,7 @@ const ChatInterfaceDemo = () => {
             }}>+</div>
           </div>
           
-          {/* <Notifications /> */}
+          <Notifications />
           <div className="sidebar-nav-item" onClick={() => {
             setShowAgents(prev => !prev);
           }} role="button" tabIndex={0}>Get Agents</div>
@@ -180,7 +171,7 @@ const ChatInterfaceDemo = () => {
           }} role="button" tabIndex={0}>Profile</div>
           <div>---------------------------------------------------------------</div>
           {/* <Announcements /> */}
-          {/* <History /> */}
+          <History />
         </div>
       </div>
       <div className="chatInterfaceSec">
