@@ -536,6 +536,16 @@ const ChatInterface = (props) => {
           reqId = question?.id || question?._id
         }
       }
+/* updating chunkMeta for the question i.e for inception*/
+      if(detail?.data?.chunkMeta){
+        try {
+          if (detail?.data?.chunkMeta) {             
+            question.chunkMeta = detail?.data?.chunkMeta
+          }
+        } catch (error) {
+          console.error("error in updating chunkMeta", error, `details are ${reqId} questions are ${questions}`)
+        }
+      }
 
       if(['error', 'terminated', 'completed', 'failed'].includes(question?.status)){        
         return;
@@ -602,15 +612,7 @@ const ChatInterface = (props) => {
             question.answer = question?.answer?.concat(detail?.data?.chunk)
           }catch(error){
             console.error("error in concatenating the answer", error, `details are ${reqId} questions are ${questions}`)
-          }
-
-          try {
-            if (detail?.data?.chunkMeta) {
-              question.chunkMeta = { ...(question?.chunkMeta || {}), ...detail.data.chunkMeta }
-            }
-          } catch (error) {
-            console.error("error in updating chunkMeta", error, `details are ${reqId} questions are ${questions}`)
-          }
+          }          
           
         }
 
@@ -744,7 +746,7 @@ const ChatInterface = (props) => {
         const payload = {
           "cId": question?.cId || question?.reqId, // Use conversation ID or request ID
           "input": input, // User's input message
-          // "context": question?.context, // Conversation context
+          "context": question?.context, // Conversation context
           "messageId": conversation?.messageId, // Message identifier
         }
         // Submit the response to the bot conversation system
