@@ -1,8 +1,9 @@
 import { cloneDeep, isEmpty } from "lodash"
 import { JoinChatThread } from "../chat"
-import { getNotification, readNotification } from "../redux/actions/global.action"
+import { fetchHistory, getNotification, readNotification } from "../redux/actions/global.action"
 import { setNotifications } from "../redux/globalSlice"
 import store from "../redux/store"
+import { LoadMoreHistoryData } from "../history"
 
 const Notification = () => {
     let state = store.getState().global
@@ -38,6 +39,10 @@ const Notification = () => {
         alerts.unshift({message : notification?.notification, cd : notification?.customdata});
         _notificationState.alert = alerts;
         store.dispatch(setNotifications(_notificationState))
+        if(_notificationState?.alert?.[0]?.cd?.category === 'scheduler'){
+            /*need to invoke fetchmoreHistory with 20 limit*/
+            store.dispatch(fetchHistory({onload: true, params: {limit: 20}}))
+        }
     }
 
     const redirectToNotificationChatThread = async (notification) => {
