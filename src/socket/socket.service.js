@@ -5,6 +5,7 @@ import Notification from "../notifications/notification";
 import { presenceStart } from "../redux/actions/global.action";
 import store from "../redux/store";
 import { AnnouncementsInterface } from "../Announcements";
+import { HistoryInterface } from "../history";
 
 class WebSocketClient {
     constructor() {
@@ -88,14 +89,19 @@ class WebSocketClient {
             });
 
             this.socket.on("botMessage", (data) => {
-                console.log("bot message received:", data);
+                if(data?.message?.followUpContext?.agentType === 'aAAgent') {
+                    ChatInterface().asyncAutonomousBotMessage(data);
+                    return;
+                }
                 BotConversation().setBotConversation(data)
             });
 
             this.socket.on('live', (msg) => {
+                if(msg?.entity === 'answerContext') {
+                    ChatInterface().agentThoughts(msg)
+                }
                 if(msg?.entity === "answersuggestion" || msg?.entity === "thoughts") {
-                    /*In answer suggestion, will receive thoughts of agents, need to append to the question*/                    
-                        ChatInterface().agentThoughts(msg)                                        
+                    ChatInterface().agentThoughts(msg)                                        
                 }
                 if (msg?.entity === "thoughts") {
                     ChatInterface().agentThoughts(msg)     
@@ -104,11 +110,19 @@ class WebSocketClient {
                     ChatInterface().contentStreaming(msg)
                 }
                 if (msg?.entity === "boardName") {
-                    /*update the name in the history board */
                     HistoryInterface().updateHistoryBoardNameonSocketEvent(msg?.data)
                 }
                 if(msg?.entity === "announcements"){
                     AnnouncementsInterface().setNewAnnouncements(msg)
+                }
+                if(msg?.entity === 'reqFlow'){
+                    ChatInterface().responseFlowGeneration(msg)
+                }
+                if(msg?.entity === "queryLimit"){
+                    ChatInterface().queryLimitExhausted?.(msg)
+                }
+                if(msg?.entity === "fileIndexingStatus"){
+                    ChatInterface().fileIndexingStatus?.(msg)
                 }
             });
             this.socket.on("notification", (msg) => {

@@ -184,8 +184,10 @@ export const constructQuestionPostCall = (data, qId) => {
 				}
 			}
 		}
-        /*Clearing the selected context when search results are received */
-        if (state.autoRemoveWebSearchFromContext) {
+        /*Clearing the selected context when search results are received, but not for aAAgent */
+        const isAAAgentContext = state.selectedContext?.data?.sources?.[0]?.agentType === 'aAAgent' 
+            || data?.payload?.followUpContext?.agentType === 'aAAgent';
+        if (state.autoRemoveWebSearchFromContext && !isAAAgentContext) {
             store.dispatch(setSelectedContext(null))
         }
 	}
@@ -363,9 +365,29 @@ export const constructQuestionPostCall = (data, qId) => {
     // }    
 
     if(data?.error){
+        const errorPayload = data?.payload;
+        const isNetworkFailure = !!errorPayload?.isNetworkError;
+        const errorMessage = errorPayload?.errors?.[0]?.msg
+            || errorPayload?.errors?.[0]?.message
+            || errorPayload?.message
+            || errorPayload?.error
+            || data?.error?.message
+            || 'Something went wrong.';
+        const errorCode = errorPayload?.errors?.[0]?.code
+            || errorPayload?.statusCode
+            || errorPayload?.code;
+
         questions[qId] = {
             ...question,
-            error: question?.status !== 'terminated' // Terminated status is when user interrupted the answer generation. Error is when there is a server driven error.
+            loading: false,
+            status: question?.status === 'terminated' ? 'terminated' : 'error',
+            error: question?.status !== 'terminated',
+            apiSuccess: false,
+            errorInfo: {
+              message: errorMessage,
+              code: errorCode,
+              isNetworkError: isNetworkFailure,
+            },
           };
           
     }else if(question?.isTask && question?.status !== 'completed'){

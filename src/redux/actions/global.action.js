@@ -3,6 +3,30 @@ import axiosInstance from "../../api/axiosInstance";
 import { handleErrorState } from "../../utils/helpers";
 import { v4 as uuidv4 } from 'uuid';
 
+const getErrorPayload = (error) => {
+    if (error.response?.data) {
+        return {
+            ...error.response.data,
+            statusCode: error.response.status,
+        };
+    }
+    const isNetworkOrCORS = error.code === 'ERR_NETWORK' || error.message === 'Network Error';
+    const isTimeout = error.code === 'ECONNABORTED' || error.code === 'ERR_TIMED_OUT';
+    const isKnownOffline = typeof window !== 'undefined' && window.__evaSdkNetworkStatus === 'offline';
+    const isCORS = isNetworkOrCORS && !isKnownOffline;
+    return {
+        message: isCORS
+            ? 'Request blocked by the server (CORS). Please contact support.'
+            : isNetworkOrCORS
+                ? 'Unable to connect to the server. Please check your network connection.'
+                : isTimeout
+                    ? 'The request timed out. Please try again.'
+                    : error.message || 'An unexpected error occurred.',
+        code: isCORS ? 'ERR_CORS' : (error.code || 'NETWORK_ERROR'),
+        isNetworkError: true,
+    };
+};
+
 // Asynchronous actions (thunks)
 export const fetchConfigData = createAsyncThunk(
     'global/fetchConfigData',
@@ -12,7 +36,7 @@ export const fetchConfigData = createAsyncThunk(
             return response.data;
         } catch (error) {
             handleErrorState(error, "Config");
-            return rejectWithValue(error.response.data);
+            return rejectWithValue(getErrorPayload(error));
         }
     }
 );
@@ -25,7 +49,7 @@ export const fetchProfileData = createAsyncThunk(
             return response.data;
         } catch (error) {
             handleErrorState(error, "Profile");
-            return rejectWithValue(error.response.data);
+            return rejectWithValue(getErrorPayload(error));
         }
     }
 );
@@ -208,7 +232,7 @@ export const fetchAgents = createAsyncThunk(
 
         } catch (error) {
             handleErrorState(error, "Agents");
-            return rejectWithValue(error.response.data);
+            return rejectWithValue(getErrorPayload(error));
         }
     }
 );
@@ -240,7 +264,7 @@ export const advanceSearch = createAsyncThunk(
             return { ...response.data, 'kore-traceid': traceId };
         } catch (error) {
             handleErrorState(error, "Advance Search");
-            return thunkAPI.rejectWithValue(error.response.data);
+            return thunkAPI.rejectWithValue(getErrorPayload(error));
         }
     }
 );
@@ -256,7 +280,7 @@ export const searchResultFilters = createAsyncThunk(
             return response.data;
         } catch (error) {
             handleErrorState(error, "Search Result Filters");
-            return rejectWithValue(error.response.data);
+            return rejectWithValue(getErrorPayload(error));
         }
     }
 );
@@ -283,7 +307,7 @@ export const cancelAdvancedSearch = createAsyncThunk(
             return response.data;
         } catch (error) {
             handleErrorState(error, "Cancel Advance Search");
-            return thunkAPI.rejectWithValue(error.response.data);
+            return thunkAPI.rejectWithValue(getErrorPayload(error));
         }
     }
 );
@@ -300,7 +324,7 @@ export const fetchHistory = createAsyncThunk(
             return response.data;
         } catch (error) {
             handleErrorState(error, "History");
-            return rejectWithValue(error.response.data);
+            return rejectWithValue(getErrorPayload(error));
         }
     }
 );
@@ -317,7 +341,7 @@ export const fetchRecentFiles = createAsyncThunk(
             return response.data;
         } catch (error) {
             handleErrorState(error, "Recent Files");
-            return rejectWithValue(error.response.data);
+            return rejectWithValue(getErrorPayload(error));
         }
     }
 );
@@ -333,7 +357,7 @@ export const getRecentFileDownloadUrl = createAsyncThunk(
             return response.data;
         } catch (error) {
             handleErrorState(error, "Download File");
-            return rejectWithValue(error.response.data);
+            return rejectWithValue(getErrorPayload(error));
         }
     }
 );
@@ -349,7 +373,7 @@ export const deleteHistory = createAsyncThunk(
             return response.data;
         } catch (error) {
             handleErrorState(error, "Delete History");
-            return rejectWithValue(error.response.data);
+            return rejectWithValue(getErrorPayload(error));
         }
     }
 );
@@ -362,7 +386,7 @@ export const updateHistory = createAsyncThunk(
             return response.data;
         } catch (error) {
             handleErrorState(error, "Update History");
-            return rejectWithValue(error.response.data);
+            return rejectWithValue(getErrorPayload(error));
         }
     }
 );
@@ -379,7 +403,7 @@ export const getSearchHistory = createAsyncThunk(
             return response.data;
         } catch (error) {
             handleErrorState(error, "Get History");
-            return rejectWithValue(error.response.data);
+            return rejectWithValue(getErrorPayload(error));
         }
     }
 );
@@ -431,7 +455,7 @@ export const submitFeedback = createAsyncThunk(
             return response;
         } catch (error) {
             handleErrorState(error, "Feedback");
-            return thunkAPI.rejectWithValue(error.response.data);
+            return thunkAPI.rejectWithValue(getErrorPayload(error));
         }
     }
 );
@@ -464,7 +488,7 @@ export const presenceStart = createAsyncThunk(
             const response = await axiosInstance.post(`presence/start`);
             return response.data;
         } catch (error) {
-            return thunkAPI.rejectWithValue(error.response.data);
+            return thunkAPI.rejectWithValue(getErrorPayload(error));
         }
     }
 );
@@ -484,7 +508,7 @@ export const getNotification = createAsyncThunk(
             return response.data;
         } catch (error) {
             handleErrorState(error, "Get Notification");
-            return rejectWithValue(error.response.data);
+            return rejectWithValue(getErrorPayload(error));
         }
     }
 );
@@ -498,7 +522,7 @@ export const readNotification = createAsyncThunk(
             return response.data;
         } catch (error) {
             handleErrorState(error, "Mark All As Read");
-            return rejectWithValue(error.response.data);
+            return rejectWithValue(getErrorPayload(error));
         }
     }
 );
@@ -511,7 +535,7 @@ export const bookMarkChatThread = createAsyncThunk(
             return response.data;
         } catch (error) {
             handleErrorState(error, "Book Mark Chat Thread");
-            return rejectWithValue(error.response.data);
+            return rejectWithValue(getErrorPayload(error));
         }
     }
 );
@@ -531,7 +555,7 @@ export const getBookMarkedChatThreads = createAsyncThunk(
             return response.data;
         } catch (error) {
             handleErrorState(error, "Get Book Marked Chat Thread");
-            return rejectWithValue(error.response.data);
+            return rejectWithValue(getErrorPayload(error));
         }
     }
 );
@@ -544,7 +568,7 @@ export const getSpecificSkills = createAsyncThunk(
             return response.data;
         } catch (error) {
             handleErrorState(error, "Get Specific Skills");
-            return rejectWithValue(error.response.data);
+            return rejectWithValue(getErrorPayload(error));
         }
     }
 );
@@ -562,7 +586,7 @@ export const thirdPartySSO = createAsyncThunk(
             return response.data;
         } catch (error) {
             handleErrorState(error, "Third Party SSO");
-            return thunkAPI.rejectWithValue(error.response.data);
+            return thunkAPI.rejectWithValue(getErrorPayload(error));
         }
     }
 );
@@ -575,7 +599,7 @@ export const updateThirdPartySSO = createAsyncThunk(
             return response.data;
         } catch (error) {
             handleErrorState(error, "Update Third Party SSO");
-            return thunkAPI.rejectWithValue(error.response.data);
+            return thunkAPI.rejectWithValue(getErrorPayload(error));
         }
     }
 );
@@ -589,7 +613,7 @@ export const basicAuth = createAsyncThunk(
             return response;
         } catch (error) {
             handleErrorState(error, "Basic Auth");
-            return thunkAPI.rejectWithValue(error.response.data);
+            return thunkAPI.rejectWithValue(getErrorPayload(error));
         }
     }
 );
@@ -602,7 +626,7 @@ export const getRelevantQuestions = createAsyncThunk(
             return response.data;
         } catch (error) {
             handleErrorState(error, "Get Relevant Questions");
-            return rejectWithValue(error.response.data);
+            return rejectWithValue(getErrorPayload(error));
         }
     }
 );
@@ -615,7 +639,7 @@ export const executionPipelineActions = createAsyncThunk(
             return response.data;
         } catch (error) {
             handleErrorState(error, "Execution Pipeline Actions");
-            return rejectWithValue(error.response.data);
+            return rejectWithValue(getErrorPayload(error));
         }
     }
 );
@@ -628,7 +652,7 @@ export const getSuggestedContactListNew = createAsyncThunk(
             return response.data;
         } catch (error) {
             handleErrorState(error, "Get Suggested Contact List New");
-            return rejectWithValue(error.response.data);
+            return rejectWithValue(getErrorPayload(error));
         }
     }
 );
@@ -641,7 +665,7 @@ export const smartComposeEmail = createAsyncThunk(
             return response.data;
         } catch (error) {
             handleErrorState(error, "Smart Compose Email");
-            return rejectWithValue(error.response.data);
+            return rejectWithValue(getErrorPayload(error));
         }
     }
 );
@@ -654,7 +678,7 @@ export const sendEmail = createAsyncThunk(
             return response.data;
         } catch (error) {
             handleErrorState(error, "Send Email");
-            return rejectWithValue(error.response.data);
+            return rejectWithValue(getErrorPayload(error));
         }
     }
 );
@@ -665,11 +689,10 @@ export const stopResponseGeneration = createAsyncThunk(
         try {
             let reqdQuestionId = encodeURIComponent(arg?.params?.id)
             const response = await axiosInstance.post(`kora/users/${arg?.params?.userId}/advancedsearch/cancelrequest/${reqdQuestionId}`, arg?.payload);
-            console.log("stopResponseGeneration response", response);
             return response.data;
         } catch (error) {
             handleErrorState(error, "Stop Response Generation");
-            return rejectWithValue(error.response.data);
+            return rejectWithValue(getErrorPayload(error));
         }
     }
 );
@@ -695,7 +718,7 @@ export const getUserDetails = createAsyncThunk(
             return response.data;
         } catch (error) {
             handleErrorState(error, "Get User Details");
-            return rejectWithValue(error.response.data);
+            return rejectWithValue(getErrorPayload(error));
         }
     }
 );
@@ -709,7 +732,7 @@ export const getChannelRecepients = createAsyncThunk(
             return response.data;
         } catch (error) {
             handleErrorState(error, "Get Channel Recepients");
-            return rejectWithValue(error.response.data);
+            return rejectWithValue(getErrorPayload(error));
         }
     }
 );
@@ -722,7 +745,7 @@ export const bookmarkAgentAction = createAsyncThunk(
             return response.data;
         } catch (error) {
             handleErrorState(error, "Bookmark Agent");
-            return rejectWithValue(error.response.data);
+            return rejectWithValue(getErrorPayload(error));
         }
     }
 );
@@ -751,7 +774,7 @@ export const deleteAnnouncementAction = createAsyncThunk(
             return { data: response.data, status: response.status };
         } catch (error) {
             handleErrorState(error, "Delete Announcement");
-            return rejectWithValue(error.response.data);
+            return rejectWithValue(getErrorPayload(error));
         }
     }
 );
@@ -764,7 +787,7 @@ export const resolveAgentAction = createAsyncThunk(
             return response.data;
         } catch (error) {
             handleErrorState(error, "Resolve Agent");
-            return rejectWithValue(error.response.data);
+            return rejectWithValue(getErrorPayload(error));
         }
     }
 );
@@ -778,7 +801,7 @@ export const getRegeneratedAnswer = createAsyncThunk(
             return response.data;
         } catch (error) {
             handleErrorState(error, "Regenerate Answer");
-            return thunkAPI.rejectWithValue(error.response.data);
+            return thunkAPI.rejectWithValue(getErrorPayload(error));
         }
     }
 );
@@ -794,7 +817,7 @@ export const sendIntegrationMessage = createAsyncThunk(
             return response.data;
         } catch (error) {
             handleErrorState(error, "Send Integration Message");
-            return rejectWithValue(error.response.data);
+            return rejectWithValue(getErrorPayload(error));
         }
     }
 );

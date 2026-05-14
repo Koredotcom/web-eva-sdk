@@ -293,7 +293,7 @@ const BotConversation = (args) => {
             reqId: data?.cId,
             from: "botAgent"
         };
-
+        addLoadingStateToCurrentQuestion(data?.cId, data?.messageId, data?.input)
         const payload = {
             question: data?.input,
             context: data?.context,
@@ -346,6 +346,9 @@ const BotConversation = (args) => {
                     }
                     botConversation[messageId] = currentBotQuestion
                     currentQuestion.botConversation = botConversation
+                    if(currentQuestion?.hasOwnProperty('chunkMeta')){
+                        delete currentQuestion?.chunkMeta
+                    }
                     questions[reqId] = currentQuestion                    
                     store.dispatch(updateChatData(questions))
                 }
