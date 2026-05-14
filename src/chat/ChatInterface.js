@@ -1,4 +1,4 @@
-import { advanceSearch, cancelAdvancedSearch, stopResponseGeneration, getSignedMediaURL } from "../redux/actions/global.action";
+import { advanceSearch, cancelAdvancedSearch, stopResponseGeneration, getSignedMediaURL , abortAdvanceSearch } from "../redux/actions/global.action";
 import { setChatInterfaceOptions, setChatInterfaceElements, setCurrentQuestion, setCustomData, setEnableContextByFollowupContext, setEnabledCustomTemplates, setErrorState, setUserSelectedLLMModel } from "../redux/globalSlice"
 import { updateChatData } from "../redux/globalSlice";
 import store from "../redux/store";
@@ -15,6 +15,82 @@ const { hideRecentAgentsDiv, unHideRecentAgentsDiv } = RecentAgentsFunc();
 
 const ChatInterface = (props) => {
     let state = store.getState().global, input = '', resIndexRef = 0;
+    let networkErrorAppliedToQId = null;
+    let isNetworkOffline = false;
+
+    const markQuestionAsOffline = (qId, callback) => {
+      const errorInfo = { message: 'You are offline. Please check your internet connection.', code: 'ERR_OFFLINE', isNetworkError: true };
+      const questions = cloneDeep(store.getState().global.questions);
+      questions[qId] = {
+        ...questions[qId],
+        loading: false,
+        status: 'failed',
+        error: true,
+        errorInfo,
+      };
+      store.dispatch(updateChatData(questions));
+      if(callback) { callback(); }
+    };
+
+    const handleOffline = () => {
+      isNetworkOffline = true;
+      if (typeof window !== 'undefined') {
+        window.__evaSdkNetworkStatus = 'offline';
+      }
+      const state = store.getState().global;
+      const currentQuestion = state.currentQuestion;
+      if (!currentQuestion?.reqId) return;
+
+      const questions = cloneDeep(state.questions);
+      const qId = currentQuestion?.isTask ? currentQuestion?.cId : currentQuestion?.reqId;
+      const question = questions[qId];
+
+      if (!question || ['completed', 'terminated', 'failed'].includes(question?.status)) return;
+
+      questions[qId] = {
+        ...question,
+        status: 'error',
+        error: { message: 'Network connection lost. Waiting to reconnect...', code: 'ERR_NETWORK_LOST', isNetworkError: true },
+        errorInfo: { message: 'Network connection lost. Waiting to reconnect...', code: 'ERR_NETWORK_LOST', isNetworkError: true },
+      };
+      networkErrorAppliedToQId = qId;
+      store.dispatch(updateChatData(questions));
+    };
+
+    const handleOnline = () => {
+      isNetworkOffline = false;
+      if (typeof window !== 'undefined') {
+        window.__evaSdkNetworkStatus = 'online';
+      }
+      if (!networkErrorAppliedToQId) return;
+
+      const state = store.getState().global;
+      const questions = cloneDeep(state.questions);
+      const question = questions[networkErrorAppliedToQId];
+
+      if (!question) {
+        networkErrorAppliedToQId = null;
+        return;
+      }
+
+      const advSearchCompleted = question?.apiSuccess === true || question?.apiSuccess === false;
+      if (advSearchCompleted) {
+        networkErrorAppliedToQId = null;
+        return;
+      }
+
+      delete question.error;
+      delete question.errorInfo;
+      question.status = question?.streamingStatus || 'in-progress';
+      questions[networkErrorAppliedToQId] = question;
+      store.dispatch(updateChatData(questions));
+      networkErrorAppliedToQId = null;
+    };
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('offline', handleOffline);
+      window.addEventListener('online', handleOnline);
+    }
 
     // Subscribe to store updates
     const subscribe = (cb) => {
@@ -30,6 +106,10 @@ const ChatInterface = (props) => {
 
         // Return a function to unsubscribe
         return () => {
+          if (typeof window !== 'undefined') {
+            window.removeEventListener('offline', handleOffline);
+            window.removeEventListener('online', handleOnline);
+          }
             unsubscribe();
         };
     };
@@ -61,9 +141,15 @@ const ChatInterface = (props) => {
         const response = await store.dispatch(stopResponseGeneration({params, payload}));
         const questions = cloneDeep(store.getState().global.questions);
         const reqdCId = getCidByReqId(questions, cancelledQuestion?.reqId);
-        constructQuestionPostCall(response, reqdCId);
+        constructQuestionPostCall(response, reqdCId || cancelledQuestion?.reqId);
     
 
+    }
+
+    const getCurrentQuestion = () => {
+      const state = store.getState().global;
+      const currentQuestion = state.currentQuestion;
+      return currentQuestion;
     }
 
     const sendMessageAction = async (value) => {
@@ -86,6 +172,11 @@ const ChatInterface = (props) => {
         }
         const qId = constructQuestionInitial({ ...params, ...payload })
 
+        if (isNetworkOffline) {
+          markQuestionAsOffline(qId);
+          return;
+        }
+
         if(!isEmpty(selectedContext?.data)) {
           let _agents = cloneDeep(allAgents?.data?.agents)
           let _commonAgents = cloneDeep(commonAgents) || []
@@ -95,14 +186,17 @@ const ChatInterface = (props) => {
           if(isAgent) {
             // when setted context is an agent
             const _source = cloneDeep(selectedContext?.data?.context || selectedContext?.data?.sources?.[0]) || {}
+            const isFollowUp = selectedContext?.data?.followUpContext;
             payload.context = {
-              agentType: isAgentSetAsSource?.type,
+              agentType: isFollowUp ? (selectedContext?.data?.context?.agentType || isAgentSetAsSource?.type) : isAgentSetAsSource?.type,
               title: isAgentSetAsSource?.name,
               "sources": [_source]}
+            if(isFollowUp && selectedContext?.data?.context?.source) {
+              payload.context.source = selectedContext?.data?.context?.source;
+            }
             if(selectedContext?.data?.messageId) {
               payload.contextParams = {messageId: selectedContext?.data?.messageId}
             }
-            /*writing especially for botAgent, will remove this once search session api gives the context data, when we click on askFollowup after bot completion */
             if(selectedContext?.data?.sessionId){
               payload.context.sessionId = selectedContext?.data?.sessionId
             }
@@ -126,6 +220,12 @@ const ChatInterface = (props) => {
                 'source': selectedContext?.data?.context?.source,
               }
             }
+          }
+
+          if(selectedContext?.data?.sources?.[0]?.agentType === 'aAAgent'){
+            const {sessionId, source, agentType} = selectedContext?.data?.sources?.[0] || {};
+            payload.context = {sessionId, source, agentType}
+            delete payload?.contextParams;
           }
         }
         if(state?.enableDebugging){
@@ -222,6 +322,12 @@ const ChatInterface = (props) => {
 		}else{
 			qId = constructQuestionInitial({...params, ...payload, replaceExistingQsn})
 		}
+
+    if (isNetworkOffline) {
+      markQuestionAsOffline(qId, arg?.callback);
+      return;
+    }
+
     setTimeout(() => {
        const scrollableElement = document.querySelector('.chatSec');
        if (scrollableElement) {
@@ -244,20 +350,23 @@ const ChatInterface = (props) => {
 				let isAgent = isAgentSetAsSource ? "agent" : null;
 				if (isAgent) {
 					// when setted context is an agent
+					const isFollowUp = selectedContext?.data?.followUpContext;
 					payload.context = {
-            agentType: isAgentSetAsSource?.type,
+            agentType: isFollowUp ? (selectedContext?.data?.context?.agentType || isAgentSetAsSource?.type) : isAgentSetAsSource?.type,
             title: isAgentSetAsSource?.name,
 						sources: [
 							selectedContext?.data?.context ||
 							selectedContext?.data?.sources?.[0],
 						],
 					};
+					if (isFollowUp && selectedContext?.data?.context?.source) {
+						payload.context.source = selectedContext?.data?.context?.source;
+					}
 					if (selectedContext?.data?.messageId) {
 						payload.contextParams = {
 							messageId: selectedContext?.data?.messageId,
 						};
 					}
-					/*writing especially for botAgent, will remove this once search session api gives the context data, when we click on askFollowup after bot completion */
 					if (selectedContext?.data?.sessionId) {
 						payload.context.sessionId =
 							selectedContext?.data?.sessionId;
@@ -267,6 +376,12 @@ const ChatInterface = (props) => {
 					payload.context = {
 						sessionId: selectedContext?.data?.sessionId,
 					};
+				}
+
+				if(selectedContext?.data?.sources?.[0]?.agentType === 'aAAgent'){
+					const {sessionId, source, agentType} = selectedContext?.data?.sources?.[0] || {};
+					payload.context = {sessionId, source, agentType}
+					delete payload?.contextParams;
 				}
 			}
 		}
@@ -427,8 +542,18 @@ const ChatInterface = (props) => {
           reqId = question?.id || question?._id
         }
       }
+/* updating chunkMeta for the question i.e for inception*/
+      if(detail?.data?.chunkMeta){
+        try {
+          if (detail?.data?.chunkMeta) {             
+            question.chunkMeta = detail?.data?.chunkMeta
+          }
+        } catch (error) {
+          console.error("error in updating chunkMeta", error, `details are ${reqId} questions are ${questions}`)
+        }
+      }
 
-      if(['error', 'terminated', 'completed'].includes(question?.status)){        
+      if(['error', 'terminated', 'completed', 'failed'].includes(question?.status)){        
         return;
       }
 
@@ -493,7 +618,7 @@ const ChatInterface = (props) => {
             question.answer = question?.answer?.concat(detail?.data?.chunk)
           }catch(error){
             console.error("error in concatenating the answer", error, `details are ${reqId} questions are ${questions}`)
-          }
+          }          
           
         }
 
@@ -515,7 +640,6 @@ const ChatInterface = (props) => {
 
         const questions = cloneDeep(state.questions)
         questions[reqId] = question
-        console.log(`apiStatus of the question ${reqId} is ${question?.apiSuccess}`)
         store.dispatch(updateChatData(questions))
 
         resIndexRef = 0
@@ -545,17 +669,18 @@ const ChatInterface = (props) => {
         reqId = cQFromStore?.cId
       }
       let currentQuestion = _questions[reqId]
-      if(['error', 'terminated', 'completed'].includes(currentQuestion?.status)){
+      if(['error', 'terminated', 'completed', 'failed'].includes(currentQuestion?.status)){
         return;
       }
       if(state?.enableDebugging){
         console.log("currentQuestion in agent thoughts function before thoughts", currentQuestion)
       }
       if(currentQuestion.viewType === 'threadView'){
-        if(detail?.data?.answerMeta?.hasOwnProperty('messageId')) {
-          currentQuestion = {...currentQuestion, ...detail?.data?.answerMeta}      
-          currentQuestion.botConversation = {}  
-        }
+        /*venkatesh fix -- he demanded to comment idk :) */
+        // if(detail?.data?.answerMeta?.hasOwnProperty('messageId')) {
+        //   currentQuestion = {...currentQuestion, ...detail?.data?.answerMeta}      
+        //   currentQuestion.botConversation = {}  
+        // }
         /*we have to create botConversation with the outputMessageId add thoughts to it, once the advanceSearchApi is completed, need to replace that outputMessageId with the response of advSearch API */
         if(detail?.data?.answerMeta?.hasOwnProperty('outputMessageId')){
           if(!currentQuestion?.botConversation) {
@@ -565,6 +690,7 @@ const ChatInterface = (props) => {
               "suggestion":detail?.data?.suggestion,
               "thoughts":detail?.data?.answerMeta?.thoughts,
               "templateType": detail?.data?.templateType || "search_answer",
+              "status": detail?.data?.status	
           }
         }  
       }else{
@@ -627,7 +753,7 @@ const ChatInterface = (props) => {
         const payload = {
           "cId": question?.cId || question?.reqId, // Use conversation ID or request ID
           "input": input, // User's input message
-          // "context": question?.context, // Conversation context
+          "context": question?.context, // Conversation context
           "messageId": conversation?.messageId, // Message identifier
         }
         // Submit the response to the bot conversation system
@@ -689,6 +815,20 @@ const ChatInterface = (props) => {
       return userAccess;
     }
 
+    const asyncAutonomousBotMessage = (msg) => {
+      const followUpContext = msg?.message?.followUpContext;
+      if(followUpContext?.agentType !== 'aAAgent') return;
+
+      const reqId = msg?.message?.reqId || msg?.reqId;
+      const questions = cloneDeep(store.getState().global.questions);
+      let question = questions[reqId];
+      if(!question) return;
+
+      question = {...question, ...msg?.message};
+      questions[reqId] = question;
+      store.dispatch(updateChatData(questions));
+    }
+
 
     return {
         subscribe,
@@ -712,6 +852,9 @@ const ChatInterface = (props) => {
         fetchSignedMediaURL,
         storeUserSelectedLLMModel,
         startNewChat,
+        responseFlowGeneration,
+        asyncAutonomousBotMessage,
+        getCurrentQuestion,
     }
 }
 

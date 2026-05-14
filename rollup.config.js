@@ -19,8 +19,18 @@ const input = {
   agents: 'src/agents/index.js',
   files: 'src/files/index.js',
   Announcements: 'src/Announcements/index.js',
+  schedulers: 'src/schedulers/index.js',
   Authorization: 'src/Authorization/index.js'
 };
+
+const esmEntryFileNames = (chunkInfo) => {
+  return chunkInfo.name === 'index' ? 'index.esm.js' : '[name]/index.esm.js';
+};
+
+const cjsEntryFileNames = (chunkInfo) => {
+  return chunkInfo.name === 'index' ? 'index.cjs.js' : '[name]/index.cjs.js';
+};
+
 export default {
   input,
 
@@ -28,15 +38,15 @@ export default {
     {
       dir: 'dist',
       format: 'esm',
-      preserveModules: true,
-      preserveModulesRoot: 'src',
-      entryFileNames: '[name]/index.js'
+      entryFileNames: esmEntryFileNames,
+      chunkFileNames: 'chunks/[name]-[hash].esm.js'
     },
 
     {
       dir: 'dist',
       format: 'cjs',
-      entryFileNames: '[name]/index.cjs.js',
+      entryFileNames: cjsEntryFileNames,
+      chunkFileNames: 'chunks/[name]-[hash].cjs.js',
       exports: 'auto'
     }
   ],

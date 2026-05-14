@@ -1421,7 +1421,10 @@ const AnsFromChip = ({ item, regeneratingAnswer }) => {
 		// Kora-React parity: MenuOptions (copy/export/set-context/three-dot) show only after
 		// the answer is completed successfully (apiSuccess) OR it is historical data.
 		// This prevents early rendering while streaming partial chunks.
-		const shouldShowActionChips = (hasSources || hasAgent) && !isThreadView && !isBotTemplate && (!!item?.apiSuccess || !!item?.historicalData);
+		// For aAAgents with flattened viewType, the API may resolve before the agent finishes
+		// (status !== 'completed'), so apiSuccess stays false. The actual completion arrives
+		// via streaming/socket which only sets status = 'completed'. Accept that as a fallback.
+		const shouldShowActionChips = (hasSources || hasAgent) && !isThreadView && !isBotTemplate && (!!item?.apiSuccess || !!item?.historicalData || item?.status === "completed");
 
 		if (shouldShowActionChips) {
 			let actionChipsHTML = `<div class="answerActionChips">`;

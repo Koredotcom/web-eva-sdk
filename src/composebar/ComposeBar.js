@@ -186,6 +186,15 @@ class ComposeBar {
                     }
                 }else{                                  
                     this.contextChipData = null;
+                    this.selectedAgent = null;
+                    const bannerWrapper = this.container.querySelector('.composebar-bot-input-wrapper');
+                    if (bannerWrapper) {
+                        hideElementImmediately(bannerWrapper);
+                    }
+                    this.setCommonAgents();
+                    this.renderCommonAgents();
+                    this.placeholder = this.options.placeholder;
+                    this.updatePlaceholder();
                 }
 
             });
@@ -537,7 +546,7 @@ class ComposeBar {
 
             this.chatInterface.stopBotAnswer();
         } else {
-            this.fileUploaderInterface.clearContext();
+            this.handleRemoveSelectedContext();
         }
     }
 
@@ -914,9 +923,13 @@ class ComposeBar {
             this.fileUploaderInterface.clearContext();
         }
         this.selectedAgent = null;
+        this.contextChipData = null;
+        const bannerWrapper = this.container.querySelector('.composebar-bot-input-wrapper');
+        if (bannerWrapper) {
+            hideElementImmediately(bannerWrapper);
+        }
         this.setCommonAgents();
         this.renderCommonAgents();
-        /*update the placeholder name to default */
         this.placeholder = this.options.placeholder;
         this.updatePlaceholder();
     }
