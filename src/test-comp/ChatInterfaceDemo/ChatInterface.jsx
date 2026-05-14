@@ -83,6 +83,7 @@ const ChatInterfaceDemo = () => {
   const [input, setInput] = useState("");
   const [showSchedulers, setShowSchedulers] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
+  const [showAgents, setShowAgents] = useState(false);
 
   const chatInterface = useRef();
   const announcementInterface = useRef();
@@ -155,11 +156,22 @@ const ChatInterfaceDemo = () => {
           </div>
 
           {/* <Notifications /> */}
-          <Agents />
+          <div className="sidebar-nav-item" onClick={() => {
+            setShowAgents(prev => !prev);
+          }} role="button" tabIndex={0}>Get Agents</div>
+          {showAgents ? <Agents /> : null}
           <div>---------------------------------------------------------------</div>
-          <div className="sidebar-nav-item" onClick={() => setShowSchedulers(true)} role="button" tabIndex={0}>Schedulers</div>
+          <div className="sidebar-nav-item" onClick={() => {
+            setShowSchedulers(true);
+            setShowAgents(false);
+            setShowProfile(false);
+          }} role="button" tabIndex={0}>Schedulers</div>
           <div>---------------------------------------------------------------</div>
-          <div className="sidebar-nav-item" onClick={() => setShowProfile(true)} role="button" tabIndex={0}>Profile</div>
+          <div className="sidebar-nav-item" onClick={() => {
+            setShowProfile(true);
+            setShowAgents(false);
+            setShowSchedulers(false);
+          }} role="button" tabIndex={0}>Profile</div>
           <div>---------------------------------------------------------------</div>
           {/* <Announcements /> */}
           {/* <History /> */}

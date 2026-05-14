@@ -21,8 +21,8 @@ function FileUploader({
 
     const state = store.getState();
     let allFileTypes = state.global.fileTypes
-    const app = window.sdkConfig.api_url;
-    this.baseUrl = app;
+    const app = window?.sdkConfig?.api_url || '';
+    this.baseUrl = app && app.endsWith('/') ? app : `${app}/`;
     this.CHUNK_SIZE = 2048 * 2048;
     this.CHUNK_SIZE_INITIAL = 1024 * 1024;
     this.allowedFileTypes = allFileTypes.attachment
@@ -177,7 +177,7 @@ function FileUploader({
         }
         
         if(_self.fileContext === "store"){
-            axios.post(this.baseUrl + "/ka/users/" + this.userInfoId + "/store/file", formData, {
+            axios.post(this.baseUrl + "ka/users/" + this.userInfoId + "/store/file", formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
                     'Authorization': "bearer " + this.accessToken

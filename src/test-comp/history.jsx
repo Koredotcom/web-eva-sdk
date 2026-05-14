@@ -14,6 +14,11 @@ import store from "../redux/store"
 const History = (props) => {
     const [historyData, setHistoryData] = useState(null)
     const [bookMarkedThreads, setBookMarkedThreads] = useState(null)
+    const [searchTerm, setSearchTerm] = useState("")
+    const [searchBoards, setSearchBoards] = useState([])
+    const [searchAttempted, setSearchAttempted] = useState(false)
+    const [searchLoading, setSearchLoading] = useState(false)
+    const [searchError, setSearchError] = useState(null)
     const historyInterface = useRef()
     const recentFilesInterface = useRef()
     const state = store.getState().global
@@ -24,7 +29,7 @@ const History = (props) => {
         // Create an instance of HistoryInterface
         historyInterface.current = HistoryInterface();
         recentFilesInterface.current = RecentFiles();
-        getBookMarkedThreads()
+        // getBookMarkedThreads()
 
         // Subscribe to updates
         const unsubscribe = historyInterface.current.subscribe((allhistoryData, apiRes, bookMarkedChatThreads) => {
@@ -108,13 +113,71 @@ const History = (props) => {
         bookMarkChatThread(item)
     }
 
+    const handleSearchTermChange = (event) => {
+        const value = event.target.value;
+        setSearchTerm(value);
+        if (!value.trim()) {
+            setSearchBoards([]);
+            setSearchAttempted(false);
+            setSearchError(null);
+        }
+    }
+
+    const searchHistory = async () => {
+        const term = searchTerm.trim();
+        if (!term || !historyInterface.current?.searchHistory) return;
+
+        setSearchLoading(true);
+        setSearchAttempted(true);
+        setSearchError(null);
+
+        const res = await historyInterface.current.searchHistory({
+            search: term,
+            limit: 50,
+            messagesLimit: 20,
+            includeMessages: true,
+            showdata: false,
+        });
+
+        if (res?.status === 'success') {
+            const boards = res?.data?.boards || res?.data?.data?.boards || [];
+            setSearchBoards(Array.isArray(boards) ? boards : []);
+        } else {
+            setSearchBoards([]);
+            setSearchError(res?.error?.message || 'Unable to search history');
+        }
+        setSearchLoading(false);
+    }
+
+    const isSearchActive = Boolean(searchTerm.trim());
+    const visibleHistoryBoards = isSearchActive ? searchBoards : (historyData?.data || []);
+
     return (
-        <div className="history-section">
-            {/* <div className="history-heading">History</div> */}
-            
+        <div>
+            <h1>History</h1>
+            <div>
+                <input
+                    type="search"
+                    value={searchTerm}
+                    onChange={handleSearchTermChange}
+                    placeholder="Search history"
+                />
+                <button
+                    type="button"
+                    onClick={searchHistory}
+                    disabled={!searchTerm.trim() || searchLoading}
+                >
+                    {searchLoading ? 'Searching...' : 'Search'}
+                </button>
+            </div>
+            <button onClick={fetchLoadMoreHistory} disabled={isSearchActive}>Load more history</button>
             {/* <button onClick={fetchLoadMoreHistoryInitial}>Initial history data with custom param</button> */}
-            <div className="history-list">
-                {historyData?.data?.length > 0 && historyData?.data?.map(item => {
+            <div>
+                {searchError ? <div>{searchError}</div> : null}
+                {isSearchActive && searchAttempted && !searchLoading && visibleHistoryBoards.length === 0 ? (
+                    <div>No results found</div>
+                ) : null}
+                {visibleHistoryBoards?.length > 0 && visibleHistoryBoards?.map(item => {
                     return (
                         <div id={`historyGrp-${item?.id}`} className="history-item" onClick={()=> joinChatHistory(item)} key={item?.id}>
                             {/* <button onClick={(e) => { e.preventDefault();  e?.stopPropagation();deleteChatThread(item) }}>Delete</button> */}
