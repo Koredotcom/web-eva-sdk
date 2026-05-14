@@ -141,9 +141,15 @@ const ChatInterface = (props) => {
         const response = await store.dispatch(stopResponseGeneration({params, payload}));
         const questions = cloneDeep(store.getState().global.questions);
         const reqdCId = getCidByReqId(questions, cancelledQuestion?.reqId);
-        constructQuestionPostCall(response, reqdCId);
+        constructQuestionPostCall(response, reqdCId || cancelledQuestion?.reqId);
     
 
+    }
+
+    const getCurrentQuestion = () => {
+      const state = store.getState().global;
+      const currentQuestion = state.currentQuestion;
+      return currentQuestion;
     }
 
     const sendMessageAction = async (value) => {
@@ -634,7 +640,6 @@ const ChatInterface = (props) => {
 
         const questions = cloneDeep(state.questions)
         questions[reqId] = question
-        console.log(`apiStatus of the question ${reqId} is ${question?.apiSuccess}`)
         store.dispatch(updateChatData(questions))
 
         resIndexRef = 0
@@ -671,10 +676,11 @@ const ChatInterface = (props) => {
         console.log("currentQuestion in agent thoughts function before thoughts", currentQuestion)
       }
       if(currentQuestion.viewType === 'threadView'){
-        if(detail?.data?.answerMeta?.hasOwnProperty('messageId')) {
-          currentQuestion = {...currentQuestion, ...detail?.data?.answerMeta}      
-          currentQuestion.botConversation = {}  
-        }
+        /*venkatesh fix -- he demanded to comment idk :) */
+        // if(detail?.data?.answerMeta?.hasOwnProperty('messageId')) {
+        //   currentQuestion = {...currentQuestion, ...detail?.data?.answerMeta}      
+        //   currentQuestion.botConversation = {}  
+        // }
         /*we have to create botConversation with the outputMessageId add thoughts to it, once the advanceSearchApi is completed, need to replace that outputMessageId with the response of advSearch API */
         if(detail?.data?.answerMeta?.hasOwnProperty('outputMessageId')){
           if(!currentQuestion?.botConversation) {
@@ -684,6 +690,7 @@ const ChatInterface = (props) => {
               "suggestion":detail?.data?.suggestion,
               "thoughts":detail?.data?.answerMeta?.thoughts,
               "templateType": detail?.data?.templateType || "search_answer",
+              "status": detail?.data?.status	
           }
         }  
       }else{
@@ -847,6 +854,7 @@ const ChatInterface = (props) => {
         startNewChat,
         responseFlowGeneration,
         asyncAutonomousBotMessage,
+        getCurrentQuestion,
     }
 }
 

@@ -649,7 +649,6 @@ export const stopResponseGeneration = createAsyncThunk(
         try {
             let reqdQuestionId = encodeURIComponent(arg?.params?.id)
             const response = await axiosInstance.post(`kora/users/${arg?.params?.userId}/advancedsearch/cancelrequest/${reqdQuestionId}`, arg?.payload);
-            console.log("stopResponseGeneration response", response);
             return response.data;
         } catch (error) {
             handleErrorState(error, "Stop Response Generation");
