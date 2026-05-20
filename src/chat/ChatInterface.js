@@ -679,6 +679,24 @@ const ChatInterface = (props) => {
       return normalizeCopyNewlines(parent?.question ?? "");
     };
 
+    const updateQuestionWithAgentContext = (messageId, agentContext) => {
+      const questions = cloneDeep(store.getState().global?.questions)
+      /*get the question using the messageId */
+      const qId = Object.values(questions).find(question => question?.messageId === messageId)?.reqId
+      if(!qId){
+        return { error: true, message: "Question not found" };
+      }
+      questions[qId] = {
+        ...questions[qId],
+        agentContext: agentContext
+      }        
+      store.dispatch(updateChatData(questions))
+      if(state?.enableDebugging){
+        console.log("after updating question with agentContext, questions[qId], questions", questions[qId], questions)
+      }
+      return questions[qId];      
+    }
+
     /**
      * Returns the assistant answer markdown/text as stored (escaped `\\n` normalized like Kora-React copy).
      * Reads from the Redux store. Pass the server `messageId`. For `threadView`, resolves via `botConversation`.
