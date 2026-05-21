@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { TemplateRenderer } from "../../templateRenderer";
-import { BotConversation, ChatInterface, NewChat } from "../../chat";
+import { BotConversation, ChatInterface, DownloadFile, NewChat } from "../../chat";
 import store from "../../redux/store";
 import { submitUserFeedback, feedbackDislikeCategories } from "../../Feedback";
 
@@ -213,6 +213,21 @@ const ChatInterfaceDemo = () => {
                 const isLiked = currentFeedback === "like";
                 const isDisliked = currentFeedback === "dislike";
 
+                const handleDownloadArtifact = async (artifact) => {
+                  const res = await DownloadFile({
+                    messageId: item?.messageId,
+                    uploadedFileId: artifact?.uploadedFileId,
+                    filename: artifact?.filename,
+                  });
+                  if (res?.error) {
+                    console.error("DownloadFile failed", res);
+                  }
+                };
+
+                const generatedArtifacts = Array.isArray(item?.generatedArtifacts)
+                  ? item.generatedArtifacts
+                  : [];
+
                 return (
                   <div key={item?.id} className="chat-demo-message-row">
                     <div
@@ -220,6 +235,34 @@ const ChatInterfaceDemo = () => {
                         __html: html.innerHTML,
                       }}
                     />
+                    {generatedArtifacts.length > 0 ? (
+                      <div className="chat-demo-artifacts" role="group" aria-label="Generated artifacts">
+                        {generatedArtifacts.map((artifact, aIdx) => (
+                          <div
+                            key={artifact?.uploadedFileId || artifact?.filename || aIdx}
+                            className="chat-demo-artifact-row"
+                          >
+                            <div className="chat-demo-artifact-info">
+                              <span className="chat-demo-artifact-name">
+                                {artifact?.filename || "Artifact"}
+                              </span>
+                              {artifact?.ext ? (
+                                <span className="chat-demo-artifact-ext">
+                                  .{artifact.ext}
+                                </span>
+                              ) : null}
+                            </div>
+                            <button
+                              type="button"
+                              className="chat-demo-artifact-download-btn"
+                              onClick={() => handleDownloadArtifact(artifact)}
+                            >
+                              Download
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    ) : null}
                     {showFeedback ? (
                       <div className="chat-demo-feedback" role="group" aria-label="Message feedback">
                         <button

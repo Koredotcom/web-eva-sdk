@@ -101,6 +101,10 @@ class WebSocketClient {
                 if(msg?.entity === "answerChunk"){
                     ChatInterface().contentStreaming(msg)
                 }
+                if(msg?.entity === 'answerContext'){
+                    /*need to add a function in chatInterface to handle the answerContext */
+                    ChatInterface().appendAnswerContext(msg)
+                }
                 if (msg?.entity === "boardName") {
                     /*update the name in the history board */
                     HistoryInterface().updateHistoryBoardNameonSocketEvent(msg?.data)

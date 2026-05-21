@@ -724,6 +724,19 @@ const ChatInterface = (props) => {
       return normalizeCopyNewlines(raw ?? "");
     };
 
+    const appendAnswerContext = (detail) => {
+      let _questions = cloneDeep(store.getState().global?.questions)
+      let reqId = detail?.data?.reqId
+      if(isEmpty(_questions[reqId])){
+        return;
+      }
+      _questions[reqId] = {..._questions[reqId], ...detail?.data?.answerMeta}      
+      store.dispatch(updateChatData(_questions))
+      if(state?.enableDebugging){
+        console.log("after appending answerContext, _questions[reqId], _questions", _questions[reqId], _questions)
+      }
+    }
+
     return {
         subscribe,
         sendMessageAction,
@@ -747,7 +760,8 @@ const ChatInterface = (props) => {
         removeFileFromAutonomousAgent,
         storeUserSelectedLLMModel,
         copyQuestion,
-        copyAnswer
+        copyAnswer,
+        appendAnswerContext
     }
 }
 

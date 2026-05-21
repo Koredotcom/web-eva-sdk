@@ -13,6 +13,8 @@ export { default as UpdateGPTPromptValue } from './gptTemplate/updateGPTPromptVa
 export { default as RemoveUploadedGPTFile } from './gptTemplate/removeUploadedGPTFile.js';
 export { SubmitGPTForm, ExecuteFormThroughURL } from './gptTemplate/submitGPTForm.js';
 
+export { default as DownloadFile } from './FilePreview/filePreview.js';
+
 export { default as BotConversation } from './botAgent/getBotConversation.js';
 export { default as Notification } from '../notifications/notification.js';
 export { default as MultiIntentExecution } from '../multiIntentExecution/multiIntentExecution.js';
