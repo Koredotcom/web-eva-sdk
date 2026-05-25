@@ -1,7 +1,7 @@
 const logger = storeAPI => next => action => {
     const enableDebugging = storeAPI.getState()?.global?.enableDebugging;
     if (enableDebugging) {
-        console.log('Dispatching action:', action.type);
+        console.log('Dispatching action:', action);
     }
     const result = next(action);
     if (enableDebugging) {
