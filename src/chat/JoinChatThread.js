@@ -52,7 +52,8 @@ const JoinChatThread = async (props) => {
                 messageId: q?.id,
                 context: {...q?.context, messageId: q?.id},
                 type: q?.postType === "follow-up" ? "followup" : "search",
-                historicalData: true
+                historicalData: true,
+                apiSuccess: true
             }
     
             // if(q?.templateType === "action_send_email" && q?.status === "draft") {    

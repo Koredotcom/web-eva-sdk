@@ -18,7 +18,8 @@ export const handleAsyncActions = (builder, asyncThunk, stateKey, callback) => {
                 state[stateKey].status = 'cancelled';                
             } else {
                 state[stateKey].status = 'failed';
-                state[stateKey].error = action.payload;
+                /*as some api responses are not giving status code in error payload, so standardizing it to status code in error payload*/
+                state[stateKey].error = {...action.payload?.data, status: action.payload.status};                                
             }
         });
 };

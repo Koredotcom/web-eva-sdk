@@ -13,7 +13,7 @@ export const fetchConfigData = createAsyncThunk(
             return response.data;
         } catch (error) {
             handleErrorState(error, "Config");
-            return rejectWithValue(error.response.data);
+            return rejectWithValue(error.response);
         }
     }
 );
@@ -26,7 +26,7 @@ export const fetchProfileData = createAsyncThunk(
             return response.data;
         } catch (error) {
             handleErrorState(error, "Profile");
-            return rejectWithValue(error.response.data);
+            return rejectWithValue(error.response);
         }
     }
 );
@@ -209,7 +209,7 @@ export const fetchAgents = createAsyncThunk(
 
         } catch (error) {
             handleErrorState(error, "Agents");
-            return rejectWithValue(error.response.data);
+            return rejectWithValue(error.response);
         }
     }
 );
@@ -285,7 +285,7 @@ export const fetchHistory = createAsyncThunk(
             return response.data;
         } catch (error) {
             handleErrorState(error, "History");
-            return rejectWithValue(error.response.data);
+            return rejectWithValue(error.response);
         }
     }
 );
@@ -346,7 +346,7 @@ export const fetchRecentFiles = createAsyncThunk(
             return response.data;
         } catch (error) {
             handleErrorState(error, "Recent Files");
-            return rejectWithValue(error.response.data);
+            return rejectWithValue(error.response);
         }
     }
 );
