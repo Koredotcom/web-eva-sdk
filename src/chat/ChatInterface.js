@@ -694,7 +694,7 @@ const ChatInterface = (props) => {
               "suggestion":detail?.data?.suggestion,
               "thoughts":detail?.data?.answerMeta?.thoughts,
               "templateType": detail?.data?.templateType || "search_answer",
-              "status": detail?.data?.status	
+              "status": detail?.data?.status || "in-progress"
           }
         }  
       }else{
