@@ -99,7 +99,7 @@ const ChatInterface = (props) => {
             state = store.getState().global;
             // If callback exists and API call is completed, invoke it
             // if (state.advanceSearchRes.status !== 'loading' && callback) {
-                callback(state.questions, state.advanceSearchRes, state.chatHistoryMoreAvailable, state.errorState, state.quickActions);
+                callback(state.questions, state.advanceSearchRes, state.chatHistoryMoreAvailable, state.errorState, state.quickActions,state.currentQuestion);
                 // console.log(state.questions, state.advanceSearchRes, state.chatHistoryMoreAvailable)
             // }
         });
@@ -548,6 +548,10 @@ const ChatInterface = (props) => {
           if (detail?.data?.chunkMeta) {             
             question.chunkMeta = detail?.data?.chunkMeta
           }
+          _questions[reqId] = question;
+          store.dispatch(setCurrentQuestion(question));
+          store.dispatch(updateChatData(_questions));
+
         } catch (error) {
           console.error("error in updating chunkMeta", error, `details are ${reqId} questions are ${questions}`)
         }
@@ -690,7 +694,7 @@ const ChatInterface = (props) => {
               "suggestion":detail?.data?.suggestion,
               "thoughts":detail?.data?.answerMeta?.thoughts,
               "templateType": detail?.data?.templateType || "search_answer",
-              "status": detail?.data?.status	
+              "status": detail?.data?.status || "in-progress"
           }
         }  
       }else{
