@@ -11,6 +11,8 @@ import MultiResponse from './gptTemplate/MultiResponse';
 import moment from "moment";
 import { fetchHistory } from "../redux/actions/global.action";
 import MultiIntentExecution from '../multiIntentExecution/multiIntentExecution';
+import ChatInterface from './ChatInterface';
+
 
 export const constructQuestionInitial = (args) => {
 	let uniqueMsgId = args?.reqId;
@@ -423,54 +425,26 @@ export const constructQuestionPostCall = (data, qId) => {
         } 
     }
     if (data?.payload?.followUpContext && state.enableContextByFollowupContext) {
-        const followUp = data?.payload?.followUpContext;
-        if(followUp?.agentType === 'aAAgent' || state.selectedContext?.data?.sources?.[0]?.agentType === 'aAAgent') {
-            const {sessionId, agentType, source} = followUp || state.selectedContext?.data?.sources?.[0] || {};
-            const existingSource = data?.payload?.context?.sources?.[0] || state.selectedContext?.data?.sources?.[0] || data?.payload?.sources?.[0] || {};
-            let context = {
-                context: { sessionId, source, agentType },
-                messageId: data?.payload?.messageId,
-                sources: [{...existingSource, sessionId, agentType, source, isAgent: true}],
-                viewType: data?.payload?.viewType,
-                type: "commonAgent",
-                'isAgent': true,
-                sessionId: sessionId,
-                followUpContext: true
-            }
-            store.dispatch(setSelectedContext({data: context}))
-        } else {
-            let context = {
-                context: data?.payload?.followUpContext,
-                messageId: data?.payload?.messageId,
-                sources: data?.payload?.sources?.map(s => ({...s, isAgent: true})) || [{isAgent: true}],
-                viewType: data?.payload?.viewType,
-                type: "agent",
-                'isAgent': true,
-                sessionId: data?.payload?.followUpContext?.sessionId,
-                followUpContext: true
-            }
-            store.dispatch(setSelectedContext({data: context}))
+        // console.log("data?.payload?.followUpContext", { ...data?.payload?.followUpContext, messageId: data?.payload?.messageId })
+        let context = {
+            context: data?.payload?.followUpContext,
+            messageId: data?.payload?.messageId,
+            sources: data?.payload?.sources,
+            viewType: data?.payload?.viewType,
+            type: "agent",
+            'isAgent': true,
+            sessionId: data?.payload?.followUpContext?.sessionId,
+            followUpContext: true, 
+            source: data?.payload?.followUpContext?.source
         }
-    } else if(data?.payload?.followUpContext?.agentType === 'aAAgent') {
-        const existingContextData = state.selectedContext?.data;
-        const hasExistingContext = existingContextData && Object.keys(existingContextData).length > 0;
-        if(!hasExistingContext) {
-            const followUp = data?.payload?.followUpContext;
-            const {sessionId, agentType, source} = followUp;
-            const existingSource = data?.payload?.context?.sources?.[0] || data?.payload?.sources?.[0] || {};
-            let context = {
-                context: { sessionId, source, agentType },
-                messageId: data?.payload?.messageId,
-                sources: [{...existingSource, sessionId, agentType, source, isAgent: true}],
-                viewType: data?.payload?.viewType,
-                type: "commonAgent",
-                'isAgent': true,
-                sessionId: sessionId,
-                followUpContext: true
-            }
-            store.dispatch(setSelectedContext({data: context}))
-        }
+        store.dispatch(setSelectedContext({data: context}))
     }
+
+    if(data?.payload?.agentContext?.sources?.length > 0){
+        /*need to call removeFileFromAutonomousAgent action to remove the files from the autonomous agent */
+        ChatInterface().removeFileFromAutonomousAgent({ fileIds: data?.payload?.agentContext?.sources?.map(source => source?.fileId)?.filter(Boolean), messageId: data?.payload?.messageId })
+    }
+    store.dispatch(setCurrentQuestion(questions[qId]))
     store.dispatch(updateChatData(questions))
 
     // if(question?.isTask) {

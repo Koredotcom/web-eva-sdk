@@ -119,6 +119,26 @@ export const updateMemoryInstruction = createAsyncThunk(
     }
 );
 
+export const onboardingFeature = createAsyncThunk(
+    'global/onboardingFeature',
+    async ({ userId, featureKey, enabled, version }, { rejectWithValue }) => {
+        try {
+            const response = await axiosInstance.put(
+                `/ka/users/${userId}/featureOnboarding`,
+                {
+                    featureKey,
+                    version: version,
+                    meta: { enabled }
+                }
+            );
+            return response.data;
+        } catch (error) {
+            handleErrorState(error, "Onboarding Feature");
+            return rejectWithValue(error.response?.data);
+        }
+    }
+);
+
 export const fetchSchedulers = createAsyncThunk(
     'global/fetchSchedulers',
     async (arg, { rejectWithValue }) => {
@@ -309,6 +329,50 @@ export const fetchHistory = createAsyncThunk(
     }
 );
 
+/**
+ * GET `/kora/boards` with `type=history` plus a free-text `search` query — returns boards
+ * (and optionally their messages) matching the term. Mirrors the Work app's history search.
+ *
+ * @param {object} arg
+ * @param {string} arg.search Free-text search term (required).
+ * @param {number} [arg.limit=50] Max boards to return.
+ * @param {number} [arg.messagesLimit=20] Max messages per board when `includeMessages` is true.
+ * @param {boolean} [arg.includeMessages=true]
+ * @param {boolean} [arg.showdata=false]
+ * @returns response.data
+ */
+export const searchHistoryBoards = createAsyncThunk(
+    'global/searchHistoryBoards',
+    async (arg = {}, { rejectWithValue }) => {
+        const {
+            search,
+            limit = 50,
+            messagesLimit = 20,
+            includeMessages = true,
+            showdata = false,
+        } = arg;
+        try {
+            const response = await axiosInstance({
+                url: `/kora/boards`,
+                method: 'GET',
+                params: {
+                    type: 'history',
+                    includeMessages,
+                    showdata,
+                    limit,
+                    messagesLimit,
+                    rnd: Date.now().toString(36),
+                    search,
+                },
+            });
+            return response.data;
+        } catch (error) {
+            handleErrorState(error, "Search History");
+            return rejectWithValue(error?.response?.data ?? error?.message);
+        }
+    }
+);
+
 export const fetchRecentFiles = createAsyncThunk(
     'global/fetchRecentFiles',
     async ({ userId, params }, { rejectWithValue }) => {
@@ -436,6 +500,26 @@ export const submitFeedback = createAsyncThunk(
         } catch (error) {
             handleErrorState(error, "Feedback");
             return thunkAPI.rejectWithValue(getErrorPayload(error));
+        }
+    }
+);
+
+/**
+ * PUT `/kora/boards/{boardId}/messages/{messageId}/feedback` — same endpoint as Work app.
+ * Returns `response.data`. Optional `cId` (SDK-only) is used by globalSlice to merge into `questions`.
+ */
+export const Feedback_V2Thunk = createAsyncThunk(
+    'global/Feedback_V2',
+    async ({ boardId, messageId, body, cId }, thunkAPI) => {
+        try {
+            const response = await axiosInstance.put(
+                `/kora/boards/${boardId}/messages/${messageId}/feedback`,
+                body
+            );
+            return response.data;
+        } catch (error) {
+            handleErrorState(error, 'Feedback');
+            return thunkAPI.rejectWithValue(error.response?.data ?? error.message);
         }
     }
 );
@@ -721,6 +805,42 @@ export const getSignedMediaURL = createAsyncThunk(
             return response.data;
         } catch (error) {
             handleErrorState(error, "Signed Media URL");
+            return rejectWithValue(error.response?.data);
+        }
+    }
+);
+
+export const addFileToAutonomousAgentAction = createAsyncThunk(
+    'global/addFileToAutonomousAgent',
+    async (arg, { rejectWithValue }) => {
+        try {
+            const { boardId, messageId, fileId } = arg;
+            const response = await axiosInstance.post(
+                `/kora/boards/${boardId}/messages/${messageId}/agentSession/addFile`,
+                { fileId },
+                { params: { rnd: Date.now().toString(36) } }
+            );
+            return response.data;
+        } catch (error) {
+            handleErrorState(error, "Add File To Autonomous Agent");
+            return rejectWithValue(error.response?.data);
+        }
+    }
+);
+
+export const removeFileFromAutonomousAgentAction = createAsyncThunk(
+    'global/removeFileFromAutonomousAgent',
+    async (arg, { rejectWithValue }) => {
+        try {
+            const { boardId, messageId, fileIds } = arg;
+            const response = await axiosInstance.post(
+                `/kora/boards/${boardId}/messages/${messageId}/agentSession/removeFile`,
+                { fileIds },
+                { params: { rnd: Date.now().toString(36) } }
+            );
+            return response.data;
+        } catch (error) {
+            handleErrorState(error, "Remove File From Autonomous Agent");
             return rejectWithValue(error.response?.data);
         }
     }

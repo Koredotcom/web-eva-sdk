@@ -5,6 +5,7 @@ import {
     fetchMemoryInstructions,
     createMemoryInstruction,
     updateMemoryInstruction,
+    onboardingFeature,
 } from "../redux/actions/global.action";
 
 export const getAboutMe = async () => {
@@ -93,9 +94,6 @@ export const createInstruction = async ({ instruction, scope, agentId=null } = {
         return { status: "failed", error: { message: "Instruction is required" }, data: null };
     }
 
-    if (instruction.length > 2000) {
-        return { status: "failed", error: { message: "Instruction must not exceed 2000 characters" }, data: null };
-    }
 
     const resolvedScope = scope || "global";
 
@@ -139,10 +137,7 @@ export const updateSpecificInstruction = async ({ instructionId, instruction } =
     if (!instruction?.trim()) {
         return { status: "failed", error: { message: "validated at sdk function level and identified the Instruction provided is empty or whitespace only" }, data: null };
     }
-
-    if (instruction.length > 2000) {
-        return { status: "failed", error: { message: "validated at sdk function level and identified the Instruction provided must not exceed 2000 characters" }, data: null };
-    }
+    
 
     const payload = { instruction };
 
@@ -154,6 +149,34 @@ export const updateSpecificInstruction = async ({ instructionId, instruction } =
             error && typeof error === "object" && !Array.isArray(error)
                 ? error
                 : { message: String(error ?? "Unable to update instruction") };
+        return { status: "failed", error: err, data: null };
+    }
+};
+
+export const updateFeatureOnboarding = async ({ featureKey, version = 1, enabled } = {}) => {
+    const state = store.getState();
+    const userId = state.global?.profile?.data?.id;
+
+    if (!userId) {
+        return { status: "failed", error: { message: "User ID not available" }, data: null };
+    }
+
+    if (!featureKey?.trim()) {
+        return { status: "failed", error: { message: "featureKey is required" }, data: null };
+    }
+
+    if (typeof enabled !== "boolean") {
+        return { status: "failed", error: { message: "enabled must be a boolean" }, data: null };
+    }
+
+    try {
+        const raw = await store.dispatch(onboardingFeature({ userId, featureKey, enabled, version })).unwrap();
+        return { status: "success", data: raw };
+    } catch (error) {
+        const err =
+            error && typeof error === "object" && !Array.isArray(error)
+                ? error
+                : { message: String(error ?? "Unable to update feature onboarding") };
         return { status: "failed", error: err, data: null };
     }
 };
@@ -172,6 +195,7 @@ const profile = () => ({
     getInstructions,
     createInstruction,
     updateSpecificInstruction,
+    updateFeatureOnboarding,
 });
 
 export default profile;

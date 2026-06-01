@@ -10,12 +10,46 @@ import {
   getRecentFileDownloadUrl,
   searchSession,
   submitFeedback,
+  Feedback_V2Thunk,
   presenceStart,
   getNotification,
   getAllAnnouncements
 } from './actions/global.action';
 import { handleAsyncActions } from '../utils/handleAsyncActions';
-import { cloneDeep, concat, isEmpty, orderBy, uniqBy } from 'lodash';
+import { cloneDeep, concat, orderBy, uniqBy } from 'lodash';
+
+/**
+ * Merge feedback API response fields into `state.questions` (by `cId` or all rows with `messageId`).
+ * The feedback API returns the full message document keyed by `_id` (no `messageId`); we normalize
+ * it back to `messageId` so chat-flow consumers (rendering, follow-up dispatches) keep working.
+ * @param {object} state - Immer draft global slice state
+ * @param {{ cId?: string, messageId?: string }} metaArg - from thunk `meta.arg`
+ * @param {object} [updates] - Response body to merge into the question(s)
+ */
+function mergeFeedbackResponseIntoQuestions(state, metaArg, updates) {
+  if (!updates || typeof updates !== 'object') return;
+  const { cId, messageId } = metaArg || {};
+  const questions = cloneDeep(state.questions);
+
+  const applyMerge = (existing) => {
+    const merged = { ...updates };
+    if (!merged.messageId) {
+      merged.messageId = existing?.messageId || updates?._id || merged?._id;
+    }
+    return merged;
+  };
+
+  if (cId && questions[cId]) {
+    questions[cId] = applyMerge(questions[cId]);
+  } else if (messageId) {
+    Object.keys(questions).forEach((key) => {
+      if (questions[key]?.messageId === messageId) {
+        questions[key] = applyMerge(questions[key]);
+      }
+    });
+  }
+  state.questions = questions;
+}
 
 const initialState = { 
   profile: {},
@@ -44,7 +78,8 @@ const initialState = {
   enabledCustomTemplates: {},
   GptUploadedFiles: null,
   submitFeedback: {},
-  customData : {},
+  Feedback_V2: {},
+  customData: {},
   presenceStart: {},
   chatInterfaceOptions: {},
   botTemplateElementReference: null,
@@ -54,7 +89,7 @@ const initialState = {
   errorState: [],
   notifications: {},
   bookMarkedChatThreads: [],
-  enableDebugging: false,
+  enableDebugging: true,
   quickActions: [],
   autoRemoveWebSearchFromContext: false,
   userSelectedLLMModel: null,
@@ -225,64 +260,67 @@ const globalSlice = createSlice({
               }           
             }
           }
-           state.questions = questions           
-         }
-         
-       }        
-      });
-      handleAsyncActions(builder, fetchHistory, 'historyRes', (state, action)=> {
-        if(action?.meta?.arg?.onload) {
-          state.history = state.historyRes
-          // state.AllHistory = state.historyRes
+          state.questions = questions
         }
-        // if(action?.meta?.arg?.loadmore) {
-          let allHistory = cloneDeep(state.AllHistory?.data) || []     
-          if(action?.meta?.arg?.initialData) {
-            allHistory = state.historyRes?.data?.boards
-          } else {
-            allHistory = uniqBy(concat(allHistory, state.historyRes?.data?.boards), 'id')
-          }
-			allHistory = allHistory?.map(item => {
-				item = {...item, bookMarked: item?.pinnedAt > 0}
-			return item
-		  })
-          state.AllHistory.data = allHistory
-          state.AllHistory.status = state.historyRes.status
-          state.AllHistory.error = state.historyRes.error
-          state.AllHistory.hasMore = state.historyRes?.data?.moreAvailable
-        // }
-      });
-      handleAsyncActions(builder, fetchRecentFiles, 'recentFilesRes', (state, action)=> {
-        if(action?.meta?.arg?.onload) {
-          state.recentFiles = state.recentFilesRes
-          state.AllrecentFiles = state.recentFilesRes
-        }
-        if(action?.meta?.arg?.loadmore) {
-          let AllrecentFiles = cloneDeep(state.AllrecentFiles?.data?.files)
-          AllrecentFiles = uniqBy(concat(AllrecentFiles, state.recentFilesRes?.data?.files), 'id')
-          state.AllrecentFiles.data.files = AllrecentFiles
-          state.AllrecentFiles.status = state.recentFilesRes.status
-          state.AllrecentFiles.error = state.recentFilesRes.error
-        }
-      });
-      handleAsyncActions(builder, searchSession, 'selectedContext')
-      handleAsyncActions(builder, getRecentFileDownloadUrl, 'recentFileDownloadUrl');
-      handleAsyncActions(builder, submitFeedback, 'submitFeedback', (state, action)=> {
-        // feedback logic to update questions
-        let questions = cloneDeep(state.questions)
-        //As we started to support feedback for the individual volley of a threaded conversation, we need to update the botConversation with the feedback
-        const isThreadedQuestion = Object.values(questions)?.find(q => q.messageId === action.payload?.data?.pId) || {}
-        if(!isEmpty(isThreadedQuestion?.botConversation)){
-          questions[[action.meta.arg.cId]].botConversation[action.payload?.data?.messageId] = action.payload?.data
-        }else{
-          questions[[action.meta.arg.cId]] = { ...questions[[action.meta.arg.cId]], ...action.payload.data }
-        }
-                  
-        state.questions = questions
-      });
-      handleAsyncActions(builder, presenceStart, 'presenceStart');
-      handleAsyncActions(builder, getAllAnnouncements, 'announcements')
-    }
+
+      }
+      if (state.enableDebugging) {
+        console.log("advanceSearch fulfilled, action type:", action.type);
+      }
+    });
+    handleAsyncActions(builder, fetchHistory, 'historyRes', (state, action) => {
+      if (action?.meta?.arg?.onload) {
+        state.history = state.historyRes
+        // state.AllHistory = state.historyRes
+      }
+      // if(action?.meta?.arg?.loadmore) {
+      let allHistory = cloneDeep(state.AllHistory?.data) || []
+      if (action?.meta?.arg?.initialData) {
+        allHistory = state.historyRes?.data?.boards
+      } else {
+        allHistory = uniqBy(concat(allHistory, state.historyRes?.data?.boards), 'id')
+      }
+      allHistory = allHistory?.map(item => {
+        item = { ...item, bookMarked: item?.pinnedAt > 0 }
+        return item
+      })
+      state.AllHistory.data = allHistory
+      state.AllHistory.status = state.historyRes.status
+      state.AllHistory.error = state.historyRes.error
+      state.AllHistory.hasMore = state.historyRes?.data?.moreAvailable
+      // }
+    });
+    handleAsyncActions(builder, fetchRecentFiles, 'recentFilesRes', (state, action) => {
+      if (action?.meta?.arg?.onload) {
+        state.recentFiles = state.recentFilesRes
+        state.AllrecentFiles = state.recentFilesRes
+      }
+      if (action?.meta?.arg?.loadmore) {
+        let AllrecentFiles = cloneDeep(state.AllrecentFiles?.data?.files)
+        AllrecentFiles = uniqBy(concat(AllrecentFiles, state.recentFilesRes?.data?.files), 'id')
+        state.AllrecentFiles.data.files = AllrecentFiles
+        state.AllrecentFiles.data.moreAvailable = action?.payload?.moreAvailable
+        state.AllrecentFiles.status = state.recentFilesRes.status
+        state.AllrecentFiles.error = state.recentFilesRes.error
+      }
+    });
+    handleAsyncActions(builder, searchSession, 'selectedContext')
+    handleAsyncActions(builder, getRecentFileDownloadUrl, 'recentFileDownloadUrl');
+    handleAsyncActions(builder, submitFeedback, 'submitFeedback', (state, action) => {
+      mergeFeedbackResponseIntoQuestions(
+        state,
+        action.meta.arg,
+        action.payload?.data,
+      );
+    });
+    handleAsyncActions(builder, Feedback_V2Thunk, 'Feedback_V2', (state, action) => {
+      mergeFeedbackResponseIntoQuestions(state, action.meta.arg, action.payload);
+    });
+    handleAsyncActions(builder, presenceStart, 'presenceStart');
+    // handleAsyncActions(builder, getAllAnnouncements, 'announcements', (state, action) => {
+    //   state.announcements = action.payload
+    // });
+  }
 });
 
 // Export actions

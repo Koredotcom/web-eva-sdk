@@ -1,4 +1,4 @@
-import { advanceSearch, cancelAdvancedSearch, stopResponseGeneration, getSignedMediaURL , abortAdvanceSearch } from "../redux/actions/global.action";
+import { advanceSearch, cancelAdvancedSearch, stopResponseGeneration, getSignedMediaURL, addFileToAutonomousAgentAction, removeFileFromAutonomousAgentAction , abortAdvanceSearch } from "../redux/actions/global.action";
 import { setChatInterfaceOptions, setChatInterfaceElements, setCurrentQuestion, setCustomData, setEnableContextByFollowupContext, setEnabledCustomTemplates, setErrorState, setUserSelectedLLMModel } from "../redux/globalSlice"
 import { updateChatData } from "../redux/globalSlice";
 import store from "../redux/store";
@@ -167,7 +167,7 @@ const ChatInterface = (props) => {
           payload.customData = state.customData
           if(state?.enableDebugging){
             console.log("custom data in chat interface", state.customData)
-            console.log("custom  data payload in chat interface", payload.customData)
+            console.log("selectedContext in chat interface", selectedContext)
           }
         }
         const qId = constructQuestionInitial({ ...params, ...payload })
@@ -217,7 +217,7 @@ const ChatInterface = (props) => {
               payload.context = {
                 ...payload.context,
                 'agentType': selectedContext?.data?.context?.agentType || 'aAAgent',
-                'source': selectedContext?.data?.context?.source,
+                'source': selectedContext?.data?.source || selectedContext?.data?.context?.source,
               }
             }
           }
@@ -622,7 +622,7 @@ const ChatInterface = (props) => {
             question.answer = question?.answer?.concat(detail?.data?.chunk)
           }catch(error){
             console.error("error in concatenating the answer", error, `details are ${reqId} questions are ${questions}`)
-          }          
+          }
           
         }
 
@@ -797,6 +797,43 @@ const ChatInterface = (props) => {
       })
     }
 
+    const addFileToAutonomousAgent = async ({ fileId, messageId }) => {
+      const boardId = store.getState().global?.activeBoardId;
+      if (!fileId) {
+        return { error: true, message: "Missing required params: fileId" };
+      }
+      if (!messageId) {
+        return { error: true, message: "Missing required params: messageId" };
+      }
+      try {
+        const result = await store
+          .dispatch(addFileToAutonomousAgentAction({ boardId, messageId, fileId }))
+          .unwrap();
+        return result;
+      } catch (error) {
+        return { error: true, message: error?.errors?.[0]?.msg || "Unable to add file to autonomous agent" };
+      }
+    }
+
+    const removeFileFromAutonomousAgent = async ({ fileIds, messageId }) => {
+      const boardId = store.getState().global?.activeBoardId;
+      const normalizedFileIds = Array.isArray(fileIds) ? fileIds : (fileIds ? [fileIds] : []);
+      if (normalizedFileIds.length === 0) {
+        return { error: true, message: "Missing required params: fileIds" };
+      }
+      if (!messageId) {
+        return { error: true, message: "Missing required params: messageId" };
+      }
+      try {
+        const result = await store
+          .dispatch(removeFileFromAutonomousAgentAction({ boardId, messageId, fileIds: normalizedFileIds }))
+          .unwrap();
+        return result;
+      } catch (error) {
+        return { error: true, message: error?.errors?.[0]?.msg || "Unable to remove file from autonomous agent" };
+      }
+    }
+
     const resolveAgent = async(agentIdArray) => {
       const apiResponse = await store.dispatch(resolveAgentAction({payload: agentIdArray}));
       if(apiResponse?.meta?.requestStatus === 'fulfilled'){        
@@ -854,6 +891,8 @@ const ChatInterface = (props) => {
         setAgentContext,
         stopBotAnswer,
         fetchSignedMediaURL,
+        addFileToAutonomousAgent,
+        removeFileFromAutonomousAgent,
         storeUserSelectedLLMModel,
         startNewChat,
         responseFlowGeneration,
