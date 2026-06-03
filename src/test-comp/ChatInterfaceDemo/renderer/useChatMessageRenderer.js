@@ -2,6 +2,8 @@ import { useCallback, useEffect, useRef } from "react";
 import { renderMessages } from "./renderMessages";
 import { useComposebarBotVisibility } from "./useComposebarBotVisibility";
 import { cleanupAllAuthChallenges } from "../../../templateRenderer/functionality/agent-auth-challenge";
+import store from "../../../redux/store";
+import { notifyAttachmentChipClick } from "../../../chat/ChatInterface";
 
 /**
  * Glue hook that wires a ChatInterface SDK instance into the imperative
@@ -70,11 +72,34 @@ export function useChatMessageRenderer({
         }
     }, [doRender, botVisible, botExpanded]);
 
+    // Delegated click listener for attachment chips — survives container innerHTML re-renders
     useEffect(() => {
+        const container = containerRef.current;
+        if (!container) return;
+
+        const handleChipClick = (e) => {
+            const chip = e.target.closest('.file-preview-chip[data-file-id]');
+            if (!chip) return;
+            const fileId = chip.dataset.fileId;
+            if (!fileId) return;
+            const reqId = chip.dataset.reqId || '';
+            const fileName = chip.dataset.fileName || 'file';
+            const fileExtension = chip.dataset.fileExtension || '';
+            const source = chip.dataset.source || 'attachment';
+            const questions = store.getState().global?.questions || {};
+			const question = questions[reqId];
+			const messageId = question?.messageId || '';
+			// Only fire if messageId is available — during loading there's no messageId yet
+			if (!messageId) return;
+			notifyAttachmentChipClick({ fileId, messageId, fileName, fileExtension, source, reqId });
+        };
+
+        container.addEventListener('click', handleChipClick);
         return () => {
+            container.removeEventListener('click', handleChipClick);
             cleanupAllAuthChallenges();
         };
-    }, []);
+    }, [containerRef]);
 
     return { onSubscribe, rerender, skippedItems, questionsRef };
 }

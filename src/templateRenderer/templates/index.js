@@ -22,14 +22,25 @@ function renderReferenceToAttachment(data) {
     const allAttachments = responseAttachments.length > 0 ? responseAttachments : userAttachments;
     
     if (allAttachments?.length > 0) {
+        const reqId = data?.reqId || '';
         const previewContainer = allAttachments.map((file, index) => {
             const fileTitle = file?.title || file?.fileName || 'Untitled';
             const extIcon = file?.extIcon || getExtIcon(getFileExtension(fileTitle));
-            
+            const fileId = file?.docId || file?.fileId || file?.contentId || '';
+            const rawExt = file?.extName || file?.ext || getFileExtension(fileTitle) || '';
+            const fileExtension = rawExt.replace(/^\./, '').toLowerCase();
+            const source = file?.source || file?.provider || file?.type || 'attachment';
+
             return `
-                <div class="file-preview-chip" key="${index}">
+                <div class="file-preview-chip"
+                    data-file-id="${encodeHtml(fileId)}"
+                    data-file-name="${encodeHtml(fileTitle)}"
+                    data-file-extension="${encodeHtml(fileExtension)}"
+                    data-source="${encodeHtml(source)}"
+                    data-req-id="${encodeHtml(reqId)}"
+                    style="cursor:pointer">
                     <div class="file-icon">
-                        <img src="${encodeHtml(extIcon)}" alt="${encodeHtml(file?.extName || getFileExtension(fileTitle))}" />
+                        <img src="${encodeHtml(extIcon)}" alt="${encodeHtml(rawExt)}" />
                     </div>
                     <div class="file-title" title="${encodeHtml(fileTitle)}">
                         ${encodeHtml(fileTitle)}

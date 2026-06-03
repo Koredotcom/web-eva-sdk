@@ -1,4 +1,4 @@
-import { advanceSearch, cancelAdvancedSearch, stopResponseGeneration, getSignedMediaURL, addFileToAutonomousAgentAction, removeFileFromAutonomousAgentAction , abortAdvanceSearch } from "../redux/actions/global.action";
+import { advanceSearch, cancelAdvancedSearch, stopResponseGeneration, getSignedMediaURL, addFileToAutonomousAgentAction, removeFileFromAutonomousAgentAction, abortAdvanceSearch } from "../redux/actions/global.action";
 import { setChatInterfaceOptions, setChatInterfaceElements, setCurrentQuestion, setCustomData, setEnableContextByFollowupContext, setEnabledCustomTemplates, setErrorState, setUserSelectedLLMModel } from "../redux/globalSlice"
 import { updateChatData } from "../redux/globalSlice";
 import store from "../redux/store";
@@ -12,6 +12,16 @@ import { current } from "@reduxjs/toolkit";
 import { sessionItemHandler } from "../Attachments/createContext";
 import RecentAgentsFunc from "../LandingPageRecentAgents/RecentAgents";
 const { hideRecentAgentsDiv, unHideRecentAgentsDiv } = RecentAgentsFunc();
+
+// Module-level registry shared across all ChatInterface() instances
+const _attachmentChipCallbacks = new Set();
+
+export const notifyAttachmentChipClick = (data) => {
+    if (!data?.messageId) return;
+    _attachmentChipCallbacks.forEach((cb) => {
+        try { cb(data); } catch (e) { console.error('[EVA-SDK] attachmentChipClick callback error', e); }
+    });
+};
 
 const ChatInterface = (props) => {
     let state = store.getState().global, input = '', resIndexRef = 0;
@@ -719,6 +729,12 @@ const ChatInterface = (props) => {
       store.dispatch(setChatInterfaceElements(payload));
     };
 
+    const onAttachmentChipClick = (callback) => {
+      if (typeof callback !== 'function') return () => {};
+      _attachmentChipCallbacks.add(callback);
+      return () => _attachmentChipCallbacks.delete(callback);
+    };
+
     const startNewChat = () => {
       unHideRecentAgentsDiv("recent-agents-container");
       NewChat();
@@ -893,6 +909,7 @@ const ChatInterface = (props) => {
         fetchSignedMediaURL,
         addFileToAutonomousAgent,
         removeFileFromAutonomousAgent,
+        onAttachmentChipClick,
         storeUserSelectedLLMModel,
         startNewChat,
         responseFlowGeneration,

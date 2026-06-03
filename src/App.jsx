@@ -38,7 +38,7 @@ const App = () => {
   return (
     <div className='aiforwork-app-container'>
       {/* <div id='master-component' className='master-component'></div>  */}
-      {/* <ChatInterfaceDemo /> */}
+      <ChatInterfaceDemo />
       {/* <ChatTestComp/> */}
       {/* <TestComp /> */}
       {/* <Agents /> */}

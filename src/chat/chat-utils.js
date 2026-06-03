@@ -69,6 +69,9 @@ export const constructQuestionInitial = (args) => {
 		questions[uniqueMsgId] = obj;
 	}
 	else{
+		const selectedContextSources = store.getState().global.selectedContext?.data?.sources;
+		const attachmentSources = selectedContextSources?.filter((s) => s?.source === 'attachment') || [];
+
 		obj = {
 			cId: uniqueMsgId,
 			question,
@@ -76,6 +79,7 @@ export const constructQuestionInitial = (args) => {
 			loading: true,
 			type: "search",
 			reqId: uniqueMsgId,
+			...(attachmentSources.length > 0 ? { context: { sources: attachmentSources } } : {}),
 		};
 
 		questions[uniqueMsgId] = obj;
