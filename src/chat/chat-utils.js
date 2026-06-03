@@ -13,6 +13,13 @@ import { fetchHistory } from "../redux/actions/global.action";
 import MultiIntentExecution from '../multiIntentExecution/multiIntentExecution';
 import ChatInterface from './ChatInterface';
 
+const _pendingAgentFiles = [];
+export const agentFilesRegistry = {
+    add: (file) => { _pendingAgentFiles.push(file); },
+    getAll: () => [..._pendingAgentFiles],
+    clear: () => { _pendingAgentFiles.length = 0; },
+};
+
 
 export const constructQuestionInitial = (args) => {
 	let uniqueMsgId = args?.reqId;
@@ -69,6 +76,12 @@ export const constructQuestionInitial = (args) => {
 		questions[uniqueMsgId] = obj;
 	}
 	else{
+		const selectedContextSources = store.getState().global.selectedContext?.data?.sources;
+		const attachmentSources = selectedContextSources?.filter((s) => s?.source === 'attachment') || [];
+		const agentPendingFiles = agentFilesRegistry.getAll();
+		agentFilesRegistry.clear();
+		const allContextSources = [...attachmentSources, ...agentPendingFiles];
+
 		obj = {
 			cId: uniqueMsgId,
 			question,
@@ -76,6 +89,7 @@ export const constructQuestionInitial = (args) => {
 			loading: true,
 			type: "search",
 			reqId: uniqueMsgId,
+			...(allContextSources.length > 0 ? { context: { sources: allContextSources } } : {}),
 		};
 
 		questions[uniqueMsgId] = obj;
@@ -441,8 +455,9 @@ export const constructQuestionPostCall = (data, qId) => {
     }
 
     if(data?.payload?.agentContext?.sources?.length > 0){
+        question.agentContext = data.payload.agentContext;
         /*need to call removeFileFromAutonomousAgent action to remove the files from the autonomous agent */
-        ChatInterface().removeFileFromAutonomousAgent({ fileIds: data?.payload?.agentContext?.sources?.map(source => source?.fileId)?.filter(Boolean), messageId: data?.payload?.messageId })
+        ChatInterface().removeFileFromAutonomousAgent({ fileIds: data?.payload?.agentContext?.sources?.map(source => source?.fileId)?.filter(Boolean), messageId: data?.payload?.followUpContext?.fMsgId })
     }
     store.dispatch(setCurrentQuestion(questions[qId]))
     store.dispatch(updateChatData(questions))

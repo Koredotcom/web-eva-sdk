@@ -14,22 +14,44 @@ import { CurvedArrowForPreview } from "../icons-library";
 function renderReferenceToAttachment(data) {
     // Check for attachments in response sources (after agent processing)
     const responseAttachments = (data?.sources?.filter((source) => source?.source === 'attachment') || []);
-    
-    // Check for user-submitted attachments in context (during thought process)
+
+    // Check for autonomous agent files from agentContext (post-response) — only show enabled files
+    const agentContextAttachments = (data?.agentContext?.sources || []).filter((s) => s?.enable === true);
+    const isAgentContext = agentContextAttachments.length > 0;
+
+    // Check for user-submitted attachments in context (during thought process / loading)
     const userAttachments = (data?.context?.sources?.filter((source) => source?.source === 'attachment') || []);
-    
-    // Combine both sources, giving priority to response attachments if available
-    const allAttachments = responseAttachments.length > 0 ? responseAttachments : userAttachments;
+
+    // Priority: response sources > agentContext sources > context sources (loading state)
+    const allAttachments = responseAttachments.length > 0
+        ? responseAttachments
+        : isAgentContext
+            ? agentContextAttachments
+            : userAttachments;
     
     if (allAttachments?.length > 0) {
+        const reqId = data?.reqId || '';
         const previewContainer = allAttachments.map((file, index) => {
             const fileTitle = file?.title || file?.fileName || 'Untitled';
             const extIcon = file?.extIcon || getExtIcon(getFileExtension(fileTitle));
-            
+            // aAAgent files use sourceFileId for preview; regular attachments use docId/fileId/contentId
+            const fileId = isAgentContext
+                ? (file?.sourceFileId || file?.fileId || '')
+                : (file?.docId || file?.fileId || file?.contentId || '');
+            const rawExt = file?.extension || file?.extName || file?.ext || getFileExtension(fileTitle) || '';
+            const fileExtension = rawExt.replace(/^\./, '').toLowerCase();
+            const source = file?.source || file?.provider || file?.type || 'attachment';
+
             return `
-                <div class="file-preview-chip" key="${index}">
+                <div class="file-preview-chip"
+                    data-file-id="${encodeHtml(fileId)}"
+                    data-file-name="${encodeHtml(fileTitle)}"
+                    data-file-extension="${encodeHtml(fileExtension)}"
+                    data-source="${encodeHtml(source)}"
+                    data-req-id="${encodeHtml(reqId)}"
+                    style="cursor:pointer">
                     <div class="file-icon">
-                        <img src="${encodeHtml(extIcon)}" alt="${encodeHtml(file?.extName || getFileExtension(fileTitle))}" />
+                        <img src="${encodeHtml(extIcon)}" alt="${encodeHtml(rawExt)}" />
                     </div>
                     <div class="file-title" title="${encodeHtml(fileTitle)}">
                         ${encodeHtml(fileTitle)}

@@ -84,6 +84,7 @@ const ChatInterfaceDemo = () => {
   const [showSchedulers, setShowSchedulers] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [showAgents, setShowAgents] = useState(false);
+  const [filePreview, setFilePreview] = useState(null); // { fileName, fileExtension, fileId, signedUrl, originalSignedUrl, loading, error }
 
   const chatInterface = useRef();
   const announcementInterface = useRef();
@@ -129,15 +130,112 @@ const ChatInterfaceDemo = () => {
           quickActions
         );
         setMessages(question);
-        setQuickActions(qa);
-        onSubscribe(question, searchResponse, moreAvailable, errorStates, qa);
+        setQuickActions(quickActions);
+        onSubscribe(question, searchResponse, moreAvailable, errorStates, quickActions);
       }
     );
 
+    const unsubscribeChipClick = chatInterface.current.onAttachmentChipClick(async (fileData) => {
+      const { fileName, fileExtension } = fileData;
+      console.log('[EVA-SDK Demo] Attachment chip clicked:', fileData);
+
+      setFilePreview({ fileData, fileName, fileExtension, signedUrl: null, originalSignedUrl: null, loading: true, error: null });
+
+      const { fileId, messageId } = fileData;
+      const result = await chatInterface.current.fetchSignedMediaURL({ msgId: messageId, fileId });
+
+      if (result?.error) {
+        setFilePreview((prev) => ({ ...prev, loading: false, error: 'Failed to load file preview.' }));
+      } else {
+        const originalSignedUrl = result?.mediaUrl || result?.url || result?.downloadUrl || result?.res?.mediaUrl || result?.res?.url || result?.res?.downloadUrl;
+        try {
+          const resp = await fetch(originalSignedUrl);
+          if (resp.ok) {
+            const blob = await resp.blob();
+            const blobUrl = URL.createObjectURL(blob);
+            setFilePreview((prev) => ({ ...prev, loading: false, signedUrl: blobUrl, originalSignedUrl, _blobUrl: blobUrl }));
+          } else {
+            setFilePreview((prev) => ({ ...prev, loading: false, signedUrl: originalSignedUrl, originalSignedUrl }));
+          }
+        } catch {
+          setFilePreview((prev) => ({ ...prev, loading: false, signedUrl: originalSignedUrl, originalSignedUrl }));
+        }
+      }
+    });
+
     return () => {
       unsubscribe();
+      unsubscribeChipClick();
     };
   }, [onSubscribe]);
+
+  const handleDownload = async () => {
+    const { fileData, originalSignedUrl, fileName } = filePreview || {};
+    if (!fileData || !originalSignedUrl) return;
+    try {
+      const resp = await fetch(originalSignedUrl);
+      if (resp.ok) {
+        const blob = await resp.blob();
+        const blobUrl = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = blobUrl;
+        a.download = fileName || 'download';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(blobUrl);
+      } else {
+        window.open(originalSignedUrl, '_blank', 'noopener,noreferrer');
+      }
+    } catch {
+      window.open(originalSignedUrl, '_blank', 'noopener,noreferrer');
+    }
+  };
+
+  const renderFilePreviewSidebar = () => {
+    if (!filePreview) return null;
+    const { fileName, fileExtension, signedUrl, originalSignedUrl, loading, error } = filePreview;
+    const ext = (fileExtension || '').toLowerCase();
+    const isImage = ['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg', 'bmp'].includes(ext);
+    const isPdf = ext === 'pdf';
+    // Images/PDFs use blob URL; Office docs need the original signed URL (blob URLs are not externally accessible)
+    const previewUrl = isPdf || isImage
+      ? signedUrl
+      : originalSignedUrl ? `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(originalSignedUrl)}` : null;
+
+    return (
+      <div style={{ position: 'fixed', top: 0, right: 0, width: '420px', height: '100vh', background: '#fff', boxShadow: '-4px 0 16px rgba(0,0,0,0.15)', zIndex: 1000, display: 'flex', flexDirection: 'column' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', borderBottom: '1px solid #e5e7eb', flexShrink: 0, gap: '8px' }}>
+          <span style={{ fontWeight: 600, fontSize: '14px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }} title={fileName}>{fileName}</span>
+          <button
+            onClick={handleDownload}
+            disabled={!filePreview?.originalSignedUrl}
+            title="Download file"
+            style={{ background: 'none', border: '1px solid #d1d5db', borderRadius: '6px', cursor: 'pointer', padding: '4px 10px', fontSize: '12px', color: '#374151', display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0 }}
+          >
+            ⬇ Download
+          </button>
+          <button onClick={() => {
+            if (filePreview?._blobUrl) URL.revokeObjectURL(filePreview._blobUrl);
+            setFilePreview(null);
+          }} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '18px', color: '#6b7280', lineHeight: 1, flexShrink: 0 }}>✕</button>
+        </div>
+        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+          {loading && <span style={{ color: '#6b7280', fontSize: '14px' }}>Loading preview…</span>}
+          {error && <span style={{ color: '#ef4444', fontSize: '14px' }}>{error}</span>}
+          {!loading && !error && previewUrl && isImage && (
+            <img src={previewUrl} alt={fileName} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
+          )}
+          {!loading && !error && previewUrl && !isImage && (
+            <iframe src={previewUrl} title={fileName} style={{ width: '100%', height: '100%', border: 'none' }} />
+          )}
+          {!loading && !error && !previewUrl && (
+            <span style={{ color: '#6b7280', fontSize: '14px' }}>No preview available.</span>
+          )}
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className="chatInterfaceDemo">
@@ -160,21 +258,18 @@ const ChatInterfaceDemo = () => {
             setShowAgents(prev => !prev);
           }} role="button" tabIndex={0}>Get Agents</div>
           {showAgents ? <Agents /> : null}
-          <div>---------------------------------------------------------------</div>
-          <div className="sidebar-nav-item" onClick={() => {
+          {/* <div className="sidebar-nav-item" onClick={() => {
             setShowSchedulers(true);
             setShowAgents(false);
             setShowProfile(false);
-          }} role="button" tabIndex={0}>Schedulers</div>
-          <div>---------------------------------------------------------------</div>
-          <div className="sidebar-nav-item" onClick={() => {
+          }} role="button" tabIndex={0}>Schedulers</div> */}
+          {/* <div className="sidebar-nav-item" onClick={() => {
             setShowProfile(true);
             setShowAgents(false);
             setShowSchedulers(false);
-          }} role="button" tabIndex={0}>Profile</div>
-          <div>---------------------------------------------------------------</div>
+          }} role="button" tabIndex={0}>Profile</div> */}
           {/* <Announcements /> */}
-          {/* <History /> */}
+          <History />
         </div>
       </div>
 
@@ -191,64 +286,7 @@ const ChatInterfaceDemo = () => {
         ) : (
         <>
           <div className="chatSec">
-            {messages &&
-              Object.values(messages).map((item, index) => {
-                if (item?.isTask) return;
-
-                // Handle multi_intent_execution separately (pure React)
-                if (item?.templateType === "multi_intent_execution") {
-                  return <MultiIntentExecutionDemo key={item?.id} data={item} />;
-                }
-
-                // For all other templates, use the HTML template renderer
-                const assistantIconTemplate = () => {
-                  return <div className="logo-icon" key={index}><img src="/public/eva-black-svg.svg" alt="AiForWork" /></div>;
-                };
-
-                let html = TemplateRenderer.generateHTMLTemplate(item, {
-                  assistantIconTemplate,
-                  loadingText: "Analyzing",
-                });
-
-                const showFeedback =
-                  item?.disableFeedback !== true && Boolean(item?.messageId);
-                const currentFeedback =
-                  item?.userFeedback?.type ?? item?.feedback;
-                const isLiked = currentFeedback === "like";
-                const isDisliked = currentFeedback === "dislike";
-
-                return (
-                  <div key={item?.id} className="chat-demo-message-row">
-                    <div
-                      dangerouslySetInnerHTML={{
-                        __html: html.innerHTML,
-                      }}
-                    />
-                    {showFeedback ? (
-                      <div className="chat-demo-feedback" role="group" aria-label="Message feedback">
-                        <button
-                          type="button"
-                          className={`chat-demo-feedback-btn${isLiked ? " is-active" : ""}`}
-                          title="Thumbs up"
-                          aria-pressed={isLiked}
-                          onClick={() => handleMessageFeedback(item, "like")}
-                        >
-                          👍
-                        </button>
-                        <button
-                          type="button"
-                          className={`chat-demo-feedback-btn${isDisliked ? " is-active" : ""}`}
-                          title="Thumbs down"
-                          aria-pressed={isDisliked}
-                          onClick={() => handleMessageFeedback(item, "dislike")}
-                        >
-                          👎
-                        </button>
-                      </div>
-                    ) : null}
-                  </div>
-                );
-              })}
+            <div ref={messagesContainerRef} />
           </div>
           <Composebar
             quickActions={quickActions}
@@ -267,6 +305,7 @@ const ChatInterfaceDemo = () => {
         </>
         )}
       </div>
+      {renderFilePreviewSidebar()}
     </div>
   );
 };
