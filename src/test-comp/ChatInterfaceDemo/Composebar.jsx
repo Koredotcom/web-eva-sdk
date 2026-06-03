@@ -46,6 +46,8 @@ const Composebar = ({quickActions, chatInterface, input, setInput, messages}) =>
           const addFileResponse = await chatInterface.current.addFileToAutonomousAgent({
             fileId,
             messageId: latestMessage?.id || latestMessage?.messageId,
+            fileName: file.name,
+            fileExtension: file.name.split('.').pop() || '',
           });
           console.log("addFileToAutonomousAgent response", addFileResponse);
         }

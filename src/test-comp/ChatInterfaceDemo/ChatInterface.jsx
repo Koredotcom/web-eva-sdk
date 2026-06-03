@@ -257,7 +257,7 @@ const ChatInterfaceDemo = () => {
           <div className="sidebar-nav-item" onClick={() => {
             setShowAgents(prev => !prev);
           }} role="button" tabIndex={0}>Get Agents</div>
-          {/* {showAgents ? <Agents /> : null} */}
+          {showAgents ? <Agents /> : null}
           {/* <div className="sidebar-nav-item" onClick={() => {
             setShowSchedulers(true);
             setShowAgents(false);
