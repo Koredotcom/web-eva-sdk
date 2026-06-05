@@ -1,5 +1,5 @@
 import axios from "axios";
-import FileUploader from "../utils/fileUploader";
+import FileUploader from "../utils/FileUploader";
 import { getUID } from "../utils/helpers";
 
 /**

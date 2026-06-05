@@ -13,6 +13,12 @@ import { fetchHistory } from "../redux/actions/global.action";
 import MultiIntentExecution from '../multiIntentExecution/multiIntentExecution';
 import ChatInterface from './ChatInterface';
 
+const _pendingAgentFiles = [];
+export const agentFilesRegistry = {
+    add: (file) => { _pendingAgentFiles.push(file); },
+    getAll: () => [..._pendingAgentFiles],
+    clear: () => { _pendingAgentFiles.length = 0; },
+};
 
 export const constructQuestionInitial = (args) => {
 	let uniqueMsgId = args?.reqId;
@@ -69,6 +75,12 @@ export const constructQuestionInitial = (args) => {
 		questions[uniqueMsgId] = obj;
 	}
 	else{
+		const selectedContextSources = store.getState().global.selectedContext?.data?.sources;
+		const attachmentSources = selectedContextSources?.filter((s) => s?.source === 'attachment') || [];
+		const agentPendingFiles = agentFilesRegistry.getAll();
+		agentFilesRegistry.clear();
+		const allContextSources = [...attachmentSources, ...agentPendingFiles];
+
 		obj = {
 			cId: uniqueMsgId,
 			question,
@@ -76,6 +88,7 @@ export const constructQuestionInitial = (args) => {
 			loading: true,
 			type: "search",
 			reqId: uniqueMsgId,
+			...(allContextSources.length > 0 ? { context: { sources: allContextSources } } : {}),
 		};
 
 		questions[uniqueMsgId] = obj;
