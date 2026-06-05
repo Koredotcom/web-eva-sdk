@@ -1,6 +1,59 @@
 import { encodeHtml } from "../utils/helper";
+import { getFileExtension, getExtIcon } from "../../utils/helpers";
 
 // import { encodeHtml } from "../utils/helper";
+
+/**
+ * Render attachment preview chips above the question bubble.
+ * Shows chips during loading (from context.sources) and after response (from sources / agentContext).
+ */
+export function renderReferenceToAttachment(data) {
+    const responseAttachments = (data?.sources?.filter((source) => source?.source === 'attachment') || []);
+    const agentContextAttachments = (data?.agentContext?.sources || []).filter((s) => s?.enable === true);
+    const isAgentContext = agentContextAttachments.length > 0;
+    const userAttachments = (data?.context?.sources?.filter((source) => source?.source === 'attachment') || []);
+
+    // Priority: response sources > agentContext sources > context sources (loading state)
+    const allAttachments = responseAttachments.length > 0
+        ? responseAttachments
+        : isAgentContext
+            ? agentContextAttachments
+            : userAttachments;
+
+    if (allAttachments?.length > 0) {
+        const reqId = data?.reqId || '';
+        const chips = allAttachments.map((file) => {
+            const fileTitle = file?.title || file?.fileName || 'Untitled';
+            const extIcon = file?.extIcon || getExtIcon(getFileExtension(fileTitle));
+            const fileId = isAgentContext
+                ? (file?.sourceFileId || file?.fileId || '')
+                : (file?.docId || file?.fileId || file?.contentId || '');
+            const rawExt = file?.extension || file?.extName || file?.ext || getFileExtension(fileTitle) || '';
+            const fileExtension = rawExt.replace(/^\./, '').toLowerCase();
+            const source = file?.source || file?.provider || file?.type || 'attachment';
+
+            return `
+                <div class="file-preview-chip"
+                    data-file-id="${encodeHtml(fileId)}"
+                    data-file-name="${encodeHtml(fileTitle)}"
+                    data-file-extension="${encodeHtml(fileExtension)}"
+                    data-source="${encodeHtml(source)}"
+                    data-req-id="${encodeHtml(reqId)}"
+                    style="cursor:pointer">
+                    <div class="file-icon">
+                        <img src="${encodeHtml(extIcon)}" alt="${encodeHtml(rawExt)}" />
+                    </div>
+                    <div class="file-title" title="${encodeHtml(fileTitle)}">
+                        ${encodeHtml(fileTitle)}
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        return `<div class="file-preview-chips-container">${chips}</div>`;
+    }
+    return '';
+}
 
 /**
  * Render a question bubble
@@ -10,9 +63,11 @@ import { encodeHtml } from "../utils/helper";
 export function renderQuestionBubble(data, userIconTemplate = false) {
 	const { question, timestamp, icon } = data;
     if(data?.isTask) return "";
+    const attachmentPreview = renderReferenceToAttachment(data);
 	return `
         <div class="message-bubble question">
             <div class="message-content">
+                ${attachmentPreview}
                 <div class="message-text">${encodeHtml(question)}</div>
                 ${userIconTemplate ? userIconTemplate : ""}
             </div>
@@ -79,8 +134,10 @@ export function renderLoading(
 ) {
 	// const { text = "Thinking...", icon } = data;
 	const text = loadingText || "Thinking...";
+    const attachmentPreview = renderReferenceToAttachment(data);
 	return ` <div class="message-bubble question">
                 <div class="message-content">
+                    ${attachmentPreview}
                     <div class="message-text">${encodeHtml(
 						data?.question
 					)}</div>
@@ -187,6 +244,7 @@ const TemplateComponents = {
 	wrapTemplate,
 	renderError,
 	renderFeedback,
+    renderReferenceToAttachment,
 };
 
 export default TemplateComponents;

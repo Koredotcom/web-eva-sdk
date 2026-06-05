@@ -1,4 +1,5 @@
 import { advanceSearch, cancelAdvancedSearch, stopResponseGeneration, getSignedMediaURL, addFileToAutonomousAgentAction, removeFileFromAutonomousAgentAction } from "../redux/actions/global.action";
+import { agentFilesRegistry } from "./chat-utils";
 import { setChatInterfaceOptions, setCurrentQuestion, setCustomData, setEnableContextByFollowupContext, setEnabledCustomTemplates, setErrorState, setUserSelectedLLMModel } from "../redux/globalSlice"
 import { updateChatData } from "../redux/globalSlice";
 import store from "../redux/store";
@@ -57,6 +58,16 @@ const buildMultiResponseAnswer = (parent) => {
         .map((r) => (r?.answer != null && r?.answer !== "" ? String(r.answer) : ""))
         .filter(Boolean)
         .join("\n\n");
+};
+
+// Module-level registry shared across all ChatInterface() instances
+const _attachmentChipCallbacks = new Set();
+
+export const notifyAttachmentChipClick = (data) => {
+    if (!data?.messageId) return;
+    _attachmentChipCallbacks.forEach((cb) => {
+        try { cb(data); } catch (e) { console.error('[EVA-SDK] attachmentChipClick callback error', e); }
+    });
 };
 
 const ChatInterface = (props) => {
@@ -591,13 +602,17 @@ const ChatInterface = (props) => {
       }
     }
 
-    const fetchSignedMediaURL = async ({ msgId, fileId }) => {
+    const fetchSignedMediaURL = async ({ msgId, fileId, source }) => {
       const userId = store.getState().global?.profile?.data?.id;
-      if (!userId || !msgId || !fileId) {
+      // aAAgent sources have sourceFileId; regular sources use docId/fileId/contentId
+      const resolvedFileId = source?.sourceFileId
+        ? source.sourceFileId
+        : (source?.docId || source?.fileId || source?.contentId || fileId);
+      if (!userId || !msgId || !resolvedFileId) {
         return { error: true, message: "Missing required params: userId, msgId, or fileId" };
       }
       try {
-        const result = await store.dispatch(getSignedMediaURL({ userId, msgId, fileId })).unwrap();
+        const result = await store.dispatch(getSignedMediaURL({ userId, msgId, fileId: resolvedFileId })).unwrap();
         return result;
       } catch(error) {
         return { error: true, message: error?.errors?.[0]?.msg || "Unable to fetch signed media URL" };
@@ -620,7 +635,7 @@ const ChatInterface = (props) => {
       })
     }
 
-    const addFileToAutonomousAgent = async ({ fileId, messageId }) => {
+    const addFileToAutonomousAgent = async ({ fileId, messageId, fileName, fileExtension }) => {
       const boardId = store.getState().global?.activeBoardId;
       if (!fileId) {
         return { error: true, message: "Missing required params: fileId" };
@@ -632,6 +647,17 @@ const ChatInterface = (props) => {
         const result = await store
           .dispatch(addFileToAutonomousAgentAction({ boardId, messageId, fileId }))
           .unwrap();
+        if (fileName) {
+          const rawExt = fileExtension || '';
+          agentFilesRegistry.add({
+            fileId,
+            title: fileName,
+            fileName,
+            extension: rawExt.replace(/^\./, '').toLowerCase(),
+            extName: rawExt.replace(/^\./, '').toLowerCase(),
+            source: 'attachment',
+          });
+        }
         return result;
       } catch (error) {
         return { error: true, message: error?.errors?.[0]?.msg || "Unable to add file to autonomous agent" };
@@ -737,6 +763,12 @@ const ChatInterface = (props) => {
       }
     }
 
+    const onAttachmentChipClick = (callback) => {
+      if (typeof callback !== 'function') return () => {};
+      _attachmentChipCallbacks.add(callback);
+      return () => _attachmentChipCallbacks.delete(callback);
+    };
+
     return {
         subscribe,
         sendMessageAction,
@@ -758,6 +790,7 @@ const ChatInterface = (props) => {
         fetchSignedMediaURL,
         addFileToAutonomousAgent,
         removeFileFromAutonomousAgent,
+        onAttachmentChipClick,
         storeUserSelectedLLMModel,
         copyQuestion,
         copyAnswer,
