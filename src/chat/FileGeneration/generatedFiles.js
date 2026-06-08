@@ -11,11 +11,17 @@ const dataStructuring = (el) => {
         id: el?.id,
         fileName: el?.fileName,
         fileExtension: el?.fileExtension,
-        createdOn: el?.createdOn,
         fileType: el?.fileType,
-        scope: el?.scope,
         size: el?.size,
         uploadedBy: el?.uploadedBy,
+        boardId: el?.boardId,
+        accountId: el?.accountId,
+        createdOn: el?.createdOn,
+        resourceId: el?.resourceId,
+        resourceType: el?.resourceType,
+        encrypted: el?.encrypted,
+        parentId: el?.parentId,
+        scope: el?.scope,
     };
 };
 
