@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { TemplateRenderer } from "../../templateRenderer";
 import { BotConversation, ChatInterface, DownloadFile, NewChat } from "../../chat";
+import { notifyAttachmentChipClick } from "../../chat/ChatInterface";
 import store from "../../redux/store";
 import { submitUserFeedback, feedbackDislikeCategories } from "../../Feedback";
 
@@ -91,9 +92,11 @@ const ChatInterfaceDemo = () => {
   const [showSchedulers, setShowSchedulers] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [showAgents, setShowAgents] = useState(false);
+  const [filePreview, setFilePreview] = useState(null); // { fileName, fileExtension, fileId, signedUrl, originalSignedUrl, loading, error }
 
   const chatInterface = useRef();
   const announcementInterface = useRef();
+  const chatSectionRef = useRef(null);
 
   useEffect(() => {
     chatInterface.current = ChatInterface();
@@ -131,10 +134,134 @@ const ChatInterfaceDemo = () => {
       }
     );
 
+    const unsubscribeChipClick = chatInterface.current.onAttachmentChipClick(async (fileData) => {
+      const { fileName, fileExtension } = fileData;
+      console.log('[EVA-SDK Demo] Attachment chip clicked:', fileData);
+
+      setFilePreview({ fileData, fileName, fileExtension, signedUrl: null, originalSignedUrl: null, loading: true, error: null });
+
+      const { fileId, messageId } = fileData;
+      const result = await chatInterface.current.fetchSignedMediaURL({ msgId: messageId, fileId });
+
+      if (result?.error) {
+        setFilePreview((prev) => ({ ...prev, loading: false, error: 'Failed to load file preview.' }));
+      } else {
+        const originalSignedUrl = result?.mediaUrl || result?.url || result?.downloadUrl || result?.res?.mediaUrl || result?.res?.url || result?.res?.downloadUrl;
+        try {
+          const resp = await fetch(originalSignedUrl);
+          if (resp.ok) {
+            const blob = await resp.blob();
+            const blobUrl = URL.createObjectURL(blob);
+            setFilePreview((prev) => ({ ...prev, loading: false, signedUrl: blobUrl, originalSignedUrl, _blobUrl: blobUrl }));
+          } else {
+            setFilePreview((prev) => ({ ...prev, loading: false, signedUrl: originalSignedUrl, originalSignedUrl }));
+          }
+        } catch {
+          setFilePreview((prev) => ({ ...prev, loading: false, signedUrl: originalSignedUrl, originalSignedUrl }));
+        }
+      }
+    });
+
     return () => {
       unsubscribe();
+      unsubscribeChipClick();
     };
   }, []);
+
+  // Delegated click listener for file-preview-chip elements — survives innerHTML re-renders
+  useEffect(() => {
+    const container = chatSectionRef.current;
+    if (!container) return;
+
+    const handleChipClick = (e) => {
+      const chip = e.target.closest('.file-preview-chip[data-file-id]');
+      if (!chip) return;
+      const fileId = chip.dataset.fileId;
+      if (!fileId) return;
+      const reqId = chip.dataset.reqId || '';
+      const fileName = chip.dataset.fileName || 'file';
+      const fileExtension = chip.dataset.fileExtension || '';
+      const source = chip.dataset.source || 'attachment';
+      const questions = store.getState().global?.questions || {};
+      const question = questions[reqId];
+      const messageId = question?.messageId || '';
+      // Only fire if messageId is available — during loading there is no messageId yet
+      if (!messageId) return;
+      notifyAttachmentChipClick({ fileId, messageId, fileName, fileExtension, source, reqId });
+    };
+
+    container.addEventListener('click', handleChipClick);
+    return () => {
+      container.removeEventListener('click', handleChipClick);
+    };
+  }, []);
+
+  const handleDownload = async () => {
+    const { fileData, originalSignedUrl, fileName } = filePreview || {};
+    if (!fileData || !originalSignedUrl) return;
+    try {
+      const resp = await fetch(originalSignedUrl);
+      if (resp.ok) {
+        const blob = await resp.blob();
+        const blobUrl = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = blobUrl;
+        a.download = fileName || 'download';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(blobUrl);
+      } else {
+        window.open(originalSignedUrl, '_blank', 'noopener,noreferrer');
+      }
+    } catch {
+      window.open(originalSignedUrl, '_blank', 'noopener,noreferrer');
+    }
+  };
+
+  const renderFilePreviewSidebar = () => {
+    if (!filePreview) return null;
+    const { fileName, fileExtension, signedUrl, originalSignedUrl, loading, error } = filePreview;
+    const ext = (fileExtension || '').toLowerCase();
+    const isImage = ['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg', 'bmp'].includes(ext);
+    const isPdf = ext === 'pdf';
+    const previewUrl = isPdf || isImage
+      ? signedUrl
+      : originalSignedUrl ? `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(originalSignedUrl)}` : null;
+
+    return (
+      <div style={{ position: 'fixed', top: 0, right: 0, width: '420px', height: '100vh', background: '#fff', boxShadow: '-4px 0 16px rgba(0,0,0,0.15)', zIndex: 1000, display: 'flex', flexDirection: 'column' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', borderBottom: '1px solid #e5e7eb', flexShrink: 0, gap: '8px' }}>
+          <span style={{ fontWeight: 600, fontSize: '14px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }} title={fileName}>{fileName}</span>
+          <button
+            onClick={handleDownload}
+            disabled={!filePreview?.originalSignedUrl}
+            title="Download file"
+            style={{ background: 'none', border: '1px solid #d1d5db', borderRadius: '6px', cursor: 'pointer', padding: '4px 10px', fontSize: '12px', color: '#374151', display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0 }}
+          >
+            ⬇ Download
+          </button>
+          <button onClick={() => {
+            if (filePreview?._blobUrl) URL.revokeObjectURL(filePreview._blobUrl);
+            setFilePreview(null);
+          }} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '18px', color: '#6b7280', lineHeight: 1, flexShrink: 0 }}>✕</button>
+        </div>
+        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+          {loading && <span style={{ color: '#6b7280', fontSize: '14px' }}>Loading preview…</span>}
+          {error && <span style={{ color: '#ef4444', fontSize: '14px' }}>{error}</span>}
+          {!loading && !error && previewUrl && isImage && (
+            <img src={previewUrl} alt={fileName} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
+          )}
+          {!loading && !error && previewUrl && !isImage && (
+            <iframe src={previewUrl} title={fileName} style={{ width: '100%', height: '100%', border: 'none' }} />
+          )}
+          {!loading && !error && !previewUrl && (
+            <span style={{ color: '#6b7280', fontSize: '14px' }}>No preview available.</span>
+          )}
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className="chatInterfaceDemo">
@@ -186,7 +313,7 @@ const ChatInterfaceDemo = () => {
           </div>
         ) : (
         <>
-          <div className="chatSec">
+          <div className="chatSec" ref={chatSectionRef}>
             {messages &&
               Object.values(messages).map((item, index) => {
                 if (item?.isTask) return;
@@ -306,6 +433,7 @@ const ChatInterfaceDemo = () => {
         </>
         )}
       </div>
+      {renderFilePreviewSidebar()}
     </div>
   );
 };
