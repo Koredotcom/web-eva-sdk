@@ -351,6 +351,23 @@ export const fetchRecentFiles = createAsyncThunk(
     }
 );
 
+export const fetchGeneratedFiles = createAsyncThunk(
+    'global/fetchGeneratedFiles',
+    async ({userId, params}, { rejectWithValue }) => {
+        try {
+            const response = await axiosInstance({
+                url: `/ka/users/${userId}/files?fileContext=generatedArtifacts`,
+                method: 'GET',
+                params
+            });
+            return response.data;
+        } catch (error) {
+            handleErrorState(error, "Generated Files");
+            return rejectWithValue(error.response);
+        }
+    }
+);
+
 export const getRecentFileDownloadUrl = createAsyncThunk(
     'global/getRecentFileDownloadUrl',
     async ({userId, params}, { rejectWithValue }) => {
