@@ -1,8 +1,8 @@
 import React, { useEffect, useRef, useState } from "react";
 import { TemplateRenderer } from "../../templateRenderer";
-import { BotConversation, ChatInterface} from "../../chat";
+import { BotConversation, ChatInterface, DownloadFile, NewChat } from "../../chat";
 import store from "../../redux/store";
-import { feedback_V2, feedbackDislikeCategories } from "../../Feedback";
+import { submitUserFeedback, feedbackDislikeCategories } from "../../Feedback";
 
 import '../../styles/chat-interface.scss'
 
@@ -15,8 +15,8 @@ import { SchedulersView } from "../../schedulers";
 import { ExecuteFormThroughURL } from "../../chat/gptTemplate/submitGPTForm";
 import Profile from "./profile";
 import { useChatMessageRenderer } from "./renderer";
-import NewChat from "../../chat/NewChat";
 import RecentAgentsFunc from "../../LandingPageRecentAgents/RecentAgents";
+import MultiIntentExecutionDemo from "./MultiIntentExecutionDemo";
 
 const { unHideRecentAgentsDiv } = RecentAgentsFunc();
 
@@ -31,7 +31,7 @@ const ChatInterfaceDemo = () => {
     const cId = item?.cId;
     if (!boardId || !messageId) {
       if (state?.enableDebugging) {
-        console.warn("feedback_V2 skipped: missing boardId or messageId", {
+        console.warn("submitUserFeedback skipped: missing boardId or messageId", {
           boardId,
           messageId,
         });
@@ -44,36 +44,26 @@ const ChatInterfaceDemo = () => {
     const isUndo =
       (feedbackType === "like" && currentFeedback === "like") ||
       (feedbackType === "dislike" && currentFeedback === "dislike");
+
+    let payload;
+    if (isUndo) {
+      payload = { action: "undo" };
+    } else if (feedbackType === "like") {
+      payload = { feedback: "like", comment: "" };
+    } else {
+      payload = { feedback: "dislike", category: ["demo"], comment: "" };
+    }
+
     try {
-      if (isUndo) {
-        await feedback_V2({
-          boardId,
-          messageId,
-          cId,
-          action: "undo",
-        });
-      } else if (feedbackType === "like") {
-        await feedback_V2({
-          boardId,
-          messageId,
-          cId,
-          feedback: "like",
-          category: [],
-          comment: "",
-        });
-      } else {
-        await feedback_V2({
-          boardId,
-          messageId,
-          cId,
-          feedback: "dislike",
-          category: ["demo"],
-          comment: "",
-        });
-      }
+      await submitUserFeedback({
+        type: feedbackType,
+        cId,
+        messageId,
+        payload,
+      });
     } catch (err) {
       if (store.getState().global?.enableDebugging) {
-        console.error("feedback_V2 failed", err);
+        console.error("submitUserFeedback failed", err);
       }
     }
   };
@@ -96,6 +86,7 @@ const ChatInterfaceDemo = () => {
     scrollContainerRef,
     loadingText: "Analyzing",
   });
+  const chatSectionRef = useRef(null);
 
   useEffect(() => {
     chatInterface.current = ChatInterface();
@@ -167,7 +158,7 @@ const ChatInterfaceDemo = () => {
       unsubscribe();
       unsubscribeChipClick();
     };
-  }, [onSubscribe]);
+  }, []);
 
   const handleDownload = async () => {
     const { fileData, originalSignedUrl, fileName } = filePreview || {};
@@ -285,6 +276,108 @@ const ChatInterfaceDemo = () => {
           </div>
         ) : (
         <>
+          <div className="chatSec" ref={chatSectionRef}>
+            {messages &&
+              Object.values(messages).map((item, index) => {
+                if (item?.isTask) return;
+
+                // Handle multi_intent_execution separately (pure React)
+                if (item?.templateType === "multi_intent_execution") {
+                  return <MultiIntentExecutionDemo key={item?.id} data={item} />;
+                }
+
+                // For all other templates, use the HTML template renderer
+                const assistantIconTemplate = () => {
+                  return <div className="logo-icon" key={index}><img src="/public/eva-black-svg.svg" alt="AiForWork" /></div>;
+                };
+
+                let html = TemplateRenderer.generateHTMLTemplate(item, {
+                  assistantIconTemplate,
+                  loadingText: "Analyzing",
+                });
+
+                const showFeedback =
+                  item?.disableFeedback !== true && Boolean(item?.messageId);
+                const currentFeedback =
+                  item?.userFeedback?.type ?? item?.feedback;
+                const isLiked = currentFeedback === "like";
+                const isDisliked = currentFeedback === "dislike";
+
+                const handleDownloadArtifact = async (artifact) => {
+                  const res = await DownloadFile({
+                    messageId: item?.messageId,
+                    uploadedFileId: artifact?.uploadedFileId,
+                    filename: artifact?.filename,
+                  });
+                  if (res?.error) {
+                    console.error("DownloadFile failed", res);
+                  }
+                };
+
+                const generatedArtifacts = Array.isArray(item?.generatedArtifacts)
+                  ? item.generatedArtifacts
+                  : [];
+
+                return (
+                  <div key={item?.id} className="chat-demo-message-row">
+                    <div
+                      dangerouslySetInnerHTML={{
+                        __html: html.innerHTML,
+                      }}
+                    />
+                    {generatedArtifacts.length > 0 ? (
+                      <div className="chat-demo-artifacts" role="group" aria-label="Generated artifacts">
+                        {generatedArtifacts.map((artifact, aIdx) => (
+                          <div
+                            key={artifact?.uploadedFileId || artifact?.filename || aIdx}
+                            className="chat-demo-artifact-row"
+                          >
+                            <div className="chat-demo-artifact-info">
+                              <span className="chat-demo-artifact-name">
+                                {artifact?.filename || "Artifact"}
+                              </span>
+                              {artifact?.ext ? (
+                                <span className="chat-demo-artifact-ext">
+                                  .{artifact.ext}
+                                </span>
+                              ) : null}
+                            </div>
+                            <button
+                              type="button"
+                              className="chat-demo-artifact-download-btn"
+                              onClick={() => handleDownloadArtifact(artifact)}
+                            >
+                              Download
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    ) : null}
+                    {showFeedback ? (
+                      <div className="chat-demo-feedback" role="group" aria-label="Message feedback">
+                        <button
+                          type="button"
+                          className={`chat-demo-feedback-btn${isLiked ? " is-active" : ""}`}
+                          title="Thumbs up"
+                          aria-pressed={isLiked}
+                          onClick={() => handleMessageFeedback(item, "like")}
+                        >
+                          👍
+                        </button>
+                        <button
+                          type="button"
+                          className={`chat-demo-feedback-btn${isDisliked ? " is-active" : ""}`}
+                          title="Thumbs down"
+                          aria-pressed={isDisliked}
+                          onClick={() => handleMessageFeedback(item, "dislike")}
+                        >
+                          👎
+                        </button>
+                      </div>
+                    ) : null}
+                  </div>
+                );
+              })}
           <div className="chatSec">
             <div ref={messagesContainerRef} />
           </div>
@@ -302,6 +395,7 @@ const ChatInterfaceDemo = () => {
             const agentId = "ag-b0b6c3b6-df0a-5316-8a9f-35bf43babd1e";
             ExecuteFormThroughURL(formData, question, agentId);
           }}>Review peggy's plan and risk information</a>
+          </div>
         </>
         )}
       </div>

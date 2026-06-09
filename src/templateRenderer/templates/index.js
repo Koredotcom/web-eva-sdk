@@ -4,22 +4,15 @@ import * as copyQuestion from "./copy-question";
 import store from "../../redux/store";
 import { convertToTimeFormat, getFileExtension, getExtIcon, markdownToPlainText } from "../../utils/helpers";
 import { CurvedArrowForPreview } from "../icons-library";
-// import { encodeHtml } from "../utils/helper";
 
 /**
- * Render attachment preview container (similar to renderReferenceToAttachment in Kora-React)
- * @param {Object} data Question/Item data
- * @returns {string} HTML string
+ * Render attachment preview chips above the question bubble.
+ * Shows chips during loading (from context.sources) and after response (from sources / agentContext).
  */
-function renderReferenceToAttachment(data) {
-    // Check for attachments in response sources (after agent processing)
+export function renderReferenceToAttachment(data) {
     const responseAttachments = (data?.sources?.filter((source) => source?.source === 'attachment') || []);
-
-    // Check for autonomous agent files from agentContext (post-response) — only show enabled files
     const agentContextAttachments = (data?.agentContext?.sources || []).filter((s) => s?.enable === true);
     const isAgentContext = agentContextAttachments.length > 0;
-
-    // Check for user-submitted attachments in context (during thought process / loading)
     const userAttachments = (data?.context?.sources?.filter((source) => source?.source === 'attachment') || []);
 
     // Priority: response sources > agentContext sources > context sources (loading state)
@@ -28,13 +21,12 @@ function renderReferenceToAttachment(data) {
         : isAgentContext
             ? agentContextAttachments
             : userAttachments;
-    
+
     if (allAttachments?.length > 0) {
         const reqId = data?.reqId || '';
-        const previewContainer = allAttachments.map((file, index) => {
+        const chips = allAttachments.map((file) => {
             const fileTitle = file?.title || file?.fileName || 'Untitled';
             const extIcon = file?.extIcon || getExtIcon(getFileExtension(fileTitle));
-            // aAAgent files use sourceFileId for preview; regular attachments use docId/fileId/contentId
             const fileId = isAgentContext
                 ? (file?.sourceFileId || file?.fileId || '')
                 : (file?.docId || file?.fileId || file?.contentId || '');
@@ -59,11 +51,10 @@ function renderReferenceToAttachment(data) {
                 </div>
             `;
         }).join('');
-        
-        return `<div class="attachment-preview-container">${previewContainer}</div>`;
-    } else {
-        return '';
+
+        return `<div class="file-preview-chips-container">${chips}</div>`;
     }
+    return '';
 }
 
 /**
@@ -123,8 +114,6 @@ function renderReferenceToResponseContext(data) {
 export function renderQuestionBubble(data, userIconTemplate = false, displayTimestamp = true) {
 	const { question, timestamp, icon} = data;
     if(data?.isTask) return "";
-    
-    // Render attachment preview above the question
     const attachmentPreview = renderReferenceToAttachment(data);
     
     // Render response context preview above the question (when GPT agent response is set as context)
@@ -383,6 +372,7 @@ const TemplateComponents = {
 	wrapTemplate,
 	renderError,
 	renderFeedback,
+    renderReferenceToAttachment,
     renderAppAvatar,
 };
 
