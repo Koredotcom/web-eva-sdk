@@ -1,8 +1,10 @@
 import _, { cloneDeep } from "lodash";
-import { bookMarkChatThread, deleteHistory, getBookMarkedChatThreads, searchHistoryBoards, updateHistory } from "../redux/actions/global.action";
+import { bookMarkChatThread, deleteHistory, getBookMarkedChatThreads, updateHistory } from "../redux/actions/global.action";
 import { setAllHistory, setBookMarkedChatThreads } from "../redux/globalSlice";
 import store from "../redux/store";
 import LoadMoreHistoryData from "./LoadMoreHistoryData";
+import SearchHistoryData, { ClearSearchHistoryData, LoadMoreSearchHistoryData } from "./searchHistoryData";
+import getHistoryThreadPreview from "./getHistoryThreadPreview";
 
 let bookMarkedThreadsOffset = 1;
 
@@ -18,7 +20,7 @@ const HistoryInterface = (props) => {
             if (state.historyRes.status !== 'loading' && callback) {
                 let _history = cloneDeep(state.AllHistory)
                 _history.data = _.orderBy(_history.data, 'createdOn', 'desc')
-                callback(_history, state.historyRes, state.bookMarkedChatThreads);
+                callback(_history, state.historyRes, state.bookMarkedChatThreads, state.historySearch);
             }
         });
 
@@ -140,33 +142,50 @@ const HistoryInterface = (props) => {
     }
 
     /**
-     * Free-text search over the current user's history boards.
-     * Returns `{ status, data, error }` so consumers don't have to dig into the raw thunk result.
+     * Debounced free-text search over the current user's history conversations
+     * (`POST /ka/users/:userId/search/conversations` with body `{ query }`).
+     * Safe to invoke on every keystroke — calls are debounced (300ms) and stale
+     * responses are cancelled. An empty term clears the search state.
+     * Results are also stored in `state.global.historySearch`.
+     * Returns `{ status, data: { results, total, pageToken, moreAvailable }, error }`
+     * where `status` is 'cancelled' when a newer search superseded this one.
+     * Each result is a flat board/message hit:
+     * `{ id, docId, docType, boardId, messageId, threadTitle, title, answer, snippet, createdOn, raw }`.
      *
      * @param {object} arg
-     * @param {string} arg.search Search term (required).
-     * @param {number} [arg.limit=50]
-     * @param {number} [arg.messagesLimit=20]
-     * @param {boolean} [arg.includeMessages=true]
-     * @param {boolean} [arg.showdata=false]
+     * @param {string} arg.search Search term (alias: `query`).
+     * @param {number} [arg.limit=25]
+     * @param {number} [arg.debounce=300]
      */
     const searchHistory = async (arg = {}) => {
-        const term = typeof arg?.search === 'string' ? arg.search.trim() : '';
-        if (!term) {
-            return { status: 'failed', error: { message: 'search term is required' }, data: null };
-        }
-        try {
-            const data = await store
-                .dispatch(searchHistoryBoards({ ...arg, search: term }))
-                .unwrap();
-            return { status: 'success', data, error: null };
-        } catch (error) {
-            const err =
-                error && typeof error === 'object' && !Array.isArray(error)
-                    ? error
-                    : { message: String(error ?? 'Unable to search history') };
-            return { status: 'failed', error: err, data: null };
-        }
+        return SearchHistoryData(arg)
+    }
+
+    /**
+     * Fetches the next page of results for the active search term using the
+     * pageToken returned with the previous page.
+     */
+    const loadMoreSearchHistory = async (arg = {}) => {
+        return LoadMoreSearchHistoryData(arg)
+    }
+
+    /**
+     * Clears the active search term and resets `state.global.historySearch`.
+     */
+    const clearHistorySearch = () => {
+        ClearSearchHistoryData()
+    }
+
+    /**
+     * Async. Returns the data shown when a history item / search result is hovered —
+     * the thread's messages shaped as a `questions` object:
+     * `{ boardId, board, matchedMessageId, questions }`.
+     * Accepts a boardId string (regular history list) or a search result object.
+     * Regular items reuse the messages already on the boards response; search results
+     * fetch the thread preview (message hits centered on the matched message) with caching.
+     */
+    const getHistoryItemPreview = async (target) => {
+        return getHistoryThreadPreview(target)
     }
 
     return {
@@ -179,6 +198,9 @@ const HistoryInterface = (props) => {
         updateHistoryBoardNameonSocketEvent,
         historyPagination,
         searchHistory,
+        loadMoreSearchHistory,
+        clearHistorySearch,
+        getHistoryItemPreview,
     }
 }
 

@@ -427,14 +427,7 @@ export const constructQuestionPostCall = async (data, qId) => {
        if(enableDebugging){
        console.log("removeFileResponse", removeFileResponse)
        }
-        /*once the file is removed, need to update the question with the new agentContext */
-        questions[qId] = {
-            ...questions[qId],
-            agentContext: removeFileResponse?.agentContext
-        }
-        if(enableDebugging){
-            console.log("questions[qId], questions", questions[qId], questions)
-        }
+        
     }
     store.dispatch(setCurrentQuestion(questions[qId]))
     store.dispatch(updateChatData(questions))

@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { TemplateRenderer } from "../../templateRenderer";
-import { BotConversation, ChatInterface, DownloadFile, NewChat } from "../../chat";
+import { BotConversation, ChatInterface, DownloadFile, JoinChatThread, NewChat } from "../../chat";
 import { notifyAttachmentChipClick } from "../../chat/ChatInterface";
 import store from "../../redux/store";
 import { submitUserFeedback, feedbackDislikeCategories } from "../../Feedback";
@@ -17,6 +17,7 @@ import { SchedulersView } from "../../schedulers";
 import { ExecuteFormThroughURL } from "../../chat/gptTemplate/submitGPTForm";
 import Profile from "./profile";
 import Notifications from "../Notifications";
+import HistorySearchModal from "./HistorySearchModal";
 
 
 
@@ -92,6 +93,7 @@ const ChatInterfaceDemo = () => {
   const [showSchedulers, setShowSchedulers] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [showAgents, setShowAgents] = useState(false);
+  const [showHistorySearch, setShowHistorySearch] = useState(false);
   const [filePreview, setFilePreview] = useState(null); // { fileName, fileExtension, fileId, signedUrl, originalSignedUrl, loading, error }
 
   const chatInterface = useRef();
@@ -297,6 +299,10 @@ const ChatInterfaceDemo = () => {
             setShowSchedulers(false);
           }} role="button" tabIndex={0}>Profile</div>
           <div>---------------------------------------------------------------</div>
+          <div className="sidebar-nav-item" onClick={() => {
+            setShowHistorySearch(true);
+          }} role="button" tabIndex={0}>Search History</div>
+          <div>---------------------------------------------------------------</div>
           {/* <Announcements /> */}
           <History />
         </div>
@@ -434,6 +440,16 @@ const ChatInterfaceDemo = () => {
         )}
       </div>
       {renderFilePreviewSidebar()}
+      <HistorySearchModal
+        visible={showHistorySearch}
+        onHide={() => setShowHistorySearch(false)}
+        onThreadSelect={(boardId) => {
+          // Joining the thread loads its messages into the chat section
+          JoinChatThread({ boardId });
+          setShowSchedulers(false);
+          setShowProfile(false);
+        }}
+      />
     </div>
   );
 };
