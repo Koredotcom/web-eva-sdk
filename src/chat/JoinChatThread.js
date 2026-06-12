@@ -55,6 +55,11 @@ const JoinChatThread = async (props) => {
                 historicalData: true,
                 apiSuccess: true
             }
+
+            if (q?.status === "terminated") {
+                let interruptedNote = "I see you interrupted the answer generation. Please feel free to provide more details or let me know how I can assist you further."
+                obj.answer = q?.answer ? `${q.answer}<br/><br/>${interruptedNote}` : interruptedNote
+            }
     
             // if(q?.templateType === "action_send_email" && q?.status === "draft") {    
             //     let emailObj = {

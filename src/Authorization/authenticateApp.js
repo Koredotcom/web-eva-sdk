@@ -1,6 +1,6 @@
 import { initializeSDK } from "../config";
 
-const DEFAULT_BASE_URL = "https://work.kore.ai/";
+const DEFAULT_BASE_URL = "https://work-qa.kore.ai/";
 
 /**
  * Decode the payload of a JWT (id_token) without verifying its signature.
