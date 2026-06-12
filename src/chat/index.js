@@ -15,6 +15,8 @@ export { SubmitGPTForm, ExecuteFormThroughURL } from './gptTemplate/submitGPTFor
 
 export { default as DownloadFile } from './FilePreview/filePreview.js';
 
+export { default as GeneratedFiles } from './FileGeneration/generatedFiles.js';
+
 export { default as BotConversation } from './botAgent/getBotConversation.js';
 export { default as Notification } from '../notifications/notification.js';
 export { default as MultiIntentExecution } from '../multiIntentExecution/multiIntentExecution.js';
