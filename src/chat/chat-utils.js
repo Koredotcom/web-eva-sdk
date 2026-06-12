@@ -283,7 +283,9 @@ export const constructQuestionPostCall = async (data, qId) => {
         if(data?.payload?.history?.templateType === chatTemplateTypes.GPT_FORM_TEMPLATE){
             delete question.template_html
         }
-        let terminatedAnswerResponse = "I see you interrupted the answer generation. Please feel free to provide more details or let me know how I can assist you further."
+        let interruptedNote = "I see you interrupted the answer generation. Please feel free to provide more details or let me know how I can assist you further."
+        let historyAnswer = data?.payload?.history?.answer
+        let terminatedAnswerResponse = historyAnswer ? `${historyAnswer}<br/><br/>${interruptedNote}` : interruptedNote
         question = { ...question,  ...data?.payload?.history, answer : terminatedAnswerResponse};
         if (question?.isTask) {
             const stepIndex = question?.stepIndex;
