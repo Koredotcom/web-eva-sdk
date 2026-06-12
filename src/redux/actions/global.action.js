@@ -280,7 +280,14 @@ export const fetchHistory = createAsyncThunk(
             const response = await axiosInstance({
                 url: `/kora/boards?type=history`,
                 method: 'GET',
-                params
+                /*boards are always fetched with their messages (Work app behaviour) so that
+                hovering a history item can preview the thread without an extra API call*/
+                params: {
+                    includeMessages: true,
+                    messagesLimit: 20,
+                    showdata: false,
+                    ...params
+                }
             });
             return response.data;
         } catch (error) {
@@ -290,46 +297,111 @@ export const fetchHistory = createAsyncThunk(
     }
 );
 
+/*history conversation search response normalization — mirrors the Work app's
+normalizeHistoryConversationSearchResponse (searches.saga.js)*/
+const getFirstDefinedValue = (...values) => values.find(value => value !== undefined && value !== null && value !== '');
+
+const getSearchDisplayText = (...values) => {
+    const value = getFirstDefinedValue(...values);
+    if (typeof value === 'string') return value;
+    if (Array.isArray(value)) return value.filter(item => typeof item === 'string').join(' ');
+    return '';
+}
+
+export const normalizeHistoryConversationSearchResponse = (responseData = {}, params = {}) => {
+    const rawResults = responseData?.results || responseData?.data || responseData?.messages || responseData?.conversations || responseData?.hits?.hits || responseData?.hits || [];
+    const resultsArray = Array.isArray(rawResults)
+        ? rawResults
+        : (Array.isArray(rawResults?.data) ? rawResults.data : (Array.isArray(rawResults?.results) ? rawResults.results : []));
+
+    const results = resultsArray.map((item, index) => {
+        const source = item?._source || item?.source || item;
+        const board = source?.board || source?.conversation || {};
+        const message = source?.message || source?.msg || {};
+        const docType = getFirstDefinedValue(source?.docType, source?.type, item?.docType, item?.type);
+        const docId = getFirstDefinedValue(source?.docId, source?.id, source?._id, item?.docId, item?.id, item?._id);
+        const boardId = docType === 'board'
+            ? docId
+            : getFirstDefinedValue(source?.boardId, source?.bId, source?.conversationId, board?.id, board?._id, item?.boardId, item?.bId);
+        const messageId = docType === 'message'
+            ? docId
+            : getFirstDefinedValue(source?.messageId, source?.msgId, message?.id, message?._id, item?.messageId, item?.msgId);
+        const title = getSearchDisplayText(source?.title, source?.name, item?.title, item?.name);
+        const answer = getSearchDisplayText(source?.answer, source?.content, source?.text, message?.answer, message?.content, item?.answer);
+        const threadTitle = docType === 'message'
+            ? getFirstDefinedValue(source?.boardName, source?.threadTitle, source?.boardTitle, board?.title, board?.name, item?.boardName)
+            : getFirstDefinedValue(title, source?.threadTitle, source?.boardTitle, board?.title, board?.name, item?.threadTitle, item?.boardTitle);
+        const snippet = docType === 'message'
+            ? getSearchDisplayText(source?.snippet, source?.question, title, answer, message?.snippet, message?.question, item?.snippet)
+            : getSearchDisplayText(source?.snippet, title, item?.snippet);
+        const createdOn = getFirstDefinedValue(source?.createdOn, source?.cOn, source?.timestamp, source?.lastModified, message?.createdOn, message?.cOn, item?.createdOn);
+
+        return {
+            ...source,
+            id: getFirstDefinedValue(docId, `${boardId || 'board'}-${messageId || index}`),
+            docId,
+            docType,
+            boardId,
+            messageId,
+            threadTitle,
+            title,
+            answer,
+            snippet,
+            createdOn,
+            raw: item,
+        };
+    });
+
+    return {
+        ...responseData,
+        results,
+        total: getFirstDefinedValue(responseData?.total, responseData?.totalCount, responseData?.count, responseData?.hits?.total?.value, results.length),
+        pageToken: getFirstDefinedValue(responseData?.nextPageToken, responseData?.pageToken, responseData?.searchAfter, responseData?.nextSearchAfter, responseData?.nextCursor, responseData?.cursor, responseData?.pagination?.searchAfter),
+        moreAvailable: !!getFirstDefinedValue(responseData?.moreAvailable, responseData?.hasMore, responseData?.hasNext, responseData?.pagination?.hasMore),
+        query: params?.query,
+    };
+}
+
 /**
- * GET `/kora/boards` with `type=history` plus a free-text `search` query — returns boards
- * (and optionally their messages) matching the term. Mirrors the Work app's history search.
+ * POST `/ka/users/:userId/search/conversations` with body `{ query }` — free-text search
+ * over the user's history conversations. Mirrors the Work app's `searchHistoryConversations`
+ * saga. Results are a flat list of board/message hits; pagination is pageToken based.
+ * Any in-flight search request is aborted when a new one is dispatched, so stale
+ * responses never overwrite newer results (same pattern as `advanceSearch`).
  *
  * @param {object} arg
- * @param {string} arg.search Free-text search term (required).
- * @param {number} [arg.limit=50] Max boards to return.
- * @param {number} [arg.messagesLimit=20] Max messages per board when `includeMessages` is true.
- * @param {boolean} [arg.includeMessages=true]
- * @param {boolean} [arg.showdata=false]
- * @returns response.data
+ * @param {string} arg.query Free-text search term (required).
+ * @param {number} [arg.limit=25] Max results per page.
+ * @param {string} [arg.pageToken] Token from the previous page for pagination.
+ * @returns normalized `{ results, total, pageToken, moreAvailable, query }`
  */
-export const searchHistoryBoards = createAsyncThunk(
-    'global/searchHistoryBoards',
-    async (arg = {}, { rejectWithValue }) => {
-        const {
-            search,
-            limit = 50,
-            messagesLimit = 20,
-            includeMessages = true,
-            showdata = false,
-        } = arg;
+let historySearchController = null;
+export const searchHistoryConversations = createAsyncThunk(
+    'global/searchHistoryConversations',
+    async (arg = {}, thunkAPI) => {
+        const { query, limit = 25, pageToken } = arg;
+        // Cancel any in-flight history search so a stale response can't win the race
+        historySearchController?.abort();
+        historySearchController = new AbortController();
         try {
             const response = await axiosInstance({
-                url: `/kora/boards`,
-                method: 'GET',
+                url: `/ka/users/${window.sdkConfig?.userId}/search/conversations`,
+                method: 'POST',
+                signal: historySearchController.signal,
                 params: {
-                    type: 'history',
-                    includeMessages,
-                    showdata,
                     limit,
-                    messagesLimit,
+                    ...(pageToken ? { pageToken } : {}),
                     rnd: Date.now().toString(36),
-                    search,
                 },
+                data: { query },
             });
-            return response.data;
+            return normalizeHistoryConversationSearchResponse(response.data, arg);
         } catch (error) {
+            if (axios.isCancel(error) || error.name === 'CanceledError') {
+                return thunkAPI.rejectWithValue({ cancelled: true });
+            }
             handleErrorState(error, "Search History");
-            return rejectWithValue(error?.response?.data ?? error?.message);
+            return thunkAPI.rejectWithValue(error?.response?.data ?? error?.message);
         }
     }
 );
