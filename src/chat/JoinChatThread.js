@@ -154,8 +154,8 @@ const JoinChatThread = async (props) => {
             _questions = updatedQuestions
         }
 
-        /*set the current question when accessed from history i.e question that is not in completed state*/
-        const currentQuestion = Object.values(_questions).find(q => q?.status !== "completed");
+        const sortedQuestions = orderBy(Object.values(_questions), 'cOn', 'asc');
+        const currentQuestion = sortedQuestions.find(q => q?.status !== "completed") || sortedQuestions[sortedQuestions.length - 1];
         store.dispatch(setCurrentQuestion(currentQuestion))
         store.dispatch(setChatHistoryMoreAvailable(moreAvailable))
         store.dispatch(updateChatData(_questions))

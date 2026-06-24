@@ -666,17 +666,25 @@ const ChatInterface = (props) => {
       })
     }
 
-    const addFileToAutonomousAgent = async ({ fileId, messageId, fileName, fileExtension }) => {
+    const addFileToAutonomousAgent = async ({ fileId, messageId, advanceSearchRes, fileName, fileExtension }) => {
       const boardId = store.getState().global?.activeBoardId;
+      const currentQuestion = store.getState().global?.currentQuestion;
+      const resolveMessageId = (q) => {
+        if (!q?.session) return null;
+        return q.session.isFirstMsg ? q.messageId : q.session.fMsgId;
+      };
+      const resolvedMessageId = messageId
+        || resolveMessageId(advanceSearchRes)
+        || resolveMessageId(currentQuestion);
       if (!fileId) {
         return { error: true, message: "Missing required params: fileId" };
       }
-      if (!messageId) {
-        return { error: true, message: "Missing required params: messageId" };
+      if (!resolvedMessageId) {
+        return { error: true, message: "Unable to resolve messageId. Provide messageId or advanceSearchRes" };
       }
       try {
         const result = await store
-          .dispatch(addFileToAutonomousAgentAction({ boardId, messageId, fileId }))
+          .dispatch(addFileToAutonomousAgentAction({ boardId, messageId: resolvedMessageId, fileId }))
           .unwrap();
         if (fileName) {
           const rawExt = fileExtension || '';
