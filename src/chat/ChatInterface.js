@@ -541,17 +541,48 @@ const ChatInterface = (props) => {
           }
         }  
       }else{
-        currentQuestion = {...currentQuestion, ...detail?.data?.answerMeta}      
+        if(detail?.data?.answerMeta?.viewType === 'reasoningView' || detail?.data?.answerMeta?.thoughtViewType === 'reasoningView'){
+          currentQuestion = {...currentQuestion, ...detail?.data?.answerMeta, thoughtViewType: 'reasoningView', thoughts:getThoghtsWhileStreaming(detail?.data?.answerMeta, currentQuestion?.thoughts)} 
+        }else{
+        currentQuestion = {...currentQuestion, ...detail?.data?.answerMeta} 
+        }     
       }
       if(state?.enableDebugging){
-        console.log("currentQuestion in agent thoughts function after thoughts", currentQuestion)
-      }
+        console.log("currentQuestion in agent thoughts function before thoughts", currentQuestion)
+      }              
       _questions[reqId] = currentQuestion      
       store.dispatch(updateChatData(_questions))
       if(state?.enableDebugging){
-        console.log("agentThoughts", detail)
+        console.log("currentQuestion in agent thoughts function after thoughts", currentQuestion)
       }
     }
+
+    const getThoghtsWhileStreaming = (answerMeta, thoughts) => {
+      if(!thoughts){
+          return [answerMeta?.thought];
+      }
+      /*find out the though inside thoughts using toolCallId */
+      const thoughtIndex = thoughts.findIndex(t => t?.toolCallId === answerMeta?.thought?.toolCallId);
+      if(thoughtIndex !== -1){
+        thoughts[thoughtIndex].state = answerMeta?.thought?.state;
+          if(answerMeta?.thought?.state === 'in-progress'){
+              try{
+                  thoughts[thoughtIndex][answerMeta?.thought?.streamType] = thoughts[thoughtIndex][answerMeta?.thought?.streamType]?.concat(answerMeta?.thought?.[answerMeta?.thought?.streamType]) || answerMeta?.thought?.[answerMeta?.thought?.streamType];                  
+              }catch(error){
+                  console.error("error", error)
+              }
+          }   
+          if(answerMeta?.thought?.state === 'completed'){
+            if(state?.enableDebugging){
+              console.log(`the thought ${answerMeta?.thought?.toolCallId} is completed`)
+            }
+            thoughts[thoughtIndex].state = answerMeta?.thought?.state;
+          }
+      }else{
+          thoughts.push(answerMeta?.thought);
+      }
+      return thoughts;
+  }
 
     const options = (_options) => {
       const chatOptions = cloneDeep(state.chatInterfaceOptions)
