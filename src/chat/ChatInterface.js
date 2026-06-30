@@ -487,9 +487,8 @@ const ChatInterface = (props) => {
 
       if (detail?.data?.status === 'completed' || detail?.data?.status === 'aborted') {
         question.streamingStatus = detail?.data?.status // 'completed' or 'aborted'
-        // question.apiSuccess = true // apiSuccess is set to true when the advanceSearchApi is completed, so removing this from here
+        question.apiSuccess = true // apiSuccess is set to true when the advanceSearchApi is completed and also once the streaming is turned to completed
         question.status = detail?.data?.status
-
         const questions = cloneDeep(state.questions)
         questions[reqId] = question
         console.log(`apiStatus of the question ${reqId} is ${question?.apiSuccess}`)
