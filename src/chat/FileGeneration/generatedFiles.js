@@ -45,8 +45,8 @@ const GeneratedFiles = async (props) => {
     const params = {
         limit: props?.limit || 15,
     };
-    if (props?.skip !== undefined && props?.skip !== null) {
-        params.skip = props.skip;
+    if (props?.offset !== undefined && props?.offset !== null) {
+        params.offset =  props?.offset;
     }
 
     try {
