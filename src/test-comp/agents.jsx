@@ -8,6 +8,7 @@ import CommonAgents from '../agents/CommonAgents'
 import { agentEnablementUserLevel, bookmarkAgent } from '../agents/actionsOnAgents'
 import pinnedAgents from '../agents/pinnedAgents'
 import { getEnabledAgents, getRecentAgents } from '../sdkAgents/sdkAgents'
+import store from '../redux/store'
 
 const Agents = () => {
     const [agents, setAgents] = useState(null)
@@ -16,10 +17,19 @@ const Agents = () => {
 
     useEffect(() => {
         fetchRecentAgentsData()
-        fetchEnabledAgentsData()
-    fetchAllAgentsData()
+        fetchAllAgentsData()
         fetchCommonAgentsData()
         fetchPinnedAgentsData()
+
+        const updateAgents = () => {
+            const res = getEnabledAgents()
+            if (res?.status === 'success') {
+                setAgents(res)
+            }
+        }
+        updateAgents()
+        const unsubscribe = store.subscribe(updateAgents)
+        return () => unsubscribe()
     }, [])
 
     const fetchPinnedAgentsData = async () => {
@@ -27,15 +37,8 @@ const Agents = () => {
         setPinnedAgentsList(res)
     }
 
-    const fetchRecentAgentsData = async () => {
-        const res = getRecentAgents()
-        // console.log(res)
-        // setAgents(res)
-    }
-    const fetchEnabledAgentsData = async () => {
-        const res = getEnabledAgents()
-        setAgents(res)
-        // console.log(res)
+    const fetchRecentAgentsData = () => {
+        getRecentAgents()
     }
     const fetchAllAgentsData = async () => {
         const res = await AllAgents()

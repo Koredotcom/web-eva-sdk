@@ -41,7 +41,7 @@ const App = () => {
       <ChatInterfaceDemo />
       {/* <ChatTestComp/> */}
       {/* <TestComp /> */}
-      {/* <Agents /> */}
+      <Agents />
       {/* <File /> */}
       {/* <SelectedContext/> */}
     </div>

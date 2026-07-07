@@ -21,6 +21,7 @@ export const agentFilesRegistry = {
 };
 
 
+
 export const constructQuestionInitial = (args) => {
 	let uniqueMsgId = args?.reqId;
 	const questions = cloneDeep(store.getState().global.questions);
@@ -116,7 +117,8 @@ export const constructQuestionInitial = (args) => {
 	return uniqueMsgId;
 };
 
-export const constructQuestionPostCall = (data, qId) => {
+export const constructQuestionPostCall = async (data, qId) => {
+    const enableDebugging = store.getState().global?.enableDebugging;
 
     // data.payload = contains api response
     // data.meta.arg = contains passed params and payload
@@ -128,7 +130,7 @@ export const constructQuestionPostCall = (data, qId) => {
     const questions = cloneDeep(state.questions)
     const activeBoardId = state.activeBoardId
 
-    if(data?.payload?.cancelled || Object.keys(questions).length === 0) {
+    if(Object.keys(questions).length === 0) {
         return;
     }
 
@@ -265,12 +267,7 @@ export const constructQuestionPostCall = (data, qId) => {
     //     question.params = data?.params
     // }
 
-    if(data?.error) {
-        // if (data?.meta?.arg?.multiIntentExecution || question?.isMultiIntentExecution) {
-        //     const stepIndex = question?.stepIndex;
-        //     question = { ...question, error : true};
-        // }
-	} else if (data?.meta?.arg?.multiIntentExecution || question?.isMultiIntentExecution) {
+    if (data?.meta?.arg?.multiIntentExecution || question?.isMultiIntentExecution) {
 		const stepIndex = question?.stepIndex;
 		question = { ...question, ...data?.payload, showResponse: true};
 		questions[question?.parentMsgId].executingActionId = question?.stepId
@@ -296,7 +293,9 @@ export const constructQuestionPostCall = (data, qId) => {
         if(data?.payload?.history?.templateType === chatTemplateTypes.GPT_FORM_TEMPLATE){
             delete question.template_html
         }
-        let terminatedAnswerResponse = "I see you interrupted the answer generation. Please feel free to provide more details or let me know how I can assist you further."
+        let interruptedNote = "I see you interrupted the answer generation. Please feel free to provide more details or let me know how I can assist you further."
+        let historyAnswer = data?.payload?.history?.answer
+        let terminatedAnswerResponse = historyAnswer ? `${historyAnswer}<br/><br/>${interruptedNote}` : interruptedNote
         question = { ...question,  ...data?.payload?.history, answer : terminatedAnswerResponse};
         if (question?.isTask) {
             const stepIndex = question?.stepIndex;
@@ -457,7 +456,11 @@ export const constructQuestionPostCall = (data, qId) => {
     if(data?.payload?.agentContext?.sources?.length > 0){
         question.agentContext = data.payload.agentContext;
         /*need to call removeFileFromAutonomousAgent action to remove the files from the autonomous agent */
-        ChatInterface().removeFileFromAutonomousAgent({ fileIds: data?.payload?.agentContext?.sources?.map(source => source?.fileId)?.filter(Boolean), messageId: data?.payload?.followUpContext?.fMsgId })
+       const removeFileResponse = await ChatInterface().removeFileFromAutonomousAgent({ fileIds: data?.payload?.agentContext?.sources?.map(source => source?.fileId)?.filter(Boolean), messageId: data?.payload?.followUpContext?.fMsgId })
+       if(enableDebugging){
+       console.log("removeFileResponse", removeFileResponse)
+       }
+        
     }
     store.dispatch(setCurrentQuestion(questions[qId]))
     store.dispatch(updateChatData(questions))

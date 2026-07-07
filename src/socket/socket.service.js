@@ -97,14 +97,11 @@ class WebSocketClient {
             });
 
             this.socket.on('live', (msg) => {
-                if(msg?.entity === 'answerContext') {
-                    ChatInterface().agentThoughts(msg)
+                if (msg?.entity === 'answerContext' || msg?.entity === 'answersuggestion' || msg?.entity === 'thoughts') {
+                    ChatInterface().agentThoughts(msg);
                 }
-                if(msg?.entity === "answersuggestion" || msg?.entity === "thoughts") {
-                    ChatInterface().agentThoughts(msg)                                        
-                }
-                if (msg?.entity === "thoughts") {
-                    ChatInterface().agentThoughts(msg)     
+                if(msg?.entity === 'answerContext'){
+                    ChatInterface().appendAnswerContext(msg);
                 }
                 if(msg?.entity === "answerChunk"){
                     ChatInterface().contentStreaming(msg)

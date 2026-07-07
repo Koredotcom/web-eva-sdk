@@ -1,7 +1,6 @@
 import { advanceSearch, cancelAdvancedSearch, stopResponseGeneration, getSignedMediaURL, addFileToAutonomousAgentAction, removeFileFromAutonomousAgentAction, abortAdvanceSearch } from "../redux/actions/global.action";
 import { agentFilesRegistry } from "./chat-utils";
-import { setChatInterfaceOptions, setChatInterfaceElements, setCurrentQuestion, setCustomData, setEnableContextByFollowupContext, setEnabledCustomTemplates, setErrorState, setUserSelectedLLMModel } from "../redux/globalSlice"
-import { updateChatData } from "../redux/globalSlice";
+import { setChatInterfaceOptions, setChatInterfaceElements, setCurrentQuestion, setCustomData, setEnableContextByFollowupContext, setEnabledCustomTemplates, setErrorState, setUserSelectedLLMModel, updateChatData } from "../redux/globalSlice"
 import store from "../redux/store";
 import { v4 as uuid } from 'uuid';
 import { constructQuestionInitial, constructQuestionPostCall } from "./chat-utils";
@@ -11,8 +10,55 @@ import BotConversation from "./botAgent/getBotConversation";
 import NewChat from "./NewChat";
 import { current } from "@reduxjs/toolkit";
 import { sessionItemHandler } from "../Attachments/createContext";
-import RecentAgentsFunc from "../LandingPageRecentAgents/RecentAgents";
-const { hideRecentAgentsDiv, unHideRecentAgentsDiv } = RecentAgentsFunc();
+
+/** Normalize escaped newlines in stored markdown (same as Kora-React MenuOptions copyAnswer). */
+const normalizeCopyNewlines = (text) => {
+    if (text == null || text === "") return "";
+    const s = typeof text === "string" ? text : String(text);
+    return s.replace(/\\n/g, "\n");
+};
+
+/**
+ * Resolve chat content from the Redux store by `messageId` only.
+ * For `viewType === 'threadView'`, matches `messageId` against keys of `botConversation` first; otherwise matches `question.messageId`.
+ * @param {string} messageId
+ * @returns {{ parent: object, botMessage: object | null } | null}
+ */
+const resolveMessageForCopy = (messageId) => {
+    if (messageId == null || messageId === "") return null;
+    const questions = store.getState().global?.questions;
+    if (!questions || typeof questions !== "object") return null;
+
+    const id = messageId;
+
+    for (const key of Object.keys(questions)) {
+        const parent = questions[key];
+        if (parent?.viewType === "threadView" && parent?.botConversation && typeof parent.botConversation === "object") {
+            const turn = parent.botConversation[id];
+            if (turn) {
+                return { parent, botMessage: turn };
+            }
+        }
+    }
+
+    for (const key of Object.keys(questions)) {
+        const q = questions[key];
+        if (q?.messageId === id) {
+            return { parent: q, botMessage: null };
+        }
+    }
+
+    return null;
+};
+
+const buildMultiResponseAnswer = (parent) => {
+    const responses = parent?.responses;
+    if (!Array.isArray(responses) || responses.length === 0) return "";
+    return responses
+        .map((r) => (r?.answer != null && r?.answer !== "" ? String(r.answer) : ""))
+        .filter(Boolean)
+        .join("\n\n");
+};
 
 // Module-level registry shared across all ChatInterface() instances
 const _attachmentChipCallbacks = new Set();
@@ -650,9 +696,8 @@ const ChatInterface = (props) => {
 
       if (detail?.data?.status === 'completed' || detail?.data?.status === 'aborted') {
         question.streamingStatus = detail?.data?.status // 'completed' or 'aborted'
-        // question.apiSuccess = true // apiSuccess is set to true when the advanceSearchApi is completed, so removing this from here
+        question.apiSuccess = true // apiSuccess is set to true when the advanceSearchApi is completed and also once the streaming is turned to completed
         question.status = detail?.data?.status
-
         const questions = cloneDeep(state.questions)
         questions[reqId] = question
         store.dispatch(updateChatData(questions))
@@ -709,17 +754,48 @@ const ChatInterface = (props) => {
           }
         }  
       }else{
-        currentQuestion = {...currentQuestion, ...detail?.data?.answerMeta}      
+        if(detail?.data?.answerMeta?.viewType === 'reasoningView' || detail?.data?.answerMeta?.thoughtViewType === 'reasoningView'){
+          currentQuestion = {...currentQuestion, ...detail?.data?.answerMeta, thoughtViewType: 'reasoningView', thoughts:getThoghtsWhileStreaming(detail?.data?.answerMeta, currentQuestion?.thoughts)} 
+        }else{
+        currentQuestion = {...currentQuestion, ...detail?.data?.answerMeta} 
+        }     
       }
       if(state?.enableDebugging){
-        console.log("currentQuestion in agent thoughts function after thoughts", currentQuestion)
-      }
+        console.log("currentQuestion in agent thoughts function before thoughts", currentQuestion)
+      }              
       _questions[reqId] = currentQuestion      
       store.dispatch(updateChatData(_questions))
       if(state?.enableDebugging){
-        console.log("agentThoughts", detail)
+        console.log("currentQuestion in agent thoughts function after thoughts", currentQuestion)
       }
     }
+
+    const getThoghtsWhileStreaming = (answerMeta, thoughts) => {
+      if(!thoughts){
+          return [answerMeta?.thought];
+      }
+      /*find out the though inside thoughts using toolCallId */
+      const thoughtIndex = thoughts.findIndex(t => t?.toolCallId === answerMeta?.thought?.toolCallId);
+      if(thoughtIndex !== -1){
+        thoughts[thoughtIndex].state = answerMeta?.thought?.state;
+          if(answerMeta?.thought?.state === 'in-progress'){
+              try{
+                  thoughts[thoughtIndex][answerMeta?.thought?.streamType] = thoughts[thoughtIndex][answerMeta?.thought?.streamType]?.concat(answerMeta?.thought?.[answerMeta?.thought?.streamType]) || answerMeta?.thought?.[answerMeta?.thought?.streamType];                  
+              }catch(error){
+                  console.error("error", error)
+              }
+          }   
+          if(answerMeta?.thought?.state === 'completed'){
+            if(state?.enableDebugging){
+              console.log(`the thought ${answerMeta?.thought?.toolCallId} is completed`)
+            }
+            thoughts[thoughtIndex].state = answerMeta?.thought?.state;
+          }
+      }else{
+          thoughts.push(answerMeta?.thought);
+      }
+      return thoughts;
+  }
 
     const options = (_options) => {
       const chatOptions = cloneDeep(state.chatInterfaceOptions)
@@ -819,17 +895,25 @@ const ChatInterface = (props) => {
       })
     }
 
-    const addFileToAutonomousAgent = async ({ fileId, messageId, fileName, fileExtension }) => {
+    const addFileToAutonomousAgent = async ({ fileId, messageId, advanceSearchRes, fileName, fileExtension }) => {
       const boardId = store.getState().global?.activeBoardId;
+      const currentQuestion = store.getState().global?.currentQuestion;
+      const resolveMessageId = (q) => {
+        if (!q?.session) return null;
+        return q.session.isFirstMsg ? q.messageId : q.session.fMsgId;
+      };
+      const resolvedMessageId = messageId
+        || resolveMessageId(advanceSearchRes)
+        || resolveMessageId(currentQuestion);
       if (!fileId) {
         return { error: true, message: "Missing required params: fileId" };
       }
-      if (!messageId) {
-        return { error: true, message: "Missing required params: messageId" };
+      if (!resolvedMessageId) {
+        return { error: true, message: "Unable to resolve messageId. Provide messageId or advanceSearchRes" };
       }
       try {
         const result = await store
-          .dispatch(addFileToAutonomousAgentAction({ boardId, messageId, fileId }))
+          .dispatch(addFileToAutonomousAgentAction({ boardId, messageId: resolvedMessageId, fileId }))
           .unwrap();
         if (fileName) {
           const rawExt = fileExtension || '';
@@ -864,6 +948,86 @@ const ChatInterface = (props) => {
         return result;
       } catch (error) {
         return { error: true, message: error?.errors?.[0]?.msg || "Unable to remove file from autonomous agent" };
+      }
+    }
+
+    /**
+     * Returns the user question text for a turn (markdown / plain as stored). Reads from the Redux store.
+     * Pass the server `messageId`. For `threadView`, the id is resolved inside that question's `botConversation`.
+     * @param {string} messageId
+     * @returns {string} Question string, or empty string if not found.
+     */
+    const copyQuestion = (messageId) => {
+      const resolved = resolveMessageForCopy(messageId);
+      if (!resolved) return "";
+
+      const { parent, botMessage } = resolved;
+      if (botMessage) {
+        const raw =
+          botMessage.question ??
+          botMessage.content ??
+          botMessage.input ??
+          "";
+        return normalizeCopyNewlines(raw);
+      }
+      return normalizeCopyNewlines(parent?.question ?? "");
+    };
+
+    const updateQuestionWithAgentContext = (messageId, agentContext) => {
+      const questions = cloneDeep(store.getState().global?.questions)
+      /*get the question using the messageId */
+      const qId = Object.values(questions).find(question => question?.messageId === messageId)?.reqId
+      if(!qId){
+        return { error: true, message: "Question not found" };
+      }
+      questions[qId] = {
+        ...questions[qId],
+        agentContext: agentContext
+      }        
+      store.dispatch(updateChatData(questions))
+      if(state?.enableDebugging){
+        console.log("after updating question with agentContext, questions[qId], questions", questions[qId], questions)
+      }
+      return questions[qId];      
+    }
+
+    /**
+     * Returns the assistant answer markdown/text as stored (escaped `\\n` normalized like Kora-React copy).
+     * Reads from the Redux store. Pass the server `messageId`. For `threadView`, resolves via `botConversation`.
+     * For `multi_responses`, non-empty `responses[].answer` values are joined with blank lines.
+     * @param {string} messageId
+     * @returns {string} Answer string, or empty string if not found.
+     */
+    const copyAnswer = (messageId) => {
+      const resolved = resolveMessageForCopy(messageId);
+      if (!resolved) return "";
+
+      const { parent, botMessage } = resolved;
+      if (botMessage) {
+        const raw =
+          botMessage.answer ??
+          botMessage.content ??
+          "";
+        return normalizeCopyNewlines(raw);
+      }
+
+      let raw = parent?.answer;
+      if (raw == null || raw === "") {
+        raw = buildMultiResponseAnswer(parent);
+      }
+      return normalizeCopyNewlines(raw ?? "");
+    };
+
+    const appendAnswerContext = (detail) => {
+      let _questions = cloneDeep(store.getState().global?.questions)
+      let reqId = detail?.data?.reqId
+      if(isEmpty(_questions[reqId])){
+        return;
+      }
+      _questions[reqId] = {..._questions[reqId], ...detail?.data?.answerMeta}      
+      store.dispatch(updateChatData(_questions))
+      if(state?.enableDebugging){
+        console.log("after appending answerContext, _questions[reqId], _questions", _questions[reqId], _questions)
       }
     }
 
@@ -928,6 +1092,9 @@ const ChatInterface = (props) => {
         removeFileFromAutonomousAgent,
         onAttachmentChipClick,
         storeUserSelectedLLMModel,
+        copyQuestion,
+        copyAnswer,
+        appendAnswerContext,
         startNewChat,
         responseFlowGeneration,
         asyncAutonomousBotMessage,
