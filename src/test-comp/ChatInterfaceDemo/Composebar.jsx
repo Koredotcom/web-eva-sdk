@@ -1,9 +1,12 @@
-import React, { useRef, useEffect } from "react";
+import React, { useRef, useEffect, useMemo } from "react";
 import { NewChat } from "../../chat";
 import { UploadFile } from "../../files";
+import { orderBy } from "lodash";
 
 const Composebar = ({quickActions, chatInterface, input, setInput, messages}) => {
   const fileInputRef = useRef();
+  const sortedMessages = useMemo(() => orderBy(Object.values(messages || {}), 'cOn', 'asc'), [messages]);
+  const latestQuestion = sortedMessages[sortedMessages.length - 1];
 
   const onChange = async (event) => {
 		if (event.keyCode === 13 && !event.shiftKey) {
@@ -26,10 +29,9 @@ const Composebar = ({quickActions, chatInterface, input, setInput, messages}) =>
     const files = Array.from(event.target.files || []);
     if (files.length === 0) return;
 
-    const latestMessage = Object.values(messages || {})[Object.values(messages || {})?.length - 1];
     const canAddToAutonomousAgent =
-      latestMessage?.context?.agentType === 'aAAgent' &&
-      latestMessage?.agentContext?.canUploadFile === true;
+      latestQuestion?.context?.agentType === 'aAAgent' &&
+      latestQuestion?.agentContext?.canUploadFile === true;
 
     for (const file of files) {
       const uploadResponse = await UploadFile({
@@ -45,7 +47,7 @@ const Composebar = ({quickActions, chatInterface, input, setInput, messages}) =>
         if (fileId) {
           const addFileResponse = await chatInterface.current.addFileToAutonomousAgent({
             fileId,
-            messageId: latestMessage?.id || latestMessage?.messageId,
+            advanceSearchRes: latestQuestion,
             fileName: file.name,
             fileExtension: file.name.split('.').pop() || '',
           });
@@ -62,9 +64,7 @@ const Composebar = ({quickActions, chatInterface, input, setInput, messages}) =>
     fileInputRef.current?.click();
   };
 
-  const messageList = Object.values(messages || {});
-  const latestMessage = messageList[messageList.length - 1];
-  const canUploadFile = latestMessage?.agentContext?.canUploadFile === true;
+  const canUploadFile = latestQuestion?.agentContext?.canUploadFile === true;
 
   return (
     <div className="composebar-parent">
@@ -128,7 +128,7 @@ const Composebar = ({quickActions, chatInterface, input, setInput, messages}) =>
         <button
           type="button"
           onClick={() =>
-          chatInterface.current.sendMessage(input, latestMessage)
+          chatInterface.current.sendMessage(input, latestQuestion)
           }
         >
           Send

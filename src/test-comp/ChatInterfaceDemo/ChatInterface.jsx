@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { TemplateRenderer } from "../../templateRenderer";
-import { BotConversation, ChatInterface, DownloadFile, NewChat } from "../../chat";
+import { BotConversation, ChatInterface, DownloadFile, JoinChatThread, NewChat } from "../../chat";
+import { notifyAttachmentChipClick } from "../../chat/ChatInterface";
 import store from "../../redux/store";
 import { submitUserFeedback, feedbackDislikeCategories } from "../../Feedback";
 
@@ -14,12 +15,29 @@ import History from "../history";
 import { SchedulersView } from "../../schedulers";
 import { ExecuteFormThroughURL } from "../../chat/gptTemplate/submitGPTForm";
 import Profile from "./profile";
-import { useChatMessageRenderer } from "./renderer";
-import RecentAgentsFunc from "../../LandingPageRecentAgents/RecentAgents";
-import MultiIntentExecutionDemo from "./MultiIntentExecutionDemo";
+import Notifications from "../Notifications";
+import HistorySearchModal from "./HistorySearchModal";
 
-const { unHideRecentAgentsDiv } = RecentAgentsFunc();
 
+
+// function ShoelaceWrapper({ html }) {
+//   const ref = useRef(null);
+
+//   useEffect(() => {
+//     if (!ref.current || !html) return;
+
+//     ref.current.innerHTML = '';
+
+//     const fragment = html instanceof Node ? html : document.createRange().createContextualFragment(html);
+//     ref.current.appendChild(fragment);
+
+//     // Ensure Shoelace components are defined before any upgrade
+//     TemplateRenderer.upgradeCustomElements(ref.current);
+
+//   }, [html]);
+
+//   return <div ref={ref} />;
+// }
 
 const ChatInterfaceDemo = () => {
   const handleMessageFeedback = async (item, feedbackType) => {
@@ -74,6 +92,7 @@ const ChatInterfaceDemo = () => {
   const [showSchedulers, setShowSchedulers] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [showAgents, setShowAgents] = useState(false);
+  const [showHistorySearch, setShowHistorySearch] = useState(false);
   const [filePreview, setFilePreview] = useState(null); // { fileName, fileExtension, fileId, signedUrl, originalSignedUrl, loading, error }
 
   const chatInterface = useRef();
@@ -258,7 +277,12 @@ const ChatInterfaceDemo = () => {
             setShowProfile(true);
             setShowAgents(false);
             setShowSchedulers(false);
-          }} role="button" tabIndex={0}>Profile</div> */}
+          }} role="button" tabIndex={0}>Profile</div>
+          <div>---------------------------------------------------------------</div>
+          <div className="sidebar-nav-item" onClick={() => {
+            setShowHistorySearch(true);
+          }} role="button" tabIndex={0}>Search History</div>
+          <div>---------------------------------------------------------------</div>
           {/* <Announcements /> */}
           <History />
         </div>
@@ -400,6 +424,16 @@ const ChatInterfaceDemo = () => {
         )}
       </div>
       {renderFilePreviewSidebar()}
+      <HistorySearchModal
+        visible={showHistorySearch}
+        onHide={() => setShowHistorySearch(false)}
+        onThreadSelect={(boardId) => {
+          // Joining the thread loads its messages into the chat section
+          JoinChatThread({ boardId });
+          setShowSchedulers(false);
+          setShowProfile(false);
+        }}
+      />
     </div>
   );
 };

@@ -55,6 +55,11 @@ const JoinChatThread = async (props) => {
                 historicalData: true,
                 apiSuccess: true
             }
+
+            if (q?.status === "terminated") {
+                let interruptedNote = "I see you interrupted the answer generation. Please feel free to provide more details or let me know how I can assist you further."
+                obj.answer = q?.answer ? `${q.answer}<br/><br/>${interruptedNote}` : interruptedNote
+            }
     
             // if(q?.templateType === "action_send_email" && q?.status === "draft") {    
             //     let emailObj = {
@@ -149,8 +154,8 @@ const JoinChatThread = async (props) => {
             _questions = updatedQuestions
         }
 
-        /*set the current question when accessed from history i.e question that is not in completed state*/
-        const currentQuestion = Object.values(_questions).find(q => q?.status !== "completed");
+        const sortedQuestions = orderBy(Object.values(_questions), 'cOn', 'asc');
+        const currentQuestion = sortedQuestions.find(q => q?.status !== "completed") || sortedQuestions[sortedQuestions.length - 1];
         store.dispatch(setCurrentQuestion(currentQuestion))
         store.dispatch(setChatHistoryMoreAvailable(moreAvailable))
         store.dispatch(updateChatData(_questions))

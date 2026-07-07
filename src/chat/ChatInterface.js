@@ -696,9 +696,8 @@ const ChatInterface = (props) => {
 
       if (detail?.data?.status === 'completed' || detail?.data?.status === 'aborted') {
         question.streamingStatus = detail?.data?.status // 'completed' or 'aborted'
-        // question.apiSuccess = true // apiSuccess is set to true when the advanceSearchApi is completed, so removing this from here
+        question.apiSuccess = true // apiSuccess is set to true when the advanceSearchApi is completed and also once the streaming is turned to completed
         question.status = detail?.data?.status
-
         const questions = cloneDeep(state.questions)
         questions[reqId] = question
         store.dispatch(updateChatData(questions))
@@ -755,17 +754,48 @@ const ChatInterface = (props) => {
           }
         }  
       }else{
-        currentQuestion = {...currentQuestion, ...detail?.data?.answerMeta}      
+        if(detail?.data?.answerMeta?.viewType === 'reasoningView' || detail?.data?.answerMeta?.thoughtViewType === 'reasoningView'){
+          currentQuestion = {...currentQuestion, ...detail?.data?.answerMeta, thoughtViewType: 'reasoningView', thoughts:getThoghtsWhileStreaming(detail?.data?.answerMeta, currentQuestion?.thoughts)} 
+        }else{
+        currentQuestion = {...currentQuestion, ...detail?.data?.answerMeta} 
+        }     
       }
       if(state?.enableDebugging){
-        console.log("currentQuestion in agent thoughts function after thoughts", currentQuestion)
-      }
+        console.log("currentQuestion in agent thoughts function before thoughts", currentQuestion)
+      }              
       _questions[reqId] = currentQuestion      
       store.dispatch(updateChatData(_questions))
       if(state?.enableDebugging){
-        console.log("agentThoughts", detail)
+        console.log("currentQuestion in agent thoughts function after thoughts", currentQuestion)
       }
     }
+
+    const getThoghtsWhileStreaming = (answerMeta, thoughts) => {
+      if(!thoughts){
+          return [answerMeta?.thought];
+      }
+      /*find out the though inside thoughts using toolCallId */
+      const thoughtIndex = thoughts.findIndex(t => t?.toolCallId === answerMeta?.thought?.toolCallId);
+      if(thoughtIndex !== -1){
+        thoughts[thoughtIndex].state = answerMeta?.thought?.state;
+          if(answerMeta?.thought?.state === 'in-progress'){
+              try{
+                  thoughts[thoughtIndex][answerMeta?.thought?.streamType] = thoughts[thoughtIndex][answerMeta?.thought?.streamType]?.concat(answerMeta?.thought?.[answerMeta?.thought?.streamType]) || answerMeta?.thought?.[answerMeta?.thought?.streamType];                  
+              }catch(error){
+                  console.error("error", error)
+              }
+          }   
+          if(answerMeta?.thought?.state === 'completed'){
+            if(state?.enableDebugging){
+              console.log(`the thought ${answerMeta?.thought?.toolCallId} is completed`)
+            }
+            thoughts[thoughtIndex].state = answerMeta?.thought?.state;
+          }
+      }else{
+          thoughts.push(answerMeta?.thought);
+      }
+      return thoughts;
+  }
 
     const options = (_options) => {
       const chatOptions = cloneDeep(state.chatInterfaceOptions)
@@ -865,17 +895,25 @@ const ChatInterface = (props) => {
       })
     }
 
-    const addFileToAutonomousAgent = async ({ fileId, messageId, fileName, fileExtension }) => {
+    const addFileToAutonomousAgent = async ({ fileId, messageId, advanceSearchRes, fileName, fileExtension }) => {
       const boardId = store.getState().global?.activeBoardId;
+      const currentQuestion = store.getState().global?.currentQuestion;
+      const resolveMessageId = (q) => {
+        if (!q?.session) return null;
+        return q.session.isFirstMsg ? q.messageId : q.session.fMsgId;
+      };
+      const resolvedMessageId = messageId
+        || resolveMessageId(advanceSearchRes)
+        || resolveMessageId(currentQuestion);
       if (!fileId) {
         return { error: true, message: "Missing required params: fileId" };
       }
-      if (!messageId) {
-        return { error: true, message: "Missing required params: messageId" };
+      if (!resolvedMessageId) {
+        return { error: true, message: "Unable to resolve messageId. Provide messageId or advanceSearchRes" };
       }
       try {
         const result = await store
-          .dispatch(addFileToAutonomousAgentAction({ boardId, messageId, fileId }))
+          .dispatch(addFileToAutonomousAgentAction({ boardId, messageId: resolvedMessageId, fileId }))
           .unwrap();
         if (fileName) {
           const rawExt = fileExtension || '';

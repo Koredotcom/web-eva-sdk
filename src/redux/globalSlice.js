@@ -6,6 +6,7 @@ import {
   fetchProfileData, 
   fetchSchedulers,
   fetchHistory,
+  searchHistoryConversations,
   fetchRecentFiles, 
   getRecentFileDownloadUrl,
   searchSession,
@@ -73,6 +74,8 @@ const initialState = {
   historyRes: {},
   history: {},
   AllHistory: {},
+  historySearchRes: {},
+  historySearch: {},
   recentFileDownloadUrl: {},
   // searchHistoryRes: {},
   chatHistoryMoreAvailable: false,
@@ -139,7 +142,10 @@ const globalSlice = createSlice({
       setAllHistory: (state, action) => {
         state.AllHistory = action.payload;
       },
-      setChatHistoryMoreAvailable: (state, action) => {
+      setHistorySearch: (state, action) => {
+      state.historySearch = action.payload;
+    },
+    setChatHistoryMoreAvailable: (state, action) => {
         state.chatHistoryMoreAvailable = action.payload;
       },
       setSelectedContext : (state, action) => {
@@ -294,6 +300,28 @@ const globalSlice = createSlice({
       state.AllHistory.hasMore = state.historyRes?.data?.moreAvailable
       // }
     });
+    handleAsyncActions(builder, searchHistoryConversations, 'historySearchRes', (state, action) => {
+      /*accumulating searched results the same way AllHistory does for pagination calls
+      (pagination is pageToken based — a pageToken on the request means "append")*/
+      const isPagination = !!action?.meta?.arg?.pageToken
+      let searchedResults = cloneDeep(state.historySearch?.data?.results) || []
+      if (isPagination) {
+        searchedResults = uniqBy(concat(searchedResults, action.payload?.results || []), 'id')
+      } else {
+        searchedResults = action.payload?.results || []
+      }
+      state.historySearch = {
+        status: state.historySearchRes.status,
+        error: state.historySearchRes.error,
+        searchTerm: action?.meta?.arg?.query,
+        data: {
+          results: searchedResults,
+          total: action.payload?.total ?? searchedResults.length,
+          pageToken: action.payload?.pageToken || null,
+          moreAvailable: !!(action.payload?.moreAvailable || action.payload?.pageToken)
+        }
+      }
+    });
     handleAsyncActions(builder, fetchRecentFiles, 'recentFilesRes', (state, action) => {
       if (action?.meta?.arg?.onload) {
         state.recentFiles = state.recentFilesRes
@@ -334,6 +362,7 @@ export const {
   setCurrentQuestion,
   setRecentFiles,
   setAllHistory,
+  setHistorySearch,
   setAllRecentFiles,
   // deleteHistoryItem,
   // updateHistoryItem,
