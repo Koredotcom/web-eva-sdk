@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { HistoryInterface, LoadMoreHistoryData } from "../../history";
+// import { getRecentAgents } from "../../sdkAgents/sdkAgents"; // ABM client: used to build recent-agent search filters
 import { TemplateRenderer } from "../../templateRenderer";
 
 /*
@@ -77,6 +78,19 @@ const HistorySearchModal = ({ visible, onHide, onThreadSelect }) => {
     const groupedBoards = isSearching ? {} : structureAllBoards(allBoards);
 
     const getItemKey = (item) => item?.id || item?.boardId || item?.messageId || item?.docId;
+
+    // ABM client: history search supports agent filters via
+    // `searchHistory({ search, filters: { agentId: [...] } })`. The SDK sends
+    // `filters` only when provided, so search still works without it.
+    // Example (recent-agent ids, capped to first 5) — enable for the ABM client:
+    // const getSearchFilters = () => {
+    //     const recent = getRecentAgents();
+    //     const agentIds = (Array.isArray(recent?.data) ? recent.data : [])
+    //         .map((a) => (typeof a === "string" ? a : a?.id))
+    //         .filter(Boolean)
+    //         .slice(0, 5);
+    //     return agentIds.length ? { agentId: agentIds } : undefined;
+    // };
 
     useEffect(() => {
         historyInterface.current = HistoryInterface();
@@ -165,7 +179,12 @@ const HistorySearchModal = ({ visible, onHide, onThreadSelect }) => {
         setSearchLoading(true);
         setSearchError(null);
 
-        const res = await historyInterface.current?.searchHistory({ search: value });
+        // ABM client: pass agent filters here, e.g.
+        // const filters = getSearchFilters();
+        const res = await historyInterface.current?.searchHistory({
+            search: value,
+            // ...(filters ? { filters } : {}),
+        });
 
         // A newer keystroke superseded this call — ignore it
         if (res?.status === "cancelled") return;
