@@ -14,6 +14,10 @@ const HISTORY_SEARCH_LIMIT = 25;
 let searchDebounceTimer = null;
 let searchSession = 0;
 let currentSearchTerm = '';
+let currentSearchFilters = null;
+
+const hasFilters = (filters) =>
+    filters && typeof filters === 'object' && !Array.isArray(filters) && Object.keys(filters).length > 0;
 
 const shapeError = (error) => {
     return error && typeof error === 'object' && !Array.isArray(error)
@@ -46,28 +50,34 @@ const executeSearch = async (arg, sessionId) => {
  * @param {string} props.search Search term (alias: `query`). An empty term clears the search state.
  * @param {number} [props.limit=25]
  * @param {number} [props.debounce=300] Debounce window in ms (0 to search immediately).
+ * @param {object} [props.filters] Extensible filter map sent in the request body (e.g. `{ agentId: ['ag-...'] }`).
+ *   Carried through to `loadMoreSearchHistory` for pagination. Omitted when empty.
  */
 const SearchHistoryData = (props = {}) => {
     return new Promise((resolve) => {
         const rawTerm = props?.search ?? props?.query;
         const term = typeof rawTerm === 'string' ? rawTerm.trim() : '';
+        const filters = hasFilters(props?.filters) ? props.filters : null;
         clearTimeout(searchDebounceTimer);
         searchSession += 1;
         const sessionId = searchSession;
 
         if (!term) {
             currentSearchTerm = '';
+            currentSearchFilters = null;
             ClearSearchHistoryData();
             resolve({ status: 'success', data: { results: [], total: 0, pageToken: null, moreAvailable: false }, error: null });
             return;
         }
 
         currentSearchTerm = term;
+        currentSearchFilters = filters;
         const debounceMs = props?.debounce ?? HISTORY_SEARCH_DEBOUNCE_MS;
         searchDebounceTimer = setTimeout(async () => {
             const result = await executeSearch({
                 query: term,
                 limit: props?.limit || HISTORY_SEARCH_LIMIT,
+                ...(filters ? { filters } : {}),
             }, sessionId);
             resolve(result);
         }, debounceMs);
@@ -93,6 +103,7 @@ const LoadMoreSearchHistoryData = async (props = {}) => {
         query: currentSearchTerm,
         limit: props?.limit || HISTORY_SEARCH_LIMIT,
         pageToken: searchData.pageToken,
+        ...(currentSearchFilters ? { filters: currentSearchFilters } : {}),
     }, searchSession);
 };
 
@@ -103,6 +114,7 @@ const ClearSearchHistoryData = () => {
     clearTimeout(searchDebounceTimer);
     searchSession += 1;
     currentSearchTerm = '';
+    currentSearchFilters = null;
     store.dispatch(setHistorySearch({}));
 };
 

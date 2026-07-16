@@ -2,6 +2,7 @@ import { use, useEffect, useRef, useState } from "react"
 import deleteChatThread from "../history/deleteHistoryData"
 import updateHistoryData from "../history/updateHistoryData"
 import { HistoryData, HistoryInterface, LoadMoreHistoryData } from "../history"
+// import { getRecentAgents } from "../sdkAgents/sdkAgents" // ABM client: used to build recent-agent search filters
 import { JoinChatThread } from "../chat"
 import { LoadMoreRecentFiles, RecentFiles } from "../files"
 import getBookMarkedChatThreads from "../history/getBookMarkedChatThreads"
@@ -112,6 +113,19 @@ const History = (props) => {
         bookMarkChatThread(item)
     }
 
+    // ABM client: history search supports agent filters via
+    // `searchHistory({ search, filters: { agentId: [...] } })`. The SDK sends
+    // `filters` only when provided, so search still works without it.
+    // Example (recent-agent ids, capped to first 5) — enable for the ABM client:
+    // const getSearchFilters = () => {
+    //     const recent = getRecentAgents();
+    //     const agentIds = (Array.isArray(recent?.data) ? recent.data : [])
+    //         .map((a) => (typeof a === "string" ? a : a?.id))
+    //         .filter(Boolean)
+    //         .slice(0, 5);
+    //     return agentIds.length ? { agentId: agentIds } : undefined;
+    // };
+
     // Search calls are debounced inside the SDK, so this is invoked on every keystroke
     const handleSearchTermChange = async (event) => {
         const value = event.target.value;
@@ -131,7 +145,12 @@ const History = (props) => {
         setSearchAttempted(true);
         setSearchError(null);
 
-        const res = await historyInterface.current?.searchHistory({ search: value });
+        // ABM client: pass agent filters here, e.g.
+        // const filters = getSearchFilters();
+        const res = await historyInterface.current?.searchHistory({
+            search: value,
+            // ...(filters ? { filters } : {}),
+        });
 
         // A newer keystroke superseded this call — ignore it
         if (res?.status === 'cancelled') return;

@@ -156,6 +156,8 @@ const HistoryInterface = (props) => {
      * @param {string} arg.search Search term (alias: `query`).
      * @param {number} [arg.limit=25]
      * @param {number} [arg.debounce=300]
+     * @param {object} [arg.filters] Extensible filter map sent in the request body
+     *   (e.g. `{ agentId: ['ag-...'] }`). Carried through to `loadMoreSearchHistory`.
      */
     const searchHistory = async (arg = {}) => {
         return SearchHistoryData(arg)

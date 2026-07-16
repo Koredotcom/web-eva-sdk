@@ -373,17 +373,19 @@ export const normalizeHistoryConversationSearchResponse = (responseData = {}, pa
  * @param {string} arg.query Free-text search term (required).
  * @param {number} [arg.limit=25] Max results per page.
  * @param {string} [arg.pageToken] Token from the previous page for pagination.
+ * @param {object} [arg.filters] Extensible filter map sent in the body (e.g. `{ agentId: ['ag-...'] }`). Omitted when empty.
  * @returns normalized `{ results, total, pageToken, moreAvailable, query }`
  */
 let historySearchController = null;
 export const searchHistoryConversations = createAsyncThunk(
     'global/searchHistoryConversations',
     async (arg = {}, thunkAPI) => {
-        const { query, limit = 25, pageToken } = arg;
+        const { query, limit = 25, pageToken, filters } = arg;
         // Cancel any in-flight history search so a stale response can't win the race
         historySearchController?.abort();
         historySearchController = new AbortController();
         try {
+            const hasFilters = filters && typeof filters === 'object' && !Array.isArray(filters) && Object.keys(filters).length > 0;
             const response = await axiosInstance({
                 url: `/ka/users/${window.sdkConfig?.userId}/search/conversations`,
                 method: 'POST',
@@ -393,7 +395,10 @@ export const searchHistoryConversations = createAsyncThunk(
                     ...(pageToken ? { pageToken } : {}),
                     rnd: Date.now().toString(36),
                 },
-                data: { query },
+                data: {
+                    query,
+                    ...(hasFilters ? { filters } : {}),
+                },
             });
             return normalizeHistoryConversationSearchResponse(response.data, arg);
         } catch (error) {
