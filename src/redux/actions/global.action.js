@@ -827,7 +827,7 @@ export const getSignedMediaURL = createAsyncThunk(
     async (arg, { rejectWithValue }) => {
         try {
             const { userId, msgId, fileId } = arg;
-            const response = await axiosInstance.get(`users/${userId}/${msgId}/${fileId}/signedMediaURL`);
+            const response = await axiosInstance.get(`ka/users/${userId}/${msgId}/${fileId}/signedMediaURL`);
             return response.data;
         } catch (error) {
             handleErrorState(error, "Signed Media URL");
