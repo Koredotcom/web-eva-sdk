@@ -1,5 +1,5 @@
 import { cloneDeep, isEmpty } from "lodash"
-import { JoinChatThread } from "../chat"
+import { JoinChatThread, NewChat, InitiateChatConversationAction } from "../chat"
 import { fetchHistory, getNotification, readNotification } from "../redux/actions/global.action"
 import { setNotifications } from "../redux/globalSlice"
 import store from "../redux/store"
@@ -166,6 +166,86 @@ const Notification = () => {
         
     }
 
+    /*
+    Stamps the thread a postback just created onto the notification itself, at
+    `cd.ed.payload = { boardId, messageId }`. A postback creates a brand-new
+    board, so before this the notification has no reference to it and a second
+    click would fire the action again. With the reference in place,
+    `redirectToNotificationChatThread` can reopen that exact thread.
+    Both the notification list and the alert list are stamped, since the same
+    notification can be present in either.
+    */
+    const stampThreadOnNotification = (notification, { boardId, messageId }) => {
+        if (!boardId) return;
+        const targetId = notification?.cd?.nId || notification?._id;
+        if (!targetId) return;
+        const _notificationState = cloneDeep(store.getState().global?.notifications);
+        if (isEmpty(_notificationState)) return;
+        const stamp = (item) => {
+            if ((item?.cd?.nId || item?._id) !== targetId) return item;
+            const cd = { ...(item?.cd || {}) };
+            cd.ed = {
+                ...(cd.ed || {}),
+                payload: { ...(cd.ed?.payload || {}), boardId, messageId }
+            };
+            return { ...item, cd };
+        };
+        if (Array.isArray(_notificationState?.notifications)) {
+            _notificationState.notifications = _notificationState.notifications.map(stamp);
+        }
+        if (Array.isArray(_notificationState?.alert)) {
+            _notificationState.alert = _notificationState.alert.map(stamp);
+        }
+        store.dispatch(setNotifications(_notificationState));
+        if (store.getState().global?.enableDebugging) {
+            console.log("notification stamped with postback thread: ", targetId, { boardId, messageId });
+        }
+    }
+
+    const sendNotificationPostBack = async (notification, button) => {
+        /*
+        Handles the click of an action button inside a notification (postback).
+        Mirrors Kora-React's notification button actionHandler/handleActionButton:
+        - "viewConversation" buttons open the existing chat thread of that notification
+        - every other button triggers a postback: a NEW thread is created (no boardId
+          is sent, so the backend creates a new board) and the button's utterance +
+          payload are sent to the agent through the advancedsearch API as
+          { question, agentId, postbackPayload }
+        */
+        if (button?.action === "viewConversation" || button?.type === "viewConversation") {
+            /* read state + JoinChatThread are already handled inside redirectToNotificationChatThread */
+            redirectToNotificationChatThread(notification)
+            return;
+        }
+
+        /* mark the notification as read before triggering the agent */
+        if (!notification?.isRead) {
+            await markNotificationAsRead(notification)
+        }
+
+        /* alerts carry the entity data under `cd`, raw socket notifications under `customdata` */
+        const customData = notification?.cd || notification?.customdata;
+        /* notifications with a defaultAction carry the agent id at the root level,
+           the rest carry it inside the entity data (ed) */
+        const agentId = customData?.ed?.id;
+        const payload = {
+            question: button?.utterance,
+            agentId,
+            postbackPayload: button?.payload
+        }
+
+        /*
+        Force a new thread: clear activeBoardId/selectedContext/questions so the
+        advancedsearch call goes out without a boardId (same as Kora-React's
+        forceNewThread flow) and the backend creates a fresh board for this postback.
+        */
+        NewChat()
+        const res = await InitiateChatConversationAction({ payload })
+        /* mirrors how chat-utils resolves the board for a settled response */
+        const boardId = res?.payload?.boardId || res?.payload?.history?.bId
+        stampThreadOnNotification(notification, { boardId, messageId: res?.payload?.messageId })
+    }
+
     return {
         subscribe,
         getNotifications,
@@ -175,7 +255,8 @@ const Notification = () => {
         markAllAsRead,
         redirectToLatestAlert,
         clearNotifications,
-        markNotificationAsRead
+        markNotificationAsRead,
+        sendNotificationPostBack
     }
 }
 

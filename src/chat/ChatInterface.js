@@ -326,10 +326,13 @@ const ChatInterface = (props) => {
 		/*
 	  below condition triggers when templatetype is gpt_form_template and user doesnt have any input fields to enter, so application needs to make advancesearch api call with {} formData, as per EVA
 	  */
+    /* the response actually used for this turn — returned to the caller below */
+    let settledRes = Res
     if (Res?.payload?.templateType === "gpt_form_template" && Res?.payload?.content?.formFields?.inputFields?.length === 0){
       delete payload.context
       payload.formData = {}
       const newRes = await store.dispatch(advanceSearch({ params, payload, userId: state?.profile?.data?.id }))
+      settledRes = newRes
       constructQuestionPostCall(newRes, qId)
     }else{
       constructQuestionPostCall(Res, qId)
@@ -339,6 +342,12 @@ const ChatInterface = (props) => {
       arg.callback()
     }
     resIndexRef = 0
+    /*
+    Returned so callers that need the server's identifiers for this turn
+    (boardId / messageId) can read them — e.g. a notification postback stamps
+    the created thread back onto the notification. Existing callers ignore it.
+    */
+    return settledRes
 	}
 
     const invokeGptAgentTemplate = (arg) => {
