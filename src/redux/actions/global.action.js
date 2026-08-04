@@ -215,20 +215,31 @@ export const fetchAgents = createAsyncThunk(
 );
 
 
-let controller;
+/*
+Per-request abort controllers keyed by reqId so multiple advanceSearch calls
+(background threads) can be in flight concurrently. Cancellation is strictly
+reqId-scoped: stopping one thread can never abort another thread's generation.
+*/
+const advanceSearchControllers = new Map();
 
-export const abortAdvanceSearch = () => {
-    if (controller) {
-        controller?.abort();
-        controller = null;
+export const abortAdvanceSearch = (reqId) => {
+    if (reqId) {
+        advanceSearchControllers.get(reqId)?.abort();
+        advanceSearchControllers.delete(reqId);
+        return;
     }
+    // Backwards-compatible: no reqId aborts everything in flight.
+    advanceSearchControllers.forEach((controller) => controller?.abort());
+    advanceSearchControllers.clear();
 };
 
 export const advanceSearch = createAsyncThunk(
     'global/advanceSearch',
     async (arg, thunkAPI) => {
-        controller = new AbortController();
         const traceId = uuidv4();
+        const requestKey = arg?.params?.reqId || traceId;
+        const controller = new AbortController();
+        advanceSearchControllers.set(requestKey, controller);
         try {            
             const response = await axiosInstance.post(`/kora/users/${arg.userId}/advancedsearch`, arg.payload, {
                 params: arg?.params,
@@ -245,6 +256,10 @@ export const advanceSearch = createAsyncThunk(
             }
             handleErrorState(error, "Advance Search");
             return thunkAPI.rejectWithValue(error.response.data);
+        } finally {
+            if (advanceSearchControllers.get(requestKey) === controller) {
+                advanceSearchControllers.delete(requestKey);
+            }
         }
     }
 );
@@ -262,8 +277,8 @@ export const cancelAdvancedSearch = createAsyncThunk(
                 data: arg.payload
             });
 
-            controller?.abort();
-            controller = null;
+            // Abort only this request's in-flight advanceSearch call.
+            abortAdvanceSearch(arg.reqId);
             
             return response.data;
         } catch (error) {
@@ -761,6 +776,8 @@ export const stopResponseGeneration = createAsyncThunk(
             let reqdQuestionId = encodeURIComponent(arg?.params?.id)
             const response = await axiosInstance.post(`kora/users/${arg?.params?.userId}/advancedsearch/cancelrequest/${reqdQuestionId}`, arg?.payload);
             console.log("stopResponseGeneration response", response);
+            // Abort only this request's in-flight advanceSearch call.
+            abortAdvanceSearch(arg?.params?.id);
             return response.data;
         } catch (error) {
             handleErrorState(error, "Stop Response Generation");

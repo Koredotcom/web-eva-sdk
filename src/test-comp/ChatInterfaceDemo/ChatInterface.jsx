@@ -285,7 +285,7 @@ const ChatInterfaceDemo = () => {
           <div className="sidebar-nav-item" onClick={() => {
             setShowAgents(prev => !prev);
           }} role="button" tabIndex={0}>Get Agents</div>
-          {showAgents ? <Agents /> : null}
+          {/* {showAgents ? <Agents /> : null}
           <div>---------------------------------------------------------------</div>
           <div className="sidebar-nav-item" onClick={() => {
             setShowSchedulers(true);
@@ -302,7 +302,7 @@ const ChatInterfaceDemo = () => {
           <div className="sidebar-nav-item" onClick={() => {
             setShowHistorySearch(true);
           }} role="button" tabIndex={0}>Search History</div>
-          <div>---------------------------------------------------------------</div>
+          <div>---------------------------------------------------------------</div> */}
           {/* <Announcements /> */}
           <History />
         </div>

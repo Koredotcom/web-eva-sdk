@@ -1,15 +1,16 @@
 import { v4 as uuid } from 'uuid';
-import { updateChatData, setActiveBoardId, setCurrentQuestion, setSelectedContext, setErrorState, setAllHistory, setQuickActions } from '../redux/globalSlice';
+import { updateChatData, setActiveBoardId, setCurrentQuestion, setSelectedContext, setErrorState, setAllHistory, setQuickActions, setActiveThreadKey, setBoardQuestions, migrateThreadKey, markThreadGenerationStart, markThreadGenerationSettled, removeThreadPartition } from '../redux/globalSlice';
+import { registerRequestThread, resolveRequestThread, migrateRequestThread, releaseRequestThread, threadHasActiveRequests, isTempThreadKey } from './threadRegistry';
 import store from '../redux/store';
 import { cloneDeep, isEmpty } from 'lodash';
 import constructGptForm from './gptTemplate/gptTemplateBody';
 import gptFormFunctionality from './gptTemplate/gptTemplateFunc';
-import { getCidByMessageId } from '../utils/helpers';
+import { getCidByMessageId, generateShortUUID } from '../utils/helpers';
 import AnswerFromChip from './AnswerFromChip';
 import { chatTemplateTypes, msgStatus } from '../utils/constants';
 import MultiResponse from './gptTemplate/MultiResponse';
 import moment from "moment";
-import { fetchHistory } from "../redux/actions/global.action";
+import { fetchHistory, advanceSearch } from "../redux/actions/global.action";
 import MultiIntentExecution from '../multiIntentExecution/multiIntentExecution';
 import ChatInterface from './ChatInterface';
 
@@ -18,6 +19,124 @@ export const agentFilesRegistry = {
     add: (file) => { _pendingAgentFiles.push(file); },
     getAll: () => [..._pendingAgentFiles],
     clear: () => { _pendingAgentFiles.length = 0; },
+};
+
+/**
+ * Settle a request's runtime state: drop its reqId from the owner thread's
+ * `activeReqIds`, raise the red dot for background completions, and free the
+ * partition once the thread has no more in-flight requests (a later open of a
+ * settled thread re-fetches fresh data through the history flow).
+ */
+const settleThreadRequest = ({ threadKey, reqId, background }) => {
+    releaseRequestThread(reqId);
+    if (!threadKey) return;
+    store.dispatch(markThreadGenerationSettled({ threadKey, reqId, background: !!background }));
+    if (background && !threadHasActiveRequests(threadKey)) {
+        store.dispatch(removeThreadPartition(threadKey));
+    }
+};
+
+/* Same advance guard runNextTask applies before firing the next task. */
+const BLOCKED_TASK_ADVANCE_STATUSES = [undefined, null, '', 'draft', 'in-progress', 'threadRunning'];
+
+/**
+ * Background counterpart of the foreground step chain
+ * `constructQuestionPostCall -> MultiIntentExecution().runNextTask -> runTask
+ * -> InitiateChatConversationAction`. Those are foreground-coupled (they read
+ * and write `state.questions` / `activeBoardId`), so a backgrounded agentic
+ * flow would stall on its current step. This mirrors the same bookkeeping on
+ * the thread's partition copy and dispatches the next step's advanceSearch
+ * directly — the flow advances exactly as far as it would have in foreground.
+ *
+ * Mutates `questions` (the partition copy) in place; the caller dispatches it
+ * via setBoardQuestions right after.
+ */
+const continueBackgroundAgenticFlow = ({ questions, question, ownerThreadKey, settledStatus, fallbackBoardId }) => {
+    /* click-gated / still-running steps must not auto-fire the next one */
+    if (BLOCKED_TASK_ADVANCE_STATUSES.includes(settledStatus)) return;
+
+    const stepIndex = question?.stepIndex;
+    if (!Number.isFinite(stepIndex)) return;
+
+    const parent = questions?.[question?.parentMsgId];
+    if (!parent?.executionPipeline?.length) return;
+
+    /* pipeline bookkeeping runTask does on advance: settled step completed;
+    whole flow completed once every task is */
+    const executionPipeline = cloneDeep(parent.executionPipeline);
+    if (executionPipeline[stepIndex]) {
+        executionPipeline[stepIndex].status = 'completed';
+    }
+    const isFlowCompleted = executionPipeline.every(task => task?.status === 'completed');
+    questions[question?.parentMsgId] = {
+        ...parent,
+        executionPipeline,
+        status: isFlowCompleted ? 'completed' : (parent?.status || 'in-progress')
+    };
+
+    const nextTask = executionPipeline[stepIndex + 1];
+    if (isFlowCompleted || !nextTask) return;
+
+    /* next step object — same shape constructQuestionInitial's
+    multiIntentExecution branch builds for the foreground dispatch */
+    const nextReqId = generateShortUUID();
+    questions[nextTask?._id] = {
+        ...nextTask,
+        stepIndex: stepIndex + 1,
+        id: nextTask?._id,
+        question: nextTask?.utterance,
+        answer: "",
+        loading: true,
+        type: "search",
+        isTask: true,
+        parentMsgId: parent?.reqId,
+        cId: nextTask?._id,
+        reqId: nextReqId,
+        showResponse: true
+    };
+
+    /*
+    Ordering is load-bearing: the next request must be registered BEFORE the
+    caller runs settleThreadRequest for the step that just finished. Otherwise
+    activeReqIds momentarily empties — the history spinner flickers off, a red
+    dot is raised mid-flow, and the partition is garbage-collected while steps
+    are still pending. (Also why this path can't reuse the foreground's
+    setTimeout(1000) before advancing.)
+    */
+    registerRequestThread(nextReqId, ownerThreadKey);
+    store.dispatch(markThreadGenerationStart({
+        threadKey: ownerThreadKey,
+        reqId: nextReqId,
+        title: nextTask?.utterance
+    }));
+
+    /*
+    Dispatch advanceSearch directly instead of routing through runTask /
+    InitiateChatConversationAction, which would inject this flow's steps into
+    whatever chat is currently on screen. Params/payload mirror exactly what
+    runTask -> initiateChatConversationAction sends for a step. The settle
+    re-enters constructQuestionPostCall, so steps N+2, N+3, … chain through
+    this same helper (or hand back to the foreground path if the user reopens
+    the thread in the meantime).
+    */
+    const boardId = parent?.boardId
+        || fallbackBoardId
+        || (!isTempThreadKey(ownerThreadKey) ? ownerThreadKey : undefined);
+    store.dispatch(advanceSearch({
+        params: { reqId: nextReqId },
+        payload: {
+            question: nextTask?.utterance,
+            boardId,
+            parentId: parent?.messageId,
+            context: {
+                intentId: nextTask?.intents?.[0]?.id,
+                agentId: nextTask?.intents?.[0]?.agentId,
+                stepId: nextTask?._id
+            }
+        },
+        userId: store.getState().global?.profile?.data?.id,
+        multiIntentExecution: true
+    })).then((res) => constructQuestionPostCall(res, nextTask?._id));
 };
 
 export const constructQuestionInitial = (args) => {
@@ -94,6 +213,25 @@ export const constructQuestionInitial = (args) => {
 		questions[uniqueMsgId] = obj;
 	}
 
+	/*
+	Multi-thread: resolve the thread this request belongs to and register
+	per-request ownership so async callbacks (settle, socket streaming) can
+	route to the right thread even after the user navigates away.
+	A boardless new chat uses the first question's reqId (already
+	`#`-prefixed) as its temp thread key until the server returns a boardId.
+	*/
+	let threadKey = store.getState().global.activeThreadKey || activeBoardId || uniqueMsgId;
+	if (store.getState().global.activeThreadKey !== threadKey) {
+		store.dispatch(setActiveThreadKey(threadKey));
+	}
+	const requestReqId = args?.reqId || uniqueMsgId;
+	registerRequestThread(requestReqId, threadKey);
+	store.dispatch(markThreadGenerationStart({
+		threadKey,
+		reqId: requestReqId,
+		title: question || args?.task?.utterance
+	}));
+
 	store.dispatch(updateChatData(questions));
 	store.dispatch(setCurrentQuestion(obj));
 
@@ -122,10 +260,24 @@ export const constructQuestionPostCall = async (data, qId) => {
     // data.meta.arg = contains passed params and payload
 
     const state = store.getState().global
-    const questions = cloneDeep(state.questions)
+
+    /*
+    Multi-thread routing: resolve which thread this response belongs to at
+    settle time. Foreground (owner is the thread on screen) behaves exactly
+    as before. Background (user navigated away mid-generation) merges into
+    that thread's partition and raises the red-dot indicator, and must never
+    touch the visible chat or steal focus (no setActiveBoardId /
+    setCurrentQuestion / context / quick-action dispatches).
+    */
+    const requestReqId = data?.meta?.arg?.params?.reqId || data?.meta?.arg?.reqId || data?.meta?.arg?.params?.id
+    const ownerThreadKey = resolveRequestThread(requestReqId) || state.activeThreadKey
+    const isForeground = !ownerThreadKey || ownerThreadKey === state.activeThreadKey
+
+    const questions = isForeground ? cloneDeep(state.questions) : cloneDeep(state.questionsByBoard?.[ownerThreadKey] || {})
     const activeBoardId = state.activeBoardId
 
     if(data?.payload?.cancelled || Object.keys(questions).length === 0) {
+        settleThreadRequest({ threadKey: ownerThreadKey, reqId: requestReqId, background: !isForeground && !data?.payload?.cancelled })
         return;
     }
 
@@ -133,7 +285,7 @@ export const constructQuestionPostCall = async (data, qId) => {
     let question = questions?.[qId]
     delete question?.loading;
 
-	if (!activeBoardId) {
+	if (isForeground && !activeBoardId) {
 		store.dispatch(
             fetchHistory({ deleteLoader: true, params: { limit: 1 } })
 		);
@@ -198,20 +350,24 @@ export const constructQuestionPostCall = async (data, qId) => {
 			}
 		}
         /*Clearing the selected context when search results are received */
-        if (state.autoRemoveWebSearchFromContext) {
+        if (isForeground && state.autoRemoveWebSearchFromContext) {
             store.dispatch(setSelectedContext(null))
         }
 	}
 
     if(data?.payload?.queryExhaustionInfo?.queryLimitExhausted){
         question.queryExhaustionInfo = data?.payload?.queryExhaustionInfo
-        store.dispatch(setErrorState(data?.payload?.queryExhaustionInfo))
+        if (isForeground) {
+            store.dispatch(setErrorState(data?.payload?.queryExhaustionInfo))
+        }
     }
 
-	if(data?.payload?.quickactions){
-		store.dispatch(setQuickActions(data?.payload?.quickactions));
-	}else{
-		store.dispatch(setQuickActions([]));
+	if (isForeground) {
+		if(data?.payload?.quickactions){
+			store.dispatch(setQuickActions(data?.payload?.quickactions));
+		}else{
+			store.dispatch(setQuickActions([]));
+		}
 	}
     // if(data?.params?.arg?.retry) {
     //     delete question?.error;
@@ -272,7 +428,7 @@ export const constructQuestionPostCall = async (data, qId) => {
 		if(stepIndex === 0) {
 		    questions[question?.parentMsgId].status = 'in-progress'
 		}
-		if(question?.isTask) {
+		if(question?.isTask && isForeground) {
 				const stepIndex = question?.stepIndex;
 				setTimeout(() => {
 				    MultiIntentExecution().runNextTask(stepIndex, data?.payload?.status , question)
@@ -287,7 +443,7 @@ export const constructQuestionPostCall = async (data, qId) => {
         let historyAnswer = data?.payload?.history?.answer
         let terminatedAnswerResponse = historyAnswer ? `${historyAnswer}<br/><br/>${interruptedNote}` : interruptedNote
         question = { ...question,  ...data?.payload?.history, answer : terminatedAnswerResponse};
-        if (question?.isTask) {
+        if (question?.isTask && isForeground) {
             const stepIndex = question?.stepIndex;
             setTimeout(() => {
                 MultiIntentExecution().runNextTask(stepIndex, data?.payload?.history?.status, question)
@@ -400,14 +556,19 @@ export const constructQuestionPostCall = async (data, qId) => {
     //     scrollBottom(data?.params?.qId)
     // })
 
-    if(!activeBoardId) {
-        if(data?.payload?.history?.status === msgStatus.TERMINATED){    
-            store.dispatch(setActiveBoardId(data?.payload?.history?.bId))
-        }else{
-            store.dispatch(setActiveBoardId(data?.payload?.boardId))
-        } 
+    /* The boardId the server assigned/confirmed for this response. */
+    const responseBoardId = data?.payload?.history?.status === msgStatus.TERMINATED
+        ? data?.payload?.history?.bId
+        : (data?.payload?.boardId || data?.payload?.history?.bId)
+
+    /*
+    Strict user-owned focus: only a foreground settle may set the active
+    board. A background completion must never hijack the thread on screen.
+    */
+    if(isForeground && !activeBoardId) {
+        store.dispatch(setActiveBoardId(responseBoardId))
     }
-    if (data?.payload?.followUpContext && state.enableContextByFollowupContext) {
+    if (isForeground && data?.payload?.followUpContext && state.enableContextByFollowupContext) {
         // console.log("data?.payload?.followUpContext", { ...data?.payload?.followUpContext, messageId: data?.payload?.messageId })
         let context = {
             context: data?.payload?.followUpContext,
@@ -423,7 +584,7 @@ export const constructQuestionPostCall = async (data, qId) => {
         store.dispatch(setSelectedContext({data: context}))
     }
 
-    if(data?.payload?.agentContext?.sources?.length > 0){
+    if(isForeground && data?.payload?.agentContext?.sources?.length > 0){
         /*need to call removeFileFromAutonomousAgent action to remove the files from the autonomous agent */
        const removeFileResponse = await ChatInterface().removeFileFromAutonomousAgent({ fileIds: data?.payload?.agentContext?.sources?.map(source => source?.fileId)?.filter(Boolean), messageId: data?.payload?.followUpContext?.fMsgId })
        if(enableDebugging){
@@ -431,8 +592,54 @@ export const constructQuestionPostCall = async (data, qId) => {
        }
         
     }
-    store.dispatch(setCurrentQuestion(questions[qId]))
-    store.dispatch(updateChatData(questions))
+
+    let settledThreadKey = ownerThreadKey
+
+    if (isForeground) {
+        store.dispatch(setCurrentQuestion(questions[qId]))
+        store.dispatch(updateChatData(questions))
+        /* temp -> real reconcile for a brand-new chat that stayed on screen */
+        if (isTempThreadKey(ownerThreadKey) && responseBoardId) {
+            migrateRequestThread(ownerThreadKey, responseBoardId)
+            store.dispatch(migrateThreadKey({ fromKey: ownerThreadKey, toKey: responseBoardId }))
+            settledThreadKey = responseBoardId
+        }
+    } else {
+        /*
+        Background agentic flow: chain the next step the same way the
+        foreground runNextTask call sites above do (gated there on
+        `isForeground`). Status selection mirrors those branches — the
+        multiIntentExecution branch passes payload.status, the terminated
+        branch passes history.status. Must run before setBoardQuestions (it
+        mutates `questions`) and before settleThreadRequest below (it
+        registers the next step's request).
+        */
+        const isMieSettle = data?.meta?.arg?.multiIntentExecution || question?.isMultiIntentExecution
+        const isTerminatedSettle = data?.payload?.history?.status === msgStatus.TERMINATED
+        if (!data?.error && question?.isTask && (isMieSettle || isTerminatedSettle)) {
+            continueBackgroundAgenticFlow({
+                questions,
+                question,
+                ownerThreadKey,
+                settledStatus: isMieSettle ? data?.payload?.status : data?.payload?.history?.status,
+                fallbackBoardId: responseBoardId
+            })
+        }
+        /* background thread: write into its partition only — never the visible chat */
+        store.dispatch(setBoardQuestions({ threadKey: ownerThreadKey, questions }))
+        /* temp -> real reconcile for a background new chat */
+        if (isTempThreadKey(ownerThreadKey) && responseBoardId) {
+            migrateRequestThread(ownerThreadKey, responseBoardId)
+            store.dispatch(migrateThreadKey({ fromKey: ownerThreadKey, toKey: responseBoardId }))
+            settledThreadKey = responseBoardId
+            /* pull the newly created board row into the history list so the
+            red dot has a real row to attach to */
+            store.dispatch(fetchHistory({ deleteLoader: true, params: { limit: 1 } }))
+        }
+    }
+
+    /* request finished — drop the spinner; red dot only for background settles */
+    settleThreadRequest({ threadKey: settledThreadKey, reqId: requestReqId, background: !isForeground })
 
     // if(question?.isTask) {
     //     setTimeout(() => {

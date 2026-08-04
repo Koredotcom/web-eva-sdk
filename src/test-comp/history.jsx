@@ -19,7 +19,6 @@ const History = (props) => {
     const [searchAttempted, setSearchAttempted] = useState(false)
     const [searchLoading, setSearchLoading] = useState(false)
     const [searchError, setSearchError] = useState(null)
-    const [hoveredPreview, setHoveredPreview] = useState(null)
     const historyInterface = useRef()
     const recentFilesInterface = useRef()
     const state = store.getState().global
@@ -174,12 +173,6 @@ const History = (props) => {
         }
     }
 
-    // On hover of a history item / search result, preview the thread's messages (Work app behaviour)
-    const handleHistoryItemHover = async (item) => {
-        const preview = await historyInterface.current?.getHistoryItemPreview(isSearchActive ? item : item?.id);
-        setHoveredPreview(preview);
-    }
-
     const isSearchActive = Boolean(searchTerm.trim());
     const visibleHistoryBoards = isSearchActive ? searchBoards : (historyData?.data || []);
 
@@ -211,33 +204,45 @@ const History = (props) => {
                             <div
                                 className={`historyGrp-${item?.id}`}
                                 onClick={()=> JoinChatThread({ boardId: isSearchActive ? (item?.boardId || item?.id) : item?.id })}
-                                onMouseEnter={() => handleHistoryItemHover(item)}
                                 key={item?.id}
+                                style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'space-between',
+                                    gap: '8px',
+                                    cursor: 'pointer',
+                                    padding: '4px 0'
+                                }}
                             >
                                 {/* <button onClick={(e) => { e.preventDefault();  e?.stopPropagation();deleteChatThread(item) }}>Delete</button> */}
-                                <span>{isSearchActive ? (item?.threadTitle || item?.title || item?.snippet) : item?.name}</span>
+                                <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                    {isSearchActive ? (item?.threadTitle || item?.title || item?.snippet) : item?.name}
+                                </span>
+                                {item?.isGenerating ? (
+                                    <span
+                                        aria-label="Generating"
+                                        style={{
+                                            width: 12,
+                                            height: 12,
+                                            flexShrink: 0,
+                                            border: '2px solid #cfcfcf',
+                                            borderTopColor: '#555',
+                                            borderRadius: '50%',
+                                            animation: 'evaHistorySpin 0.7s linear infinite'
+                                        }}
+                                    />
+                                ) : null}
                                 {/* <button onClick={(e) => { e.preventDefault();  e?.stopPropagation();editNamePopup(item) }}>Edit</button> */}
                                 {/* <button onClick={(e) => { e.preventDefault(); e?.stopPropagation(); bookMarkChatThreadItem(item) }}>{item?.bookMarked ? 'UnBook Mark' : 'Book Mark'}</button> */}
                             </div>
                         )
                     })}
+                    <style>{`
+                        @keyframes evaHistorySpin {
+                            to { transform: rotate(360deg); }
+                        }
+                    `}</style>
                 </div>
-                {/* Hover preview panel — messages of the hovered thread */}
-                {hoveredPreview?.boardId ? (
-                    <div>
-                        <h3>{hoveredPreview?.board?.name}</h3>
-                        {Object.keys(hoveredPreview?.questions || {}).length === 0 ? (
-                            <div>No messages to preview</div>
-                        ) : (
-                            Object.values(hoveredPreview.questions).map(q => (
-                                <div key={q?.id}>
-                                    <div><b>{q?.question || q?.content?.question}</b></div>
-                                    <div>{q?.answer || q?.content?.answer}</div>
-                                </div>
-                            ))
-                        )}
-                    </div>
-                ) : null}
             </div>
             {/* <div>
                 <h1>Book Marked Chat Thread</h1>

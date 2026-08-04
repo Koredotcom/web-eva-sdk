@@ -1,14 +1,14 @@
 import { advanceSearch, cancelAdvancedSearch, stopResponseGeneration, getSignedMediaURL, addFileToAutonomousAgentAction, removeFileFromAutonomousAgentAction } from "../redux/actions/global.action";
 import { agentFilesRegistry } from "./chat-utils";
-import { setChatInterfaceOptions, setCurrentQuestion, setCustomData, setEnableContextByFollowupContext, setEnabledCustomTemplates, setErrorState, setUserSelectedLLMModel } from "../redux/globalSlice"
+import { setChatInterfaceOptions, setCurrentQuestion, setCustomData, setEnableContextByFollowupContext, setEnabledCustomTemplates, setErrorState, setUserSelectedLLMModel, setBoardQuestions } from "../redux/globalSlice"
 import { updateChatData } from "../redux/globalSlice";
+import { resolveRequestThread } from "./threadRegistry";
 import store from "../redux/store";
 import { v4 as uuid } from 'uuid';
 import { constructQuestionInitial, constructQuestionPostCall } from "./chat-utils";
 import { checkHistoryAccessed, generateShortUUID, getCidByMessageId, getCidByReqId } from "../utils/helpers";
 import { cloneDeep, isEmpty } from "lodash";
 import BotConversation from "./botAgent/getBotConversation";
-import { current } from "@reduxjs/toolkit";
 import { sessionItemHandler } from "../Attachments/createContext";
 
 /** Normalize escaped newlines in stored markdown (same as Kora-React MenuOptions copyAnswer). */
@@ -58,6 +58,30 @@ const buildMultiResponseAnswer = (parent) => {
         .map((r) => (r?.answer != null && r?.answer !== "" ? String(r.answer) : ""))
         .filter(Boolean)
         .join("\n\n");
+};
+
+/**
+ * Resolve which thread a socket event belongs to and pick the right source
+ * question map. Foreground events (owner is the thread on screen, or an
+ * unregistered legacy event) keep working against `state.questions` exactly
+ * as before; background events read/write that thread's partition only.
+ */
+const resolveStreamTarget = (globalState, eventReqId) => {
+    const ownerThreadKey = resolveRequestThread(eventReqId);
+    const isForeground = !ownerThreadKey || ownerThreadKey === globalState.activeThreadKey;
+    const sourceQuestions = isForeground
+        ? globalState.questions
+        : (globalState.questionsByBoard?.[ownerThreadKey] || {});
+    return { ownerThreadKey, isForeground, sourceQuestions };
+};
+
+/** Route a stream update to the visible chat (foreground) or a background thread's partition. */
+const writeStreamQuestions = (isForeground, ownerThreadKey, questionsMap) => {
+    if (isForeground) {
+        store.dispatch(updateChatData(questionsMap));
+    } else {
+        store.dispatch(setBoardQuestions({ threadKey: ownerThreadKey, questions: questionsMap }));
+    }
 };
 
 // Module-level registry shared across all ChatInterface() instances
@@ -399,8 +423,11 @@ const ChatInterface = (props) => {
       // if contentStreaming set to false by client than it will not stream the content
       if(state.chatInterfaceOptions?.contentStreaming === false) return;
 
+      /*route the event to its owner thread: visible chat or background partition*/
+      const { ownerThreadKey, isForeground, sourceQuestions } = resolveStreamTarget(state, detail?.data?.reqId);
+
       // questionsRef.current - because questions state updates not coming in eventBuzz
-      const questions = cloneDeep(state.questions);
+      const questions = cloneDeep(sourceQuestions);
       if(Object.keys(questions).length === 0) {
         return;
       }
@@ -470,7 +497,7 @@ const ChatInterface = (props) => {
                     }
               }
               questions[reqId] = question
-              store.dispatch(updateChatData(questions))
+              writeStreamQuestions(isForeground, ownerThreadKey, questions)
               return;               
             }
             
@@ -491,17 +518,17 @@ const ChatInterface = (props) => {
         }
         
         questions[reqId] = question
-        store.dispatch(updateChatData(questions))
+        writeStreamQuestions(isForeground, ownerThreadKey, questions)
       }
 
       if (detail?.data?.status === 'completed' || detail?.data?.status === 'aborted') {
         question.streamingStatus = detail?.data?.status // 'completed' or 'aborted'
         question.apiSuccess = true // apiSuccess is set to true when the advanceSearchApi is completed and also once the streaming is turned to completed
         question.status = detail?.data?.status
-        const questions = cloneDeep(state.questions)
+        const questions = cloneDeep(sourceQuestions)
         questions[reqId] = question
         console.log(`apiStatus of the question ${reqId} is ${question?.apiSuccess}`)
-        store.dispatch(updateChatData(questions))
+        writeStreamQuestions(isForeground, ownerThreadKey, questions)
 
         resIndexRef = 0
 
@@ -515,7 +542,9 @@ const ChatInterface = (props) => {
     }
 
     const agentThoughts = (detail) => {
-      let _questions = cloneDeep(state.questions)
+      /*route the event to its owner thread: visible chat or background partition*/
+      const { ownerThreadKey, isForeground, sourceQuestions } = resolveStreamTarget(state, detail?.data?.reqId);
+      let _questions = cloneDeep(sourceQuestions)
       let reqId = detail?.data?.reqId
       if(isEmpty(_questions[reqId])){
         return;
@@ -559,7 +588,7 @@ const ChatInterface = (props) => {
         console.log("currentQuestion in agent thoughts function before thoughts", currentQuestion)
       }              
       _questions[reqId] = currentQuestion      
-      store.dispatch(updateChatData(_questions))
+      writeStreamQuestions(isForeground, ownerThreadKey, _questions)
       if(state?.enableDebugging){
         console.log("currentQuestion in agent thoughts function after thoughts", currentQuestion)
       }
@@ -798,13 +827,15 @@ const ChatInterface = (props) => {
     };
 
     const appendAnswerContext = (detail) => {
-      let _questions = cloneDeep(store.getState().global?.questions)
+      /*route the event to its owner thread: visible chat or background partition*/
+      const { ownerThreadKey, isForeground, sourceQuestions } = resolveStreamTarget(store.getState().global, detail?.data?.reqId);
+      let _questions = cloneDeep(sourceQuestions)
       let reqId = detail?.data?.reqId
       if(isEmpty(_questions[reqId])){
         return;
       }
       _questions[reqId] = {..._questions[reqId], ...detail?.data?.answerMeta}      
-      store.dispatch(updateChatData(_questions))
+      writeStreamQuestions(isForeground, ownerThreadKey, _questions)
       if(state?.enableDebugging){
         console.log("after appending answerContext, _questions[reqId], _questions", _questions[reqId], _questions)
       }
