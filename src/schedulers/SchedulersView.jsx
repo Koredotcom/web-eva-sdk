@@ -23,8 +23,19 @@ const SchedulersView = () => {
 
   const loadSchedulers = useCallback(async () => {
     const res = await getSchedulers();
-    const list = res?.data?? res?.data?.allAgents;
-    setSchedulers(Array.isArray(list) ? list : []);
+    /*
+    API / store shape is { allAgents, notfoundAgents }, not a bare array.
+    `res.data ?? res.data.allAgents` short-circuits on the object itself,
+    Array.isArray fails, and the list was always forced to [].
+    */
+    const data = res?.data;
+    const list = Array.isArray(data)
+      ? data
+      : [
+          ...(Array.isArray(data?.allAgents) ? data.allAgents : []),
+          ...(Array.isArray(data?.notfoundAgents) ? data.notfoundAgents : []),
+        ];
+    setSchedulers(list);
   }, []);
 
   useEffect(() => {
@@ -131,9 +142,14 @@ const SchedulersView = () => {
         </p>
         <h2 className="schedulers-heading">Link Agent using credentials</h2>
 
-        <button type="button" className="schedulers-add-btn" onClick={handleCreate}>
-          + Create
-        </button>
+        <div className="schedulers-actions">
+          <button type="button" className="schedulers-add-btn" onClick={loadSchedulers}>
+            Get Schedulers
+          </button>
+          <button type="button" className="schedulers-add-btn" onClick={handleCreate}>
+            + Create
+          </button>
+        </div>
 
         <div className="schedulers-list">
           {schedulers.length === 0 && <p className="schedulers-empty">No schedulers yet.</p>}

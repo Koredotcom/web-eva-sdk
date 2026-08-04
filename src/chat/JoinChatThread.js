@@ -1,8 +1,9 @@
-import { keyBy, orderBy } from "lodash"
+import { cloneDeep, keyBy, orderBy } from "lodash"
 import { getSearchHistory } from "../redux/actions/global.action"
 import store from "../redux/store"
 import { v4 as uuid } from 'uuid';
-import { setActiveBoardId, updateChatData, setChatHistoryMoreAvailable, setCurrentQuestion, setSelectedContext } from "../redux/globalSlice";
+import { setActiveBoardId, updateChatData, setChatHistoryMoreAvailable, setCurrentQuestion, setSelectedContext, setActiveThreadKey, clearThreadCompletionIndicator } from "../redux/globalSlice";
+import { isTempThreadKey } from "./threadRegistry";
 import constructGptForm from "./gptTemplate/gptTemplateBody";
 import gptFormFunctionality from "./gptTemplate/gptTemplateFunc";
 import MultiResponse from "./gptTemplate/MultiResponse";
@@ -17,6 +18,48 @@ const JoinChatThread = async (props) => {
 		chatHistoryOffset += 1;
 	}
 
+    /*
+    Multi-thread: opening a thread is an explicit user action — the only
+    sanctioned focus switch. Reading the thread also clears its red-dot
+    (background-completion) indicator.
+    */
+    const isTempThread = isTempThreadKey(props.boardId);
+    const runtime = state.threadRuntimeState?.[props.boardId];
+    const livePartition = state.questionsByBoard?.[props.boardId];
+
+    store.dispatch(setActiveThreadKey(props.boardId));
+    store.dispatch(setActiveBoardId(isTempThread ? null : props.boardId));
+    store.dispatch(clearThreadCompletionIndicator(props.boardId));
+
+    /*
+    If this thread is still generating, hydrate the chat instantly from its
+    live partition — streaming continues on screen through the normal
+    foreground path (owner === activeThreadKey). No REST call: the partition
+    is the freshest copy, and for temp (boardless) threads there is no
+    server-side board to fetch yet.
+    */
+    if (!props?.pagination && runtime?.isGenerating && livePartition && Object.keys(livePartition).length > 0) {
+        const _questions = cloneDeep(livePartition);
+        const sortedQuestions = Object.values(_questions);
+        const currentQuestion = sortedQuestions.find(q =>
+            q?.loading ||
+            q?.streamingStatus === 'in-progress' ||
+            !['completed', 'terminated', 'error', 'aborted'].includes(q?.status)
+        ) || sortedQuestions[sortedQuestions.length - 1];
+        store.dispatch(setCurrentQuestion(currentQuestion));
+        store.dispatch(updateChatData(_questions));
+        store.dispatch(setChatHistoryMoreAvailable(false));
+        return;
+    }
+
+    /*temp threads are client-only — nothing to fetch from the server*/
+    if (isTempThread) {
+        const _questions = cloneDeep(livePartition || {});
+        store.dispatch(updateChatData(_questions));
+        store.dispatch(setChatHistoryMoreAvailable(false));
+        return;
+    }
+
     let params = {
         // limit: props?.limit || 20,
         // offset: chatHistoryOffset * (props?.limit || 20)
@@ -29,9 +72,6 @@ const JoinChatThread = async (props) => {
     }
 
     const Res = await store.dispatch(getSearchHistory({boardId: props.boardId, params}))
-
-    // Setting active boardId
-    store.dispatch(setActiveBoardId(props.boardId))
     // offset will increase only if its pagination call
     // if(props?.pagination) {
         // chatHistoryOffset++

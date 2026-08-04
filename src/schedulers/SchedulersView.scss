@@ -33,9 +33,14 @@
   font-size: 1.25rem;
 }
 
+.schedulers-actions {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 1rem;
+}
+
 .schedulers-add-btn {
   padding: 8px 18px;
-  margin-bottom: 1rem;
   cursor: pointer;
   border: 1px solid #1976d2;
   background: #1976d2;

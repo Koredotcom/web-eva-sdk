@@ -17,7 +17,7 @@ import {
   getAllAnnouncements
 } from './actions/global.action';
 import { handleAsyncActions } from '../utils/handleAsyncActions';
-import { cloneDeep, concat, orderBy, uniqBy } from 'lodash';
+import { cloneDeep, concat, uniqBy } from 'lodash';
 
 /**
  * Merge feedback API response fields into `state.questions` (by `cId` or all rows with `messageId`).
@@ -54,6 +54,18 @@ function mergeFeedbackResponseIntoQuestions(state, metaArg, updates) {
     });
   }
   state.questions = questions;
+  syncActiveThreadPartition(state);
+}
+
+/**
+ * Mirror the foreground `state.questions` into the partition of the thread
+ * currently on screen (`questionsByBoard[activeThreadKey]`). Keeps the live
+ * partition in sync so navigating away mid-generation needs no snapshot step.
+ */
+function syncActiveThreadPartition(state) {
+  if (state.activeThreadKey) {
+    state.questionsByBoard[state.activeThreadKey] = state.questions;
+  }
 }
 
 const initialState = {
@@ -100,7 +112,19 @@ const initialState = {
   quickActions: [],
   announcements: {},
   autoRemoveWebSearchFromContext: false,
-  userSelectedLLMModel: null
+  userSelectedLLMModel: null,
+  /*
+  Multi-thread / background generation state.
+  - activeThreadKey: the thread currently on screen — a real boardId, or a
+    `#`-prefixed temp key for a boardless new chat (first question's reqId).
+  - questionsByBoard: live per-thread partitions `{ [threadKey]: { [qId]: question } }`.
+    Only threads with an active/unread generation keep a partition.
+  - threadRuntimeState: sidebar indicator source of truth
+    `{ [threadKey]: { isGenerating, activeReqIds, hasCompletedInBackground, title, createdOn, lastUpdatedAt } }`.
+  */
+  activeThreadKey: null,
+  questionsByBoard: {},
+  threadRuntimeState: {}
 };
 
 const globalSlice = createSlice({
@@ -109,6 +133,108 @@ const globalSlice = createSlice({
   reducers: {
     updateChatData: (state, action) => {
       state.questions = action.payload;
+      // Keep the on-screen thread's partition in sync (background threads
+      // are written through setBoardQuestions instead).
+      syncActiveThreadPartition(state);
+    },
+    setActiveThreadKey: (state, action) => {
+      /*
+      Leaving a thread (New Chat → null, or opening a different board) means
+      that thread has been "backgrounded". Stamp showInHistory so its optimistic
+      history row stays visible even if the user later reopens it — without this
+      flag, JoinChatThread would set it active again and the subscribe merge
+      would drop it from the list.
+      */
+      const prevKey = state.activeThreadKey;
+      const nextKey = action.payload;
+      if (prevKey && prevKey !== nextKey && state.threadRuntimeState[prevKey]) {
+        state.threadRuntimeState[prevKey].showInHistory = true;
+        state.threadRuntimeState[prevKey].lastUpdatedAt = Date.now();
+      }
+      state.activeThreadKey = nextKey;
+    },
+    /* Replace a background thread's whole partition (streaming merges). */
+    setBoardQuestions: (state, action) => {
+      const { threadKey, questions } = action.payload || {};
+      if (!threadKey) return;
+      state.questionsByBoard[threadKey] = questions || {};
+    },
+    /* Temp -> real reconcile: rename partition, runtime entry and active key. */
+    migrateThreadKey: (state, action) => {
+      const { fromKey, toKey } = action.payload || {};
+      if (!fromKey || !toKey || fromKey === toKey) return;
+      if (state.questionsByBoard[fromKey]) {
+        state.questionsByBoard[toKey] = state.questionsByBoard[fromKey];
+        delete state.questionsByBoard[fromKey];
+      }
+      const fromRuntime = state.threadRuntimeState[fromKey];
+      if (fromRuntime) {
+        const toRuntime = state.threadRuntimeState[toKey] || {};
+        state.threadRuntimeState[toKey] = {
+          ...fromRuntime,
+          ...toRuntime,
+          activeReqIds: { ...(fromRuntime.activeReqIds || {}), ...(toRuntime.activeReqIds || {}) },
+          isGenerating: !!(fromRuntime.isGenerating || toRuntime.isGenerating),
+          hasCompletedInBackground: !!(fromRuntime.hasCompletedInBackground || toRuntime.hasCompletedInBackground),
+          showInHistory: !!(fromRuntime.showInHistory || toRuntime.showInHistory)
+        };
+        delete state.threadRuntimeState[fromKey];
+      }
+      if (state.activeThreadKey === fromKey) {
+        state.activeThreadKey = toKey;
+      }
+    },
+    markThreadGenerationStart: (state, action) => {
+      const { threadKey, reqId, title } = action.payload || {};
+      if (!threadKey || !reqId) return;
+      const prev = state.threadRuntimeState[threadKey] || {};
+      state.threadRuntimeState[threadKey] = {
+        ...prev,
+        title: prev.title || title,
+        createdOn: prev.createdOn || Date.now(),
+        activeReqIds: { ...(prev.activeReqIds || {}), [reqId]: true },
+        isGenerating: true,
+        lastUpdatedAt: Date.now()
+      };
+    },
+    markThreadGenerationSettled: (state, action) => {
+      const { threadKey, reqId, background, clearAll } = action.payload || {};
+      if (!threadKey) return;
+      const prev = state.threadRuntimeState[threadKey];
+      if (!prev) return;
+      const activeReqIds = { ...(prev.activeReqIds || {}) };
+      if (clearAll) {
+        Object.keys(activeReqIds).forEach(key => delete activeReqIds[key]);
+      } else if (reqId) {
+        delete activeReqIds[reqId];
+      }
+      state.threadRuntimeState[threadKey] = {
+        ...prev,
+        activeReqIds,
+        isGenerating: Object.keys(activeReqIds).length > 0,
+        hasCompletedInBackground: !!background || !!prev.hasCompletedInBackground,
+        lastUpdatedAt: Date.now()
+      };
+    },
+    /* Clears the red dot (user opened / read the thread). */
+    clearThreadCompletionIndicator: (state, action) => {
+      const threadKey = action.payload;
+      if (!threadKey || !state.threadRuntimeState[threadKey]) return;
+      state.threadRuntimeState[threadKey].hasCompletedInBackground = false;
+      state.threadRuntimeState[threadKey].lastUpdatedAt = Date.now();
+    },
+    /* Drop a settled background thread's cached partition (memory hygiene). */
+    removeThreadPartition: (state, action) => {
+      const threadKey = action.payload;
+      if (!threadKey) return;
+      delete state.questionsByBoard[threadKey];
+    },
+    /* Full cleanup: board deleted from history. */
+    removeThreadState: (state, action) => {
+      const threadKey = action.payload;
+      if (!threadKey) return;
+      delete state.questionsByBoard[threadKey];
+      delete state.threadRuntimeState[threadKey];
     },
     setActiveBoardId: (state, action) => {
       state.activeBoardId = action.payload;
@@ -233,6 +359,7 @@ const globalSlice = createSlice({
             }
           }
           state.questions = questions
+          syncActiveThreadPartition(state)
         }
 
       }
@@ -346,7 +473,15 @@ export const {
   setAutoRemoveWebSearchFromContext,
   setSchedulers,
   setUserSelectedLLMModel,
-  setAdvanceSearchRes
+  setAdvanceSearchRes,
+  setActiveThreadKey,
+  setBoardQuestions,
+  migrateThreadKey,
+  markThreadGenerationStart,
+  markThreadGenerationSettled,
+  clearThreadCompletionIndicator,
+  removeThreadPartition,
+  removeThreadState
 } = globalSlice.actions;
 
 export default globalSlice;

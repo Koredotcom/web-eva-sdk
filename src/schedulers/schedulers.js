@@ -8,8 +8,14 @@ import { combineDateTimeToISO } from "./schedulerHelpers.js";
 
 const normalizeSchedulers = (data) => {
   if (Array.isArray(data)) return data;
+  if (Array.isArray(data?.allAgents) || Array.isArray(data?.notfoundAgents)) {
+    return [
+      ...(Array.isArray(data?.allAgents) ? data.allAgents : []),
+      ...(Array.isArray(data?.notfoundAgents) ? data.notfoundAgents : []),
+    ];
+  }
   if (data?.schedulers) return data.schedulers;
-  if (data?.data) return Array.isArray(data.data) ? data.data : [];
+  if (data?.data) return Array.isArray(data.data) ? data.data : normalizeSchedulers(data.data);
   return [];
 };
 

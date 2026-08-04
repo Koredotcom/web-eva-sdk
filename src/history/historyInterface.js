@@ -1,6 +1,7 @@
 import _, { cloneDeep } from "lodash";
 import { bookMarkChatThread, deleteHistory, getBookMarkedChatThreads, updateHistory } from "../redux/actions/global.action";
-import { setAllHistory, setBookMarkedChatThreads } from "../redux/globalSlice";
+import { setAllHistory, setBookMarkedChatThreads, clearThreadCompletionIndicator, removeThreadState } from "../redux/globalSlice";
+import { isTempThreadKey } from "../chat/threadRegistry";
 import store from "../redux/store";
 import LoadMoreHistoryData from "./LoadMoreHistoryData";
 import SearchHistoryData, { ClearSearchHistoryData, LoadMoreSearchHistoryData } from "./searchHistoryData";
@@ -20,7 +21,74 @@ const HistoryInterface = (props) => {
             if (state.historyRes.status !== 'loading' && callback) {
                 let _history = cloneDeep(state.AllHistory)
                 _history.data = _.orderBy(_history.data, 'createdOn', 'desc')
-                callback(_history, state.historyRes, state.bookMarkedChatThreads, state.historySearch);
+                /*
+                Background-thread indicators: decorate every board row with its
+                runtime state so the client can render a spinner (isGenerating)
+                or a red dot (hasUnreadAnswer).
+
+                A brand-new chat still on screen (active, not yet showInHistory)
+                stays plain — its loader lives in the chat panel. Once the row
+                has been backgrounded into history, keep the spinner/red-dot
+                even if the user reopens that thread.
+                */
+                const threadRuntimeState = state.threadRuntimeState || {}
+                const activeThreadKey = state.activeThreadKey
+                _history.data = _history.data?.map(item => {
+                    const runtime = threadRuntimeState[item?.id]
+                    const hideIndicators = item?.id === activeThreadKey && !runtime?.showInHistory
+                    const effectiveRuntime = hideIndicators ? null : runtime
+                    return {
+                        ...item,
+                        isGenerating: !!effectiveRuntime?.isGenerating,
+                        hasUnreadAnswer: !effectiveRuntime?.isGenerating && !!effectiveRuntime?.hasCompletedInBackground
+                    }
+                })
+                /*
+                Optimistic rows: a background thread the server hasn't put in
+                AllHistory yet. Two cases — a boardless new chat (temp
+                `#`-prefixed key, no board exists), and the window right after
+                temp→real migration before the fetchHistory(limit:1) response
+                lands. Both are merged at the top so the row never flickers out.
+
+                A brand-new active thread is NOT listed until the user leaves it
+                (New Chat / open another board stamps showInHistory). Once that
+                flag is set, reopening the same thread must keep the row — so
+                activeThreadKey alone is not enough to hide it.
+                */
+                const existingIds = new Set((_history.data || []).map(item => item?.id))
+                const optimisticRows = Object.keys(threadRuntimeState)
+                    .filter(key => {
+                        if (existingIds.has(key)) return false
+                        const runtime = threadRuntimeState[key]
+                        /*only surface threads with something to show — a settled
+                        + read thread absent from the loaded pages is not a row*/
+                        if (!runtime?.isGenerating && !runtime?.hasCompletedInBackground) return false
+                        /*hide while still the original on-screen chat; keep once
+                        it has been backgrounded into history (even if reopened)*/
+                        if (key === activeThreadKey && !runtime?.showInHistory) return false
+                        return true
+                    })
+                    .map(key => {
+                        const runtime = threadRuntimeState[key]
+                        return {
+                            id: key,
+                            name: runtime?.title,
+                            title: runtime?.title,
+                            createdOn: runtime?.createdOn,
+                            isGenerating: !!runtime?.isGenerating,
+                            hasUnreadAnswer: !runtime?.isGenerating && !!runtime?.hasCompletedInBackground,
+                            isTemp: isTempThreadKey(key)
+                        }
+                    })
+                    .sort((a, b) => (b.createdOn || 0) - (a.createdOn || 0))
+                if (optimisticRows.length > 0) {
+                    _history.data = [...optimisticRows, ...(_history.data || [])]
+                }
+                /*
+                5th arg: the raw runtime map, for clients that want the
+                low-level state (activeReqIds, lastUpdatedAt, ...) directly.
+                */
+                callback(_history, state.historyRes, state.bookMarkedChatThreads, state.historySearch, threadRuntimeState);
             }
         });
 
@@ -29,6 +97,14 @@ const HistoryInterface = (props) => {
             unsubscribe();
         };
     };
+
+    /**
+     * Clears the red-dot (unread background answer) indicator for a thread.
+     * Called automatically when the thread is opened via JoinChatThread.
+     */
+    const markThreadAsRead = (boardId) => {
+        store.dispatch(clearThreadCompletionIndicator(boardId))
+    }
 
     const deleteHistoryBoard = async (arg) => {
         const response = await store.dispatch(deleteHistory({ boardId: arg?.id }))
@@ -39,6 +115,8 @@ const HistoryInterface = (props) => {
               };
               
               store.dispatch(setAllHistory(newHistory));      
+              /*drop any cached partition/runtime state for the deleted board*/
+              store.dispatch(removeThreadState(response?.meta?.arg?.boardId));
         }
     }
 
@@ -203,6 +281,7 @@ const HistoryInterface = (props) => {
         loadMoreSearchHistory,
         clearHistorySearch,
         getHistoryItemPreview,
+        markThreadAsRead,
     }
 }
 
