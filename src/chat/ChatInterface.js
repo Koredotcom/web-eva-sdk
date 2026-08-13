@@ -206,6 +206,9 @@ const ChatInterface = (props) => {
                 && prev.quickActions === next.quickActions;
             prev = next;
             if (unchanged) return;
+            if (state?.enableDebugging) {
+                console.log("Received data from chat API:", next.questions, next.advanceSearchRes, next.chatHistoryMoreAvailable, next.errorState, next.quickActions);
+            }
             callback(next.questions, next.advanceSearchRes, next.chatHistoryMoreAvailable, next.errorState, next.quickActions);
         });
 
