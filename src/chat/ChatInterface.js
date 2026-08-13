@@ -95,75 +95,78 @@ export const notifyAttachmentChipClick = (data) => {
 };
 
 /*
-Diagnostic support for `subscribe`. `store.subscribe` notifies on every
-dispatched action regardless of whether anything the subscriber reads moved,
-so these helpers classify each of the five emitted values per notification to
-show whether a trigger carried real data. Deep comparison is only affordable
-because every call site is gated on `enableDebugging`.
+Diagnostic support for `subscribe`, kept for future investigation of how often
+the subscriber is notified and why. `store.subscribe` notifies on every
+dispatched action regardless of whether anything the subscriber reads moved, so
+these helpers classify each of the five emitted values per notification to show
+whether a trigger carried real data. Uncomment this block together with the
+call inside `subscribe` and the `__evaLastAction` line in the logger middleware.
+Deep comparison is only affordable because the call site is gated on
+`enableDebugging`; it must never run in a client build.
 */
-const SUBSCRIBED_KEYS = ['questions', 'advanceSearchRes', 'chatHistoryMoreAvailable', 'errorState', 'quickActions'];
-
-/** 'unchanged' | 'sameValueNewRef' (identity changed, content did not) | 'changed'. */
-const classifyChange = (prev, next) => {
-    if (prev === next) return 'unchanged';
-    return isEqual(prev, next) ? 'sameValueNewRef' : 'changed';
-};
-
-/** Names of the top-level fields that differ between two objects. */
-const changedFields = (a, b) => {
-    const keys = new Set([...Object.keys(a || {}), ...Object.keys(b || {})]);
-    const out = [];
-    keys.forEach((k) => {
-        if (!isEqual(a?.[k], b?.[k])) out.push(k);
-    });
-    return out;
-};
-
-/** Which question ids were added/removed/modified, and which fields moved on each. */
-const diffQuestionMaps = (prev, next) => {
-    const p = prev || {};
-    const n = next || {};
-    return {
-        added: Object.keys(n).filter((k) => !(k in p)),
-        removed: Object.keys(p).filter((k) => !(k in n)),
-        modified: Object.keys(n)
-            .filter((k) => k in p && !isEqual(p[k], n[k]))
-            .map((k) => ({ id: k, fields: changedFields(p[k], n[k]) }))
-    };
-};
-
-const reportSubscriberTrigger = (triggerCount, prev, next) => {
-    const action = globalThis.__evaLastAction || 'unknown';
-
-    if (!prev) {
-        console.log(`[EVA-SDK subscribe] #${triggerCount} by "${action}" — initial snapshot, nothing to compare against`);
-        return;
-    }
-
-    const statuses = {};
-    SUBSCRIBED_KEYS.forEach((k) => {
-        statuses[k] = classifyChange(prev[k], next[k]);
-    });
-
-    const moved = SUBSCRIBED_KEYS.filter((k) => statuses[k] !== 'unchanged');
-    if (moved.length === 0) {
-        console.log(`[EVA-SDK subscribe] #${triggerCount} by "${action}" — NO-OP: none of the 5 subscribed values changed`);
-        return;
-    }
-
-    const realChanges = moved.filter((k) => statuses[k] === 'changed');
-    const details = { action, statuses };
-    if (statuses.questions === 'changed') {
-        details.questionsDiff = diffQuestionMaps(prev.questions, next.questions);
-    }
-    const verdict = realChanges.length === 0
-        ? 'NO-OP: new object identity but identical content'
-        : `changed: ${realChanges.join(', ')}`;
-    console.log(
-        `[EVA-SDK subscribe] #${triggerCount} by "${action}" — ${verdict} | ${moved.map((k) => `${k}=${statuses[k]}`).join(', ')}`,
-        details
-    );
-};
+// const SUBSCRIBED_KEYS = ['questions', 'advanceSearchRes', 'chatHistoryMoreAvailable', 'errorState', 'quickActions'];
+//
+// /** 'unchanged' | 'sameValueNewRef' (identity changed, content did not) | 'changed'. */
+// const classifyChange = (prev, next) => {
+//     if (prev === next) return 'unchanged';
+//     return isEqual(prev, next) ? 'sameValueNewRef' : 'changed';
+// };
+//
+// /** Names of the top-level fields that differ between two objects. */
+// const changedFields = (a, b) => {
+//     const keys = new Set([...Object.keys(a || {}), ...Object.keys(b || {})]);
+//     const out = [];
+//     keys.forEach((k) => {
+//         if (!isEqual(a?.[k], b?.[k])) out.push(k);
+//     });
+//     return out;
+// };
+//
+// /** Which question ids were added/removed/modified, and which fields moved on each. */
+// const diffQuestionMaps = (prev, next) => {
+//     const p = prev || {};
+//     const n = next || {};
+//     return {
+//         added: Object.keys(n).filter((k) => !(k in p)),
+//         removed: Object.keys(p).filter((k) => !(k in n)),
+//         modified: Object.keys(n)
+//             .filter((k) => k in p && !isEqual(p[k], n[k]))
+//             .map((k) => ({ id: k, fields: changedFields(p[k], n[k]) }))
+//     };
+// };
+//
+// const reportSubscriberTrigger = (triggerCount, prev, next) => {
+//     const action = globalThis.__evaLastAction || 'unknown';
+//
+//     if (!prev) {
+//         console.log(`[EVA-SDK subscribe] #${triggerCount} by "${action}" — initial snapshot, nothing to compare against`);
+//         return;
+//     }
+//
+//     const statuses = {};
+//     SUBSCRIBED_KEYS.forEach((k) => {
+//         statuses[k] = classifyChange(prev[k], next[k]);
+//     });
+//
+//     const moved = SUBSCRIBED_KEYS.filter((k) => statuses[k] !== 'unchanged');
+//     if (moved.length === 0) {
+//         console.log(`[EVA-SDK subscribe] #${triggerCount} by "${action}" — NO-OP: none of the 5 subscribed values changed`);
+//         return;
+//     }
+//
+//     const realChanges = moved.filter((k) => statuses[k] === 'changed');
+//     const details = { action, statuses };
+//     if (statuses.questions === 'changed') {
+//         details.questionsDiff = diffQuestionMaps(prev.questions, next.questions);
+//     }
+//     const verdict = realChanges.length === 0
+//         ? 'NO-OP: new object identity but identical content'
+//         : `changed: ${realChanges.join(', ')}`;
+//     console.log(
+//         `[EVA-SDK subscribe] #${triggerCount} by "${action}" — ${verdict} | ${moved.map((k) => `${k}=${statuses[k]}`).join(', ')}`,
+//         details
+//     );
+// };
 
 const ChatInterface = (props) => {
     let state = store.getState().global, input = '', resIndexRef = 0;
@@ -181,7 +184,7 @@ const ChatInterface = (props) => {
         cost does not grow with the number of questions in the thread.
         */
         let prev = null;
-        let triggerCount = 0;
+        // let triggerCount = 0;
         const unsubscribe = store.subscribe(() => {
             state = store.getState().global;
             const next = {
@@ -191,10 +194,10 @@ const ChatInterface = (props) => {
                 errorState: state.errorState,
                 quickActions: state.quickActions
             };
-            if (state?.enableDebugging) {
-                triggerCount += 1;
-                reportSubscriberTrigger(triggerCount, prev, next);
-            }
+            // if (state?.enableDebugging) {
+            //     triggerCount += 1;
+            //     reportSubscriberTrigger(triggerCount, prev, next);
+            // }
             const unchanged = !!prev
                 && prev.questions === next.questions
                 && prev.advanceSearchRes === next.advanceSearchRes
