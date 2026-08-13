@@ -7,7 +7,7 @@ import store from "../redux/store";
 import { v4 as uuid } from 'uuid';
 import { constructQuestionInitial, constructQuestionPostCall } from "./chat-utils";
 import { checkHistoryAccessed, generateShortUUID, getCidByMessageId, getCidByReqId } from "../utils/helpers";
-import { cloneDeep, isEmpty } from "lodash";
+import { cloneDeep, isEmpty, isEqual } from "lodash";
 import BotConversation from "./botAgent/getBotConversation";
 import { sessionItemHandler } from "../Attachments/createContext";
 
@@ -94,19 +94,119 @@ export const notifyAttachmentChipClick = (data) => {
     });
 };
 
+/*
+Diagnostic support for `subscribe`, kept for future investigation of how often
+the subscriber is notified and why. `store.subscribe` notifies on every
+dispatched action regardless of whether anything the subscriber reads moved, so
+these helpers classify each of the five emitted values per notification to show
+whether a trigger carried real data. Uncomment this block together with the
+call inside `subscribe` and the `__evaLastAction` line in the logger middleware.
+Deep comparison is only affordable because the call site is gated on
+`enableDebugging`; it must never run in a client build.
+*/
+// const SUBSCRIBED_KEYS = ['questions', 'advanceSearchRes', 'chatHistoryMoreAvailable', 'errorState', 'quickActions'];
+//
+// /** 'unchanged' | 'sameValueNewRef' (identity changed, content did not) | 'changed'. */
+// const classifyChange = (prev, next) => {
+//     if (prev === next) return 'unchanged';
+//     return isEqual(prev, next) ? 'sameValueNewRef' : 'changed';
+// };
+//
+// /** Names of the top-level fields that differ between two objects. */
+// const changedFields = (a, b) => {
+//     const keys = new Set([...Object.keys(a || {}), ...Object.keys(b || {})]);
+//     const out = [];
+//     keys.forEach((k) => {
+//         if (!isEqual(a?.[k], b?.[k])) out.push(k);
+//     });
+//     return out;
+// };
+//
+// /** Which question ids were added/removed/modified, and which fields moved on each. */
+// const diffQuestionMaps = (prev, next) => {
+//     const p = prev || {};
+//     const n = next || {};
+//     return {
+//         added: Object.keys(n).filter((k) => !(k in p)),
+//         removed: Object.keys(p).filter((k) => !(k in n)),
+//         modified: Object.keys(n)
+//             .filter((k) => k in p && !isEqual(p[k], n[k]))
+//             .map((k) => ({ id: k, fields: changedFields(p[k], n[k]) }))
+//     };
+// };
+//
+// const reportSubscriberTrigger = (triggerCount, prev, next) => {
+//     const action = globalThis.__evaLastAction || 'unknown';
+//
+//     if (!prev) {
+//         console.log(`[EVA-SDK subscribe] #${triggerCount} by "${action}" — initial snapshot, nothing to compare against`);
+//         return;
+//     }
+//
+//     const statuses = {};
+//     SUBSCRIBED_KEYS.forEach((k) => {
+//         statuses[k] = classifyChange(prev[k], next[k]);
+//     });
+//
+//     const moved = SUBSCRIBED_KEYS.filter((k) => statuses[k] !== 'unchanged');
+//     if (moved.length === 0) {
+//         console.log(`[EVA-SDK subscribe] #${triggerCount} by "${action}" — NO-OP: none of the 5 subscribed values changed`);
+//         return;
+//     }
+//
+//     const realChanges = moved.filter((k) => statuses[k] === 'changed');
+//     const details = { action, statuses };
+//     if (statuses.questions === 'changed') {
+//         details.questionsDiff = diffQuestionMaps(prev.questions, next.questions);
+//     }
+//     const verdict = realChanges.length === 0
+//         ? 'NO-OP: new object identity but identical content'
+//         : `changed: ${realChanges.join(', ')}`;
+//     console.log(
+//         `[EVA-SDK subscribe] #${triggerCount} by "${action}" — ${verdict} | ${moved.map((k) => `${k}=${statuses[k]}`).join(', ')}`,
+//         details
+//     );
+// };
+
 const ChatInterface = (props) => {
     let state = store.getState().global, input = '', resIndexRef = 0;
 
     // Subscribe to store updates
     const subscribe = (cb) => {
         let callback = cb;
+        /*
+        `store.subscribe` notifies on every dispatched action, not on state
+        change, so without this the callback also runs for history,
+        notifications, presence and thread bookkeeping. Reference equality is a
+        sound test for "did a reducer write this branch": Immer preserves the
+        identity of untouched branches, and every write path here clones before
+        dispatching rather than mutating in place. Deliberately O(1) so the
+        cost does not grow with the number of questions in the thread.
+        */
+        let prev = null;
+        // let triggerCount = 0;
         const unsubscribe = store.subscribe(() => {
             state = store.getState().global;
-            // If callback exists and API call is completed, invoke it
-            // if (state.advanceSearchRes.status !== 'loading' && callback) {
-                callback(state.questions, state.advanceSearchRes, state.chatHistoryMoreAvailable, state.errorState, state.quickActions);
-                // console.log(state.questions, state.advanceSearchRes, state.chatHistoryMoreAvailable)
+            const next = {
+                questions: state.questions,
+                advanceSearchRes: state.advanceSearchRes,
+                chatHistoryMoreAvailable: state.chatHistoryMoreAvailable,
+                errorState: state.errorState,
+                quickActions: state.quickActions
+            };
+            // if (state?.enableDebugging) {
+            //     triggerCount += 1;
+            //     reportSubscriberTrigger(triggerCount, prev, next);
             // }
+            const unchanged = !!prev
+                && prev.questions === next.questions
+                && prev.advanceSearchRes === next.advanceSearchRes
+                && prev.chatHistoryMoreAvailable === next.chatHistoryMoreAvailable
+                && prev.errorState === next.errorState
+                && prev.quickActions === next.quickActions;
+            prev = next;
+            if (unchanged) return;
+            callback(next.questions, next.advanceSearchRes, next.chatHistoryMoreAvailable, next.errorState, next.quickActions);
         });
 
         // Return a function to unsubscribe
@@ -832,6 +932,10 @@ const ChatInterface = (props) => {
       let _questions = cloneDeep(sourceQuestions)
       let reqId = detail?.data?.reqId
       if(isEmpty(_questions[reqId])){
+        return;
+      }
+      /*a settled turn must not be reopened by a late socket event - same guard contentStreaming and agentThoughts apply*/
+      if(['error', 'terminated', 'completed'].includes(_questions[reqId]?.status)){
         return;
       }
       _questions[reqId] = {..._questions[reqId], ...detail?.data?.answerMeta}      
