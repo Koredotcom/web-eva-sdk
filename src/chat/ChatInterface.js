@@ -61,14 +61,33 @@ const buildMultiResponseAnswer = (parent) => {
 };
 
 /**
+ * True when `questionsMap` holds a turn for this reqId. Mirrors the two-step
+ * lookup contentStreaming does: agentic turns are keyed by messageId and carry
+ * the reqId as a field, so a direct key hit alone would miss them.
+ */
+const hasQuestionFor = (questionsMap, eventReqId) => {
+    if (!eventReqId || !questionsMap) return false;
+    if (questionsMap[eventReqId]) return true;
+    return Object.values(questionsMap).some((q) => q?.reqId === eventReqId);
+};
+
+/**
  * Resolve which thread a socket event belongs to and pick the right source
- * question map. Foreground events (owner is the thread on screen, or an
- * unregistered legacy event) keep working against `state.questions` exactly
- * as before; background events read/write that thread's partition only.
+ * question map. Foreground events read/write `state.questions`; background
+ * events read/write that thread's partition only.
+ *
+ * An unregistered reqId is ambiguous — it is either a legacy event that was
+ * never stamped (genuinely foreground) or a request whose ownership
+ * settleThreadRequest already released (owned by whichever thread ran it).
+ * Absence of an owner is therefore not enough to claim the foreground; require
+ * the visible map to actually hold the turn. Orphans fall through to an empty
+ * source map, which every caller already guards against.
  */
 const resolveStreamTarget = (globalState, eventReqId) => {
     const ownerThreadKey = resolveRequestThread(eventReqId);
-    const isForeground = !ownerThreadKey || ownerThreadKey === globalState.activeThreadKey;
+    const isForeground = ownerThreadKey
+        ? ownerThreadKey === globalState.activeThreadKey
+        : hasQuestionFor(globalState.questions, eventReqId);
     const sourceQuestions = isForeground
         ? globalState.questions
         : (globalState.questionsByBoard?.[ownerThreadKey] || {});
@@ -550,6 +569,18 @@ const ChatInterface = (props) => {
         if(question){
           /*as we have found a match in agentic flow, so its messageId is the one we should target as questions object for agenticFlow is architected using messageId */
           reqId = question?.id || question?._id
+        } else {
+          /*
+          Last resort: no turn in the routed map owns this reqId. resolveStreamTarget
+          already keeps orphaned chunks (one that lands after settleThreadRequest
+          released its reqId) away from the visible chat, so reaching here means the
+          map is genuinely missing the turn. Writing would corrupt whichever thread
+          the map belongs to.
+          */
+          if(state?.enableDebugging){
+            console.warn("[EVA-SDK] dropping stream chunk with no matching question", detail?.data?.reqId)
+          }
+          return;
         }
       }
 
@@ -630,7 +661,9 @@ const ChatInterface = (props) => {
         question.status = detail?.data?.status
         const questions = cloneDeep(sourceQuestions)
         questions[reqId] = question
-        console.log(`apiStatus of the question ${reqId} is ${question?.apiSuccess}`)
+        if(state?.enableDebugging){
+          console.log(`apiStatus of the question ${reqId} is ${question?.apiSuccess}`)
+        }
         writeStreamQuestions(isForeground, ownerThreadKey, questions)
 
         resIndexRef = 0
