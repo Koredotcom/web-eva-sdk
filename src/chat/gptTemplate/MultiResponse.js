@@ -104,10 +104,11 @@ const MultiResponse = () => {
             _questions[reqId] = currentQuestion;
             store.dispatch(updateChatData(_questions));
             
-            
+            if(defaultTemplate){
             setTimeout(() => {
                 gptFormFunctionality(_formData, currentQuestion);
             }, 100);
+        }
         }
     }
 
