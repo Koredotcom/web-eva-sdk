@@ -199,13 +199,47 @@ const JoinChatThread = async (props) => {
         store.dispatch(setCurrentQuestion(currentQuestion))
         store.dispatch(setChatHistoryMoreAvailable(moreAvailable))
         store.dispatch(updateChatData(_questions))
-        /*fetch the latest question from the _questions and put it in the context */
-        const  {messageId, sources,...contextFromHistory} = Object.values(_questions)?.[0]?.context;        
-        /*need to remove messageId from the contextFromHistory */
-        if(contextFromHistory?.agentType === 'aAAgent'){
-            store.dispatch(setSelectedContext({data:{...contextFromHistory, followUpContext: true}}))   
+
+        /*
+        Session restore (mirrors Kora-React getChatHistoryPaginationData.js >
+        afterApiCallSuccess): derive the thread's session from the most recent
+        question that carries a context, so follow-ups asked from history send
+        it in the payload. Skipped on pagination — older pages must not
+        overwrite the session derived from the newest message.
+        */
+        if (!props?.pagination) {
+            const latestWithContext = [...sortedQuestions].reverse()
+                .find(q => q?.context && Object.keys(q.context).length > 0);
+            /*messageId is row metadata stamped above — not part of the session context */
+            const { messageId, sources: contextSources, ...contextFromHistory } = latestWithContext?.context || {};
+            /*
+            History rows carry `sources` at the row level (sibling of `context`),
+            not inside it — same as Kora-React's `lastQuestion.sources`.
+            context.sources is kept as a fallback for older rows.
+            */
+            const sources = latestWithContext?.sources?.length ? latestWithContext.sources : contextSources;
+
+            if (contextFromHistory?.agentType === 'aAAgent') {
+                store.dispatch(setSelectedContext({ data: { ...contextFromHistory, followUpContext: true } }))
+            } else if (sources?.length || contextFromHistory?.sessionId) {
+                /*
+                Agent or attachment session. sources + sessionId is enough for
+                sendMessageAction to rebuild the same payload a live session
+                would: sources[0].source is matched against allAgents /
+                commonAgents for the agent branch, and sessionId drives the
+                attachment branch.
+                */
+                store.dispatch(setSelectedContext({
+                    data: {
+                        sources,
+                        ...(contextFromHistory?.sessionId && { sessionId: contextFromHistory.sessionId })
+                    }
+                }))
+            } else {
+                /*no session on this thread — clear stale context left over from the previously opened thread */
+                store.dispatch(setSelectedContext({}))
+            }
         }
-             
     }
     await afterApiCallSuccess()
     if(state?.enableDebugging){
