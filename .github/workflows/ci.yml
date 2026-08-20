@@ -1,0 +1,45 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - CI_TEST
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Test and build SDK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests with coverage
+        run: npm run test:coverage
+
+      - name: Build distribution
+        run: npm run build
+
+      - name: Verify package output
+        run: npm run package:check
+
+      - name: Upload distribution artifact
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: eva-web-sdk-dist-${{ github.sha }}
+          path: dist/
+          if-no-files-found: error

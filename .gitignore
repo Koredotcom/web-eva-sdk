@@ -5,12 +5,13 @@
 # Web
 #
 dist/
-package-lock.json
 eva-web-sdk-*
+
+# Keep the npm lockfile committed so CI can use reproducible installs.
 
 # node.js
 #
 node_modules/
 npm-debug.log
 yarn-error.log
-
+coverage/
