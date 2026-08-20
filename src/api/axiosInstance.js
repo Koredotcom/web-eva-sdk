@@ -8,7 +8,10 @@ const axiosInstance = axios.create({
   },
 });
 
-const isMobile = () => /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+// Browser globals are unavailable during Node-based tests and server-side
+// imports. Treat those environments as web instead of failing at import time.
+const isMobile = () => typeof navigator !== 'undefined'
+  && /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
 const _analyticsData =
   `channel=${isMobile() ? 'mobile' : 'web'};version=` +
