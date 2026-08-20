@@ -93,5 +93,6 @@ export default [
   createConfig('src/agents/index.js', 'agents', 'Agents'),
   createConfig('src/files/index.js', 'files', 'Files'),
   createConfig('src/Announcements/index.js', 'Announcements', 'Announcements'),
+  createConfig('src/schedulers/index.js', 'schedulers', 'Schedulers'),
   createConfig('src/Authorization/index.js', 'Authorization', 'Authorization')
 ];
