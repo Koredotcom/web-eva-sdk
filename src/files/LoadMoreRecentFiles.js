@@ -1,4 +1,7 @@
-import { cloneDeep } from "lodash";
+/*
+ * Keep the existing load-more contract: `loadmore` remains true for initial
+ * and subsequent pages; the reducer uses `initialData` for replacement mode.
+ */
 import { fetchRecentFiles } from "../redux/actions/global.action";
 import { setAllRecentFiles } from "../redux/globalSlice";
 import store from "../redux/store";
@@ -15,7 +18,12 @@ const LoadMoreRecentFiles = (props) => {
   const state = store.getState();
   store.dispatch(setAllRecentFiles({...state.global.AllrecentFiles, status: 'loading'}))
 
-  store.dispatch(fetchRecentFiles({ loadmore: true, userId: window.sdkConfig.userId, params }))
+  store.dispatch(fetchRecentFiles({
+    loadmore: true,
+    initialData: !!props?.initialData,
+    userId: window.sdkConfig.userId,
+    params,
+  }))
   recentFilesOffset++
 
   const dataStructuring = (el) => {

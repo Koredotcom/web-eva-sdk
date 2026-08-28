@@ -5,6 +5,7 @@
 # Web
 #
 dist/
+coverage/
 package-lock.json
 eva-web-sdk-*
 
@@ -13,4 +14,3 @@ eva-web-sdk-*
 node_modules/
 npm-debug.log
 yarn-error.log
-

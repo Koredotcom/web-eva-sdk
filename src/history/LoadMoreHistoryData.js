@@ -1,4 +1,8 @@
 
+/*
+ * Keep the existing load-more contract: `loadmore` remains true for initial
+ * and subsequent pages; the reducer uses `initialData` for replacement mode.
+ */
 import moment from 'moment';
 import { fetchHistory } from "../redux/actions/global.action";
 import { setAllHistory } from "../redux/globalSlice";
@@ -19,7 +23,11 @@ const LoadMoreHistoryData = async (props) => {
   const state = store.getState();
   store.dispatch(setAllHistory({...state.global.AllHistory, status: 'loading'}))
 
-  store.dispatch(fetchHistory({ loadmore: true, params, initialData: props?.initialData || false }))
+  store.dispatch(fetchHistory({
+    loadmore: true,
+    params,
+    initialData: !!props?.initialData,
+  }))
   historyOffset++
 
   const dataStructuring = (el) => {
