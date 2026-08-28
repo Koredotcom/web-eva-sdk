@@ -1,4 +1,4 @@
-import { createSlice } from '@reduxjs/toolkit';
+import { createSlice, current } from '@reduxjs/toolkit';
 import {
   advanceSearch,
   fetchAgents,
@@ -368,26 +368,33 @@ const globalSlice = createSlice({
       }
     });
     handleAsyncActions(builder, fetchHistory, 'historyRes', (state, action) => {
+      const response = action.payload || {};
+      const incomingBoards = response.data?.boards || response?.boards || [];
+
       if (action?.meta?.arg?.onload) {
         state.history = state.historyRes
         // state.AllHistory = state.historyRes
       }
-      // if(action?.meta?.arg?.loadmore) {
-      let allHistory = cloneDeep(state.AllHistory?.data) || []
-      if (action?.meta?.arg?.initialData) {
-        allHistory = state.historyRes?.data?.boards
-      } else {
-        allHistory = uniqBy(concat(allHistory, state.historyRes?.data?.boards), 'id')
-      }
-      allHistory = allHistory?.map(item => {
-        item = { ...item, bookMarked: item?.pinnedAt > 0 }
-        return item
-      })
-      state.AllHistory.data = allHistory
+
+      /*
+       * This reducer receives an Immer draft. Take a plain snapshot before
+       * pagination; lodash.cloneDeep on the draft array can violate the
+       * Proxy prototype invariant in client applications.
+       */
+      const existingBoards = state.AllHistory?.data
+        ? current(state.AllHistory.data)
+        : [];
+      const allHistory = action?.meta?.arg?.initialData
+        ? incomingBoards
+        : uniqBy([...existingBoards, ...incomingBoards], 'id');
+
+      state.AllHistory.data = allHistory.map(item => ({
+        ...item,
+        bookMarked: item?.pinnedAt > 0,
+      }));
       state.AllHistory.status = state.historyRes.status
       state.AllHistory.error = state.historyRes.error
-      state.AllHistory.hasMore = state.historyRes?.data?.moreAvailable
-      // }
+      state.AllHistory.hasMore = response?.moreAvailable
     });
     handleAsyncActions(builder, searchHistoryConversations, 'historySearchRes', (state, action) => {
       /*accumulating searched results the same way AllHistory does for pagination calls
@@ -412,17 +419,32 @@ const globalSlice = createSlice({
       }
     });
     handleAsyncActions(builder, fetchRecentFiles, 'recentFilesRes', (state, action) => {
+      const response = action.payload || {};
+      const incomingFiles = response?.files || [];
+
       if (action?.meta?.arg?.onload) {
-        state.recentFiles = state.recentFilesRes
-        state.AllrecentFiles = state.recentFilesRes
+        state.recentFiles = {
+          ...state.recentFilesRes,
+          data: { ...response, files: [...incomingFiles] },
+        };
+        state.AllrecentFiles = {
+          ...state.recentFilesRes,
+          data: { ...response, files: [...incomingFiles] },
+        };
       }
       if (action?.meta?.arg?.loadmore) {
-        let AllrecentFiles = cloneDeep(state.AllrecentFiles?.data?.files)
-        AllrecentFiles = uniqBy(concat(AllrecentFiles, state.recentFilesRes?.data?.files), 'id')
-        state.AllrecentFiles.data.files = AllrecentFiles
-        state.AllrecentFiles.data.moreAvailable = action?.payload?.moreAvailable
-        state.AllrecentFiles.status = state.recentFilesRes.status
-        state.AllrecentFiles.error = state.recentFilesRes.error
+        /* Use a plain snapshot instead of cloning an Immer draft array. */
+        const existingFiles = state.AllrecentFiles?.data?.files
+          ? current(state.AllrecentFiles.data.files)
+          : [];
+        state.AllrecentFiles.data.files = uniqBy(
+          [...existingFiles, ...incomingFiles],
+          'id'
+        );
+        state.AllrecentFiles.data.moreAvailable =
+          response.moreAvailable ?? response?.moreAvailable;
+        state.AllrecentFiles.status = state?.recentFilesRes?.status
+        state.AllrecentFiles.error = response?.error
       }
     });
     handleAsyncActions(builder, searchSession, 'selectedContext')
