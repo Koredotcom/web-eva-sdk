@@ -30,8 +30,6 @@ import { cloneDeep, concat, uniqBy } from 'lodash';
 function mergeFeedbackResponseIntoQuestions(state, metaArg, updates) {
   if (!updates || typeof updates !== 'object') return;
   const { cId, messageId } = metaArg || {};
-  const questions = cloneDeep(state.questions);
-
   const applyMerge = (existing) => {
     const merged = { apiSuccess: true, ...existing, ...updates};
     if(!updates?.hasOwnProperty('userFeedback')){
@@ -44,16 +42,21 @@ function mergeFeedbackResponseIntoQuestions(state, metaArg, updates) {
     return merged;
   };
 
-  if (cId && questions[cId]) {
-    questions[cId] = applyMerge(questions[cId]);
+  /*
+   * `state` is an Immer draft inside a reducer. Mutate the matching draft
+   * entry directly instead of passing the draft to lodash.cloneDeep or
+   * assigning into a `current()` snapshot. This avoids Proxy prototype
+   * invariant errors and read-only-property errors for history messages.
+   */
+  if (cId && state.questions[cId]) {
+    state.questions[cId] = applyMerge(state.questions[cId]);
   } else if (messageId) {
-    Object.keys(questions).forEach((key) => {
-      if (questions[key]?.messageId === messageId) {
-        questions[key] = applyMerge(questions[key]);
+    Object.keys(state.questions || {}).forEach((key) => {
+      if (state.questions[key]?.messageId === messageId) {
+        state.questions[key] = applyMerge(state.questions[key]);
       }
     });
   }
-  state.questions = questions;
   syncActiveThreadPartition(state);
 }
 
