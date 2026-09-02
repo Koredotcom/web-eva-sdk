@@ -6,6 +6,7 @@ import { setEnabledDebugging, setAppMetaData, setDisableHistorySectionInChatSect
 import store from "./redux/store";
 import { WebSocketService } from "./socket/socket.service";
 import { initializeSDKRuntime } from "./sdkRuntime";
+import InvokeAgent from "./chat/invokeAgent";
 export const initializeSDK = async (config) => {
 
   if (typeof window !== "undefined" && window.__EVA_SDK_INITIALIZED__) {
@@ -46,7 +47,17 @@ export const initializeSDK = async (config) => {
   // making foundation api call once sdk initialized properly
   store.dispatch(fetchConfigData(config.userId))
   store.dispatch(fetchProfileData(config.userId))
-  store.dispatch(fetchAgents({userId: config.userId}))
+  const agentsResponse = await store.dispatch(fetchAgents({userId: config.userId}))
+  if (agentsResponse?.meta?.requestStatus === 'fulfilled' && config?.agentContext?.id) {
+    const availableAgents = agentsResponse?.payload?.agents || [];
+    const preselectedAgent = availableAgents.find(
+      agent => String(agent?.id) === String(config.agentContext.id)
+    );
+
+    if (preselectedAgent) {
+      InvokeAgent(preselectedAgent);
+    }
+  }
   store.dispatch(fetchHistory({onload: true, params: {limit: initialHistoryLimit}}))
   store.dispatch(fetchRecentFiles({onload: true, userId: config.userId, params: {limit: 10}}))
   store.dispatch(getAllAnnouncements({params: {userId: config.userId}}))

@@ -252,7 +252,7 @@ const createPanel = (titleText) => {
     panel
       ?.querySelector?.(".eva-composebar-area")
       ?.classList?.remove("eva-composebar-area--history-selected");
-    if (state.hideRecentAgents) {
+        if (state.hideRecentAgents) {
       hideRecentAgentsDiv('recent-agents-container');
     } else {
       unHideRecentAgentsDiv('recent-agents-container');
@@ -620,9 +620,6 @@ export const open = () => {
   state.isOpen = true;
   syncPanelState();
   syncHistoryButtonVisibility();
-  if (state.preselectedAgent) {
-    InvokeAgent(state.preselectedAgent);
-  }
 };
 
 export const close = () => {
