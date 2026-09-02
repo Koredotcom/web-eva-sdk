@@ -25,12 +25,10 @@ const getAccessToken = 'bgKlPSpWIdHeyvFEeCTTDYFLgeBzFQaogc6sEVvLNt8HKvvbJG0dgbGt
 // });
 
 authenticateApp({
-  id_token: "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJzYWkudmFuZ2F2ZXRpQGtvcmUuY29tIiwiZmlyc3ROYW1lIjoic2FpIiwibGFzdE5hbWUiOiJzYW50aG9zaCIsImFwcElkIjoiY3MtNGE2MjZhYmEtMWU3ZS01NzQ2LTg0ZjMtYWVjZThkNzFkYTc5IiwiaWF0IjoxNzc2NzU1NTMwMjQ4LCJleHAiOjE3NzY3NTU2NTY5MTl9.PnFek9nZPwA2_SEyRqNE1YsLkKyhw8weD3QG2ihPsU0",
+  id_token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJrYXJ0aGlrLnByYXR1cmlAa29yZS5jb20iLCJmaXJzdE5hbWUiOiJrYXJ0aGlrIiwibGFzdE5hbWUiOiJwcmF0dXJpIiwiYXBwSWQiOiJjcy1hOTY4NTQwMy04NDBkLTU3NGItOGM2Ny1mMjA5YzMyZWFkNDIiLCJpYXQiOjE3ODgyNjcwMDIsImV4cCI6MTgxOTgwMzAwMn0.7lHuvZQkQwxh_zXsZ2jCSIVJI6TfhAQM2QCt72H-y1A",
 }).then((res) => {
   console.log(res);
 });
 
 
-
 ReactDOM.createRoot(document.getElementById('root')).render(<App />)
-

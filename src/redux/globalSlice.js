@@ -1,4 +1,4 @@
-import { createSlice } from '@reduxjs/toolkit';
+import { createSlice, current } from '@reduxjs/toolkit';
 import {
   advanceSearch,
   fetchAgents,
@@ -246,7 +246,7 @@ const globalSlice = createSlice({
         // state.AllHistory = state.historyRes
       }
       // if(action?.meta?.arg?.loadmore) {
-      let allHistory = cloneDeep(state.AllHistory?.data) || []
+      let allHistory = current(state.AllHistory)?.data || []
       if (action?.meta?.arg?.initialData) {
         allHistory = state.historyRes?.data?.boards
       } else {

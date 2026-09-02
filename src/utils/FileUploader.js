@@ -24,7 +24,6 @@ function FileUploader({
     const app = window?.sdkConfig?.api_url || '';
     this.baseUrl = app && app.endsWith('/') ? app : `${app}/`;
     this.CHUNK_SIZE = 2048 * 2048;
-    this.CHUNK_SIZE_INITIAL = 1024 * 1024;
     this.allowedFileTypes = allFileTypes.attachment
     this.filetypes = {
         "audio": allFileTypes.audio,
@@ -143,39 +142,7 @@ function FileUploader({
     }
 
     this._uploadFile = function () {
-        const _self = this;
-        let formData = new FormData();
-        formData.append('file', this.file);
-        formData.append('fileExtension', this.fileInfo.fileType);
-        formData.append('fileType', this.fileInfo.type);
-        formData.append('filename', this.fileInfo.fileName);
-        formData.append('fileContext', this.fileContext);
-        if(resourceId)formData.append("resourceId" ,resourceId)
-        if(resourceType)formData.append("resourceType" ,resourceType)
-        if(rowId)formData.append("rowId" ,rowId);
-        if(tableId)formData.append("tableId" ,tableId);
-        if(scope)formData.append("scope" ,scope);
-
-        if(this.pageId ){
-            formData.append('pageId',this.pageId);
-        }
-        if(this.boardId){
-            formData.append('boardId',this.boardId);
-        }
-        if(this.fileInfo?.height){
-            formData.append('height',this.fileInfo?.height);
-        }
-        if(this.fileInfo?.width){
-            formData.append('width',this.fileInfo?.width);
-        }
-        if (this.fileInfo.isThumbnail) {
-            formData.append('thumbnailUpload', true);
-            const thumbnail = _self.dataURLtoFile(this.fileInfo.thumbnailData, this.fileInfo.name + '_thumb');
-            formData.append('thumbnail', thumbnail);
-        } else {
-            formData.append('thumbnailUpload', false);
-        }
-        
+        return this._initChunkUpload();
         if(_self.fileContext === "store"){
             axios.post(this.baseUrl + "ka/users/" + this.userInfoId + "/store/file", formData, {
                 headers: {
@@ -471,11 +438,7 @@ function FileUploader({
         // if(resourceId){
         //   return  this._uploadFile();
         // }
-        if (this.fileInfo.isChunkUpload || this._v2) { // v2 always upload files in chunk
-            this._initChunkUpload();
-        } else {
-            this._uploadFile();
-        }
+        this._uploadFile();
     };
 
     this._getFileToken = function () {
@@ -630,8 +593,8 @@ function FileUploader({
             };
 
             if (this.allowedFileTypes?.indexOf(this.fileInfo.fileType) !== -1) {
-                this.fileInfo.isChunkUpload = this.fileInfo.fileSize > this.CHUNK_SIZE_INITIAL;
-                this.fileInfo.totalChunks = (this.fileInfo.isChunkUpload) ? (Math.floor(this.fileInfo.fileSize / this.CHUNK_SIZE) + 1) : 1;
+                this.fileInfo.isChunkUpload = true;
+                this.fileInfo.totalChunks = Math.max(1, Math.ceil(this.fileInfo.fileSize / this.CHUNK_SIZE));
                 if (this.filetypes?.audio?.indexOf(this.fileInfo.fileType) !== -1) {
                     this.fileInfo.type = 'audio';
                     this.fileInfo.isThumbnail = false;
@@ -675,4 +638,3 @@ function FileUploader({
 };
 
 export default FileUploader;
-

@@ -18,6 +18,15 @@ const normalizeCopyNewlines = (text) => {
     return s.replace(/\\n/g, "\n");
 };
 
+const normalizeFileIds = (fileIds) => {
+    const ids = Array.isArray(fileIds) ? fileIds : [fileIds];
+    return [...new Set(
+        ids
+            .filter((fileId) => typeof fileId === "string" && fileId.trim())
+            .map((fileId) => fileId.trim())
+    )];
+};
+
 /**
  * Resolve chat content from the Redux store by `messageId` only.
  * For `viewType === 'threadView'`, matches `messageId` against keys of `botConversation` first; otherwise matches `question.messageId`.
@@ -118,7 +127,7 @@ const ChatInterface = (props) => {
 
     }
 
-    const sendMessageAction = async (value) => {
+    const sendMessageAction = async (value, options = {}) => {
       const state = store.getState()?.global
       if (value) {
         const { allAgents, selectedContext, commonAgents, userSelectedLLMModel} = state
@@ -179,6 +188,11 @@ const ChatInterface = (props) => {
             }
           }
         }
+        const fileIds = normalizeFileIds(options?.fileIds);
+        if (fileIds.length > 0) {
+          payload.fileIds = fileIds;
+        }
+
         if(state?.enableDebugging){
           console.log("payload in chat interface", payload)
         }
@@ -573,6 +587,8 @@ const ChatInterface = (props) => {
      * @param {Object} question - The question object containing conversation details
      * @param {Object} conversation - The conversation object containing message details
      * @param {string} input - The user's input message to be sent
+     * @param {Object} [options] - Optional request metadata
+     * @param {string[]} [options.fileIds] - Uploaded file IDs to include in the request payload
      * 
      * @description
      * This function handles two types of message sending:
@@ -581,7 +597,7 @@ const ChatInterface = (props) => {
      * 2. Regular Chat: If not a bot conversation, it uses the standard sendMessageAction
      *    to process the message through the regular chat flow
      */
-    const sendMessage = (input, question) => {
+    const sendMessage = (input, question, options = {}) => {
       // Check if this is a bot conversation
       if(question?.botConversation) {
         // Get the conversation which is in-progress
@@ -598,7 +614,7 @@ const ChatInterface = (props) => {
         BotConversation().submitBotResponse(payload)
       } else {
         // Handle as a regular chat message
-        sendMessageAction(input)
+        return sendMessageAction(input, options)
       }
     }
 

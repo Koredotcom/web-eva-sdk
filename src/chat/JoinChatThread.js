@@ -159,11 +159,16 @@ const JoinChatThread = async (props) => {
         store.dispatch(setCurrentQuestion(currentQuestion))
         store.dispatch(setChatHistoryMoreAvailable(moreAvailable))
         store.dispatch(updateChatData(_questions))
-        /*fetch the latest question from the _questions and put it in the context */
-        const  {messageId, sources,...contextFromHistory} = Object.values(_questions)?.[0]?.context;        
-        /*need to remove messageId from the contextFromHistory */
-        if(contextFromHistory?.agentType === 'aAAgent'){
-            store.dispatch(setSelectedContext({data:{...contextFromHistory, followUpContext: true}}))   
+        /*fetch the latest question from the _questions (sortedQuestions is already cOn asc) and put it in the context */
+        const resolveSessionId = (q) => q?.context?.sessionId ?? q?.sessionId ?? q?.session?.sId;
+        /*scan newest -> oldest for the latest autonomous agent question that has a resolvable session id */
+        const latestAgentQuestion = [...sortedQuestions]
+            .reverse()
+            .find((q) => q?.context?.agentType === 'aAAgent' && Boolean(resolveSessionId(q)));
+        if (latestAgentQuestion) {
+            /*need to remove messageId & sources from the context before seeding selectedContext */
+            const { messageId, sources, ...contextFromHistory } = latestAgentQuestion.context;
+            store.dispatch(setSelectedContext({ data: { ...contextFromHistory, sessionId: resolveSessionId(latestAgentQuestion), followUpContext: true } }))
         }
              
     }

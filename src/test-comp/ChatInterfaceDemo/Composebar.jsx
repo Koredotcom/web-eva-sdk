@@ -5,18 +5,23 @@ import { orderBy } from "lodash";
 
 const Composebar = ({quickActions, chatInterface, input, setInput, messages}) => {
   const fileInputRef = useRef();
+  const pendingFileIdsRef = useRef([]);
   const sortedMessages = useMemo(() => orderBy(Object.values(messages || {}), 'cOn', 'asc'), [messages]);
   const latestQuestion = sortedMessages[sortedMessages.length - 1];
+
+  const handleSendMessage = async () => {
+    if (!input?.trim()) return;
+
+    const fileIds = [...pendingFileIdsRef.current];
+    await chatInterface.current.sendMessage(input, latestQuestion, { fileIds });
+    pendingFileIdsRef.current = [];
+    setInput("");
+  };
 
   const onChange = async (event) => {
 		if (event.keyCode === 13 && !event.shiftKey) {
 			event.preventDefault();
-			const message = Object.values(messages);
-			await chatInterface.current.sendMessage(
-				input,
-				message?.[message?.length - 1]
-			);
-			setInput("");
+			await handleSendMessage();
 		}
 	};
 
@@ -29,10 +34,6 @@ const Composebar = ({quickActions, chatInterface, input, setInput, messages}) =>
     const files = Array.from(event.target.files || []);
     if (files.length === 0) return;
 
-    const canAddToAutonomousAgent =
-      latestQuestion?.context?.agentType === 'aAAgent' &&
-      latestQuestion?.agentContext?.canUploadFile === true;
-
     for (const file of files) {
       const uploadResponse = await UploadFile({
         file,
@@ -42,16 +43,12 @@ const Composebar = ({quickActions, chatInterface, input, setInput, messages}) =>
       });
       console.log("file upload response", uploadResponse);
 
-      if (uploadResponse?.status === "success" && canAddToAutonomousAgent) {
+      if (uploadResponse?.status === "success") {
         const fileId = getUploadedFileId(uploadResponse);
         if (fileId) {
-          const addFileResponse = await chatInterface.current.addFileToAutonomousAgent({
-            fileId,
-            advanceSearchRes: latestQuestion,
-            fileName: file.name,
-            fileExtension: file.name.split('.').pop() || '',
-          });
-          console.log("addFileToAutonomousAgent response", addFileResponse);
+          pendingFileIdsRef.current = [
+            ...new Set([...pendingFileIdsRef.current, fileId]),
+          ];
         }
       }
     }
@@ -63,8 +60,6 @@ const Composebar = ({quickActions, chatInterface, input, setInput, messages}) =>
     console.log('triggered file upload')
     fileInputRef.current?.click();
   };
-
-  const canUploadFile = latestQuestion?.agentContext?.canUploadFile === true;
 
   return (
     <div className="composebar-parent">
@@ -127,7 +122,7 @@ const Composebar = ({quickActions, chatInterface, input, setInput, messages}) =>
         <button
           type="button"
           onClick={() =>
-          chatInterface.current.sendMessage(input, latestQuestion)
+          handleSendMessage()
           }
         >
           Send
