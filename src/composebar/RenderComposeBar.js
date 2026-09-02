@@ -7,6 +7,8 @@ function RenderComposeBar(targetDiv, options = {}) {
         showQuickActions: true,
         showNewButton: true,
         showStopButton: true,
+        showComposeBarPlusButton: true,
+        showAgentBanner: true,
         ...options
     };
 

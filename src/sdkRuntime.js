@@ -1,5 +1,6 @@
 import { renderParentComponent } from "./master-component/ParentComponent";
 import { ChatInterface } from "./chat";
+import InvokeAgent from "./chat/invokeAgent";
 
 let initialized = false;
 let parentRendered = false;
@@ -55,6 +56,8 @@ export const setAgentContext = (agent) => {
   const instance = getChatInterfaceInstance();
   return instance.setAgentContext(agent);
 };
+
+export const invokeAgent = (agent) => InvokeAgent(agent);
 
 export const destroySDKRuntime = () => {
   chatInterfaceInstance = null;

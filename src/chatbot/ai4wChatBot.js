@@ -8,6 +8,7 @@ import BotConversation from "../chat/botAgent/getBotConversation";
 import store from "../redux/store";
 import { setAutonomousAsyncPending } from "../redux/globalSlice";
 import { cleanupAllAuthChallenges } from "../templateRenderer/functionality/agent-auth-challenge";
+import InvokeAgent from "../chat/invokeAgent";
 
 const DEFAULT_CONTAINER_ID = "eva-sdk-chatbot-container";
 const DEFAULT_TITLE = "Eva Assistant";
@@ -619,6 +620,9 @@ export const open = () => {
   state.isOpen = true;
   syncPanelState();
   syncHistoryButtonVisibility();
+  if (state.preselectedAgent) {
+    InvokeAgent(state.preselectedAgent);
+  }
 };
 
 export const close = () => {

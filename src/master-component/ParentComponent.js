@@ -367,7 +367,10 @@ export const renderParentComponent = (divId) => {
     parentComponentDiv.innerHTML = constructParentComponent()    
     
     // Initialize ComposeBar and RecentAgents
-    RenderComposeBar(document.getElementById('compose-bar-container'))
+    RenderComposeBar(document.getElementById('compose-bar-container'), {
+        showComposeBarPlusButton: window?.sdkConfig?.showComposeBarPlusButton !== false,
+        showAgentBanner: window?.sdkConfig?.showAgentBanner !== false,
+    })
     initScrollArrow()
     setTimeout(() => {
         renderRecentAgents('recent-agents-container')

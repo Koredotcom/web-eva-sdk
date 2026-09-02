@@ -734,6 +734,26 @@ const ChatInterface = (props) => {
     const setAgentContext = (agent) => {
       const agentData = agent?.data || agent;
       const agentId = agentData?.id || agentData?.docId || agentData?.source;
+
+      const applyAgentContext = () => {
+        const agentsState = store.getState().global?.allAgents;
+        const availableAgents = agentsState?.data?.agents;
+
+        // The user-scoped agents response is authoritative. Do not set a
+        // context until it is available, and never set one that is not in it.
+        if (!Array.isArray(availableAgents)) {
+          return false;
+        }
+
+        const authorizedAgent = availableAgents.find((availableAgent) => (
+          String(availableAgent?.id) === String(agentId)
+        ));
+
+        if (!authorizedAgent) {
+          console.warn(`Agent context was not set because the user does not have access to agent: ${agentId}`);
+          return true;
+        }
+
       const agentName = agentData?.name || agentData?.title || '';
       const agentType = agentData?.agentType || 'commonAgent';
       const sourceType = agentData?.type || agentData?.sourceType || 'searchAgent';
@@ -756,6 +776,23 @@ const ChatInterface = (props) => {
 			invokeAgent: true,
 			type: agentType,
       })
+
+        return true;
+      };
+
+      if (applyAgentContext()) {
+        return;
+      }
+
+      // init() fetches agents asynchronously. Retry once the user-scoped
+      // response is committed to Redux, then unsubscribe to avoid leaks.
+      const unsubscribe = store.subscribe(() => {
+        const agentsState = store.getState().global?.allAgents;
+        if (Array.isArray(agentsState?.data?.agents) || agentsState?.status === 'rejected') {
+          unsubscribe();
+          applyAgentContext();
+        }
+      });
     }
 
     const resolveAgent = async(agentIdArray) => {

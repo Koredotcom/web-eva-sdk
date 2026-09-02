@@ -18,7 +18,11 @@ const NewChat = (agentContext=null) => {
     store.dispatch(setQuickActions([]))
 
     if (agentContext) {
-        ChatInterface().setAgentContext(agentContext)
+        // Let the reset subscribers finish hiding the previous banner before
+        // restoring the default agent context.
+        setTimeout(() => {
+            ChatInterface().setAgentContext(agentContext)
+        }, 150)
     }
 
 }

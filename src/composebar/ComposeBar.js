@@ -25,6 +25,8 @@ class ComposeBar {
             showStopButton: true,
             showCommonAgents: true,
             showAgentsDialog: true,
+            showComposeBarPlusButton: true,
+            showAgentBanner: true,
             ...options
         };
 
@@ -175,9 +177,17 @@ class ComposeBar {
                         // }
                     } else {
                         /*clean up block */
-                        const ifBotHeaderPresent = this.container.querySelector('.composebar-bot-input-wrapper');
-                        if (ifBotHeaderPresent) {
-                            hideElementImmediately(ifBotHeaderPresent, { enableLogging: true });
+                        // New Chat restores the selected agent immediately after
+                        // clearing questions. Pending callbacks from the previous
+                        // conversation may still enter this branch, so do not hide
+                        // the agent banner when a context has already been restored.
+                        const selectedContext = store.getState()?.global?.selectedContext?.data;
+                        const hasSelectedContext = selectedContext?.sources?.length > 0;
+                        if (!hasSelectedContext) {
+                            const ifBotHeaderPresent = this.container.querySelector('.composebar-bot-input-wrapper');
+                            if (ifBotHeaderPresent) {
+                                hideElementImmediately(ifBotHeaderPresent, { enableLogging: true });
+                            }
                         }
                         setTimeout(() => {
                             this.placeholder = 'Ask or Search Anything...';
@@ -1452,7 +1462,7 @@ class ComposeBar {
                     </div>` : ''}
 
                     <div class="eva-composebar-area">
-                        <div class="composebar-bot-input-wrapper" style="display: none;">
+                        <div class="composebar-bot-input-wrapper${this.options.showAgentBanner ? '' : ' composebar-agent-banner-hidden'}" style="display: none;">
                             <div class="bot-input-header">
                                 <div class="bot-input-header-left">
                                     <div class="bot-input-header-left-icon">                                        
@@ -1482,12 +1492,12 @@ class ComposeBar {
                             </div>         
                             <div class="eva-attachments-container" data-eva-attachments></div>
                             <div class='left-actions'>
-                                <div class='common-agents-container'>
+                                ${this.options.showComposeBarPlusButton ? `<div class='common-agents-container'>
                                     <button class="agents-action-item" data-eva-agents-action data-eva-open-dialog>
                                         ${this.isMSEnv ? `<img src="images/MS-Icons/flash-ms.svg" alt="Agents" width="18" height="18" />` : PlusIcon({ size: 14, color: "#0F0F0F" })}
                                         <!-- ${this.isMSEnv ? CheveronDownIcon({ size: 14, color: "#1773b0" }) : CheveronDownIcon({ size: 14, color: "#0F0F0F" })} -->
                                     </button>
-                                </div>
+                                </div>` : ''}
                                 <div class="composebar-context-container" style="display: none;"></div>
                             </div>
                             <div class="eva-compose-textarea-container">
