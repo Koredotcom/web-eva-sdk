@@ -16,6 +16,9 @@ const state = {
   initialized: false,
   isOpen: false,
   isHistoryOpen: false,
+  hideRecentAgents: false,
+  showHistory: true,
+  preselectedAgent: null,
   sourcesDrawerObserver: null,
   composebarObserver: null,
   elements: {
@@ -248,14 +251,12 @@ const createPanel = (titleText) => {
     panel
       ?.querySelector?.(".eva-composebar-area")
       ?.classList?.remove("eva-composebar-area--history-selected");
-    unHideRecentAgentsDiv('recent-agents-container');
-    NewChat();
-    /* Hide agent banner after Redux subscribers run, so ComposeBar does not re-show it */
-    const hideAgentBanner = () => {
-      const agentBanner = document.querySelector('.composebar-bot-input-wrapper');
-      if (agentBanner) agentBanner.style.display = "none";
-    };
-    setTimeout(hideAgentBanner, 0);
+    if (state.hideRecentAgents) {
+      hideRecentAgentsDiv('recent-agents-container');
+    } else {
+      unHideRecentAgentsDiv('recent-agents-container');
+    }
+    NewChat(state.preselectedAgent);
   });
 
   const chatHistoryButton = document.createElement("button");
@@ -547,6 +548,13 @@ const syncHistoryState = () => {
   }
 };
 
+const syncHistoryButtonVisibility = () => {
+  const { chatHistoryButton } = state.elements;
+  if (chatHistoryButton) {
+    chatHistoryButton.style.display = state.showHistory ? "" : "none";
+  }
+};
+
 export const init = (config = {}) => {
   if (!ensureDomAvailable()) {
     return null;
@@ -555,6 +563,9 @@ export const init = (config = {}) => {
   ensureMacOSBodyClass();
 
   const containerId = config?.containerId || DEFAULT_CONTAINER_ID;
+  state.hideRecentAgents = config?.hideRecentAgents === true;
+  state.showHistory = config?.showHistory !== false && config?.disableHistorySectionInChatSection !== true;
+  state.preselectedAgent = config?.agentContext || null;
   const sdkAlreadyInitialized =
     typeof window !== "undefined" && window.__EVA_SDK_INITIALIZED__;
 
@@ -566,6 +577,9 @@ export const init = (config = {}) => {
     ...config,
     containerId,
   });
+  if (state.hideRecentAgents) {
+    hideRecentAgentsDiv("recent-agents-container");
+  }
   if (sdkAlreadyInitialized) {
     initializeSDKRuntime({ containerId });
   }
@@ -576,6 +590,7 @@ export const init = (config = {}) => {
 
   syncPanelState();
   syncHistoryState();
+  syncHistoryButtonVisibility();
   state.initialized = true;
 
 
@@ -603,10 +618,7 @@ export const open = () => {
   syncQuestionsContainerClass();
   state.isOpen = true;
   syncPanelState();
-
-  if (store.getState().global.disableHistorySectionInChatSection) {
-    state.elements.chatHistoryButton.style.display = "none";
-  }
+  syncHistoryButtonVisibility();
 };
 
 export const close = () => {

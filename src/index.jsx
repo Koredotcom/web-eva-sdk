@@ -74,7 +74,7 @@ if (typeof document !== "undefined" && typeof window !== "undefined") {
 
 // Re-export all modules from nested directories
 import { initializeSDK } from './config';
-import { configureChatInterfaceElements, destroySDKRuntime, startNewChat } from './sdkRuntime';
+import { configureChatInterfaceElements, destroySDKRuntime, setAgentContext, startNewChat } from './sdkRuntime';
 import { chatBot } from './chatbot';
 export { initializeSDK };
 export * from './components';
@@ -115,6 +115,7 @@ if (typeof window !== 'undefined') {
     },
     chatInterface: {
       configure: (options) => configureChatInterfaceElements(options),
+      setAgentContext: (agent) => setAgentContext(agent),
       startNewChat: () => startNewChat(),
     },
     chatBot,

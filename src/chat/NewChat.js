@@ -2,8 +2,9 @@ import { abortAdvanceSearch } from "../redux/actions/global.action"
 import { setActiveBoardId, setGptUploadedFiles, updateChatData, setSelectedContext, setCurrentQuestion, setErrorState, setQuickActions, setAutonomousAsyncPending } from "../redux/globalSlice"
 import store from "../redux/store"
 import { cleanupAllAuthChallenges } from "../templateRenderer/functionality/agent-auth-challenge"
+import ChatInterface from "./ChatInterface"
 
-const NewChat = () => {    
+const NewChat = (agentContext=null) => {    
     abortAdvanceSearch()
     cleanupAllAuthChallenges()
     store.dispatch(setAutonomousAsyncPending({}))
@@ -15,6 +16,10 @@ const NewChat = () => {
     store.dispatch(setCurrentQuestion({}))
     store.dispatch(setErrorState([]))
     store.dispatch(setQuickActions([]))
+
+    if (agentContext) {
+        ChatInterface().setAgentContext(agentContext)
+    }
 
 }
 

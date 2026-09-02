@@ -50,7 +50,9 @@ export const initializeSDK = async (config) => {
   store.dispatch(fetchHistory({onload: true, params: {limit: initialHistoryLimit}}))
   store.dispatch(fetchRecentFiles({onload: true, userId: config.userId, params: {limit: 10}}))
   store.dispatch(getAllAnnouncements({params: {userId: config.userId}}))
-  store.dispatch(setDisableHistorySectionInChatSection(config?.disableHistorySectionInChatSection || false))
+  store.dispatch(setDisableHistorySectionInChatSection(
+    config?.disableHistorySectionInChatSection === true || config?.showHistory === false
+  ))
   // once presenceStart call success than get the sToken which is required to connect socket
   await store.dispatch(presenceStart())
 

@@ -51,6 +51,11 @@ export const configureChatInterfaceElements = (options) => {
   return instance.configureChatInterfaceElements(options);
 };
 
+export const setAgentContext = (agent) => {
+  const instance = getChatInterfaceInstance();
+  return instance.setAgentContext(agent);
+};
+
 export const destroySDKRuntime = () => {
   chatInterfaceInstance = null;
   parentRendered = false;
