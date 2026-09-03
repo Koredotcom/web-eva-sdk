@@ -5,7 +5,6 @@ import axios, { all } from "axios";
 import { searchSession } from "../redux/actions/global.action";
 import { generateComponentId, generateShortUUID, getFileExtension, getUID } from "../utils/helpers";
 import { setSelectedContext } from "../redux/globalSlice";
-import uploadFiles from "./uploadFiles";
 import removeItem from "./removeItem";
 import removeCurentFile from "./removeCurrentFile";
 import { sessionItemHandler } from "./createContext";
@@ -78,16 +77,27 @@ const FileUpload = (props) => {
                     completedFiles++;
                     //Checking whether all files have completed token generation to make the searchSession Call
                     if (completedFiles === allFiles.length) {
-                        let selectedSources = state?.selectedContext?.data?.sources
-                        if (allSources?.length !== selectedSources?.length) {
-                            //Checking and uploading the selected sources as context
-                            allSources = allSources.filter(source =>
-                                selectedSources.some(selected => selected.uID === source.uID)
-                            );
-                        }
-                        //If there are no sources to add, no searchSession call is to be made. 
-                        let action = state?.selectedContext?.data?.sessionId ? "update" : "add"
-                        allSources?.length && uploadFiles({ attachments: allSources, action });
+                        // File upload only creates the file and returns its fileId.
+                        // Keep the uploaded sources locally so ComposeBar can render
+                        // their pills; the fileIds are sent with the next advancedSearch.
+                        const currentData = store.getState()?.global?.selectedContext?.data || {};
+                        const uploadedIds = new Set(allFiles.map(file => file.uID));
+                        const existingSources = (currentData.sources || []).filter(
+                            source => !uploadedIds.has(source?.uID)
+                        );
+                        const completedSources = allSources.map(source => ({
+                            ...source,
+                            type: 'attachment',
+                            loading: false,
+                        }));
+
+                        store.dispatch(setSelectedContext({
+                            data: {
+                                ...currentData,
+                                sources: [...existingSources, ...completedSources],
+                                loading: false,
+                            },
+                        }));
                     }
                 });
             }
@@ -160,6 +170,7 @@ const FileUpload = (props) => {
                     componentId,
                     extName: getFileExtension(file?.fileName),
                     source: 'attachment',
+                    type: 'attachment',
                     title: file?.fileName,
                     docId: file?.fileUrl?.fileId,
                 };

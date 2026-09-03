@@ -1,5 +1,5 @@
 import { abortAdvanceSearch, advanceSearch, cancelAdvancedSearch, resolveAgentAction, stopResponseGeneration } from "../redux/actions/global.action";
-import { setChatInterfaceOptions, setCurrentQuestion, setCustomData, setEnableContextByFollowupContext, setEnabledCustomTemplates, setErrorState, setAnsFromChipElements, setChatInterfaceElements, setAutonomousAsyncPending } from "../redux/globalSlice"
+import { setChatInterfaceOptions, setCurrentQuestion, setCustomData, setEnableContextByFollowupContext, setEnabledCustomTemplates, setErrorState, setAnsFromChipElements, setChatInterfaceElements, setAutonomousAsyncPending, setSelectedContext } from "../redux/globalSlice"
 import { updateChatData } from "../redux/globalSlice";
 import store from "../redux/store";
 import { v4 as uuid } from 'uuid';
@@ -13,6 +13,40 @@ import RecentAgentsFunc from "../LandingPageRecentAgents/RecentAgents";
 import NewChat from "./NewChat";
 import { unHideRecentAgentsDiv } from "../LandingPageRecentAgents";
 const {hideRecentAgentsDiv} = RecentAgentsFunc();
+
+const getSelectedFileIds = (selectedContext) => {
+  const sources = selectedContext?.data?.sources || [];
+  const sourceFileIds = sources
+    .filter(source => source?.source === 'attachment' || source?.type === 'attachment')
+    .map(source => source?.docId || source?.fileId || source?.fileUrl?.fileId || source?.contentId)
+    .filter(Boolean);
+  return [...new Set([...(selectedContext?.data?.fileIds || []), ...sourceFileIds])];
+};
+
+const addSelectedFileIds = (payload, selectedContext) => {
+  const fileIds = getSelectedFileIds(selectedContext);
+  if (fileIds.length) payload.fileIds = [...new Set(fileIds)];
+};
+
+const clearSelectedFiles = (selectedContext) => {
+  const data = selectedContext?.data;
+  if (!data) return;
+
+  const remainingSources = (data.sources || []).filter(
+    source => source?.source !== 'attachment' && source?.type !== 'attachment'
+  );
+
+  if (remainingSources.length === (data.sources || []).length && !(data.fileIds || []).length) return;
+
+  store.dispatch(setSelectedContext({
+    ...selectedContext,
+    data: {
+      ...data,
+      sources: remainingSources,
+      fileIds: [],
+    },
+  }));
+};
 
 const ChatInterface = (props) => {
     let state = store.getState().global, input = '', resIndexRef = 0;
@@ -174,6 +208,8 @@ const ChatInterface = (props) => {
             }
           }
         }
+        addSelectedFileIds(payload, selectedContext);
+        clearSelectedFiles(selectedContext);
         // Scroll-to-bottom for normal (non-task) user questions.
         requestAnimationFrame(() => scrollToBottom("smooth"));
         console.log("payload in chat interface", payload)
@@ -308,6 +344,9 @@ const ChatInterface = (props) => {
     if(payload['formData'] && arg?.isTask){
        delete payload.context;
     }
+
+    addSelectedFileIds(payload, selectedContext);
+    clearSelectedFiles(selectedContext);
 
     console.log("custom data payload in chat interface line no 206", payload.customData)
 

@@ -6,7 +6,8 @@ import { fetchAgents } from "../redux/actions/global.action.js";
 import { ActionsFlashIcon, arrowCirlceUpIcon, attachmentIcon, CheveronDownIcon, createCloseIcon, createDeleteIcon, createThumbsUpFilled, microphoneIcon, searchIcon, settingsIcon, Close, StopIcon, CurvedArrowForPreview, PlusIcon } from "../templateRenderer/icons-library.js";
 import FileUpload from "../Attachments/fileUpload.js";
 import FileUploader from "../utils/FileUploader.js";
-import { uploadFileToAgenticPlatform, removeFileFromAgenticPlatform } from "../redux/actions/global.action.js";
+import { removeFileFromAgenticPlatform } from "../redux/actions/global.action.js";
+import { setSelectedContext } from "../redux/globalSlice.js";
 import { getAgentType, getFileExtension, getUID, hideElementImmediately, showElementImmediately, showElementDelayed, getIconsList, markdownToPlainText, resolveSdkAssetPath } from "../utils/helpers.js";
 import { renderRecentFiles } from "./RenderRecentAttachments.js";
 import { isMSEnv } from "../utils/helpers.js";
@@ -342,6 +343,18 @@ class ComposeBar {
             const globalState = state?.global;
             const selectedContext = globalState?.selectedContext?.data;
 
+            // The chat request consumes attachment fileIds. Clear the autonomous
+            // upload pills when the attachment context has been consumed.
+            const hasAttachmentContext = (selectedContext?.fileIds?.length > 0) ||
+                (selectedContext?.sources || []).some(source =>
+                    source?.source === 'attachment' || source?.type === 'attachment'
+                );
+            if (!hasAttachmentContext && this.autonomousUploadedFiles?.length) {
+                this.autonomousUploadedFiles = [];
+                this.autonomousFileIds = [];
+                this.renderAutonomousAttachmentUI();
+            }
+
             // 1. Re-render update of recent files list selection icons if dialog is open
             const attachmentDialog = this.container.querySelector('[data-eva-attachment-dialog]');
             if (attachmentDialog?.hasAttribute('open')) {
@@ -611,7 +624,7 @@ class ComposeBar {
      *   1. Validate size (<5 MB)
      *   2. Add a loading chip immediately
      *   3. FileUploader: token → chunk/upload → onSuccess returns { fileUrl.fileId }
-     *   4. Call addFile endpoint with { fileId }
+     *   4. Keep the uploaded fileId for the next advancedSearch request
      */
     handleAutonomousFileUpload(event) {
         const file = event.target.files?.[0];
@@ -649,7 +662,7 @@ class ComposeBar {
             () => {},
             (uploadedFile) => {
                 const docId = uploadedFile?.fileUrl?.fileId;
-                this._uploadFileToAgentic(docId, mediaName);
+                this._registerAutonomousFile(docId, mediaName);
             },
             (error) => {
                 console.error('[ComposeBar] FileUploader error:', error);
@@ -662,33 +675,32 @@ class ComposeBar {
     }
 
     /**
-     * After FileUploader finishes, call the addFile endpoint with { fileId }.
+     * Store the uploaded fileId locally. It is sent as fileIds with the next
+     * advancedSearch request; a separate addFile request is not required.
      */
-    async _uploadFileToAgentic(fileId, mediaName) {
+    _registerAutonomousFile(fileId, mediaName) {
         if (!fileId) {
             this.autonomousUploadedFiles = this.autonomousUploadedFiles.filter(f => f.mediaName !== mediaName);
             this.renderAutonomousAttachmentUI();
             return;
         }
 
-        try {
-            const result = await store.dispatch(uploadFileToAgenticPlatform({
-                boardId: this._autonomousBoardId,
-                messageId: this._autonomousMessageId,
-                payload: { fileId },
-            }));
+        this.autonomousUploadedFiles = this.autonomousUploadedFiles.map(file =>
+            file.mediaName === mediaName
+                ? { ...file, fileId, docId: fileId, loading: false, enable: true }
+                : file
+        );
+        this.autonomousFileIds = [...new Set([...this.autonomousFileIds, fileId])];
 
-            if (result?.payload?.agentContext?.sources) {
-                this.autonomousUploadedFiles = result.payload.agentContext.sources;
-                const newIds = this.autonomousUploadedFiles.map(f => f?.fileId || f?.docId).filter(Boolean);
-                this.autonomousFileIds = [...new Set([...this.autonomousFileIds, ...newIds])];
-            } else {
-                this.autonomousUploadedFiles = this.autonomousUploadedFiles.filter(f => f.mediaName !== mediaName);
-            }
-        } catch (err) {
-            console.error('[ComposeBar] addFile API error:', err);
-            this.autonomousUploadedFiles = this.autonomousUploadedFiles.filter(f => f.mediaName !== mediaName);
-        }
+        const currentData = store.getState()?.global?.selectedContext?.data || {};
+        const fileIds = [...new Set([...(currentData.fileIds || []), ...this.autonomousFileIds])];
+        store.dispatch(setSelectedContext({
+            data: {
+                ...currentData,
+                fileIds,
+                loading: false,
+            },
+        }));
 
         this.renderAutonomousAttachmentUI();
     }
@@ -710,6 +722,13 @@ class ComposeBar {
                 this.autonomousUploadedFiles = this.autonomousUploadedFiles.filter(f => (f?.fileId || f?.docId) !== fileId);
             }
             this.autonomousFileIds = this.autonomousFileIds.filter(id => id !== fileId);
+            const currentData = store.getState()?.global?.selectedContext?.data || {};
+            store.dispatch(setSelectedContext({
+                data: {
+                    ...currentData,
+                    fileIds: (currentData.fileIds || []).filter(id => id !== fileId),
+                },
+            }));
         } catch (err) {
             console.error('[ComposeBar] Autonomous file remove error:', err);
             this.autonomousUploadedFiles = this.autonomousUploadedFiles.filter(f => (f?.fileId || f?.docId) !== fileId);
@@ -737,8 +756,11 @@ class ComposeBar {
             const uid = file?.uID || file?.componentId || file?.docId || name;
             const fileExtension = getFileExtension(name);
 
+            const iconPath = resolveSdkAssetPath(`images/${fileExtension}.png`);
+            const defaultIconPath = resolveSdkAssetPath('images/default.png');
+
             return `<div class="eva-attachment-pill" data-attach-uid="${escapeHtml(uid)}" title="${escapeHtml(name)}">
-                <div class="attachment-icon"><img src="images/${fileExtension}.png" onerror="this.src='images/default.png'" alt=''/></div>
+                <div class="attachment-icon"><img src="${iconPath}" onerror="this.onerror=null;this.src='${defaultIconPath}'" alt=''/></div>
                 <div class="eva-attachment-name">${escapeHtml(name)}</div>
                 ${file?.loading ? `<div class="waloader"></div>` :
                     `<button type="button" class="eva-attachment-remove" data-remove-uid="${escapeHtml(uid)}" aria-label="Remove">&times;</button>`}
