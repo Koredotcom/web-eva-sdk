@@ -1,6 +1,9 @@
 import { renderParentComponent } from "./master-component/ParentComponent";
 import { ChatInterface } from "./chat";
 import InvokeAgent from "./chat/invokeAgent";
+import store from "./redux/store";
+import { updateChatData } from "./redux/globalSlice";
+import { v4 as uuid } from "uuid";
 
 let initialized = false;
 let parentRendered = false;
@@ -58,6 +61,33 @@ export const setAgentContext = (agent) => {
 };
 
 export const invokeAgent = (agent) => InvokeAgent(agent);
+
+/**
+ * Replace the questions currently displayed by the chat UI.
+ * This only updates Redux/UI state; it does not send a request to an agent.
+ */
+export const updateQuestions = (questions = {}) => {
+  if (!questions || typeof questions !== "object" || Array.isArray(questions)) {
+    throw new TypeError("updateQuestions expects a questions object");
+  }
+
+  const normalizedQuestions = Object.fromEntries(
+    Object.entries(questions).map(([key, question]) => {
+      if (!question || typeof question !== "object") return [key, question];
+
+      const reqId = question.reqId || question.cId || question.id || uuid();
+      return [key, {
+        ...question,
+        id: question.id || reqId,
+        cId: question.cId || reqId,
+        reqId: question.reqId || reqId,
+      }];
+    })
+  );
+
+  store.dispatch(updateChatData(normalizedQuestions));
+  return normalizedQuestions;
+};
 
 export const destroySDKRuntime = () => {
   chatInterfaceInstance = null;

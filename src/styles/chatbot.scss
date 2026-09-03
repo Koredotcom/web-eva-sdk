@@ -662,6 +662,24 @@
     max-width: 100%;
     min-width: 0;
   }
+  .custom-welcome-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+  }
+  .custom-welcome-button {
+    padding: 0.5rem 0.875rem;
+    border: 1px solid #5b2a86;
+    border-radius: 1rem;
+    background: #fff;
+    color: #5b2a86;
+    cursor: pointer;
+    font: inherit;
+  }
+  .custom-welcome-button:hover {
+    background: #f5effa;
+  }
   .table-wrapper {
     overflow-x: auto;
     max-width: 100%;

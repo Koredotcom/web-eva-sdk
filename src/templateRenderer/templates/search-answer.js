@@ -1,6 +1,21 @@
 import { MessageRenderer } from "../../plugins/Markdown/message-renderer";
 import { encodeHtml } from "../utils/helper";
 import { renderThoughts, setupThoughtsToggle } from "./bot-conversation";
+import CustomWelcomeButtons from "../functionality/custom-welcome-buttons";
+
+function renderCustomButtons(data) {
+    if (!Array.isArray(data?.customButtons) || data.customButtons.length === 0) return "";
+
+    return `
+        <div class="custom-welcome-buttons" aria-label="Suggested questions">
+            ${data.customButtons.map((button, index) => `
+                <button type="button" class="custom-welcome-button" id="custom-welcome-button-${data?.id}-${index}">
+                    ${encodeHtml(button?.label || button?.value || button?.payload || "")}
+                </button>
+            `).join("")}
+        </div>
+    `;
+}
 
 function render(data) {
     let thoughtsHTML = "";
@@ -41,7 +56,11 @@ function renderAnswer(data) {
         <div id="answer-${data.messageId || data.id}" class="threadName maxLength">
             ${MessageRenderer(data.answer)}
         </div>
+        ${renderCustomButtons(data)}
     `;
+    if (data?.customButtons?.length) {
+        setTimeout(() => CustomWelcomeButtons(data), 0);
+    }
     return html;
 }
 
