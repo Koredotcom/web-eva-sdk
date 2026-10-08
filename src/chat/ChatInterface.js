@@ -295,7 +295,8 @@ const ChatInterface = (props) => {
             payload.context = {
               agentType: isAgentSetAsSource?.type,
               title: isAgentSetAsSource?.name,
-              "sources": [_source]}
+              "sources": [{ ..._source, isAgent: true }]
+            }
             if(selectedContext?.data?.messageId) {
               payload.contextParams = {messageId: selectedContext?.data?.messageId}
             }
@@ -787,7 +788,7 @@ const ChatInterface = (props) => {
      */
     const sendMessage = (input, question) => {
       // Check if this is a bot conversation
-      if(question?.botConversation) {
+      if(question?.botConversation && question?.status !== 'completed') {
         // Get the conversation which is in-progress
       const conversation = Object.values(question?.botConversation)?.find(c => c?.status === 'in-progress')
 
