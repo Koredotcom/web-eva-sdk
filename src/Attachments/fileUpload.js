@@ -76,7 +76,7 @@ const FileUpload = (props) => {
                 uploadFileInitial(currentFile, allSources, () => {
                     completedFiles++;
                     //Checking whether all files have completed token generation to make the searchSession Call
-                    if (completedFiles === files.length) {
+                    if (completedFiles === (files?.length || allFiles?.length)) {
                         let selectedSources = state?.selectedContext?.data?.sources
                         if ((allSources?.length !== selectedSources?.length) && selectedSources?.length > 0) {
                             //Checking and uploading the selected sources as context
