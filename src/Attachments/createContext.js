@@ -228,6 +228,16 @@ export const attachmentSessionHanlder = (args) => {
 export const setContext = async (state, args, callback, type) => {
 
     let userId = window.sdkConfig.userId
+    const sourcesWithUID = [
+        ...(state?.selectedContext?.data?.sources || []),
+        ...(args?.payload || [])
+    ];
+    const actionItemsMappedWithUID = sourcesWithUID.reduce((acc, source) => {
+        if (source?.docId && source?.uID) {
+            acc[source.docId] = source.uID;
+        }
+        return acc;
+    }, {});
 
     if (args?.payload) {
         args.payload = args?.payload?.map(p => {
@@ -271,6 +281,9 @@ export const setContext = async (state, args, callback, type) => {
         action: args?.action,
         // it will be helpfull to remove items from selectedContext state if api got failed
         actionItemIds: args?.payload?.map(p => p?.docId)
+    }
+    if (Object.keys(actionItemsMappedWithUID).length > 0) {
+        params.actionItemsMappedWithUID = actionItemsMappedWithUID;
     }
     const payload = {}
 

@@ -6,7 +6,7 @@ import { authenticateApp } from './Authorization';
 
 
 
-const getAccessToken = 'bgKlPSpWIdHeyvFEeCTTDYFLgeBzFQaogc6sEVvLNt8HKvvbJG0dgbGt9H4lbT3s'; 
+const getAccessToken = 'rjZNTlLqLQ4ZrOXR8Z93TT9CqDvNdvsD8cAXMkEpitWmHu_HDh5_-KdF1-0GB_Zh'; 
 initializeSDK({
     accessToken: getAccessToken,
     api_url: 'https://eva-qa.kore.ai/api/1.1/',

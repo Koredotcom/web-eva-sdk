@@ -241,7 +241,7 @@ function FileUploader({
                         console.error("failed api call",err);
                     }
                 }else{
-                    let response = {type: _self.fileInfo.type, fileName:_self.fileInfo.fileName, filesize:_self.fileInfo.fileSize, fileUrl: data.data, mediaName: _self.fileInfo.mediaName, blobUrl: _self.fileInfo?.blobUrl}
+                    let response = {type: _self.fileInfo.type, fileName:_self.fileInfo.fileName, filesize:_self.fileInfo.fileSize, fileUrl: data.data, mediaName: _self.fileInfo.mediaName, blobUrl: _self.fileInfo?.blobUrl, uID:_self.uID}
                     // if(_self.fileInfo.height) {
                     //     response.height = _self.fileInfo.height;
                     // }
@@ -381,7 +381,9 @@ function FileUploader({
             }
         })
         .catch(function(error) {        
-            console.log("error",error);
+            if (store.getState().global?.enableDebugging) {
+                console.log("error", error);
+            }
             if(_self?.source?.token?.reason?.message !== "Upload aborted by the user."){
                 _self.onError('FILE_UPLOAD_ERROR');
              }
@@ -425,7 +427,9 @@ function FileUploader({
             // }
         })
         .catch(function(err) {
-            console.log("error",err);
+            if (store.getState().global?.enableDebugging) {
+                console.log("error", err);
+            }
             if(_self?.source?.token?.reason?.message !== "Upload aborted by the user."){
                 _self.onError('FILE_UPLOAD_ERROR');
              }
