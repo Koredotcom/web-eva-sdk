@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { TemplateRenderer } from "../../templateRenderer";
-import { BotConversation, ChatInterface, DownloadFile, JoinChatThread, NewChat } from "../../chat";
+import { BotConversation, ChatInterface, DownloadFile, JoinChatThread, NewChat, restoreChatSession } from "../../chat";
 import { notifyAttachmentChipClick } from "../../chat/ChatInterface";
 import store from "../../redux/store";
 import { submitUserFeedback, feedbackDislikeCategories } from "../../Feedback";
@@ -18,8 +18,6 @@ import { ExecuteFormThroughURL } from "../../chat/gptTemplate/submitGPTForm";
 import Profile from "./profile";
 import Notifications from "../Notifications";
 import HistorySearchModal from "./HistorySearchModal";
-
-
 
 // function ShoelaceWrapper({ html }) {
 //   const ref = useRef(null);
@@ -103,6 +101,13 @@ const ChatInterfaceDemo = () => {
   useEffect(() => {
     chatInterface.current = ChatInterface();
     chatInterface.current.options({ contentStreaming: true });
+
+    restoreChatSession().catch((error) => {
+      if (store.getState().global?.enableDebugging) {
+        console.error("Failed to restore chat session", error);
+      }
+    });
+
     let botInstance = BotConversation()
         botInstance.initializeBotSDK({
             "name": "ProcureBot",

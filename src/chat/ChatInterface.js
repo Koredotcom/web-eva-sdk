@@ -603,7 +603,9 @@ const ChatInterface = (props) => {
           if (!question?.responses?.[resIndex]) {
             question.responses[resIndex] = { answer: '' }
           }
-
+          if (!question?.responses?.[resIndex]?.answer) {
+            question.responses[resIndex] = { ...question.responses[resIndex], answer: '' }
+          }
           question.responses[resIndex].answer = question?.responses?.[resIndex]?.answer?.concat(detail?.data?.chunk)
 
           if (resIndexRef !== resIndex) {
@@ -638,6 +640,9 @@ const ChatInterface = (props) => {
             
           }
           try{
+            if(!question?.answer) {
+              question.answer = ''
+            }
             question.answer = question?.answer?.concat(detail?.data?.chunk)
           }catch(error){
             console.error("error in concatenating the answer", error, `details are ${reqId} questions are ${questions}`)

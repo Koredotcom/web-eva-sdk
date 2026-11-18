@@ -154,6 +154,69 @@ html, body {
     margin-bottom: 12px;
 }
 
+.composebar-upload-status {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin: 0 0 12px;
+}
+
+.composebar-upload-file,
+.composebar-upload-error {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 8px 10px;
+    border: 1px solid #d0d5dd;
+    border-radius: 8px;
+    font-size: 13px;
+    overflow-wrap: anywhere;
+}
+
+.composebar-upload-file {
+    background: #f8fafc;
+    color: #344054;
+}
+
+.composebar-upload-file-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.composebar-upload-remove {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: #667085;
+    font-size: 20px;
+    line-height: 1;
+    cursor: pointer;
+
+    &:hover {
+        background: #eaecf0;
+        color: #344054;
+    }
+
+    &:focus-visible {
+        outline: 2px solid #2e90fa;
+        outline-offset: 2px;
+    }
+}
+
+.composebar-upload-error {
+    background: #fef3f2;
+    border-color: #fecdca;
+    color: #b42318;
+}
+
 .composebar-buttons {
     display: flex;
     align-items: center;

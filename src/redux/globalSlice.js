@@ -450,7 +450,16 @@ const globalSlice = createSlice({
         state.AllrecentFiles.error = response?.error
       }
     });
-    handleAsyncActions(builder, searchSession, 'selectedContext')
+    handleAsyncActions(builder, searchSession, 'selectedContext', (state, action) => {
+      const actionItemsMappedWithUID = action?.meta?.arg?.params?.actionItemsMappedWithUID || {};
+      if (Array.isArray(action?.payload?.sources)) {
+        state.selectedContext.data.sources = action.payload.sources.map((source) => {
+          const uID = actionItemsMappedWithUID[source?.docId];
+          return uID !== undefined ? { ...source, uID } : source;
+        });
+      }
+    });
+
     handleAsyncActions(builder, getRecentFileDownloadUrl, 'recentFileDownloadUrl');
     handleAsyncActions(builder, submitFeedback, 'submitFeedback', (state, action) => {
       mergeFeedbackResponseIntoQuestions(

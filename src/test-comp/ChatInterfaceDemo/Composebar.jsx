@@ -1,12 +1,31 @@
-import React, { useRef, useEffect, useMemo } from "react";
+import React, { useRef, useEffect, useMemo, useState } from "react";
 import { NewChat } from "../../chat";
 import { UploadFile } from "../../files";
+import { FileUpload } from "../../Attachments";
 import { orderBy } from "lodash";
 
 const Composebar = ({quickActions, chatInterface, input, setInput, messages}) => {
   const fileInputRef = useRef();
+  const fileUploadRef = useRef(null);
+  const [uploadedSources, setUploadedSources] = useState([]);
+  const [uploadErrors, setUploadErrors] = useState([]);
   const sortedMessages = useMemo(() => orderBy(Object.values(messages || {}), 'cOn', 'asc'), [messages]);
   const latestQuestion = sortedMessages[sortedMessages.length - 1];
+
+  useEffect(() => {
+    const uploader = FileUpload();
+    fileUploadRef.current = uploader;
+
+    const unsubscribe = uploader.subscribe((sources, _sessionId, _quickActions, errors) => {
+      setUploadedSources(sources || []);
+      setUploadErrors(errors || []);
+    });
+
+    return () => {
+      unsubscribe();
+      fileUploadRef.current = null;
+    };
+  }, []);
 
   const onChange = async (event) => {
 		if (event.keyCode === 13 && !event.shiftKey) {
@@ -33,25 +52,28 @@ const Composebar = ({quickActions, chatInterface, input, setInput, messages}) =>
       latestQuestion?.context?.agentType === 'aAAgent' &&
       latestQuestion?.agentContext?.canUploadFile === true;
 
+    // Autonomous agent uploads use the agent-specific API. Other compose-bar
+    // uploads go through the FileUpload interface so they become chat context.
+    if (!canAddToAutonomousAgent) {
+      fileUploadRef.current?.uploadFile(event);
+      event.target.value = "";
+      return;
+    }
+
     for (const file of files) {
       const uploadResponse = await UploadFile({
         file,
-        onProgress: (progress) => {
-          console.log("file upload progress", file.name, progress);
-        },
       });
-      console.log("file upload response", uploadResponse);
 
-      if (uploadResponse?.status === "success" && canAddToAutonomousAgent) {
+      if (uploadResponse?.status === "success") {
         const fileId = getUploadedFileId(uploadResponse);
         if (fileId) {
-          const addFileResponse = await chatInterface.current.addFileToAutonomousAgent({
+          await chatInterface.current.addFileToAutonomousAgent({
             fileId,
             advanceSearchRes: latestQuestion,
             fileName: file.name,
             fileExtension: file.name.split('.').pop() || '',
           });
-          console.log("addFileToAutonomousAgent response", addFileResponse);
         }
       }
     }
@@ -63,8 +85,6 @@ const Composebar = ({quickActions, chatInterface, input, setInput, messages}) =>
     console.log('triggered file upload')
     fileInputRef.current?.click();
   };
-
-  const canUploadFile = latestQuestion?.agentContext?.canUploadFile === true;
 
   return (
     <div className="composebar-parent">
@@ -91,6 +111,41 @@ const Composebar = ({quickActions, chatInterface, input, setInput, messages}) =>
           value={input}
           placeholder="Ask question..."
         />
+        {(uploadedSources.length > 0 || uploadErrors.length > 0) && (
+          <div className="composebar-upload-status" aria-live="polite">
+            {uploadedSources.map((source, index) => (
+              <div
+                className="composebar-upload-file"
+                key={source?.uID || source?.componentId || `${source?.title}-${index}`}
+              >
+                <span>{source?.fileName || source?.title || "Untitled file"}</span>
+                <div className="composebar-upload-file-actions">
+                  <span>
+                    {source?.loading ? "Uploading…" : source?.error ? "Upload failed" : "Added"}
+                  </span>
+                  <button
+                    type="button"
+                    className="composebar-upload-remove"
+                    aria-label={`Remove ${source?.fileName || source?.title || "uploaded file"}`}
+                    title="Remove file"
+                    onClick={() => fileUploadRef.current?.removeContext(source)}
+                  >
+                    <span aria-hidden="true">×</span>
+                  </button>
+                </div>
+              </div>
+            ))}
+            {uploadErrors.map((file, index) => (
+              <div
+                className="composebar-upload-error"
+                role="alert"
+                key={file?.uID || `${file?.title}-${index}`}
+              >
+                {file?.fileName || file?.title || "File"}: {file?.message || file?.error || "Upload failed"}
+              </div>
+            ))}
+          </div>
+        )}
       </div>
       <div className="composebar-buttons">
         <input
