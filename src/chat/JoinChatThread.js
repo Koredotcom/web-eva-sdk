@@ -92,8 +92,7 @@ const JoinChatThread = async (props) => {
                 messageId: q?.id,
                 context: {...q?.context, messageId: q?.id},
                 type: q?.postType === "follow-up" ? "followup" : "search",
-                historicalData: true,
-                apiSuccess: true
+                historicalData: true
             }
 
             if (q?.status === "terminated") {
@@ -178,6 +177,10 @@ const JoinChatThread = async (props) => {
             //     obj.formsLength = obj.content.formFields?.length;
             //     obj.content.formFields = formFields;
             // }
+
+            if(q?.status === "completed"){
+                obj.apiSuccess = true
+            }
     
             updatedQuestions[msgId] = obj;
             // return obj;

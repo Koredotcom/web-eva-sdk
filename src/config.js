@@ -5,6 +5,7 @@ import { fetchAgents, fetchConfigData, fetchProfileData, fetchHistory, fetchRece
 import { setAnnouncements, setAutoRemoveWebSearchFromContext, setEnableContextByFollowupContext, setEnabledDebugging } from "./redux/globalSlice";
 import store from "./redux/store";
 import { WebSocketService } from "./socket/socket.service";
+import { initializeChatRecoveryPersistence } from "./chat/chatRecoveryStorage";
 export const initializeSDK = async (config) => {
   const requiredKeys = ['accessToken', 'api_url', 'userId']
   let initialHistoryLimit = config?.initialHistoryLimit || 10;
@@ -23,6 +24,7 @@ export const initializeSDK = async (config) => {
 
   // Set the SDK config globally
   window.sdkConfig = config;
+  initializeChatRecoveryPersistence();
 
   if(config?.autoRemoveWebSearchFromContext){
     store.dispatch(setAutoRemoveWebSearchFromContext(true))
